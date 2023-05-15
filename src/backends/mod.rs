@@ -11,9 +11,9 @@
 mod word_stream;
 pub use word_stream::*;
 
-#[cfg(feature="std")]
+#[cfg(feature = "std")]
 mod file_backend;
-#[cfg(feature="std")]
+#[cfg(feature = "std")]
 pub use file_backend::*;
 
 mod unbuffered_bit_stream_reader;
