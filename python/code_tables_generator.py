@@ -18,9 +18,11 @@ import os
 import sys
 from math import log2, ceil, floor
 
-ROOT = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if len(sys.argv) > 1:
     ROOT = os.path.join(ROOT, sys.argv[1])
+else:
+    ROOT = os.path.join(ROOT, "src", "codes")
 
 
 # Value we will use for values we cannot read using the current tables
