@@ -15,6 +15,9 @@ import sys
 import subprocess
 from code_tables_generator import generate_default_tables
 
+if not os.path.exists("benchmarks") or not os.path.exists("python"):
+    sys.exit("You must run this script in the main project directory.")
+
 for bits in range(1, 18):
     value_max = 2**bits
     print("Table bits:", bits, file=sys.stderr)
@@ -24,9 +27,9 @@ for bits in range(1, 18):
             "cargo clean", shell=True,
             cwd="../benchmarks",
         )
-        # Run the benchmark with native cpu optimizations
+        # Generate tables with the desired number of bits 
         stdout = subprocess.check_output(
-            "cargo run --release",
+            "python python/code_tables_generator.py",
             shell=True,
             env={
                 **os.environ,
@@ -35,6 +38,16 @@ for bits in range(1, 18):
                 "DELTA_CODE_TABLE_MAX":str(value_max),
                 "ZETA_CODE_TABLE_MAX":str(value_max),
                 "MERGED_TABLES":str(2 - tables_num),
+            },
+        ).decode()
+
+
+        # Run the benchmark with native cpu optimizations
+        stdout = subprocess.check_output(
+            "cargo run --release",
+            shell=True,
+            env={
+                **os.environ,
                 "RUSTFLAGS":"-C target-cpu=native",
             },
             cwd="../benchmarks",
