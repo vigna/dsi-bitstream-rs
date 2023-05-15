@@ -2,6 +2,8 @@
 name = "dsi-bitstream"
 version = "0.1.0"
 edition = "2021"
+authors = ["Tommaso Fontana", "Sebastiano Vigna <sebastiano.vigna@unimi.it>"]
+
 
 [dependencies]
 anyhow = "1.0.71"

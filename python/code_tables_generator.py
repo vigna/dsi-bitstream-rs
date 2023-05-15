@@ -1,4 +1,12 @@
 #!/usr/bin/python3
+
+#
+# SPDX-FileCopyrightText: 2023 Tommaso Fontana
+# SPDX-FileCopyrightText: 2023 Inria
+#
+# SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
+#
+
 """
 This is not a `build.rs` because it will mainly generated once and adding it to
 `build.rs` would cause a big slowdown of compilation because it would invalidate

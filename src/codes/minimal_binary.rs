@@ -1,3 +1,11 @@
+/*
+ * SPDX-FileCopyrightText: 2023 Tommaso Fontana
+ * SPDX-FileCopyrightText: 2023 Inria
+ * SPDX-FileCopyrightText: 2023 Sebastiano Vigna
+ *
+ * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
+ */
+
 //! # Minimal Binary
 //!
 //! Also called [Truncated binary encoding](https://en.wikipedia.org/wiki/Truncated_binary_encoding)

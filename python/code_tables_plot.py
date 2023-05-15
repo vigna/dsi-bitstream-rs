@@ -1,4 +1,12 @@
 #!/bin/usr/python3
+
+#
+# SPDX-FileCopyrightText: 2023 Tommaso Fontana
+# SPDX-FileCopyrightText: 2023 Inria
+#
+# SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
+#
+
 """This script takes the data generated from `code_tables_study.py` and plots them"""
 
 import sys

@@ -1,3 +1,10 @@
+/*
+ * SPDX-FileCopyrightText: 2023 Tommaso Fontana
+ * SPDX-FileCopyrightText: 2023 Inria
+ *
+ * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
+ */
+
 /// `UpcastableInto : UpcastableFrom = Into : From`, It's easyer to use to
 /// specify bounds on generic variables
 pub trait UpcastableInto<W>: Sized {

@@ -1,3 +1,10 @@
+/*
+ * SPDX-FileCopyrightText: 2023 Tommaso Fontana
+ * SPDX-FileCopyrightText: 2023 Inria
+ *
+ * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
+ */
+
 //! # Traits
 //! This modules contains the traits that are used throughout the crate.
 //! They are collected into a module so you can do `use dsi_bitstream::traits::*;`
@@ -23,9 +30,3 @@ pub use word_stream::*;
 
 mod bit_order;
 pub use bit_order::*;
-
-mod webgraph_codes;
-pub use webgraph_codes::*;
-
-mod graph;
-pub use graph::*;

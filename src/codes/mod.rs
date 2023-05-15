@@ -1,3 +1,11 @@
+/*
+ * SPDX-FileCopyrightText: 2023 Tommaso Fontana
+ * SPDX-FileCopyrightText: 2023 Inria
+ * SPDX-FileCopyrightText: 2023 Sebastiano Vigna
+ *
+ * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
+ */
+
 //! This modules contains all the logic to read and write codes. While it's used
 //! by webgraph it's not a part of webgraph. In the future we should move this
 //! to its own crate, while we decide on the logistic of where to put it,
