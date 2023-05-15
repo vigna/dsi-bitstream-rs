@@ -15,7 +15,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Install Clippy and fmt
-      run: rustup toolchain install stable --component clippy fmt
+      run: rustup toolchain install nightly --component clippy fmt
     - name: Check formatting
       run: cargo fmt -- --check
     - name: Build
