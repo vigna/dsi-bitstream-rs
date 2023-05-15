@@ -691,9 +691,7 @@ def gen_zeta(read_bits, write_max_val, len_max_val=None, k=3, merged_table=False
         f.write("/// The K of the zeta codes for these tables\n")
         f.write("pub const K: u64 = {};".format(k))
 
-
 ################################################################################
-
 
 def generate_default_tables():
     merged_table = os.environ.get("MERGED_TABLES", 0) == "0"

@@ -16,7 +16,7 @@ import sys
 import subprocess
 from code_tables_generator import *
 
-ROOT = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 target_folder = os.path.join(ROOT, "target")
 test_cov_path = os.path.join(target_folder, "test_cov.profraw")
 rustup_info =  subprocess.check_output("rustup show", shell=True).decode()
@@ -40,7 +40,7 @@ for bits in range(1, 18):
         # Clean the target to force the recreation of the tables
         subprocess.check_call(
             "cargo clean", shell=True,
-            cwd="benchmarks",
+            cwd="../benchmarks",
         )
         # Run the benchmark with native cpu optimizations and collect pgo
         _stdout = subprocess.check_output(
@@ -54,7 +54,7 @@ for bits in range(1, 18):
                 "MERGED_TABLES":str(2 - tables_num),
                 "RUSTFLAGS":"-Ctarget-cpu=native -Cprofile-generate={}".format(pgo_folder),
             },
-            cwd="benchmarks",
+            cwd="../benchmarks",
         ).decode()
 
         # Merge the raw data
@@ -77,7 +77,7 @@ for bits in range(1, 18):
                 "MERGED_TABLES":str(2 - tables_num),
                 "RUSTFLAGS":"-Ctarget-cpu=native -Cprofile-use={}".format(pgo_merged),
             },
-            cwd="benchmarks",
+            cwd="../benchmarks",
         ).decode()
 
         # Dump the header only the first time
