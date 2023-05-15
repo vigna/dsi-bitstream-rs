@@ -25,7 +25,7 @@ for bits in range(1, 18):
         # Clean the target to force the recreation of the tables
         subprocess.check_call(
             "cargo clean", shell=True,
-            cwd="../benchmarks",
+            cwd="benchmarks",
         )
         # Generate tables with the desired number of bits 
         stdout = subprocess.check_output(
@@ -50,7 +50,7 @@ for bits in range(1, 18):
                 **os.environ,
                 "RUSTFLAGS":"-C target-cpu=native",
             },
-            cwd="../benchmarks",
+            cwd="benchmarks",
         ).decode()
 
         # Dump the header only the first time
