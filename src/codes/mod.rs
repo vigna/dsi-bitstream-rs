@@ -69,7 +69,6 @@
 //! ```
 
 mod gamma;
-use std::debug_assert;
 
 pub use gamma::{len_gamma, GammaRead, GammaWrite};
 

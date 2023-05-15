@@ -39,7 +39,7 @@
 //#![deny(clippy::missing_crate_level_docs)]
 //#![deny(clippy::missing_docs_in_private_items)]
 //#![deny(missing_debug_implementations)]
-//#![cfg_attr(not(feature = "std"), no_std)]
+#![cfg_attr(not(feature = "std"), no_std)]
 
 #[cfg(feature = "alloc")]
 extern crate alloc;

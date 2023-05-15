@@ -4,6 +4,10 @@ version = "0.1.0"
 edition = "2021"
 authors = ["Tommaso Fontana", "Sebastiano Vigna <sebastiano.vigna@unimi.it>"]
 
-
 [dependencies]
-anyhow = "1.0.71"
+anyhow = { version = "1.0.71", default-features = false }
+
+[features]
+default = ["std"]
+std = ["alloc", "anyhow/std"]
+alloc = []
