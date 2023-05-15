@@ -14,8 +14,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - name: Install Clippy and fmt
-      run: rustup toolchain install nightly --component clippy fmt
+    - name: Install fmt
+      run: rustup component add rustfmt
+    - name: Install Clippy
+      run: rustup component add clippy
     - name: Add baremetal x86_64 target
       run: rustup target add x86_64-unknown-none
     - name: Check formatting
