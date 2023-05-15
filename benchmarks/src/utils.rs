@@ -10,7 +10,7 @@ pub fn calibrate_overhead() -> u128 {
         nanos.update(delta as f64);
     }
     let measures = nanos.finalize();
-    eprintln!("Timesource calibration is: {:#4?}", measures);
+    // eprintln!("Timesource calibration is: {:#4?}", measures);
     measures.avg as u128
 }
 
