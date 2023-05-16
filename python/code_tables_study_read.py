@@ -18,7 +18,8 @@ from code_tables_generator import generate_default_tables
 if not os.path.exists("benchmarks") or not os.path.exists("python"):
     sys.exit("You must run this script in the main project directory.")
 
-for bits in range(1, 18):
+first_time = True
+for bits in range(4, 8):
     print("Table bits:", bits, file=sys.stderr)
     for tables_num in [1, 2]:
         # Clean the target to force the recreation of the tables
@@ -52,8 +53,9 @@ for bits in range(1, 18):
         ).decode()
 
         # Dump the header only the first time
-        if bits == 1 and tables_num == 1:
+        if first_time:
             print("n_bits,tables_num," + stdout.split("\n")[0])
+            first_time = False
         # Dump all lines and add the `n_bits` column
         for line in stdout.split("\n")[1:]:
             if len(line.strip()) != 0:

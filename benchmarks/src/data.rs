@@ -1,6 +1,6 @@
 use super::*;
 
-lazy_static::lazy_static!{
+lazy_static::lazy_static! {
     pub static ref DELTA_DISTR: Vec<f64> = {
         let mut delta_distr = vec![0.];
         let mut s = 0.;
@@ -17,11 +17,11 @@ macro_rules! compute_ratio {
     ($data:expr, $table:ident, $len_func:ident) => {{
         let mut total = 0.0;
         for value in &$data {
-            #[cfg(feature="read")]
+            #[cfg(feature = "reads")]
             if $len_func::<false>(*value) <= $table::READ_BITS as usize {
                 total += 1.0;
             }
-            #[cfg(not(feature="read"))]
+            #[cfg(not(feature = "reads"))]
             if *value <= $table::WRITE_MAX {
                 total += 1.0;
             }
@@ -34,7 +34,7 @@ macro_rules! compute_ratio {
 /// ratio of values that will hit the tables
 pub fn gen_unary_data() -> (f64, Vec<u64>) {
     let mut rng = rand::thread_rng();
-    
+
     let unary_data = (0..VALUES)
         .map(|_| {
             let v: u64 = rng.gen();
@@ -51,12 +51,10 @@ pub fn gen_unary_data() -> (f64, Vec<u64>) {
 /// ratio of values that will hit the tables
 pub fn gen_gamma_data() -> (f64, Vec<u64>) {
     let mut rng = rand::thread_rng();
-    
+
     let distr = rand_distr::Zeta::new(2.0).unwrap();
     let gamma_data = (0..VALUES)
-        .map(|_| {
-            rng.sample(distr) as u64 - 1
-        })
+        .map(|_| rng.sample(distr) as u64 - 1)
         .collect::<Vec<_>>();
 
     let ratio = compute_ratio!(gamma_data, gamma_tables, len_gamma);
@@ -72,11 +70,12 @@ pub fn gen_delta_data() -> (f64, Vec<u64>) {
     let distr = rand_distr::Uniform::new(0., DELTA_DISTR[DELTA_DISTR.len() - 1]);
     let delta_data = (0..VALUES)
         .map(|_| {
-            let  p = rng.sample(distr);
-            let s = DELTA_DISTR.binary_search_by(|v| {
-                v.partial_cmp(&p).unwrap()
-            });
-            match s { Ok(x) => x as u64, Err(x) => x as u64 - 1} 
+            let p = rng.sample(distr);
+            let s = DELTA_DISTR.binary_search_by(|v| v.partial_cmp(&p).unwrap());
+            match s {
+                Ok(x) => x as u64,
+                Err(x) => x as u64 - 1,
+            }
         })
         .collect::<Vec<_>>();
 
@@ -92,25 +91,27 @@ pub fn gen_zeta3_data() -> (f64, Vec<u64>) {
 
     let distr = rand_distr::Zeta::new(1.2).unwrap();
     let zeta3_data = (0..VALUES)
-        .map(|_| {
-            rng.sample(distr) as u64 - 1
-        })
+        .map(|_| rng.sample(distr) as u64 - 1)
         .collect::<Vec<_>>();
 
-    let ratio = zeta3_data.iter().map(|value| {
-        #[cfg(feature="read")]
-        if len_zeta::<false>(*value, 3) <= zeta_tables::READ_BITS as usize {
-            1
-        } else {
-            0
-        }
-        #[cfg(not(feature="read"))]
-        if *value <= zeta_tables::WRITE_MAX {
-            1
-        } else {
-            0
-        }
-    }).sum::<usize>() as f64 / VALUES as f64;
+    let ratio = zeta3_data
+        .iter()
+        .map(|value| {
+            #[cfg(feature = "reads")]
+            if len_zeta::<false>(*value, 3) <= zeta_tables::READ_BITS as usize {
+                1
+            } else {
+                0
+            }
+            #[cfg(not(feature = "reads"))]
+            if *value <= zeta_tables::WRITE_MAX {
+                1
+            } else {
+                0
+            }
+        })
+        .sum::<usize>() as f64
+        / VALUES as f64;
 
     (ratio, zeta3_data)
 }

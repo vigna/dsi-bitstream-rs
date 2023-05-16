@@ -29,7 +29,7 @@ impl MetricsStream {
         assert!(value.is_finite());
         self.values.push(value);
 
-        // Welford algorithm 
+        // Welford algorithm
         // https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance
         let delta = value - self.avg;
         self.avg += delta / self.values.len() as f64;
@@ -40,7 +40,10 @@ impl MetricsStream {
     /// Consume this builder to get the statistics
     pub fn finalize(mut self) -> Metrics {
         if self.values.len() < 2 {
-            panic!("Got {} values which is not enough for an std", self.values.len());
+            panic!(
+                "Got {} values which is not enough for an std",
+                self.values.len()
+            );
         }
         self.values.sort_unstable_by(|a, b| a.total_cmp(b));
         let var = self.m2 / (self.values.len() - 1) as f64;

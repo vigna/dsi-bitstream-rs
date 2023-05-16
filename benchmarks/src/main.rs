@@ -17,9 +17,9 @@ const CALIBRATION_ITERS: usize = 100_000;
 /// extract
 const DELTA_DISTR_SIZE: usize = 1_000_000;
 
-#[cfg(feature = "read")]
+#[cfg(feature = "reads")]
 type ReadWord = u32;
-#[cfg(feature = "read")]
+#[cfg(feature = "reads")]
 type BufferWord = u64;
 
 #[cfg(feature = "rtdsc")]
@@ -44,11 +44,11 @@ macro_rules! bench {
 // the memory where we will write values
 let mut buffer = Vec::with_capacity(VALUES);
 // counters for the total read time and total write time
-#[cfg(feature="read")]
+#[cfg(feature="reads")]
 let mut read_buff = MetricsStream::with_capacity(VALUES);
-#[cfg(feature="read")]
+#[cfg(feature="reads")]
 let mut read_unbuff = MetricsStream::with_capacity(VALUES);
-#[cfg(not(feature="read"))]
+#[cfg(not(feature="reads"))]
 let mut write = MetricsStream::with_capacity(VALUES);
 
 // measure
@@ -67,21 +67,20 @@ for iter in 0..(WARMUP_ITERS + BENCH_ITERS) {
         for value in &data {
             black_box(r.$write::<$($table),*>(*value).unwrap());
         }
-        let nanos = w_start.elapsed().as_nanos();
-        // add the measurement if we are not in the warmup
-        #[cfg(not(feature="read"))]
+            // add the measurement if we are not in the warmup
+        #[cfg(not(feature="reads"))]
         if iter >= WARMUP_ITERS {
-            write.update((nanos - $cal) as f64);
+            write.update((w_start.elapsed().as_nanos() - $cal) as f64);
         }
     }
 
-    #[cfg(feature="read")]
+    #[cfg(feature="reads")]
     let transmuted_buff: &[ReadWord] = unsafe{core::slice::from_raw_parts(
         buffer.as_ptr() as *const ReadWord,
         buffer.len() * (core::mem::size_of::<u64>() / core::mem::size_of::<ReadWord>()),
     )};
 
-    #[cfg(feature="read")]
+    #[cfg(feature="reads")]
     // read the codes
     {
         // init the reader
@@ -99,7 +98,7 @@ for iter in 0..(WARMUP_ITERS + BENCH_ITERS) {
             read_buff.update((nanos - $cal) as f64);
         }
     }
-    #[cfg(feature="read")]
+    #[cfg(feature="reads")]
     {
         // init the reader
         let mut r = UnbufferedBitStreamRead::<$bo, _>::new(
@@ -119,11 +118,11 @@ for iter in 0..(WARMUP_ITERS + BENCH_ITERS) {
 }
 
 // convert from cycles to nano seconds
-#[cfg(feature="read")]
+#[cfg(feature="reads")]
 let read_buff = read_buff.finalize();
-#[cfg(feature="read")]
+#[cfg(feature="reads")]
 let read_unbuff = read_unbuff.finalize();
-#[cfg(not(feature="read"))]
+#[cfg(not(feature="reads"))]
 let write = write.finalize();
 
 let table = if ($($table),*,).0 {
@@ -132,7 +131,7 @@ let table = if ($($table),*,).0 {
     "NoTable"
 };
 // print the results
-#[cfg(not(feature="read"))]
+#[cfg(not(feature="reads"))]
 println!("{}::{}::{},{},{},{},{},{},{},{}",
     $code, stringify!($bo), table, // the informations about what we are benchmarking
     "write",
@@ -143,7 +142,7 @@ println!("{}::{}::{},{},{},{},{},{},{},{}",
     write.median / VALUES as f64,
     write.percentile_75 / VALUES as f64,
 );
-#[cfg(feature="read")]
+#[cfg(feature="reads")]
 println!("{}::{}::{},{},{},{},{},{},{},{}",
     $code, stringify!($bo), table, // the informations about what we are benchmarking
     "read_buff",
@@ -154,7 +153,7 @@ println!("{}::{}::{},{},{},{},{},{},{},{}",
     read_buff.median / VALUES as f64,
     read_buff.percentile_75 / VALUES as f64,
 );
-#[cfg(feature="read")]
+#[cfg(feature="reads")]
 println!("{}::{}::{},{},{},{},{},{},{},{}",
     $code, stringify!($bo), table, // the informations about what we are benchmarking
     "read_unbuff",

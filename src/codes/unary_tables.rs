@@ -4,7 +4,7 @@
 use crate::traits::{BitRead, BitWrite, UpcastableInto, L2M, M2L};
 use anyhow::Result;
 /// How many bits are needed to read the tables in this
-pub const READ_BITS: usize = 0;
+pub const READ_BITS: usize = 5;
 /// The len we assign to a code that cannot be decoded through the table
 pub const MISSING_VALUE_LEN: u8 = 255;
 /// Maximum value writable using the table(s)
@@ -80,13 +80,23 @@ pub fn write_table_m2l<B: BitWrite<M2L>>(backend: &mut B, value: u64) -> Result<
     })
 }
 ///Table containing the values used to speed up the reading of unary codes
-pub const READ_M2L: &[u8] = &[0];
+pub const READ_M2L: &[u8] = &[
+    0, 4, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+];
 ///Table contaings the lens used to speed up the reading of unary codes
-pub const READ_LEN_M2L: &[u8] = &[255];
+pub const READ_LEN_M2L: &[u8] = &[
+    255, 5, 4, 4, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1,
+];
 ///Table containing the values used to speed up the reading of unary codes
-pub const READ_L2M: &[u8] = &[0];
+pub const READ_L2M: &[u8] = &[
+    0, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0, 4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+];
 ///Table contaings the lens used to speed up the reading of unary codes
-pub const READ_LEN_L2M: &[u8] = &[255];
+pub const READ_LEN_L2M: &[u8] = &[
+    255, 1, 2, 1, 3, 1, 2, 1, 4, 1, 2, 1, 3, 1, 2, 1, 5, 1, 2, 1, 3, 1, 2, 1, 4, 1, 2, 1, 3, 1, 2,
+    1,
+];
 ///Table used to speed up the writing of unary codes
 pub const WRITE_M2L: &[u64] = &[
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
