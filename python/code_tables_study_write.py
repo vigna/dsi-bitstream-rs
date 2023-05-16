@@ -19,7 +19,7 @@ if not os.path.exists("benchmarks") or not os.path.exists("python"):
     sys.exit("You must run this script in the main project directory.")
 
 for bits in range(1, 18):
-    value_max = 2**bits
+    value_max = 2**bits - 1
     print("Table bits:", bits, file=sys.stderr)
     for tables_num in [1, 2]:
         # Clean the target to force the recreation of the tables
@@ -59,7 +59,7 @@ for bits in range(1, 18):
         # Dump all lines and add the `max` column
         for line in stdout.split("\n")[1:]:
             if len(line.strip()) != 0:
-                print("{},{},{}".format(value_max, tables_num, line))
+                print("{},{},{}".format(value_max + 1, tables_num, line))
 
         sys.stdout.flush()
 
