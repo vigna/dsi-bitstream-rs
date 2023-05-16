@@ -42,6 +42,7 @@ impl<T> UpcastableFrom<T> for T {
 macro_rules! impl_upcasts {
     ($base_type:ty, $($ty:ty,)*) => {$(
 impl UpcastableFrom<$base_type> for $ty {
+    #[inline(always)]
     fn upcast_from(value: $base_type) -> Self {
         value as $ty
     }
@@ -55,26 +56,31 @@ impl UpcastableFrom<$base_type> for $ty {
 impl_upcasts!(u8, u16, u32, u64, u128,);
 
 impl UpcastableFrom<u8> for usize {
+    #[inline(always)]
     fn upcast_from(value: u8) -> Self {
         value as usize
     }
 }
 impl UpcastableFrom<u16> for usize {
+    #[inline(always)]
     fn upcast_from(value: u16) -> Self {
         value as usize
     }
 }
 impl UpcastableFrom<u32> for usize {
+    #[inline(always)]
     fn upcast_from(value: u32) -> Self {
         value as usize
     }
 }
 impl UpcastableFrom<usize> for u64 {
+    #[inline(always)]
     fn upcast_from(value: usize) -> Self {
         value as u64
     }
 }
 impl UpcastableFrom<usize> for u128 {
+    #[inline(always)]
     fn upcast_from(value: usize) -> Self {
         value as u128
     }
