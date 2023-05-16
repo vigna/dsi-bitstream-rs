@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 #
 # SPDX-FileCopyrightText: 2023 Tommaso Fontana
@@ -60,7 +60,7 @@ for code in ["unary", "gamma", "delta", "delta_gamma", "zeta3"]:
         "%s::L2M::NoTable" % code,
         "%s::M2L::NoTable" % code,
     ]:
-        values = df[df.pat == pat].groupby(x_label).mean()
+        values = df[df.pat == pat].groupby(x_label).mean(numeric_only=True)
         m = min(values.ns_median)
         plt.errorbar(
             values.index,
@@ -80,7 +80,7 @@ for code in ["unary", "gamma", "delta", "delta_gamma", "zeta3"]:
     ratios = (
         df[df.pat.str.contains(code) & (df.tables_num == tables_n)]
         .groupby(x_label)
-        .mean()
+        .mean(numeric_only=True)
     )
     bars = plt.bar(
         ratios.index,
