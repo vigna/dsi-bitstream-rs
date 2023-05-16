@@ -13,3 +13,11 @@ rand_distr = "0.4.3"
 default = ["std"]
 std = ["alloc", "anyhow/std"]
 alloc = []
+
+[profile.release] # Used for the examples
+opt-level = 3             # like --release
+lto = "fat"               # Full LTO
+overflow-checks = false   # Disable integer overflow checks.
+debug = false             # Include debug info.
+debug-assertions = false  # Enables debug assertions.
+codegen-units=1           # slower compile times, but maybe better perf
