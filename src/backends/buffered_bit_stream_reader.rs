@@ -193,12 +193,7 @@ where
             );
         }
 
-        let mut result: u64 = if self.valid_bits != 0 {
-            self.buffer >> (BW::BITS - self.valid_bits)
-        } else {
-            BW::ZERO
-        }
-        .cast();
+        let mut result: u64 = (self.buffer >> (BW::BITS - 1 - self.valid_bits) >> 1).cast();
         n_bits -= self.valid_bits;
 
         // Directly read to the result without updating the buffer
