@@ -19,7 +19,7 @@ if not os.path.exists("benchmarks") or not os.path.exists("python"):
     sys.exit("You must run this script in the main project directory.")
 
 first_time = True
-for bits in range(4, 8):
+for bits in range(1, 18):
     print("Table bits:", bits, file=sys.stderr)
     for tables_num in [1, 2]:
         # Clean the target to force the recreation of the tables
