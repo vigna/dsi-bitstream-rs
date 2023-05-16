@@ -45,11 +45,13 @@ where
 macro_rules! impl_casts {
     ($base_type:ty, $($ty:ty,)*) => {$(
 impl CastableFrom<$base_type> for $ty {
+    #[inline(always)]
     fn cast_from(value: $base_type) -> Self {
         value as $ty
     }
 }
 impl CastableFrom<$ty> for $base_type {
+    #[inline(always)]
     fn cast_from(value: $ty) -> $base_type {
         value as $base_type
     }
