@@ -30,6 +30,8 @@ fn main() {
         .map(|_| rng.sample(distr) as u64 - 1)
         .collect::<Vec<_>>();
 
+    // M2L
+    println!("M2L");
     buffer.clear();
     {
         // init the writer
@@ -46,6 +48,8 @@ fn main() {
         )
     };
 
+
+    println!("ɣ<false> Buff ");
     // init the reader
     let mut r = BufferedBitStreamRead::<M2L, BufferWord, _>::new(MemWordReadInfinite::new(
         &transmuted_buff,
@@ -53,16 +57,105 @@ fn main() {
     // measure
     let r_start = Instant::now();
     for _ in &data {
-        black_box(r.read_gamma::<true>().unwrap());
+        black_box(r.read_gamma::<false>().unwrap());
     }
     let nanos = r_start.elapsed().as_nanos();
     println!("{}", nanos);
 
+    println!("ɣ<false> Unbuff ");
     let mut r = UnbufferedBitStreamRead::<M2L, _>::new(MemWordReadInfinite::new(&buffer));
     // measure
     let r_start = Instant::now();
     for _ in &data {
-        black_box(r.read_gamma::<true>().unwrap());
+        black_box(r.read_gamma::<false>().unwrap());
+    }
+    let nanos = r_start.elapsed().as_nanos();
+    println!("{}", nanos);
+
+    println!("ɣ<true> Buff ");
+    // init the reader
+    let mut r = BufferedBitStreamRead::<M2L, BufferWord, _>::new(MemWordReadInfinite::new(
+        &transmuted_buff,
+    ));
+    // measure
+    let r_start = Instant::now();
+    for _ in &data {
+        black_box(r.read_gamma::<false>().unwrap());
+    }
+    let nanos = r_start.elapsed().as_nanos();
+    println!("{}", nanos);
+
+    println!("ɣ<true> Unbuff ");
+    let mut r = UnbufferedBitStreamRead::<M2L, _>::new(MemWordReadInfinite::new(&buffer));
+    // measure
+    let r_start = Instant::now();
+    for _ in &data {
+        black_box(r.read_gamma::<false>().unwrap());
+    }
+    let nanos = r_start.elapsed().as_nanos();
+    println!("{}", nanos);
+
+    // L2M
+    println!("L2M");
+    buffer.clear();
+    {
+        // init the writer
+        let mut r = BufferedBitStreamWrite::<L2M, _>::new(MemWordWriteVec::new(&mut buffer));
+        for &value in &data {
+            black_box(r.write_gamma::<false>(value).unwrap());
+        }
+    }
+
+    let transmuted_buff: &[ReadWord] = unsafe {
+        core::slice::from_raw_parts(
+            buffer.as_ptr() as *const ReadWord,
+            buffer.len() * (core::mem::size_of::<u64>() / core::mem::size_of::<ReadWord>()),
+        )
+    };
+
+
+    println!("ɣ<false> Buff ");
+    // init the reader
+    let mut r = BufferedBitStreamRead::<L2M, BufferWord, _>::new(MemWordReadInfinite::new(
+        &transmuted_buff,
+    ));
+    // measure
+    let r_start = Instant::now();
+    for _ in &data {
+        black_box(r.read_gamma::<false>().unwrap());
+    }
+    let nanos = r_start.elapsed().as_nanos();
+    println!("{}", nanos);
+
+    println!("ɣ<false> Unbuff ");
+    let mut r = UnbufferedBitStreamRead::<L2M, _>::new(MemWordReadInfinite::new(&buffer));
+    // measure
+    let r_start = Instant::now();
+    for _ in &data {
+        black_box(r.read_gamma::<false>().unwrap());
+    }
+    let nanos = r_start.elapsed().as_nanos();
+    println!("{}", nanos);
+
+    println!("ɣ<true> Buff ");
+    // init the reader
+    let mut r = BufferedBitStreamRead::<L2M, BufferWord, _>::new(MemWordReadInfinite::new(
+        &transmuted_buff,
+    ));
+    // measure
+    let r_start = Instant::now();
+    for _ in &data {
+        black_box(r.read_gamma::<false>().unwrap());
+    }
+    let nanos = r_start.elapsed().as_nanos();
+    println!("{}", nanos);
+
+    println!("ɣ<true> Unbuff ");
+    let mut r = UnbufferedBitStreamRead::<L2M, _>::new(MemWordReadInfinite::new(&buffer));
+    // measure
+    let r_start = Instant::now();
+    for _ in &data {
+        black_box(r.read_gamma::<false>().unwrap());
     }
     let nanos = r_start.elapsed().as_nanos();
     println!("{}", nanos);
