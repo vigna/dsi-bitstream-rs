@@ -361,7 +361,7 @@ where
         let mut bits_in_res = self.valid_bits;
 
         // Directly read to the result without updating the buffer
-        while n_bits - bits_in_res > WR::Word::BITS {
+        while n_bits > WR::Word::BITS + bits_in_res {
             let new_word: u64 = self.backend.read_next_word()?.to_le().upcast();
             result |= new_word << bits_in_res;
             bits_in_res += WR::Word::BITS;
