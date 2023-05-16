@@ -193,12 +193,7 @@ where
             );
         }
 
-        let mut result: u64 = if self.valid_bits != 0 {
-            self.buffer >> (BW::BITS - self.valid_bits)
-        } else {
-            BW::ZERO
-        }
-        .cast();
+        let mut result: u64 = (self.buffer >> (BW::BITS - 1 - self.valid_bits) >> 1).cast();
         n_bits -= self.valid_bits;
 
         // Directly read to the result without updating the buffer
@@ -363,18 +358,17 @@ where
         }
 
         let mut result: u64 = self.buffer.cast();
-        n_bits -= self.valid_bits;
         let mut bits_in_res = self.valid_bits;
 
         // Directly read to the result without updating the buffer
-        while n_bits > WR::Word::BITS {
+        while n_bits - bits_in_res > WR::Word::BITS {
             let new_word: u64 = self.backend.read_next_word()?.to_le().upcast();
             result |= new_word << bits_in_res;
-            n_bits -= WR::Word::BITS;
             bits_in_res += WR::Word::BITS;
         }
 
         // get the final word
+        n_bits -= bits_in_res;
         let new_word = self.backend.read_next_word()?.to_le();
         self.valid_bits = WR::Word::BITS - n_bits;
         // compose the remaining bits

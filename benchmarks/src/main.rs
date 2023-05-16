@@ -42,7 +42,7 @@ use data::*;
 macro_rules! bench {
     ($cal:expr, $code:literal, $read:ident, $write:ident, $gen_data:ident, $bo:ident, $($table:expr),*) => {{
 // the memory where we will write values
-let mut buffer = Vec::with_capacity(VALUES);
+let mut buffer: Vec<u64> = Vec::with_capacity(VALUES);
 // counters for the total read time and total write time
 #[cfg(feature="reads")]
 let mut read_buff = MetricsStream::with_capacity(VALUES);
@@ -63,11 +63,12 @@ for iter in 0..(WARMUP_ITERS + BENCH_ITERS) {
             MemWordWriteVec::new(&mut buffer)
         );
         // measure
+        #[cfg(not(feature="reads"))]
         let w_start = Instant::now();
         for value in &data {
             black_box(r.$write::<$($table),*>(*value).unwrap());
         }
-            // add the measurement if we are not in the warmup
+        // add the measurement if we are not in the warmup
         #[cfg(not(feature="reads"))]
         if iter >= WARMUP_ITERS {
             write.update((w_start.elapsed().as_nanos() - $cal) as f64);
@@ -189,8 +190,6 @@ pub fn main() {
     // print the header of the csv
     println!("pat,type,ratio,ns_avg,ns_std,ns_perc25,ns_median,ns_perc75");
 
-    // benchmark the buffered impl
-
     impl_code!(
         calibration,
         "unary",
@@ -212,6 +211,10 @@ pub fn main() {
         write_zeta3,
         gen_zeta3_data
     );
+
+    // For delta we need to generate the data differently
+    // because we have four cases, depending on whether
+    // we use gamma tables or not.
 
     // delta with gamma tables disabled
     bench!(
