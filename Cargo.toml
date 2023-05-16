@@ -2,6 +2,10 @@
 name = "dsi-bitstream"
 version = "0.1.0"
 edition = "2021"
+description = "A Rust implementation of read/write bit streams supporting several types of instantaneous codes"
+repository = "https://github.com/vigna/dsi-bitstream-rs/"
+license = "Apache-2.0 OR LGPL-2.1-or-later"
+readme = "README.md"
 authors = ["Tommaso Fontana", "Sebastiano Vigna <sebastiano.vigna@unimi.it>"]
 
 [dependencies]
