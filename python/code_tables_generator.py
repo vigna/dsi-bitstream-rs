@@ -34,7 +34,7 @@ def get_best_fitting_type(n_bits):
         return "u64"
     if n_bits <= 128:
         return "u128"
-    raise ValueError()
+    raise ValueError(n_bits)
 
 
 read_func_merged_table = """
