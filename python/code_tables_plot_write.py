@@ -15,7 +15,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 df = pd.read_csv(sys.stdin, index_col=None, header=0)
-
+    
 if "n_bits" in df.columns:
     x_label = "n_bits"
 else:
