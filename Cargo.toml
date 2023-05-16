@@ -6,6 +6,8 @@ authors = ["Tommaso Fontana", "Sebastiano Vigna <sebastiano.vigna@unimi.it>"]
 
 [dependencies]
 anyhow = { version = "1.0.71", default-features = false }
+rand = "0.8.5"
+rand_distr = "0.4.3"
 
 [features]
 default = ["std"]
