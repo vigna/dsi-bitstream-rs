@@ -55,7 +55,7 @@ for code in ["unary", "gamma", "delta", "delta_gamma", "zeta3"]:
             "%s::L2M::NoTable" % code,
             "%s::M2L::NoTable" % code,
         ]:
-            values = df[(df.pat == pat) & (df.type == ty)].groupby("n_bits").mean()
+            values = df[(df.pat == pat) & (df.type == ty)].groupby("n_bits").mean(numeric_only=True)
             m = min(values.ns_median)
             plt.errorbar(
                 values.index,
@@ -75,7 +75,7 @@ for code in ["unary", "gamma", "delta", "delta_gamma", "zeta3"]:
     ratios = (
         df[df.pat.str.contains(code) & (df.tables_num == tables_n)]
         .groupby("n_bits")
-        .mean()
+        .mean(numeric_only=True)
     )
     bars = plt.bar(
         ratios.index,
