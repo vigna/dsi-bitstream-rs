@@ -1,5 +1,7 @@
 use dsi_bitstream::prelude::*;
+use rand::rngs::SmallRng;
 use rand::Rng;
+use rand::SeedableRng;
 use std::hint::black_box;
 
 type ReadWord = u32;
@@ -19,7 +21,7 @@ fn main() {
     let low: usize = args[1].parse().unwrap();
     let high: usize = args[2].parse().unwrap();
     let mut buffer: Vec<u64> = Vec::with_capacity(VALUES);
-    let mut rng = rand::thread_rng();
+    let mut rng = SmallRng::seed_from_u64(0);
     let mut data: Vec<usize> = Vec::with_capacity(VALUES);
     for _ in 0..VALUES {
         data.push(rng.gen_range(low..high) as usize);

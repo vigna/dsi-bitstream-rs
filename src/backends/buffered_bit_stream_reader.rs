@@ -204,10 +204,10 @@ where
         }
         // get the final word
         let new_word = self.backend.read_next_word()?.to_be();
-        self.valid_bits = WR::Word::BITS - n_bits;
         // compose the remaining bits
+        self.valid_bits = WR::Word::BITS - n_bits;
         let upcasted: u64 = new_word.upcast();
-        let final_bits: u64 = (upcasted >> self.valid_bits).downcast();
+        let final_bits: u64 = upcasted >> self.valid_bits;
         result = (result << n_bits) | final_bits;
         // and put the rest in the buffer
         self.buffer = new_word.upcast();
@@ -357,24 +357,25 @@ where
             );
         }
 
-        let mut result: u64 = self.buffer.cast().rotate_right(self.valid_bits as _);
-        //let mut bits_in_res = self.valid_bits;
+        let mut bits_in_result = self.valid_bits;
+        let mut result: u64 = self.buffer.cast().rotate_right(bits_in_result as _);
 
         // Directly read to the result without updating the buffer
-        while n_bits > WR::Word::BITS {
+        while n_bits > WR::Word::BITS + bits_in_result {
             let new_word: u64 = self.backend.read_next_word()?.to_le().upcast();
             result = (result | new_word).rotate_right(WR::Word::BITS as _);
-            n_bits -= WR::Word::BITS;
+            bits_in_result += WR::Word::BITS;
         }
 
+        n_bits -= bits_in_result;
         // get the final word
         let new_word = self.backend.read_next_word()?.to_le();
-        self.valid_bits = WR::Word::BITS - n_bits;
         // compose the remaining bits
+        self.valid_bits = WR::Word::BITS - n_bits;
         let shamt = 64 - n_bits;
         let upcasted: u64 = new_word.upcast();
-        let final_bits: u64 = ((upcasted << shamt) >> shamt).downcast();
-        result = (result | final_bits).rotate_right(n_bits as _);
+        let final_bits: u64 = (upcasted << shamt) >> shamt;
+        result = (result | final_bits).rotate_left(bits_in_result as _);
         // and put the rest in the buffer
         self.buffer = new_word.upcast();
         self.buffer >>= n_bits;
