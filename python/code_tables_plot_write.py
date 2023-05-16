@@ -15,11 +15,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 df = pd.read_csv(sys.stdin, index_col=None, header=0)
-    
-if "n_bits" in df.columns:
-    x_label = "n_bits"
-else:
-    x_label = "max"
+x_label = "max_log2"
+df[x_label] = np.log2(df["max"]) 
 
 for code in ["unary", "gamma", "delta", "delta_gamma", "zeta3"]:
     plt.figure(figsize=(10, 8), dpi=200, facecolor="white")
@@ -117,8 +114,6 @@ for code in ["unary", "gamma", "delta", "delta_gamma", "zeta3"]:
     plt.ylim(bottom=0)  # ymin is your value
     plt.xlim([left, right])  # ymin is your value
     plt.xticks(ratios.index)
-    if x_label != "n_bits":
-        plt.xscale("log", base=2)
     plt.title(
         (
             "Performances of %s codes read and writes in function of the table size\n"

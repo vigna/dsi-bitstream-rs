@@ -15,15 +15,11 @@ To run just execute `$ python ./gen_code_tables.py`
 To provide a build foler, pass it as the first positional argument.
 """
 import os
-import sys
+import subprocess
 from math import log2, ceil, floor
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-if len(sys.argv) > 1:
-    ROOT = os.path.join(ROOT, sys.argv[1])
-else:
-    ROOT = os.path.join(ROOT, "src", "codes")
-
+ROOT = os.path.join(ROOT, "src", "codes")
 
 # Value we will use for values we cannot read using the current tables
 def get_best_fitting_type(n_bits):
@@ -694,29 +690,32 @@ def gen_zeta(read_bits, write_max_val, len_max_val=None, k=3, merged_table=False
 ################################################################################
 
 def generate_default_tables():
-    merged_table = os.environ.get("MERGED_TABLES", 0) == "0"
+    # Generate the default tables
+    merged_table = True
     gen_unary(
-        read_bits=int(os.environ.get("UNARY_CODE_TABLE_BITS", "0")), 
-        write_max_val=int(os.environ.get("UNARY_CODE_TABLE_MAX", "63")),
+        read_bits=0, 
+        write_max_val=63,
         merged_table=merged_table,
     )
     gen_gamma(
-        read_bits=int(os.environ.get("GAMMA_CODE_TABLE_BITS", "11")), 
-        write_max_val=int(os.environ.get("GAMMA_CODE_TABLE_MAX", "255")),
+        read_bits=11, 
+        write_max_val=255,
         merged_table=merged_table,
     )
     gen_delta(
-        read_bits=int(os.environ.get("DELTA_CODE_TABLE_BITS", "11")), 
-        write_max_val=int(os.environ.get("DELTA_CODE_TABLE_MAX", "255")),
+        read_bits=11, 
+        write_max_val=255,
         merged_table=merged_table,
     )
     gen_zeta(
-        read_bits=int(os.environ.get("ZETA_CODE_TABLE_BITS", "12")), 
-        write_max_val=int(os.environ.get("ZETA_CODE_TABLE_MAX", "255")),
+        read_bits=12, 
+        write_max_val=255,
         k=3,
         merged_table=merged_table,
     )
+    subprocess.check_call(
+        "cargo fmt", shell=True,
+    )
 
 if __name__ == "__main__":
-    # Generate the default tables
     generate_default_tables()

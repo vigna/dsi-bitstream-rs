@@ -13,7 +13,7 @@ create a `table.csv` file with all the results
 import os
 import sys
 import subprocess
-from code_tables_generator import generate_default_tables
+from code_tables_generator import *
 
 if not os.path.exists("benchmarks") or not os.path.exists("python"):
     sys.exit("You must run this script in the main project directory.")
@@ -29,20 +29,29 @@ for bits in range(1, 18):
             "cargo clean", shell=True,
             cwd="benchmarks",
         )
-        # Generate tables with the desired number of bits 
-        stdout = subprocess.check_output(
-            "python python/code_tables_generator.py",
-            shell=True,
-            env={
-                **os.environ,
-                "UNARY_CODE_TABLE_MAX":str(min(value_max, 64)),
-                "GAMMA_CODE_TABLE_MAX":str(value_max),
-                "DELTA_CODE_TABLE_MAX":str(value_max),
-                "ZETA_CODE_TABLE_MAX":str(value_max),
-                "MERGED_TABLES":str(2 - tables_num),
-            },
-        ).decode()
-
+        
+        merged_table = tables_num == 1
+        gen_unary(
+            read_bits=0, 
+            write_max_val=min(value_max, 64),
+            merged_table=merged_table,
+        )
+        gen_gamma(
+            read_bits=11, 
+            write_max_val=value_max,
+            merged_table=merged_table,
+        )
+        gen_delta(
+            read_bits=11, 
+            write_max_val=value_max,
+            merged_table=merged_table,
+        )
+        gen_zeta(
+            read_bits=12, 
+            write_max_val=value_max,
+            k=3,
+            merged_table=merged_table,
+        )
 
         # Run the benchmark with native cpu optimizations
         stdout = subprocess.check_output(
