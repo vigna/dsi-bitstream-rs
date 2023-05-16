@@ -190,8 +190,6 @@ pub fn main() {
     // print the header of the csv
     println!("pat,type,ratio,ns_avg,ns_std,ns_perc25,ns_median,ns_perc75");
 
-    // benchmark the buffered impl
-
     impl_code!(
         calibration,
         "unary",
@@ -213,6 +211,10 @@ pub fn main() {
         write_zeta3,
         gen_zeta3_data
     );
+
+    // For delta we need to generate the data differently
+    // because we have four cases, depending on whether
+    // we use gamma tables or not.
 
     // delta with gamma tables disabled
     bench!(
