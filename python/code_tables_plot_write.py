@@ -116,7 +116,7 @@ for code in ["unary", "gamma", "delta", "delta_gamma", "zeta3"]:
     plt.xticks(ratios.index)
     plt.title(
         (
-            "Performances of %s codes read and writes in function of the table size\n"
+            "Performances of %s codes writes in function of the table size\n"
             "Shaded areas are the 25%% and 75%% percentiles and the plots "
             "are medians with stds."
         )
@@ -124,4 +124,4 @@ for code in ["unary", "gamma", "delta", "delta_gamma", "zeta3"]:
     )
     plt.xlabel("Table Bits")
     plt.ylabel("ns")
-    plt.savefig("%s_tables.png" % code, bbox_inches="tight")
+    plt.savefig("%s_write_tables.png" % code, bbox_inches="tight")
