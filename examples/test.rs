@@ -80,7 +80,7 @@ fn main() {
     // measure
     let r_start = Instant::now();
     for _ in &data {
-        black_box(r.read_gamma::<false>().unwrap());
+        black_box(r.read_gamma::<true>().unwrap());
     }
     let nanos = r_start.elapsed().as_nanos();
     println!("{}", nanos);
@@ -90,7 +90,7 @@ fn main() {
     // measure
     let r_start = Instant::now();
     for _ in &data {
-        black_box(r.read_gamma::<false>().unwrap());
+        black_box(r.read_gamma::<true>().unwrap());
     }
     let nanos = r_start.elapsed().as_nanos();
     println!("{}", nanos);
@@ -145,7 +145,7 @@ fn main() {
     // measure
     let r_start = Instant::now();
     for _ in &data {
-        black_box(r.read_gamma::<false>().unwrap());
+        black_box(r.read_gamma::<true>().unwrap());
     }
     let nanos = r_start.elapsed().as_nanos();
     println!("{}", nanos);
@@ -155,7 +155,7 @@ fn main() {
     // measure
     let r_start = Instant::now();
     for _ in &data {
-        black_box(r.read_gamma::<false>().unwrap());
+        black_box(r.read_gamma::<true>().unwrap());
     }
     let nanos = r_start.elapsed().as_nanos();
     println!("{}", nanos);
