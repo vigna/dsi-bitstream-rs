@@ -56,7 +56,7 @@ pub trait Word:
     /// Number of bytes in the word
     const BYTES: usize;
     /// The byte array form of the value = `[u8; Self::BYTES]`
-    type BytesForm: AsRef<[u8]> + Copy;
+    type BytesForm: AsRef<[u8]> + AsMut<[u8]> + Copy + Default;
     /// Zero represented by `Self`
     const ZERO: Self;
     /// One represented by `Self`
