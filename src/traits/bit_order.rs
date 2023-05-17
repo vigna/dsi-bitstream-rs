@@ -21,14 +21,20 @@ mod private {
 }
 impl<T: private::BitOrderCore> BitOrder for T {}
 
-/// Marker trait to require that something is either [`L2M`] or
-/// [`M2L`]
+/// Marker trait to require that something is either [`LE`] or
+/// [`BE`]
 pub trait BitOrder: private::BitOrderCore {}
 
 /// Marker type that represents LSB to MSB bit order
-pub struct L2M;
+pub struct LittleEndian;
 /// Marker type that represents MSB to LSB bit order
-pub struct M2L;
+pub struct BigEndian;
 
-impl private::BitOrderCore for L2M {}
-impl private::BitOrderCore for M2L {}
+/// Alias for [`BigEndian`]
+pub type BE = BigEndian;
+
+/// Alias for [`LittleEndian`]
+pub type LE = LittleEndian;
+
+impl private::BitOrderCore for LittleEndian {}
+impl private::BitOrderCore for BigEndian {}

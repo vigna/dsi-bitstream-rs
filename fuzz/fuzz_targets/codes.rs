@@ -24,14 +24,13 @@ enum RandomCommand {
 
 fuzz_target!(|data: FuzzCase| {
     //println!("{:#4?}", data);
-    let mut buffer_m2l: Vec<u64> = vec![];
-    let mut buffer_l2m: Vec<u64> = vec![];
+    let mut buffer_be: Vec<u64> = vec![];
+    let mut buffer_le: Vec<u64> = vec![];
     let mut writes = vec![];
     // write
     {
-        let mut big = BufferedBitStreamWrite::<M2L, _>::new(MemWordWriteVec::new(&mut buffer_m2l));
-        let mut little =
-            BufferedBitStreamWrite::<L2M, _>::new(MemWordWriteVec::new(&mut buffer_l2m));
+        let mut big = BufferedBitStreamWrite::<BE, _>::new(MemWordWriteVec::new(&mut buffer_be));
+        let mut little = BufferedBitStreamWrite::<LE, _>::new(MemWordWriteVec::new(&mut buffer_le));
 
         for command in data.commands.iter() {
             match command {
@@ -120,27 +119,27 @@ fuzz_target!(|data: FuzzCase| {
         }
     }
     // read back
-    //println!("{:?}", buffer_m2l);
-    //println!("{:?}", buffer_l2m);
-    let m2l_trans: &[ReadWord] = unsafe {
+    //println!("{:?}", buffer_be);
+    //println!("{:?}", buffer_le);
+    let be_trans: &[ReadWord] = unsafe {
         core::slice::from_raw_parts(
-            buffer_m2l.as_ptr() as *const ReadWord,
-            buffer_m2l.len() * (core::mem::size_of::<u64>() / core::mem::size_of::<ReadWord>()),
+            buffer_be.as_ptr() as *const ReadWord,
+            buffer_be.len() * (core::mem::size_of::<u64>() / core::mem::size_of::<ReadWord>()),
         )
     };
-    let l2m_trans: &[ReadWord] = unsafe {
+    let le_trans: &[ReadWord] = unsafe {
         core::slice::from_raw_parts(
-            buffer_l2m.as_ptr() as *const ReadWord,
-            buffer_l2m.len() * (core::mem::size_of::<u64>() / core::mem::size_of::<ReadWord>()),
+            buffer_le.as_ptr() as *const ReadWord,
+            buffer_le.len() * (core::mem::size_of::<u64>() / core::mem::size_of::<ReadWord>()),
         )
     };
     {
-        let mut big = UnbufferedBitStreamRead::<M2L, _>::new(MemWordRead::new(&buffer_m2l));
+        let mut big = UnbufferedBitStreamRead::<BE, _>::new(MemWordRead::new(&buffer_be));
         let mut big_buff =
-            BufferedBitStreamRead::<M2L, ReadBuffer, _>::new(MemWordRead::new(m2l_trans));
-        let mut little = UnbufferedBitStreamRead::<L2M, _>::new(MemWordRead::new(&buffer_l2m));
+            BufferedBitStreamRead::<BE, ReadBuffer, _>::new(MemWordRead::new(be_trans));
+        let mut little = UnbufferedBitStreamRead::<LE, _>::new(MemWordRead::new(&buffer_le));
         let mut little_buff =
-            BufferedBitStreamRead::<L2M, ReadBuffer, _>::new(MemWordRead::new(l2m_trans));
+            BufferedBitStreamRead::<LE, ReadBuffer, _>::new(MemWordRead::new(le_trans));
 
         for (succ, command) in writes.iter().zip(data.commands.iter()) {
             let pos = big.get_position();

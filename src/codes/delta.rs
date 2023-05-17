@@ -43,26 +43,26 @@ pub trait DeltaRead<BO: BitOrder>: GammaRead<BO> {
     fn read_delta<const USE_TABLE: bool, const USE_GAMMA_TABLE: bool>(&mut self) -> Result<u64>;
 }
 
-impl<B: GammaRead<M2L>> DeltaRead<M2L> for B {
+impl<B: GammaRead<BE>> DeltaRead<BE> for B {
     #[inline]
     fn read_delta<const USE_TABLE: bool, const USE_GAMMA_TABLE: bool>(&mut self) -> Result<u64> {
         if USE_TABLE {
-            if let Some(res) = delta_tables::read_table_m2l(self)? {
+            if let Some(res) = delta_tables::read_table_be(self)? {
                 return Ok(res);
             }
         }
-        default_read_delta::<M2L, _, USE_GAMMA_TABLE>(self)
+        default_read_delta::<BE, _, USE_GAMMA_TABLE>(self)
     }
 }
-impl<B: GammaRead<L2M>> DeltaRead<L2M> for B {
+impl<B: GammaRead<LE>> DeltaRead<LE> for B {
     #[inline]
     fn read_delta<const USE_TABLE: bool, const USE_GAMMA_TABLE: bool>(&mut self) -> Result<u64> {
         if USE_TABLE {
-            if let Some(res) = delta_tables::read_table_l2m(self)? {
+            if let Some(res) = delta_tables::read_table_le(self)? {
                 return Ok(res);
             }
         }
-        default_read_delta::<L2M, _, USE_GAMMA_TABLE>(self)
+        default_read_delta::<LE, _, USE_GAMMA_TABLE>(self)
     }
 }
 
@@ -95,32 +95,32 @@ pub trait DeltaWrite<BO: BitOrder>: GammaWrite<BO> {
     ) -> Result<()>;
 }
 
-impl<B: GammaWrite<M2L>> DeltaWrite<M2L> for B {
+impl<B: GammaWrite<BE>> DeltaWrite<BE> for B {
     #[inline]
     fn write_delta<const USE_TABLE: bool, const USE_GAMMA_TABLE: bool>(
         &mut self,
         value: u64,
     ) -> Result<()> {
         if USE_TABLE {
-            if delta_tables::write_table_m2l(self, value)? {
+            if delta_tables::write_table_be(self, value)? {
                 return Ok(());
             }
         }
-        default_write_delta::<M2L, _, USE_GAMMA_TABLE>(self, value)
+        default_write_delta::<BE, _, USE_GAMMA_TABLE>(self, value)
     }
 }
-impl<B: GammaWrite<L2M>> DeltaWrite<L2M> for B {
+impl<B: GammaWrite<LE>> DeltaWrite<LE> for B {
     #[inline]
     fn write_delta<const USE_TABLE: bool, const USE_GAMMA_TABLE: bool>(
         &mut self,
         value: u64,
     ) -> Result<()> {
         if USE_TABLE {
-            if delta_tables::write_table_l2m(self, value)? {
+            if delta_tables::write_table_le(self, value)? {
                 return Ok(());
             }
         }
-        default_write_delta::<L2M, _, USE_GAMMA_TABLE>(self, value)
+        default_write_delta::<LE, _, USE_GAMMA_TABLE>(self, value)
     }
 }
 

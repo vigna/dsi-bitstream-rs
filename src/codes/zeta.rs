@@ -50,7 +50,7 @@ pub trait ZetaRead<BO: BitOrder>: MinimalBinaryRead<BO> {
     fn read_zeta3<const USE_TABLE: bool>(&mut self) -> Result<u64>;
 }
 
-impl<B: BitRead<M2L>> ZetaRead<M2L> for B {
+impl<B: BitRead<BE>> ZetaRead<BE> for B {
     #[inline]
     fn read_zeta<const USE_TABLE: bool>(&mut self, k: u64) -> Result<u64> {
         default_read_zeta(self, k)
@@ -59,14 +59,14 @@ impl<B: BitRead<M2L>> ZetaRead<M2L> for B {
     #[inline]
     fn read_zeta3<const USE_TABLE: bool>(&mut self) -> Result<u64> {
         if USE_TABLE {
-            if let Some(res) = zeta_tables::read_table_m2l(self)? {
+            if let Some(res) = zeta_tables::read_table_be(self)? {
                 return Ok(res);
             }
         }
         default_read_zeta(self, 3)
     }
 }
-impl<B: BitRead<L2M>> ZetaRead<L2M> for B {
+impl<B: BitRead<LE>> ZetaRead<LE> for B {
     #[inline]
     fn read_zeta<const USE_TABLE: bool>(&mut self, k: u64) -> Result<u64> {
         default_read_zeta(self, k)
@@ -75,7 +75,7 @@ impl<B: BitRead<L2M>> ZetaRead<L2M> for B {
     #[inline]
     fn read_zeta3<const USE_TABLE: bool>(&mut self) -> Result<u64> {
         if USE_TABLE {
-            if let Some(res) = zeta_tables::read_table_l2m(self)? {
+            if let Some(res) = zeta_tables::read_table_le(self)? {
                 return Ok(res);
             }
         }
@@ -108,7 +108,7 @@ pub trait ZetaWrite<BO: BitOrder>: MinimalBinaryWrite<BO> {
     fn write_zeta3<const USE_TABLE: bool>(&mut self, value: u64) -> Result<()>;
 }
 
-impl<B: BitWrite<M2L>> ZetaWrite<M2L> for B {
+impl<B: BitWrite<BE>> ZetaWrite<BE> for B {
     #[inline]
     fn write_zeta<const USE_TABLE: bool>(&mut self, value: u64, k: u64) -> Result<()> {
         default_write_zeta(self, value, k)
@@ -117,14 +117,14 @@ impl<B: BitWrite<M2L>> ZetaWrite<M2L> for B {
     #[inline]
     fn write_zeta3<const USE_TABLE: bool>(&mut self, value: u64) -> Result<()> {
         if USE_TABLE {
-            if zeta_tables::write_table_m2l(self, value)? {
+            if zeta_tables::write_table_be(self, value)? {
                 return Ok(());
             }
         }
         default_write_zeta(self, value, 3)
     }
 }
-impl<B: BitWrite<L2M>> ZetaWrite<L2M> for B {
+impl<B: BitWrite<LE>> ZetaWrite<LE> for B {
     #[inline]
     fn write_zeta<const USE_TABLE: bool>(&mut self, value: u64, k: u64) -> Result<()> {
         default_write_zeta(self, value, k)
@@ -133,7 +133,7 @@ impl<B: BitWrite<L2M>> ZetaWrite<L2M> for B {
     #[inline]
     fn write_zeta3<const USE_TABLE: bool>(&mut self, value: u64) -> Result<()> {
         if USE_TABLE {
-            if zeta_tables::write_table_l2m(self, value)? {
+            if zeta_tables::write_table_le(self, value)? {
                 return Ok(());
             }
         }
@@ -141,7 +141,7 @@ impl<B: BitWrite<L2M>> ZetaWrite<L2M> for B {
     }
 }
 
-/// Common part of the M2L and L2M impl
+/// Common part of the BE and LE impl
 ///
 /// # Errors
 /// Forward `read_unary` and `read_bits` errors.

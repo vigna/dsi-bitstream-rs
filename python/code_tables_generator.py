@@ -140,7 +140,7 @@ def gen_table(
             )
         )
         f.write("use anyhow::Result;\n")
-        f.write("use crate::traits::{BitRead, BitWrite, M2L, L2M, UpcastableInto};\n")
+        f.write("use crate::traits::{BitRead, BitWrite, BE, LE, UpcastableInto};\n")
 
         f.write("/// How many bits are needed to read the tables in this\n")
         f.write("pub const READ_BITS: usize = {};\n".format(read_bits))
@@ -168,17 +168,17 @@ def gen_table(
             read_func_template = read_func_two_table
             write_func_template = write_func_two_table
 
-        for bo in ["l2m", "m2l"]:
+        for bo in ["le", "be"]:
             f.write(read_func_template % {"bo": bo, "BO": bo.upper()})
             f.write(write_func_template % {"bo": bo, "BO": bo.upper()})
 
         # Write the read tables
-        for BO in ["M2L", "L2M"]:
+        for BO in ["BE", "LE"]:
             codes = []
             for value in range(0, 2**read_bits):
                 bits = ("{:0%sb}" % read_bits).format(value)
                 try:
-                    value, bits_left = read_func(bits, BO == "M2L")
+                    value, bits_left = read_func(bits, BO == "BE")
                     codes.append((value, read_bits - len(bits_left)))
                 except ValueError:
                     codes.append((0, MISSING_VALUE_LEN))
@@ -234,7 +234,7 @@ def gen_table(
                 f.write("];\n")
 
         # Write the write tables
-        for bo in ["M2L", "L2M"]:
+        for bo in ["BE", "LE"]:
             if merged_table:
                 f.write(
                     "///Table used to speed up the writing of {} codes\n".format(code_name)
@@ -244,7 +244,7 @@ def gen_table(
                     % (bo, get_best_fitting_type(len_func(write_max_val)))
                 )
                 for value in range(write_max_val + 1):
-                    bits = write_func(value, "", bo == "M2L")
+                    bits = write_func(value, "", bo == "BE")
                     f.write("({}, {}),".format(int(bits, 2), len(bits)))
                 f.write("];\n")
             else:
@@ -257,7 +257,7 @@ def gen_table(
                 )
                 len_bits = []
                 for value in range(write_max_val + 1):
-                    bits = write_func(value, "", bo == "M2L")
+                    bits = write_func(value, "", bo == "BE")
                     len_bits.append(len(bits))
                     f.write("{},".format(int(bits, 2)))
 
@@ -290,20 +290,20 @@ def gen_table(
 ################################################################################
 
 
-def read_fixed(n_bits, bitstream, m2l):
+def read_fixed(n_bits, bitstream, be):
     """Read a fixed number of bits"""
     if len(bitstream) < n_bits:
         raise ValueError()
 
-    if m2l:
+    if be:
         return int(bitstream[:n_bits], 2), bitstream[n_bits:]
     else:
         return int(bitstream[-n_bits:], 2), bitstream[:-n_bits]
 
 
-def write_fixed(value, n_bits, bitstream, m2l):
+def write_fixed(value, n_bits, bitstream, be):
     """Write a fixed number of bits"""
-    if m2l:
+    if be:
         return bitstream + ("{:0%sb}" % n_bits).format(value)
     else:
         return ("{:0%sb}" % n_bits).format(value) + bitstream
@@ -312,9 +312,9 @@ def write_fixed(value, n_bits, bitstream, m2l):
 ################################################################################
 
 
-def read_unary(bitstream, m2l):
+def read_unary(bitstream, be):
     """Read an unary code"""
-    if m2l:
+    if be:
         l = len(bitstream) - len(bitstream.lstrip("0"))  # NoQA: E741
         if l == len(bitstream):
             raise ValueError()
@@ -326,9 +326,9 @@ def read_unary(bitstream, m2l):
         return l, bitstream[: -l - 1]
 
 
-def write_unary(value, bitstream, m2l):
+def write_unary(value, bitstream, be):
     """Write an unary code"""
-    if m2l:
+    if be:
         return bitstream + "0" * value + "1"
     else:
         return "1" + "0" * value + bitstream
@@ -351,15 +351,15 @@ assert write_unary(3, "", False) == "1000"
 
 # Little consistency check
 for i in range(256):
-    wm2l = write_unary(i, "", True)
-    rm2l = read_unary(wm2l, True)[0]
-    wl2m = write_unary(i, "", False)
-    rl2m = read_unary(wl2m, False)[0]
+    wbe = write_unary(i, "", True)
+    rbe = read_unary(wbe, True)[0]
+    wle = write_unary(i, "", False)
+    rle = read_unary(wle, False)[0]
     l = len_unary(i)  # NoQA: E741
-    assert i == rm2l
-    assert i == rl2m
-    assert len(wm2l) == l
-    assert len(wl2m) == l
+    assert i == rbe
+    assert i == rle
+    assert len(wbe) == l
+    assert len(wle) == l
 
 
 def gen_unary(read_bits, write_max_val, len_max_val=None, merged_table=False):
@@ -380,24 +380,24 @@ def gen_unary(read_bits, write_max_val, len_max_val=None, merged_table=False):
 ################################################################################
 
 
-def read_gamma(bitstream, m2l):
+def read_gamma(bitstream, be):
     """Read a gamma code"""
-    l, bitstream = read_unary(bitstream, m2l)
+    l, bitstream = read_unary(bitstream, be)
     if l == 0:
         return 0, bitstream
-    f, bitstream = read_fixed(l, bitstream, m2l)
+    f, bitstream = read_fixed(l, bitstream, be)
     v = f + (1 << l) - 1
     return v, bitstream
 
 
-def write_gamma(value, bitstream, m2l):
+def write_gamma(value, bitstream, be):
     """Write a gamma code"""
     value += 1
     l = floor(log2(value))  # NoQA: E741
     s = value - (1 << l)
-    bitstream = write_unary(l, bitstream, m2l)
+    bitstream = write_unary(l, bitstream, be)
     if l != 0:
-        bitstream = write_fixed(s, l, bitstream, m2l)
+        bitstream = write_fixed(s, l, bitstream, be)
     return bitstream
 
 
@@ -424,15 +424,15 @@ assert write_gamma(5, "", False) == "10100"
 
 # Little consistency check
 for i in range(256):
-    wm2l = write_gamma(i, "", True)
-    rm2l = read_gamma(wm2l, True)[0]
-    wl2m = write_gamma(i, "", False)
-    rl2m = read_gamma(wl2m, False)[0]
+    wbe = write_gamma(i, "", True)
+    rbe = read_gamma(wbe, True)[0]
+    wle = write_gamma(i, "", False)
+    rle = read_gamma(wle, False)[0]
     l = len_gamma(i)  # NoQA: E741
-    assert i == rm2l
-    assert i == rl2m
-    assert len(wm2l) == l
-    assert len(wl2m) == l
+    assert i == rbe
+    assert i == rle
+    assert len(wbe) == l
+    assert len(wle) == l
 
 
 def gen_gamma(read_bits, write_max_val, len_max_val=None, merged_table=False):
@@ -453,24 +453,24 @@ def gen_gamma(read_bits, write_max_val, len_max_val=None, merged_table=False):
 ################################################################################
 
 
-def read_delta(bitstream, m2l):
+def read_delta(bitstream, be):
     """Read a delta code"""
-    l, bitstream = read_gamma(bitstream, m2l)
+    l, bitstream = read_gamma(bitstream, be)
     if l == 0:
         return 0, bitstream
-    f, bitstream = read_fixed(l, bitstream, m2l)
+    f, bitstream = read_fixed(l, bitstream, be)
     v = f + (1 << l) - 1
     return v, bitstream
 
 
-def write_delta(value, bitstream, m2l):
+def write_delta(value, bitstream, be):
     """Write a delta code"""
     value += 1
     l = floor(log2(value))  # NoQA: E741
     s = value - (1 << l)
-    bitstream = write_gamma(l, bitstream, m2l)
+    bitstream = write_gamma(l, bitstream, be)
     if l != 0:
-        bitstream = write_fixed(s, l, bitstream, m2l)
+        bitstream = write_fixed(s, l, bitstream, be)
     return bitstream
 
 
@@ -497,15 +497,15 @@ assert write_delta(5, "", False) == "10110"
 
 # Little consistency check
 for i in range(256):
-    wm2l = write_delta(i, "", True)
-    rm2l = read_delta(wm2l, True)[0]
-    wl2m = write_delta(i, "", False)
-    rl2m = read_delta(wl2m, False)[0]
+    wbe = write_delta(i, "", True)
+    rbe = read_delta(wbe, True)[0]
+    wle = write_delta(i, "", False)
+    rle = read_delta(wle, False)[0]
     l = len_delta(i)  # NoQA: E741
-    assert i == rm2l
-    assert i == rl2m
-    assert len(wm2l) == l
-    assert len(wl2m) == l
+    assert i == rbe
+    assert i == rle
+    assert len(wbe) == l
+    assert len(wle) == l
 
 
 def gen_delta(read_bits, write_max_val, len_max_val=None, merged_table=False):
@@ -526,31 +526,31 @@ def gen_delta(read_bits, write_max_val, len_max_val=None, merged_table=False):
 ################################################################################
 
 
-def read_minimal_binary(max, bitstream, m2l):
+def read_minimal_binary(max, bitstream, be):
     """Read a minimal binary code code with max `max`"""
     l = int(floor(log2(max)))  # NoQA: E741
-    v, bitstream = read_fixed(l, bitstream, m2l)
+    v, bitstream = read_fixed(l, bitstream, be)
     limit = (1 << (l + 1)) - max
 
     if v < limit:
         return v, bitstream
     else:
-        b, bitstream = read_fixed(1, bitstream, m2l)
+        b, bitstream = read_fixed(1, bitstream, be)
         v = (v << 1) | b
         return v - limit, bitstream
 
 
-def write_minimal_binary(value, max, bitstream, m2l):
+def write_minimal_binary(value, max, bitstream, be):
     """Write a minimal binary code with max `max`"""
     l = int(floor(log2(max)))  # NoQA: E741
     limit = (1 << (l + 1)) - max
 
     if value < limit:
-        return write_fixed(value, l, bitstream, m2l)
+        return write_fixed(value, l, bitstream, be)
     else:
         to_write = value + limit
-        bitstream = write_fixed(to_write >> 1, l, bitstream, m2l)
-        return write_fixed(to_write & 1, 1, bitstream, m2l)
+        bitstream = write_fixed(to_write >> 1, l, bitstream, be)
+        return write_fixed(to_write & 1, 1, bitstream, be)
 
 
 def len_minimal_binary(value, max):
@@ -589,37 +589,37 @@ assert write_minimal_binary(9, 10, "", False) == "1111"
 # Little consistency check
 _max = 200
 for i in range(_max):
-    wm2l = write_minimal_binary(i, _max, "", True)
-    rm2l = read_minimal_binary(_max, wm2l, True)[0]
-    wl2m = write_minimal_binary(i, _max, "", False)
-    rl2m = read_minimal_binary(_max, wl2m, False)[0]
+    wbe = write_minimal_binary(i, _max, "", True)
+    rbe = read_minimal_binary(_max, wbe, True)[0]
+    wle = write_minimal_binary(i, _max, "", False)
+    rle = read_minimal_binary(_max, wle, False)[0]
     l = len_minimal_binary(i, _max)  # NoQA: E741
-    assert i == rm2l
-    assert i == rl2m
-    assert len(wm2l) == l
-    assert len(wl2m) == l
+    assert i == rbe
+    assert i == rle
+    assert len(wbe) == l
+    assert len(wle) == l
 
 ################################################################################
 
 
-def read_zeta(bitstream, k, m2l):
+def read_zeta(bitstream, k, be):
     """Read a zeta code"""
-    h, bitstream = read_unary(bitstream, m2l)
+    h, bitstream = read_unary(bitstream, be)
     u = 2 ** ((h + 1) * k)
     l = 2 ** (h * k)  # NoQA: E741
-    r, bitstream = read_minimal_binary(u - l, bitstream, m2l)
+    r, bitstream = read_minimal_binary(u - l, bitstream, be)
     return l + r - 1, bitstream
 
 
-def write_zeta(value, k, bitstream, m2l):
+def write_zeta(value, k, bitstream, be):
     """Write a zeta code"""
     value += 1
     h = int(floor(log2(value)) / k)
     u = 2 ** ((h + 1) * k)
     l = 2 ** (h * k)  # NoQA: E741
 
-    bitstream = write_unary(h, bitstream, m2l)
-    bitstream = write_minimal_binary(value - l, u - l, bitstream, m2l)
+    bitstream = write_unary(h, bitstream, be)
+    bitstream = write_minimal_binary(value - l, u - l, bitstream, be)
     return bitstream
 
 
@@ -657,17 +657,17 @@ assert write_zeta(8, 3, "", False) == "0000110"
 for i in range(256):
     l = len_zeta(i, 3)  # NoQA: E741
 
-    wm2l = write_zeta(i, 3, "", True)
-    rm2l = read_zeta(wm2l, 3, True)[0]
+    wbe = write_zeta(i, 3, "", True)
+    rbe = read_zeta(wbe, 3, True)[0]
 
-    assert i == rm2l, "%s %s %s" % (i, rm2l, wm2l)
-    assert len(wm2l) == l
+    assert i == rbe, "%s %s %s" % (i, rbe, wbe)
+    assert len(wbe) == l
 
-    wl2m = write_zeta(i, 3, "", False)
-    rl2m = read_zeta(wl2m, 3, False)[0]
+    wle = write_zeta(i, 3, "", False)
+    rle = read_zeta(wle, 3, False)[0]
 
-    assert i == rl2m, "%s %s %s" % (i, rl2m, wl2m)
-    assert len(wl2m) == l
+    assert i == rle, "%s %s %s" % (i, rle, wle)
+    assert len(wle) == l
 
 
 def gen_zeta(read_bits, write_max_val, len_max_val=None, k=3, merged_table=False):
@@ -679,8 +679,8 @@ def gen_zeta(read_bits, write_max_val, len_max_val=None, k=3, merged_table=False
         len_max_val,
         "zeta",
         lambda value: len_zeta(value, k),
-        lambda bitstream, m2l: read_zeta(bitstream, k, m2l),
-        lambda value, bitstream, m2l: write_zeta(value, k, bitstream, m2l),
+        lambda bitstream, be: read_zeta(bitstream, k, be),
+        lambda value, bitstream, be: write_zeta(value, k, bitstream, be),
         merged_table,
     )
     with open(os.path.join(ROOT, "zeta_tables.rs"), "a") as f:

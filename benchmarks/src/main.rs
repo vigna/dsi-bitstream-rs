@@ -172,10 +172,10 @@ println!("{}::{}::{},{},{},{},{},{},{},{}",
 /// macro to implement all combinations of bit order and table use
 macro_rules! impl_code {
     ($cal:expr, $code:literal, $read:ident, $write:ident, $gen_data:ident) => {
-        bench!($cal, $code, $read, $write, $gen_data, M2L, false);
-        bench!($cal, $code, $read, $write, $gen_data, M2L, true);
-        bench!($cal, $code, $read, $write, $gen_data, L2M, false);
-        bench!($cal, $code, $read, $write, $gen_data, L2M, true);
+        bench!($cal, $code, $read, $write, $gen_data, BE, false);
+        bench!($cal, $code, $read, $write, $gen_data, BE, true);
+        bench!($cal, $code, $read, $write, $gen_data, LE, false);
+        bench!($cal, $code, $read, $write, $gen_data, LE, true);
     };
 }
 
@@ -223,7 +223,7 @@ pub fn main() {
         read_delta,
         write_delta,
         gen_delta_data,
-        M2L,
+        BE,
         true,
         false
     );
@@ -233,7 +233,7 @@ pub fn main() {
         read_delta,
         write_delta,
         gen_delta_data,
-        M2L,
+        BE,
         false,
         false
     );
@@ -243,7 +243,7 @@ pub fn main() {
         read_delta,
         write_delta,
         gen_delta_data,
-        L2M,
+        LE,
         true,
         false
     );
@@ -253,7 +253,7 @@ pub fn main() {
         read_delta,
         write_delta,
         gen_delta_data,
-        L2M,
+        LE,
         false,
         false
     );
@@ -265,7 +265,7 @@ pub fn main() {
         read_delta,
         write_delta,
         gen_delta_data,
-        M2L,
+        BE,
         true,
         true
     );
@@ -275,7 +275,7 @@ pub fn main() {
         read_delta,
         write_delta,
         gen_delta_data,
-        M2L,
+        BE,
         false,
         true
     );
@@ -285,7 +285,7 @@ pub fn main() {
         read_delta,
         write_delta,
         gen_delta_data,
-        L2M,
+        LE,
         true,
         true
     );
@@ -295,7 +295,7 @@ pub fn main() {
         read_delta,
         write_delta,
         gen_delta_data,
-        L2M,
+        LE,
         false,
         true
     );

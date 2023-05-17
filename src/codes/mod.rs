@@ -11,7 +11,7 @@
 //! to its own crate, while we decide on the logistic of where to put it,
 //! it will stay here to go on with the developement of the library.
 //!
-//! **The convention is to read bits from the MSB to the LSB (M2L) of each byte.**
+//! **The convention is to read bits from the MSB to the LSB (BE) of each byte.**
 //!
 //! #### Example:
 //! The following stream of bits, to be read from left to right, from top to
@@ -22,11 +22,11 @@
 //! ```
 //! is equivalent to the following stream of bytes:
 //! ```text
-//! M2L
+//! BE
 //! 76 60 f1 cd 9f b5 43 00
 //! 86 9b 73 f9 e6 63 28 70
 //!
-//! L2M
+//! LE
 //! 6e 06 8f b3 f9 ad c2 00
 //! 61 d9 ce 9f 67 c6 14 0e
 //! ```
@@ -34,38 +34,38 @@
 //! ```
 //! use dsi_bitstream::prelude::*;
 //! // file data
-//! let data_m2l: [u8; 16] = [
+//! let data_be: [u8; 16] = [
 //!     0x76, 0x60, 0xf1, 0xcd, 0x9f, 0xb5, 0x43, 0x00,
 //!     0x86, 0x9b, 0x73, 0xf9, 0xe6, 0x63, 0x28, 0x70,
 //! ];
 //! // Read data as native endianess [`u64`]s, we can't just do a
 //! // transmute because we have no guarantees on the alignement of data
-//! let words_m2l = data_m2l.chunks(8)
+//! let words_be = data_be.chunks(8)
 //!     .map(|data| u64::from_ne_bytes(data.try_into().unwrap()))
 //!     .collect::<Vec<_>>();
 //!
-//! let mut bitstream_m2l = <UnbufferedBitStreamRead<M2L, _>>::new(
-//!     MemWordRead::new(&words_m2l)
+//! let mut bitstream_be = <UnbufferedBitStreamRead<BE, _>>::new(
+//!     MemWordRead::new(&words_be)
 //! );
-//! assert_eq!(bitstream_m2l.read_bits(8).unwrap(), 0b0111_0110);
-//! assert_eq!(bitstream_m2l.read_bits(4).unwrap(), 0b0110);
-//! assert_eq!(bitstream_m2l.read_bits(4).unwrap(), 0b0000);
-//! assert_eq!(bitstream_m2l.read_bits(10).unwrap(), 0b1111_0001_11);
-//! assert_eq!(bitstream_m2l.read_bits(8).unwrap(), 0b00_1101_10);
-//! assert_eq!(bitstream_m2l.read_bits(38).unwrap(), 0b01_1111_1011_0101_0100_0011_0000_0000_1000_0110);
+//! assert_eq!(bitstream_be.read_bits(8).unwrap(), 0b0111_0110);
+//! assert_eq!(bitstream_be.read_bits(4).unwrap(), 0b0110);
+//! assert_eq!(bitstream_be.read_bits(4).unwrap(), 0b0000);
+//! assert_eq!(bitstream_be.read_bits(10).unwrap(), 0b1111_0001_11);
+//! assert_eq!(bitstream_be.read_bits(8).unwrap(), 0b00_1101_10);
+//! assert_eq!(bitstream_be.read_bits(38).unwrap(), 0b01_1111_1011_0101_0100_0011_0000_0000_1000_0110);
 //!
-//! bitstream_m2l.seek_bit(0); // rewind the stream
-//! assert_eq!(bitstream_m2l.read_bits(8).unwrap(), 0b0111_0110);
-//! bitstream_m2l.seek_bit(0); // rewind the stream
+//! bitstream_be.seek_bit(0); // rewind the stream
+//! assert_eq!(bitstream_be.read_bits(8).unwrap(), 0b0111_0110);
+//! bitstream_be.seek_bit(0); // rewind the stream
 //!
-//! assert_eq!(bitstream_m2l.read_unary::<true>().unwrap(), 1);
-//! assert_eq!(bitstream_m2l.read_unary::<true>().unwrap(), 0);
-//! assert_eq!(bitstream_m2l.read_unary::<true>().unwrap(), 0);
-//! assert_eq!(bitstream_m2l.read_unary::<true>().unwrap(), 1);
-//! assert_eq!(bitstream_m2l.read_unary::<true>().unwrap(), 0);
-//! assert_eq!(bitstream_m2l.read_unary::<true>().unwrap(), 2);
-//! assert_eq!(bitstream_m2l.read_unary::<true>().unwrap(), 0);
-//! assert_eq!(bitstream_m2l.read_unary::<true>().unwrap(), 5);
+//! assert_eq!(bitstream_be.read_unary::<true>().unwrap(), 1);
+//! assert_eq!(bitstream_be.read_unary::<true>().unwrap(), 0);
+//! assert_eq!(bitstream_be.read_unary::<true>().unwrap(), 0);
+//! assert_eq!(bitstream_be.read_unary::<true>().unwrap(), 1);
+//! assert_eq!(bitstream_be.read_unary::<true>().unwrap(), 0);
+//! assert_eq!(bitstream_be.read_unary::<true>().unwrap(), 2);
+//! assert_eq!(bitstream_be.read_unary::<true>().unwrap(), 0);
+//! assert_eq!(bitstream_be.read_unary::<true>().unwrap(), 5);
 //! ```
 
 mod gamma;

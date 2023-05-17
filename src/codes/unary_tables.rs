@@ -1,7 +1,7 @@
 // THIS FILE HAS BEEN GENERATED WITH THE SCRIPT code_tables_generator.py
 // ~~~~~~~~~~~~~~~~~~~ DO NOT MODIFY ~~~~~~~~~~~~~~~~~~~~~~
 // Pre-computed constants used to speedup the reading and writing of unary codes
-use crate::traits::{BitRead, BitWrite, UpcastableInto, L2M, M2L};
+use crate::traits::{BitRead, BitWrite, UpcastableInto, BE, LE};
 use anyhow::Result;
 /// How many bits are needed to read the tables in this
 pub const READ_BITS: usize = 0;
@@ -17,10 +17,10 @@ pub const WRITE_MAX: u64 = 63;
 ///
 /// # Errors
 /// This function errors if it wasn't able to skip_bits
-pub fn read_table_l2m<B: BitRead<L2M>>(backend: &mut B) -> Result<Option<u64>> {
+pub fn read_table_le<B: BitRead<LE>>(backend: &mut B) -> Result<Option<u64>> {
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
         let idx: u64 = idx.upcast();
-        let (value, len) = READ_L2M[idx as usize];
+        let (value, len) = READ_LE[idx as usize];
         if len != MISSING_VALUE_LEN {
             backend.skip_bits_after_table_lookup(len as usize)?;
             return Ok(Some(value as u64));
@@ -36,8 +36,8 @@ pub fn read_table_l2m<B: BitRead<L2M>>(backend: &mut B) -> Result<Option<u64>> {
 ///
 /// # Errors
 /// This function errors if it wasn't able to skip_bits
-pub fn write_table_l2m<B: BitWrite<L2M>>(backend: &mut B, value: u64) -> Result<bool> {
-    Ok(if let Some((bits, len)) = WRITE_L2M.get(value as usize) {
+pub fn write_table_le<B: BitWrite<LE>>(backend: &mut B, value: u64) -> Result<bool> {
+    Ok(if let Some((bits, len)) = WRITE_LE.get(value as usize) {
         backend.write_bits(*bits as u64, *len as usize)?;
         true
     } else {
@@ -52,10 +52,10 @@ pub fn write_table_l2m<B: BitWrite<L2M>>(backend: &mut B, value: u64) -> Result<
 ///
 /// # Errors
 /// This function errors if it wasn't able to skip_bits
-pub fn read_table_m2l<B: BitRead<M2L>>(backend: &mut B) -> Result<Option<u64>> {
+pub fn read_table_be<B: BitRead<BE>>(backend: &mut B) -> Result<Option<u64>> {
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
         let idx: u64 = idx.upcast();
-        let (value, len) = READ_M2L[idx as usize];
+        let (value, len) = READ_BE[idx as usize];
         if len != MISSING_VALUE_LEN {
             backend.skip_bits_after_table_lookup(len as usize)?;
             return Ok(Some(value as u64));
@@ -71,8 +71,8 @@ pub fn read_table_m2l<B: BitRead<M2L>>(backend: &mut B) -> Result<Option<u64>> {
 ///
 /// # Errors
 /// This function errors if it wasn't able to skip_bits
-pub fn write_table_m2l<B: BitWrite<M2L>>(backend: &mut B, value: u64) -> Result<bool> {
-    Ok(if let Some((bits, len)) = WRITE_M2L.get(value as usize) {
+pub fn write_table_be<B: BitWrite<BE>>(backend: &mut B, value: u64) -> Result<bool> {
+    Ok(if let Some((bits, len)) = WRITE_BE.get(value as usize) {
         backend.write_bits(*bits as u64, *len as usize)?;
         true
     } else {
@@ -80,11 +80,11 @@ pub fn write_table_m2l<B: BitWrite<M2L>>(backend: &mut B, value: u64) -> Result<
     })
 }
 ///Table used to speed up the reading of unary codes
-pub const READ_M2L: &[(u8, u8)] = &[(0, 255)];
+pub const READ_BE: &[(u8, u8)] = &[(0, 255)];
 ///Table used to speed up the reading of unary codes
-pub const READ_L2M: &[(u8, u8)] = &[(0, 255)];
+pub const READ_LE: &[(u8, u8)] = &[(0, 255)];
 ///Table used to speed up the writing of unary codes
-pub const WRITE_M2L: &[(u64, u8)] = &[
+pub const WRITE_BE: &[(u64, u8)] = &[
     (1, 1),
     (1, 2),
     (1, 3),
@@ -151,7 +151,7 @@ pub const WRITE_M2L: &[(u64, u8)] = &[
     (1, 64),
 ];
 ///Table used to speed up the writing of unary codes
-pub const WRITE_L2M: &[(u64, u8)] = &[
+pub const WRITE_LE: &[(u64, u8)] = &[
     (1, 1),
     (2, 2),
     (4, 3),

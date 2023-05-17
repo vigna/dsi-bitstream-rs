@@ -29,8 +29,8 @@ for code in ["unary", "gamma", "delta", "delta_gamma", "zeta3"]:
             marker = "s"
 
         for pat in [
-            "%s::L2M::Table" % code,
-            "%s::M2L::Table" % code,
+            "%s::LE::Table" % code,
+            "%s::BE::Table" % code,
         ]:
             values = df[
                 (df.pat == pat) & (df.tables_num == tables_n)
@@ -54,8 +54,8 @@ for code in ["unary", "gamma", "delta", "delta_gamma", "zeta3"]:
             )
 
     for pat in [
-        "%s::L2M::NoTable" % code,
-        "%s::M2L::NoTable" % code,
+        "%s::LE::NoTable" % code,
+        "%s::BE::NoTable" % code,
     ]:
         values = df[df.pat == pat].groupby(x_label).mean(numeric_only=True)
         m = min(values.ns_median)

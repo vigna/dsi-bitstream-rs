@@ -37,7 +37,7 @@ impl<BO: BitOrder, WR> UnbufferedBitStreamRead<BO, WR> {
     }
 }
 
-impl<WR: WordRead<Word = u64> + WordStream> BitRead<M2L> for UnbufferedBitStreamRead<M2L, WR> {
+impl<WR: WordRead<Word = u64> + WordStream> BitRead<BE> for UnbufferedBitStreamRead<BE, WR> {
     type PeekType = u32;
 
     #[inline]
@@ -108,7 +108,7 @@ impl<WR: WordRead<Word = u64> + WordStream> BitRead<M2L> for UnbufferedBitStream
     #[inline]
     fn read_unary<const USE_TABLE: bool>(&mut self) -> Result<u64> {
         if USE_TABLE {
-            if let Some(res) = unary_tables::read_table_m2l(self)? {
+            if let Some(res) = unary_tables::read_table_be(self)? {
                 return Ok(res);
             }
         }
@@ -133,7 +133,7 @@ impl<WR: WordRead<Word = u64> + WordStream> BitRead<M2L> for UnbufferedBitStream
     }
 }
 
-impl<WR: WordStream> BitSeek for UnbufferedBitStreamRead<L2M, WR> {
+impl<WR: WordStream> BitSeek for UnbufferedBitStreamRead<LE, WR> {
     fn get_position(&self) -> usize {
         self.bit_idx
     }
@@ -144,7 +144,7 @@ impl<WR: WordStream> BitSeek for UnbufferedBitStreamRead<L2M, WR> {
     }
 }
 
-impl<WR: WordStream> BitSeek for UnbufferedBitStreamRead<M2L, WR> {
+impl<WR: WordStream> BitSeek for UnbufferedBitStreamRead<BE, WR> {
     fn get_position(&self) -> usize {
         self.bit_idx
     }
@@ -155,7 +155,7 @@ impl<WR: WordStream> BitSeek for UnbufferedBitStreamRead<M2L, WR> {
     }
 }
 
-impl<WR: WordRead<Word = u64> + WordStream> BitRead<L2M> for UnbufferedBitStreamRead<L2M, WR> {
+impl<WR: WordRead<Word = u64> + WordStream> BitRead<LE> for UnbufferedBitStreamRead<LE, WR> {
     type PeekType = u32;
     #[inline]
     fn skip_bits(&mut self, n_bits: usize) -> Result<()> {
@@ -227,7 +227,7 @@ impl<WR: WordRead<Word = u64> + WordStream> BitRead<L2M> for UnbufferedBitStream
     #[inline]
     fn read_unary<const USE_TABLE: bool>(&mut self) -> Result<u64> {
         if USE_TABLE {
-            if let Some(res) = unary_tables::read_table_l2m(self)? {
+            if let Some(res) = unary_tables::read_table_le(self)? {
                 return Ok(res);
             }
         }

@@ -59,7 +59,7 @@ pub trait BBSWDrop<WR: WordWrite>: Sized + BitOrder {
     fn drop(data: &mut BufferedBitStreamWrite<Self, WR>) -> Result<()>;
 }
 
-impl<WR: WordWrite<Word = u64>> BBSWDrop<WR> for M2L {
+impl<WR: WordWrite<Word = u64>> BBSWDrop<WR> for BE {
     #[inline]
     fn drop(data: &mut BufferedBitStreamWrite<Self, WR>) -> Result<()> {
         data.partial_flush()?;
@@ -73,7 +73,7 @@ impl<WR: WordWrite<Word = u64>> BBSWDrop<WR> for M2L {
     }
 }
 
-impl<WR: WordWrite<Word = u64>> BitWriteBuffered<M2L> for BufferedBitStreamWrite<M2L, WR> {
+impl<WR: WordWrite<Word = u64>> BitWriteBuffered<BE> for BufferedBitStreamWrite<BE, WR> {
     #[inline]
     fn partial_flush(&mut self) -> Result<()> {
         if self.bits_in_buffer < 64 {
@@ -86,7 +86,7 @@ impl<WR: WordWrite<Word = u64>> BitWriteBuffered<M2L> for BufferedBitStreamWrite
     }
 }
 
-impl<WR: WordWrite<Word = u64>> BitWrite<M2L> for BufferedBitStreamWrite<M2L, WR> {
+impl<WR: WordWrite<Word = u64>> BitWrite<BE> for BufferedBitStreamWrite<BE, WR> {
     #[inline]
     fn write_bits(&mut self, value: u64, n_bits: usize) -> Result<()> {
         if n_bits > 64 {
@@ -116,7 +116,7 @@ impl<WR: WordWrite<Word = u64>> BitWrite<M2L> for BufferedBitStreamWrite<M2L, WR
     fn write_unary<const USE_TABLE: bool>(&mut self, value: u64) -> Result<()> {
         debug_assert_ne!(value, u64::MAX);
         if USE_TABLE {
-            if unary_tables::write_table_m2l(self, value)? {
+            if unary_tables::write_table_be(self, value)? {
                 return Ok(());
             }
         }
@@ -155,7 +155,7 @@ impl<WR: WordWrite<Word = u64>> BitWrite<M2L> for BufferedBitStreamWrite<M2L, WR
     }
 }
 
-impl<WR: WordWrite<Word = u64>> BBSWDrop<WR> for L2M {
+impl<WR: WordWrite<Word = u64>> BBSWDrop<WR> for LE {
     #[inline]
     fn drop(data: &mut BufferedBitStreamWrite<Self, WR>) -> Result<()> {
         data.partial_flush()?;
@@ -169,7 +169,7 @@ impl<WR: WordWrite<Word = u64>> BBSWDrop<WR> for L2M {
     }
 }
 
-impl<WR: WordWrite<Word = u64>> BitWriteBuffered<L2M> for BufferedBitStreamWrite<L2M, WR> {
+impl<WR: WordWrite<Word = u64>> BitWriteBuffered<LE> for BufferedBitStreamWrite<LE, WR> {
     #[inline]
     fn partial_flush(&mut self) -> Result<()> {
         if self.bits_in_buffer < 64 {
@@ -182,7 +182,7 @@ impl<WR: WordWrite<Word = u64>> BitWriteBuffered<L2M> for BufferedBitStreamWrite
     }
 }
 
-impl<WR: WordWrite<Word = u64>> BitWrite<L2M> for BufferedBitStreamWrite<L2M, WR> {
+impl<WR: WordWrite<Word = u64>> BitWrite<LE> for BufferedBitStreamWrite<LE, WR> {
     #[inline]
     fn write_bits(&mut self, value: u64, n_bits: usize) -> Result<()> {
         if n_bits > 64 {
@@ -214,7 +214,7 @@ impl<WR: WordWrite<Word = u64>> BitWrite<L2M> for BufferedBitStreamWrite<L2M, WR
     fn write_unary<const USE_TABLE: bool>(&mut self, value: u64) -> Result<()> {
         debug_assert_ne!(value, u64::MAX);
         if USE_TABLE {
-            if unary_tables::write_table_l2m(self, value)? {
+            if unary_tables::write_table_le(self, value)? {
                 return Ok(());
             }
         }

@@ -47,7 +47,7 @@ impl<E: BitOrder, BW: Word, WR: WordRead> BufferedBitStreamRead<E, BW, WR> {
     /// use dsi_bitstream::prelude::*;
     /// let words: [u64; 1] = [0x0043b59fccf16077];
     /// let word_reader = MemWordRead::new(&words);
-    /// let mut bitstream = <BufferedBitStreamRead<M2L, u128, _>>::new(word_reader);
+    /// let mut bitstream = <BufferedBitStreamRead<BE, u128, _>>::new(word_reader);
     /// ```
     #[must_use]
     pub fn new(backend: WR) -> Self {
@@ -60,7 +60,7 @@ impl<E: BitOrder, BW: Word, WR: WordRead> BufferedBitStreamRead<E, BW, WR> {
     }
 }
 
-impl<BW: Word, WR: WordRead> BufferedBitStreamRead<M2L, BW, WR>
+impl<BW: Word, WR: WordRead> BufferedBitStreamRead<BE, BW, WR>
 where
     WR::Word: UpcastableInto<BW>,
 {
@@ -86,7 +86,7 @@ where
     }
 }
 
-impl<BW: Word, WR: WordRead + WordStream> BitSeek for BufferedBitStreamRead<M2L, BW, WR>
+impl<BW: Word, WR: WordRead + WordStream> BitSeek for BufferedBitStreamRead<BE, BW, WR>
 where
     WR::Word: UpcastableInto<BW>,
 {
@@ -112,7 +112,7 @@ where
     }
 }
 
-impl<BW: Word, WR: WordRead> BitRead<M2L> for BufferedBitStreamRead<M2L, BW, WR>
+impl<BW: Word, WR: WordRead> BitRead<BE> for BufferedBitStreamRead<BE, BW, WR>
 where
     BW: DowncastableInto<WR::Word> + CastableInto<u64>,
     WR::Word: UpcastableInto<BW> + UpcastableInto<u64>,
@@ -219,7 +219,7 @@ where
     #[inline]
     fn read_unary<const USE_TABLE: bool>(&mut self) -> Result<u64> {
         if USE_TABLE {
-            if let Some(res) = unary_tables::read_table_m2l(self)? {
+            if let Some(res) = unary_tables::read_table_be(self)? {
                 return Ok(res);
             }
         }
@@ -247,7 +247,7 @@ where
     }
 }
 
-impl<BW: Word, WR: WordRead> BufferedBitStreamRead<L2M, BW, WR>
+impl<BW: Word, WR: WordRead> BufferedBitStreamRead<LE, BW, WR>
 where
     WR::Word: UpcastableInto<BW>,
 {
@@ -273,7 +273,7 @@ where
     }
 }
 
-impl<BW: Word, WR: WordRead + WordStream> BitSeek for BufferedBitStreamRead<L2M, BW, WR>
+impl<BW: Word, WR: WordRead + WordStream> BitSeek for BufferedBitStreamRead<LE, BW, WR>
 where
     WR::Word: UpcastableInto<BW>,
 {
@@ -299,7 +299,7 @@ where
     }
 }
 
-impl<BW: Word, WR: WordRead> BitRead<L2M> for BufferedBitStreamRead<L2M, BW, WR>
+impl<BW: Word, WR: WordRead> BitRead<LE> for BufferedBitStreamRead<LE, BW, WR>
 where
     BW: DowncastableInto<WR::Word> + CastableInto<u64>,
     WR::Word: UpcastableInto<BW> + UpcastableInto<u64>,
@@ -409,7 +409,7 @@ where
     #[inline]
     fn read_unary<const USE_TABLE: bool>(&mut self) -> Result<u64> {
         if USE_TABLE {
-            if let Some(res) = unary_tables::read_table_l2m(self)? {
+            if let Some(res) = unary_tables::read_table_le(self)? {
                 return Ok(res);
             }
         }

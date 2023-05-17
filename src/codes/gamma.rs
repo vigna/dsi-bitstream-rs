@@ -48,7 +48,7 @@ pub trait GammaRead<BO: BitOrder>: BitRead<BO> {
     fn read_gamma<const USE_TABLE: bool>(&mut self) -> Result<u64>;
 }
 
-/// Common part of the M2L and L2M impl
+/// Common part of the BE and LE impl
 ///
 /// # Errors
 /// Forward `read_unary` and `read_bits` errors.
@@ -59,22 +59,22 @@ fn default_read_gamma<BO: BitOrder, B: BitRead<BO>>(backend: &mut B) -> Result<u
     Ok(backend.read_bits(len as usize)? + (1 << len) - 1)
 }
 
-impl<B: BitRead<M2L>> GammaRead<M2L> for B {
+impl<B: BitRead<BE>> GammaRead<BE> for B {
     #[inline]
     fn read_gamma<const USE_TABLE: bool>(&mut self) -> Result<u64> {
         if USE_TABLE {
-            if let Some(res) = gamma_tables::read_table_m2l(self)? {
+            if let Some(res) = gamma_tables::read_table_be(self)? {
                 return Ok(res);
             }
         }
         default_read_gamma(self)
     }
 }
-impl<B: BitRead<L2M>> GammaRead<L2M> for B {
+impl<B: BitRead<LE>> GammaRead<LE> for B {
     #[inline]
     fn read_gamma<const USE_TABLE: bool>(&mut self) -> Result<u64> {
         if USE_TABLE {
-            if let Some(res) = gamma_tables::read_table_l2m(self)? {
+            if let Some(res) = gamma_tables::read_table_le(self)? {
                 return Ok(res);
             }
         }
@@ -95,22 +95,22 @@ pub trait GammaWrite<BO: BitOrder>: BitWrite<BO> {
     fn write_gamma<const USE_TABLE: bool>(&mut self, value: u64) -> Result<()>;
 }
 
-impl<B: BitWrite<M2L>> GammaWrite<M2L> for B {
+impl<B: BitWrite<BE>> GammaWrite<BE> for B {
     #[inline]
     fn write_gamma<const USE_TABLE: bool>(&mut self, value: u64) -> Result<()> {
         if USE_TABLE {
-            if gamma_tables::write_table_m2l(self, value)? {
+            if gamma_tables::write_table_be(self, value)? {
                 return Ok(());
             }
         }
         default_write_gamma(self, value)
     }
 }
-impl<B: BitWrite<L2M>> GammaWrite<L2M> for B {
+impl<B: BitWrite<LE>> GammaWrite<LE> for B {
     #[inline]
     fn write_gamma<const USE_TABLE: bool>(&mut self, value: u64) -> Result<()> {
         if USE_TABLE {
-            if gamma_tables::write_table_l2m(self, value)? {
+            if gamma_tables::write_table_le(self, value)? {
                 return Ok(());
             }
         }
@@ -118,7 +118,7 @@ impl<B: BitWrite<L2M>> GammaWrite<L2M> for B {
     }
 }
 
-/// Common part of the M2L and L2M impl
+/// Common part of the BE and LE impl
 ///
 /// # Errors
 /// Forward `read_unary` and `read_bits` errors.
