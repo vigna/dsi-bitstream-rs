@@ -58,7 +58,6 @@ impl<W: Word, B: core::fmt::Debug> core::fmt::Debug for FileBackend<W, B> {
     }
 }
 
-/*
 /// Convert [`std::io::Read`] to [`WordRead`]
 impl<W: Word, B: std::io::Read> WordRead for FileBackend<W, B> {
     type Word = W;
@@ -68,9 +67,9 @@ impl<W: Word, B: std::io::Read> WordRead for FileBackend<W, B> {
         let mut res = [0; 8];
         self.file.read(&mut res)?;
         let res_ptr = &res as *const u8 as *const W::BytesForm;
-        Ok(W::from_ne_bytes(unsafe{*res_ptr}))
+        Ok(W::from_ne_bytes(unsafe { *res_ptr }))
     }
-}*/
+}
 
 /// Convert [`std::io::Write`] to [`WordWrite`]
 impl<W: Word, B: std::io::Write> WordWrite for FileBackend<W, B> {
