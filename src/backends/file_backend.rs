@@ -91,7 +91,7 @@ mod test {
             0x954d351a, 0x3225ec9f, 0xbca253f9, 0x915aad84, 0x274c0de1, 0x4bfc6982, 0x59a47341,
             0x4e32a33a, 0x9e0d2208,
         ];
-        let path = std::env::temp_dir().join("test1");
+        let path = std::env::temp_dir().join("test_file_backend");
         {
             let mut writer = <FileBackend<u32, _>>::new(std::fs::File::create(&path).unwrap());
             for value in &data {
@@ -115,7 +115,23 @@ mod test {
             0x78, 0x81, 0xc8, 0xc3, 0xdb, 0xab, 0x23, 0xe1, 0x13, 0xb0, 0x04, 0xd7, 0x3c, 0x21,
             0x0e, 0xba, 0x5d, 0xfc, 0xac, 0x4f, 0x04, 0x2d,
         ];
-        let path = std::env::temp_dir().join("test2");
+        let path = std::env::temp_dir().join("test_file_backend_codes");
+        {
+            let mut writer = <BufferedBitStreamWrite<BE, _>>::new(<FileBackend<u64, _>>::new(
+                std::fs::File::create(&path).unwrap(),
+            ));
+            for value in &data {
+                writer.write_gamma::<true>(*value as _).unwrap();
+            }
+        }
+        {
+            let mut reader = <BufferedBitStreamRead<BE, u64, _>>::new(<FileBackend<u32, _>>::new(
+                std::fs::File::open(&path).unwrap(),
+            ));
+            for value in &data {
+                assert_eq!(*value as u64, reader.read_gamma::<false>().unwrap());
+            }
+        }
         {
             let mut writer = <BufferedBitStreamWrite<LE, _>>::new(<FileBackend<u64, _>>::new(
                 std::fs::File::create(&path).unwrap(),
