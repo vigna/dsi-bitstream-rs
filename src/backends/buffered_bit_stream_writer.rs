@@ -89,15 +89,17 @@ impl<WR: WordWrite<Word = u64>> BitWriteBuffered<BE> for BufferedBitStreamWrite<
 impl<WR: WordWrite<Word = u64>> BitWrite<BE> for BufferedBitStreamWrite<BE, WR> {
     #[inline]
     fn write_bits(&mut self, value: u64, n_bits: usize) -> Result<()> {
+        if n_bits == 0 {
+            return Ok(());
+        }
+
         if n_bits > 64 {
             bail!(
                 "The n of bits to read has to be in [0, 64] and {} is not.",
                 n_bits
             );
         }
-        if n_bits == 0 {
-            return Ok(());
-        }
+
         #[cfg(test)]
         if (value & (1_u64 << n_bits).wrapping_sub(1)) != value {
             bail!("Error value {} does not fit in {} bits", value, n_bits);
@@ -144,11 +146,7 @@ impl<WR: WordWrite<Word = u64>> BitWrite<BE> for BufferedBitStreamWrite<BE, WR> 
             self.bits_in_buffer = 0;
         }
         self.bits_in_buffer += code_length as usize;
-        if code_length == 128 {
-            self.buffer = 0;
-        } else {
-            self.buffer <<= code_length;
-        }
+        self.buffer = self.buffer << code_length - 1 << 1;
         self.buffer |= 1_u128;
 
         Ok(())
@@ -185,15 +183,17 @@ impl<WR: WordWrite<Word = u64>> BitWriteBuffered<LE> for BufferedBitStreamWrite<
 impl<WR: WordWrite<Word = u64>> BitWrite<LE> for BufferedBitStreamWrite<LE, WR> {
     #[inline]
     fn write_bits(&mut self, value: u64, n_bits: usize) -> Result<()> {
+        if n_bits == 0 {
+            return Ok(());
+        }
+
         if n_bits > 64 {
             bail!(
                 "The n of bits to read has to be in [0, 64] and {} is not.",
                 n_bits
             );
         }
-        if n_bits == 0 {
-            return Ok(());
-        }
+
         #[cfg(test)]
         if (value & (1_u64 << n_bits).wrapping_sub(1)) != value {
             bail!("Error value {} does not fit in {} bits", value, n_bits);
@@ -241,11 +241,7 @@ impl<WR: WordWrite<Word = u64>> BitWrite<LE> for BufferedBitStreamWrite<LE, WR> 
             self.bits_in_buffer = 0;
         }
         self.bits_in_buffer += code_length as usize;
-        if code_length == 128 {
-            self.buffer = 0;
-        } else {
-            self.buffer >>= code_length;
-        }
+        self.buffer = self.buffer >> code_length - 1 >> 1;
         self.buffer |= 1_u128 << 127;
 
         Ok(())
