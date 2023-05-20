@@ -247,3 +247,79 @@ impl<WR: WordWrite<Word = u64>> BitWrite<LE> for BufferedBitStreamWrite<LE, WR> 
         Ok(())
     }
 }
+
+#[cfg(test)]
+#[test]
+fn test_buffered_bit_stream_writer() {
+    use super::MemWordWriteVec;
+    use crate::{
+        codes::{GammaRead, GammaWrite},
+        prelude::{BufferedBitStreamRead, MemWordRead},
+    };
+    use rand::Rng;
+    use rand::{rngs::SmallRng, SeedableRng};
+
+    let mut buffer_be: Vec<u64> = vec![];
+    let mut buffer_le: Vec<u64> = vec![];
+    let mut big = BufferedBitStreamWrite::<BE, _>::new(MemWordWriteVec::new(&mut buffer_be));
+    let mut little = BufferedBitStreamWrite::<LE, _>::new(MemWordWriteVec::new(&mut buffer_le));
+
+    let mut r = SmallRng::seed_from_u64(0);
+
+    for i in 0..128 {
+        big.write_gamma::<false>(i).unwrap();
+        little.write_gamma::<false>(i).unwrap();
+        big.write_gamma::<true>(i).unwrap();
+        little.write_gamma::<true>(i).unwrap();
+        big.write_bits(r.gen_range(1..=64), 1);
+        little.write_bits(r.gen_range(1..=64), 1);
+        big.write_unary::<false>(r.gen_range(1..=1024));
+        little.write_unary::<false>(r.gen_range(1..=1024));
+        big.write_unary::<true>(r.gen_range(1..=1024));
+        little.write_unary::<true>(r.gen_range(1..=1024));
+    }
+
+    drop(big);
+    drop(little);
+
+    type ReadWord = u32;
+    type ReadBuffer = u64;
+    let be_trans: &[ReadWord] = unsafe {
+        core::slice::from_raw_parts(
+            buffer_be.as_ptr() as *const ReadWord,
+            buffer_be.len() * (core::mem::size_of::<u64>() / core::mem::size_of::<ReadWord>()),
+        )
+    };
+    let le_trans: &[ReadWord] = unsafe {
+        core::slice::from_raw_parts(
+            buffer_le.as_ptr() as *const ReadWord,
+            buffer_le.len() * (core::mem::size_of::<u64>() / core::mem::size_of::<ReadWord>()),
+        )
+    };
+
+    let mut big_buff = BufferedBitStreamRead::<BE, ReadBuffer, _>::new(MemWordRead::new(be_trans));
+    let mut little_buff =
+        BufferedBitStreamRead::<LE, ReadBuffer, _>::new(MemWordRead::new(le_trans));
+
+    let mut r = SmallRng::seed_from_u64(0);
+
+    for i in 0..128 {
+        assert_eq!(big_buff.read_gamma::<false>().unwrap(), i);
+        assert_eq!(little_buff.read_gamma::<false>().unwrap(), i);
+        assert_eq!(big_buff.read_gamma::<false>().unwrap(), i);
+        assert_eq!(little_buff.read_gamma::<false>().unwrap(), i);
+        assert_eq!(big_buff.read_bits(r.gen_range(1..=64)).unwrap(), 1);
+        assert_eq!(little_buff.read_bits(r.gen_range(1..=64)).unwrap(), 1);
+        assert_eq!(big_buff.read_unary::<false>().unwrap(), r.gen_range(1..=64));
+        assert_eq!(
+            little_buff.read_unary::<false>().unwrap(),
+            r.gen_range(1..=64)
+        );
+        assert_eq!(little_buff.read_bits(r.gen_range(1..=64)).unwrap(), 1);
+        assert_eq!(big_buff.read_unary::<false>().unwrap(), r.gen_range(1..=64));
+        assert_eq!(
+            little_buff.read_unary::<false>().unwrap(),
+            r.gen_range(1..=64)
+        );
+    }
+}
