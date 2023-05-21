@@ -115,6 +115,7 @@ impl<WR: WordWrite<Word = u64>> BitWrite<BE> for BufferedBitStreamWrite<BE, WR> 
     }
 
     #[inline]
+    #[allow(clippy::collapsible_if)]
     fn write_unary<const USE_TABLE: bool>(&mut self, value: u64) -> Result<()> {
         debug_assert_ne!(value, u64::MAX);
         if USE_TABLE {
@@ -146,7 +147,7 @@ impl<WR: WordWrite<Word = u64>> BitWrite<BE> for BufferedBitStreamWrite<BE, WR> 
             self.bits_in_buffer = 0;
         }
         self.bits_in_buffer += code_length as usize;
-        self.buffer = self.buffer << code_length - 1 << 1;
+        self.buffer = self.buffer << (code_length - 1) << 1;
         self.buffer |= 1_u128;
 
         Ok(())
@@ -211,6 +212,7 @@ impl<WR: WordWrite<Word = u64>> BitWrite<LE> for BufferedBitStreamWrite<LE, WR> 
     }
 
     #[inline]
+    #[allow(clippy::collapsible_if)]
     fn write_unary<const USE_TABLE: bool>(&mut self, value: u64) -> Result<()> {
         debug_assert_ne!(value, u64::MAX);
         if USE_TABLE {
@@ -241,7 +243,7 @@ impl<WR: WordWrite<Word = u64>> BitWrite<LE> for BufferedBitStreamWrite<LE, WR> 
             self.bits_in_buffer = 0;
         }
         self.bits_in_buffer += code_length as usize;
-        self.buffer = self.buffer >> code_length - 1 >> 1;
+        self.buffer = self.buffer >> (code_length - 1) >> 1;
         self.buffer |= 1_u128 << 127;
 
         Ok(())

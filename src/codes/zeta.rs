@@ -21,10 +21,13 @@ use crate::traits::*;
 /// for decoding
 #[must_use]
 #[inline]
+#[allow(clippy::collapsible_if)]
 pub fn len_zeta<const USE_TABLE: bool>(mut value: u64, k: u64) -> usize {
-    if USE_TABLE && k == zeta_tables::K {
-        if let Some(idx) = zeta_tables::LEN.get(value as usize) {
-            return *idx as usize;
+    if USE_TABLE {
+        if k == zeta_tables::K {
+            if let Some(idx) = zeta_tables::LEN.get(value as usize) {
+                return *idx as usize;
+            }
         }
     }
     value += 1;
@@ -115,6 +118,7 @@ impl<B: BitWrite<BE>> ZetaWrite<BE> for B {
     }
 
     #[inline]
+    #[allow(clippy::collapsible_if)]
     fn write_zeta3<const USE_TABLE: bool>(&mut self, value: u64) -> Result<()> {
         if USE_TABLE {
             if zeta_tables::write_table_be(self, value)? {
@@ -124,6 +128,7 @@ impl<B: BitWrite<BE>> ZetaWrite<BE> for B {
         default_write_zeta(self, value, 3)
     }
 }
+
 impl<B: BitWrite<LE>> ZetaWrite<LE> for B {
     #[inline]
     fn write_zeta<const USE_TABLE: bool>(&mut self, value: u64, k: u64) -> Result<()> {
@@ -131,6 +136,7 @@ impl<B: BitWrite<LE>> ZetaWrite<LE> for B {
     }
 
     #[inline]
+    #[allow(clippy::collapsible_if)]
     fn write_zeta3<const USE_TABLE: bool>(&mut self, value: u64) -> Result<()> {
         if USE_TABLE {
             if zeta_tables::write_table_le(self, value)? {

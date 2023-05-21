@@ -97,6 +97,7 @@ pub trait DeltaWrite<BO: BitOrder>: GammaWrite<BO> {
 
 impl<B: GammaWrite<BE>> DeltaWrite<BE> for B {
     #[inline]
+    #[allow(clippy::collapsible_if)]
     fn write_delta<const USE_TABLE: bool, const USE_GAMMA_TABLE: bool>(
         &mut self,
         value: u64,
@@ -109,8 +110,10 @@ impl<B: GammaWrite<BE>> DeltaWrite<BE> for B {
         default_write_delta::<BE, _, USE_GAMMA_TABLE>(self, value)
     }
 }
+
 impl<B: GammaWrite<LE>> DeltaWrite<LE> for B {
     #[inline]
+    #[allow(clippy::collapsible_if)]
     fn write_delta<const USE_TABLE: bool, const USE_GAMMA_TABLE: bool>(
         &mut self,
         value: u64,
