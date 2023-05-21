@@ -115,10 +115,13 @@ impl<WR: WordWrite<Word = u64>> BitWrite<BE> for BufferedBitStreamWrite<BE, WR> 
     }
 
     #[inline]
+    #[allow(clippy::collapsible_if)]
     fn write_unary<const USE_TABLE: bool>(&mut self, value: u64) -> Result<()> {
         debug_assert_ne!(value, u64::MAX);
-        if USE_TABLE && unary_tables::write_table_be(self, value)? {
-            return Ok(());
+        if USE_TABLE {
+            if unary_tables::write_table_be(self, value)? {
+                return Ok(());
+            }
         }
 
         let mut code_length = value + 1;
@@ -209,10 +212,13 @@ impl<WR: WordWrite<Word = u64>> BitWrite<LE> for BufferedBitStreamWrite<LE, WR> 
     }
 
     #[inline]
+    #[allow(clippy::collapsible_if)]
     fn write_unary<const USE_TABLE: bool>(&mut self, value: u64) -> Result<()> {
         debug_assert_ne!(value, u64::MAX);
-        if USE_TABLE && unary_tables::write_table_le(self, value)? {
-            return Ok(());
+        if USE_TABLE {
+            if unary_tables::write_table_le(self, value)? {
+                return Ok(());
+            }
         }
         let mut code_length = value + 1;
 
