@@ -101,7 +101,7 @@ impl<WR: WordWrite<Word = u64>> BitWrite<BE> for BufferedBitStreamWrite<BE, WR> 
         }
 
         #[cfg(test)]
-        if (value & (1_u64 << n_bits).wrapping_sub(1)) != value {
+        if (value & (1_u128 << n_bits).wrapping_sub(1) as u64) != value {
             bail!("Error value {} does not fit in {} bits", value, n_bits);
         }
 
@@ -195,7 +195,7 @@ impl<WR: WordWrite<Word = u64>> BitWrite<LE> for BufferedBitStreamWrite<LE, WR> 
         }
 
         #[cfg(test)]
-        if (value & (1_u64 << n_bits).wrapping_sub(1)) != value {
+        if (value & (1_u128 << n_bits).wrapping_sub(1) as u64) != value {
             bail!("Error value {} does not fit in {} bits", value, n_bits);
         }
 
@@ -265,18 +265,19 @@ fn test_buffered_bit_stream_writer() {
     let mut little = BufferedBitStreamWrite::<LE, _>::new(MemWordWriteVec::new(&mut buffer_le));
 
     let mut r = SmallRng::seed_from_u64(0);
+    const ITER: u64 = 128;
 
-    for i in 0..128 {
+    for i in 0..ITER {
         big.write_gamma::<false>(i).unwrap();
         little.write_gamma::<false>(i).unwrap();
         big.write_gamma::<true>(i).unwrap();
         little.write_gamma::<true>(i).unwrap();
-        big.write_bits(r.gen_range(1..=64), 1);
-        little.write_bits(r.gen_range(1..=64), 1);
-        big.write_unary::<false>(r.gen_range(1..=1024));
-        little.write_unary::<false>(r.gen_range(1..=1024));
-        big.write_unary::<true>(r.gen_range(1..=1024));
-        little.write_unary::<true>(r.gen_range(1..=1024));
+        big.write_bits(1, r.gen_range(1..=64));
+        little.write_bits(1, r.gen_range(1..=64));
+        big.write_unary::<false>(r.gen_range(0..=1024));
+        little.write_unary::<false>(r.gen_range(0..=1024));
+        big.write_unary::<true>(r.gen_range(0..=1024));
+        little.write_unary::<true>(r.gen_range(0..=1024));
     }
 
     drop(big);
@@ -303,23 +304,29 @@ fn test_buffered_bit_stream_writer() {
 
     let mut r = SmallRng::seed_from_u64(0);
 
-    for i in 0..128 {
+    for i in 0..ITER {
         assert_eq!(big_buff.read_gamma::<false>().unwrap(), i);
         assert_eq!(little_buff.read_gamma::<false>().unwrap(), i);
         assert_eq!(big_buff.read_gamma::<false>().unwrap(), i);
         assert_eq!(little_buff.read_gamma::<false>().unwrap(), i);
         assert_eq!(big_buff.read_bits(r.gen_range(1..=64)).unwrap(), 1);
         assert_eq!(little_buff.read_bits(r.gen_range(1..=64)).unwrap(), 1);
-        assert_eq!(big_buff.read_unary::<false>().unwrap(), r.gen_range(1..=64));
         assert_eq!(
-            little_buff.read_unary::<false>().unwrap(),
-            r.gen_range(1..=64)
+            big_buff.read_unary::<false>().unwrap(),
+            r.gen_range(0..=1024)
         );
-        assert_eq!(little_buff.read_bits(r.gen_range(1..=64)).unwrap(), 1);
-        assert_eq!(big_buff.read_unary::<false>().unwrap(), r.gen_range(1..=64));
         assert_eq!(
             little_buff.read_unary::<false>().unwrap(),
-            r.gen_range(1..=64)
+            r.gen_range(0..=1024)
+        );
+        assert_eq!(little_buff.read_bits(r.gen_range(0..=1024)).unwrap(), 1);
+        assert_eq!(
+            big_buff.read_unary::<false>().unwrap(),
+            r.gen_range(0..=1024)
+        );
+        assert_eq!(
+            little_buff.read_unary::<false>().unwrap(),
+            r.gen_range(0..=1024)
         );
     }
 }
