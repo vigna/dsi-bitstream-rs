@@ -101,10 +101,8 @@ impl<B: GammaWrite<BE>> DeltaWrite<BE> for B {
         &mut self,
         value: u64,
     ) -> Result<()> {
-        if USE_TABLE {
-            if delta_tables::write_table_be(self, value)? {
-                return Ok(());
-            }
+        if USE_TABLE && delta_tables::write_table_be(self, value)? {
+            return Ok(());
         }
         default_write_delta::<BE, _, USE_GAMMA_TABLE>(self, value)
     }
@@ -115,10 +113,8 @@ impl<B: GammaWrite<LE>> DeltaWrite<LE> for B {
         &mut self,
         value: u64,
     ) -> Result<()> {
-        if USE_TABLE {
-            if delta_tables::write_table_le(self, value)? {
-                return Ok(());
-            }
+        if USE_TABLE && delta_tables::write_table_le(self, value)? {
+            return Ok(());
         }
         default_write_delta::<LE, _, USE_GAMMA_TABLE>(self, value)
     }

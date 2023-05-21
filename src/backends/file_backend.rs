@@ -65,7 +65,7 @@ impl<W: Word, B: std::io::Read> WordRead for FileBackend<W, B> {
     #[inline]
     fn read_next_word(&mut self) -> Result<W> {
         let mut res: W::BytesForm = Default::default();
-        self.file.read(res.as_mut())?;
+        let _ = self.file.read(res.as_mut())?;
         Ok(W::from_ne_bytes(res))
     }
 }
@@ -76,7 +76,7 @@ impl<W: Word, B: std::io::Write> WordWrite for FileBackend<W, B> {
 
     #[inline]
     fn write_word(&mut self, word: W) -> Result<()> {
-        self.file.write(word.to_ne_bytes().as_ref())?;
+        let _ = self.file.write(word.to_ne_bytes().as_ref())?;
         Ok(())
     }
 }

@@ -98,10 +98,8 @@ pub trait GammaWrite<BO: BitOrder>: BitWrite<BO> {
 impl<B: BitWrite<BE>> GammaWrite<BE> for B {
     #[inline]
     fn write_gamma<const USE_TABLE: bool>(&mut self, value: u64) -> Result<()> {
-        if USE_TABLE {
-            if gamma_tables::write_table_be(self, value)? {
-                return Ok(());
-            }
+        if USE_TABLE && gamma_tables::write_table_be(self, value)? {
+            return Ok(());
         }
         default_write_gamma(self, value)
     }
@@ -109,10 +107,8 @@ impl<B: BitWrite<BE>> GammaWrite<BE> for B {
 impl<B: BitWrite<LE>> GammaWrite<LE> for B {
     #[inline]
     fn write_gamma<const USE_TABLE: bool>(&mut self, value: u64) -> Result<()> {
-        if USE_TABLE {
-            if gamma_tables::write_table_le(self, value)? {
-                return Ok(());
-            }
+        if USE_TABLE && gamma_tables::write_table_le(self, value)? {
+            return Ok(());
         }
         default_write_gamma(self, value)
     }

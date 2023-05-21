@@ -116,10 +116,8 @@ impl<B: BitWrite<BE>> ZetaWrite<BE> for B {
 
     #[inline]
     fn write_zeta3<const USE_TABLE: bool>(&mut self, value: u64) -> Result<()> {
-        if USE_TABLE {
-            if zeta_tables::write_table_be(self, value)? {
-                return Ok(());
-            }
+        if USE_TABLE && zeta_tables::write_table_be(self, value)? {
+            return Ok(());
         }
         default_write_zeta(self, value, 3)
     }
@@ -132,10 +130,8 @@ impl<B: BitWrite<LE>> ZetaWrite<LE> for B {
 
     #[inline]
     fn write_zeta3<const USE_TABLE: bool>(&mut self, value: u64) -> Result<()> {
-        if USE_TABLE {
-            if zeta_tables::write_table_le(self, value)? {
-                return Ok(());
-            }
+        if USE_TABLE && zeta_tables::write_table_le(self, value)? {
+            return Ok(());
         }
         default_write_zeta(self, value, 3)
     }
