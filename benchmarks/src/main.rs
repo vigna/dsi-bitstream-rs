@@ -201,14 +201,14 @@ pub fn main() {
         calibration,
         "gamma",
         read_gamma,
-        write_gamma,
+        write_gamma_param,
         gen_gamma_data
     );
     impl_code!(
         calibration,
         "zeta3",
         read_zeta3,
-        write_zeta3,
+        write_zeta3_param,
         gen_zeta3_data
     );
 

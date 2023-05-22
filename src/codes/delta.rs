@@ -10,7 +10,7 @@
 //! universal coding of x ∈ N+ is obtained by representing x in binary
 //! preceded by a representation of its length in γ.
 
-use super::{delta_tables, fast_floor_log2, len_gamma, GammaReadParam, GammaWriteParam};
+use super::{delta_tables, fast_floor_log2, len_gamma_param, GammaReadParam, GammaWriteParam};
 use crate::traits::*;
 use anyhow::Result;
 
@@ -18,16 +18,30 @@ use anyhow::Result;
 #[inline]
 /// Returns how long the Delta code for `value` will be
 ///
-/// `USE_TABLE` enables or disables the use of pre-computed tables
+/// `USE_DELTA_TABLE` enables or disables the use of pre-computed tables
 /// for decoding
-pub fn len_delta<const USE_TABLE: bool>(value: u64) -> usize {
-    if USE_TABLE {
+pub fn len_delta_param<const USE_DELTA_TABLE: bool, const USE_GAMMA_TABLE: bool>(
+    value: u64,
+) -> usize {
+    if USE_DELTA_TABLE {
         if let Some(idx) = delta_tables::LEN.get(value as usize) {
             return *idx as usize;
         }
     }
     let l = fast_floor_log2(value + 1);
-    l as usize + len_gamma::<USE_TABLE>(l as _)
+    l as usize + len_gamma_param::<USE_GAMMA_TABLE>(l as _)
+}
+
+/// Returns how long the Delta code for `value` will be
+///
+/// `USE_DELTA_TABLE` enables or disables the use of pre-computed tables
+/// for decoding
+#[inline(always)]
+pub fn len_delta<const USE_DELTA_TABLE: bool>(value: u64) -> usize {
+    #[cfg(target_arch = "arm")]
+    return len_delta_param::<false, false>(value);
+    #[cfg(not(target_arch = "arm"))]
+    return len_delta_param::<false, true>(value);
 }
 
 pub trait DeltaRead<BO: BitOrder>: DeltaReadParam<BO> {
@@ -38,23 +52,23 @@ pub trait DeltaRead<BO: BitOrder>: DeltaReadParam<BO> {
 pub trait DeltaReadParam<BO: BitOrder>: GammaReadParam<BO> {
     /// Read a delta code from the stream.
     ///
-    /// `USE_TABLE` enables or disables the use of pre-computed tables
+    /// `USE_DELTA_TABLE` enables or disables the use of pre-computed tables
     /// for decoding
     ///
     /// # Errors
     /// This function fails only if the BitRead backend has problems reading
     /// bits, as when the stream ended unexpectedly
-    fn read_delta_param<const USE_TABLE: bool, const USE_GAMMA_TABLE: bool>(
+    fn read_delta_param<const USE_DELTA_TABLE: bool, const USE_GAMMA_TABLE: bool>(
         &mut self,
     ) -> Result<u64>;
 }
 
 impl<B: GammaReadParam<BE>> DeltaReadParam<BE> for B {
     #[inline]
-    fn read_delta_param<const USE_TABLE: bool, const USE_GAMMA_TABLE: bool>(
+    fn read_delta_param<const USE_DELTA_TABLE: bool, const USE_GAMMA_TABLE: bool>(
         &mut self,
     ) -> Result<u64> {
-        if USE_TABLE {
+        if USE_DELTA_TABLE {
             if let Some(res) = delta_tables::read_table_be(self)? {
                 return Ok(res);
             }
@@ -64,10 +78,10 @@ impl<B: GammaReadParam<BE>> DeltaReadParam<BE> for B {
 }
 impl<B: GammaReadParam<LE>> DeltaReadParam<LE> for B {
     #[inline]
-    fn read_delta_param<const USE_TABLE: bool, const USE_GAMMA_TABLE: bool>(
+    fn read_delta_param<const USE_DELTA_TABLE: bool, const USE_GAMMA_TABLE: bool>(
         &mut self,
     ) -> Result<u64> {
-        if USE_TABLE {
+        if USE_DELTA_TABLE {
             if let Some(res) = delta_tables::read_table_le(self)? {
                 return Ok(res);
             }
@@ -97,13 +111,13 @@ pub trait DeltaWrite<BO: BitOrder>: DeltaWriteParam<BO> {
 pub trait DeltaWriteParam<BO: BitOrder>: GammaWriteParam<BO> {
     /// Write a value on the stream
     ///
-    /// `USE_TABLE` enables or disables the use of pre-computed tables
+    /// `USE_DELTA_TABLE` enables or disables the use of pre-computed tables
     /// for decoding
     ///
     /// # Errors
     /// This function fails only if the BitWrite backend has problems writing
     /// bits, as when the stream ended unexpectedly
-    fn write_delta_param<const USE_TABLE: bool, const USE_GAMMA_TABLE: bool>(
+    fn write_delta_param<const USE_DELTA_TABLE: bool, const USE_GAMMA_TABLE: bool>(
         &mut self,
         value: u64,
     ) -> Result<usize>;
@@ -112,11 +126,11 @@ pub trait DeltaWriteParam<BO: BitOrder>: GammaWriteParam<BO> {
 impl<B: GammaWriteParam<BE>> DeltaWriteParam<BE> for B {
     #[inline]
     #[allow(clippy::collapsible_if)]
-    fn write_delta_param<const USE_TABLE: bool, const USE_GAMMA_TABLE: bool>(
+    fn write_delta_param<const USE_DELTA_TABLE: bool, const USE_GAMMA_TABLE: bool>(
         &mut self,
         value: u64,
     ) -> Result<usize> {
-        if USE_TABLE {
+        if USE_DELTA_TABLE {
             if let Some(len) = delta_tables::write_table_be(self, value)? {
                 return Ok(len);
             }
@@ -128,11 +142,11 @@ impl<B: GammaWriteParam<BE>> DeltaWriteParam<BE> for B {
 impl<B: GammaWriteParam<LE>> DeltaWriteParam<LE> for B {
     #[inline]
     #[allow(clippy::collapsible_if)]
-    fn write_delta_param<const USE_TABLE: bool, const USE_GAMMA_TABLE: bool>(
+    fn write_delta_param<const USE_DELTA_TABLE: bool, const USE_GAMMA_TABLE: bool>(
         &mut self,
         value: u64,
     ) -> Result<usize> {
-        if USE_TABLE {
+        if USE_DELTA_TABLE {
             if let Some(len) = delta_tables::write_table_le(self, value)? {
                 return Ok(len);
             }

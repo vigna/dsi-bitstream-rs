@@ -121,7 +121,7 @@ mod test {
                 std::fs::File::create(&path).unwrap(),
             ));
             for value in &data {
-                writer.write_gamma::<true>(*value as _).unwrap();
+                writer.write_gamma(*value as _).unwrap();
             }
         }
         {
@@ -129,7 +129,7 @@ mod test {
                 std::fs::File::open(&path).unwrap(),
             ));
             for value in &data {
-                assert_eq!(*value as u64, reader.read_gamma::<false>().unwrap());
+                assert_eq!(*value as u64, reader.read_gamma().unwrap());
             }
         }
         {
@@ -137,7 +137,7 @@ mod test {
                 std::fs::File::create(&path).unwrap(),
             ));
             for value in &data {
-                writer.write_gamma::<true>(*value as _).unwrap();
+                writer.write_gamma(*value as _).unwrap();
             }
         }
         {
@@ -145,7 +145,7 @@ mod test {
                 std::fs::File::open(&path).unwrap(),
             ));
             for value in &data {
-                assert_eq!(*value as u64, reader.read_gamma::<false>().unwrap());
+                assert_eq!(*value as u64, reader.read_gamma().unwrap());
             }
         }
     }

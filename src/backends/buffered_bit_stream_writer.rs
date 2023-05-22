@@ -168,6 +168,10 @@ impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BitWrite<BE>
 
         Ok((value + 1) as usize)
     }
+
+    fn write_unary(&mut self, value: u64) -> Result<usize> {
+        self.write_unary_param::<false>(value)
+    }
 }
 
 impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BBSWDrop<WR, WCP> for LE {
@@ -268,6 +272,10 @@ impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BitWrite<LE>
 
         Ok((value + 1) as usize)
     }
+
+    fn write_unary(&mut self, value: u64) -> Result<usize> {
+        self.write_unary_param::<false>(value)
+    }
 }
 
 #[cfg(test)]
@@ -327,27 +335,15 @@ fn test_buffered_bit_stream_writer() {
     let mut r = SmallRng::seed_from_u64(0);
 
     for i in 0..ITER {
-        assert_eq!(big_buff.read_gamma::<false>().unwrap(), i);
-        assert_eq!(little_buff.read_gamma::<false>().unwrap(), i);
-        assert_eq!(big_buff.read_gamma::<false>().unwrap(), i);
-        assert_eq!(little_buff.read_gamma::<false>().unwrap(), i);
+        assert_eq!(big_buff.read_gamma().unwrap(), i);
+        assert_eq!(little_buff.read_gamma().unwrap(), i);
+        assert_eq!(big_buff.read_gamma().unwrap(), i);
+        assert_eq!(little_buff.read_gamma().unwrap(), i);
         assert_eq!(big_buff.read_bits(r.gen_range(1..=64)).unwrap(), 1);
         assert_eq!(little_buff.read_bits(r.gen_range(1..=64)).unwrap(), 1);
-        assert_eq!(
-            big_buff.read_unary::<false>().unwrap(),
-            r.gen_range(0..=1024)
-        );
-        assert_eq!(
-            little_buff.read_unary::<false>().unwrap(),
-            r.gen_range(0..=1024)
-        );
-        assert_eq!(
-            big_buff.read_unary::<false>().unwrap(),
-            r.gen_range(0..=1024)
-        );
-        assert_eq!(
-            little_buff.read_unary::<false>().unwrap(),
-            r.gen_range(0..=1024)
-        );
+        assert_eq!(big_buff.read_unary().unwrap(), r.gen_range(0..=1024));
+        assert_eq!(little_buff.read_unary().unwrap(), r.gen_range(0..=1024));
+        assert_eq!(big_buff.read_unary().unwrap(), r.gen_range(0..=1024));
+        assert_eq!(little_buff.read_unary().unwrap(), r.gen_range(0..=1024));
     }
 }

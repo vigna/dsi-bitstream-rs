@@ -24,7 +24,7 @@ use anyhow::Result;
 /// for decoding
 #[must_use]
 #[inline]
-pub fn len_gamma<const USE_TABLE: bool>(mut value: u64) -> usize {
+pub fn len_gamma_param<const USE_TABLE: bool>(mut value: u64) -> usize {
     if USE_TABLE {
         if let Some(idx) = gamma_tables::LEN.get(value as usize) {
             return *idx as usize;
@@ -33,6 +33,13 @@ pub fn len_gamma<const USE_TABLE: bool>(mut value: u64) -> usize {
     value += 1;
     let number_of_blocks_to_write = value.trailing_zeros();
     2 * number_of_blocks_to_write as usize + 1
+}
+
+pub fn len_gamma(value: u64) -> usize {
+    #[cfg(target_arch = "arm")]
+    return len_gamma_param::<false>(value);
+    #[cfg(not(target_arch = "arm"))]
+    return len_gamma_param::<true>(value);
 }
 
 pub trait GammaRead<BO: BitOrder>: GammaReadParam<BO> {

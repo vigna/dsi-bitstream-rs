@@ -58,28 +58,32 @@
 //! assert_eq!(bitstream_be.read_bits(8).unwrap(), 0b0111_0110);
 //! bitstream_be.seek_bit(0); // rewind the stream
 //!
-//! assert_eq!(bitstream_be.read_unary::<true>().unwrap(), 1);
-//! assert_eq!(bitstream_be.read_unary::<true>().unwrap(), 0);
-//! assert_eq!(bitstream_be.read_unary::<true>().unwrap(), 0);
-//! assert_eq!(bitstream_be.read_unary::<true>().unwrap(), 1);
-//! assert_eq!(bitstream_be.read_unary::<true>().unwrap(), 0);
-//! assert_eq!(bitstream_be.read_unary::<true>().unwrap(), 2);
-//! assert_eq!(bitstream_be.read_unary::<true>().unwrap(), 0);
-//! assert_eq!(bitstream_be.read_unary::<true>().unwrap(), 5);
+//! assert_eq!(bitstream_be.read_unary().unwrap(), 1);
+//! assert_eq!(bitstream_be.read_unary().unwrap(), 0);
+//! assert_eq!(bitstream_be.read_unary().unwrap(), 0);
+//! assert_eq!(bitstream_be.read_unary().unwrap(), 1);
+//! assert_eq!(bitstream_be.read_unary().unwrap(), 0);
+//! assert_eq!(bitstream_be.read_unary().unwrap(), 2);
+//! assert_eq!(bitstream_be.read_unary().unwrap(), 0);
+//! assert_eq!(bitstream_be.read_unary().unwrap(), 5);
 //! ```
 
 mod gamma;
 
-pub use gamma::{len_gamma, GammaRead, GammaReadParam, GammaWrite, GammaWriteParam};
+pub use gamma::{
+    len_gamma, len_gamma_param, GammaRead, GammaReadParam, GammaWrite, GammaWriteParam,
+};
 
 mod delta;
-pub use delta::{len_delta, DeltaRead, DeltaReadParam, DeltaWrite, DeltaWriteParam};
+pub use delta::{
+    len_delta, len_delta_param, DeltaRead, DeltaReadParam, DeltaWrite, DeltaWriteParam,
+};
 
 mod minimal_binary;
 pub use minimal_binary::{len_minimal_binary, MinimalBinaryRead, MinimalBinaryWrite};
 
 mod zeta;
-pub use zeta::{len_zeta, ZetaRead, ZetaReadParam, ZetaWrite, ZetaWriteParam};
+pub use zeta::{len_zeta, len_zeta_param, ZetaRead, ZetaReadParam, ZetaWrite, ZetaWriteParam};
 
 pub mod delta_tables;
 pub mod gamma_tables;

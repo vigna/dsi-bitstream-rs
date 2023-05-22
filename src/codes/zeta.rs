@@ -22,7 +22,7 @@ use crate::traits::*;
 #[must_use]
 #[inline]
 #[allow(clippy::collapsible_if)]
-pub fn len_zeta<const USE_TABLE: bool>(mut value: u64, k: u64) -> usize {
+pub fn len_zeta_param<const USE_TABLE: bool>(mut value: u64, k: u64) -> usize {
     if USE_TABLE {
         if k == zeta_tables::K {
             if let Some(idx) = zeta_tables::LEN.get(value as usize) {
@@ -35,6 +35,11 @@ pub fn len_zeta<const USE_TABLE: bool>(mut value: u64, k: u64) -> usize {
     let u = 1 << ((h + 1) * k);
     let l = 1 << (h * k);
     len_unary::<false>(h) + len_minimal_binary(value - l, u - l)
+}
+
+#[inline(always)]
+pub fn len_zeta(k: u64, value: u64) -> usize {
+    return len_zeta_param::<true>(k, value);
 }
 
 pub trait ZetaRead<BO: BitOrder>: ZetaReadParam<BO> {
