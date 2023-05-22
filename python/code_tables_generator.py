@@ -695,22 +695,22 @@ def generate_default_tables():
     merged_table = True
     gen_unary(
         read_bits=0, 
-        write_max_val=63,
+        write_max_val=0,
         merged_table=merged_table,
     )
     gen_gamma(
-        read_bits=11, 
-        write_max_val=255,
+        read_bits=9, 
+        write_max_val=63,
         merged_table=merged_table,
     )
     gen_delta(
-        read_bits=11, 
-        write_max_val=255,
+        read_bits=0, 
+        write_max_val=1023,
         merged_table=merged_table,
     )
     gen_zeta(
         read_bits=12, 
-        write_max_val=255,
+        write_max_val=1023,
         k=3,
         merged_table=merged_table,
     )
