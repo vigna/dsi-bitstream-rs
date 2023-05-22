@@ -13,7 +13,7 @@ create a `table.csv` file with all the results
 import os
 import sys
 import subprocess
-from code_tables_generator import *
+from gen_code_tables import *
 
 if not os.path.exists("benchmarks") or not os.path.exists("python"):
     sys.exit("You must run this script in the main project directory.")

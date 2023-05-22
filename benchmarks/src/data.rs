@@ -18,7 +18,7 @@ macro_rules! compute_ratio {
         let mut total = 0.0;
         for value in &$data {
             #[cfg(feature = "reads")]
-            if $len_func::<false>(*value) <= $table::READ_BITS as usize {
+            if $len_func(*value) <= $table::READ_BITS as usize {
                 total += 1.0;
             }
             #[cfg(not(feature = "reads"))]
@@ -98,7 +98,7 @@ pub fn gen_zeta3_data() -> (f64, Vec<u64>) {
         .iter()
         .map(|value| {
             #[cfg(feature = "reads")]
-            if len_zeta::<false>(*value, 3) <= zeta_tables::READ_BITS as usize {
+            if len_zeta(*value, 3) <= zeta_tables::READ_BITS as usize {
                 1
             } else {
                 0

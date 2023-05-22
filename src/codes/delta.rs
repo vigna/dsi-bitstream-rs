@@ -37,7 +37,7 @@ pub fn len_delta_param<const USE_DELTA_TABLE: bool, const USE_GAMMA_TABLE: bool>
 /// `USE_DELTA_TABLE` enables or disables the use of pre-computed tables
 /// for decoding
 #[inline(always)]
-pub fn len_delta<const USE_DELTA_TABLE: bool>(value: u64) -> usize {
+pub fn len_delta(value: u64) -> usize {
     #[cfg(target_arch = "arm")]
     return len_delta_param::<false, false>(value);
     #[cfg(not(target_arch = "arm"))]

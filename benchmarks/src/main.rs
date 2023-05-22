@@ -193,21 +193,21 @@ pub fn main() {
     impl_code!(
         calibration,
         "unary",
-        read_unary,
-        write_unary,
+        read_unary_param,
+        write_unary_param,
         gen_unary_data
     );
     impl_code!(
         calibration,
         "gamma",
-        read_gamma,
+        read_gamma_param,
         write_gamma_param,
         gen_gamma_data
     );
     impl_code!(
         calibration,
         "zeta3",
-        read_zeta3,
+        read_zeta3_param,
         write_zeta3_param,
         gen_zeta3_data
     );
@@ -220,8 +220,8 @@ pub fn main() {
     bench!(
         calibration,
         "delta",
-        read_delta,
-        write_delta,
+        read_delta_param,
+        write_delta_param,
         gen_delta_data,
         BE,
         true,
@@ -230,8 +230,8 @@ pub fn main() {
     bench!(
         calibration,
         "delta",
-        read_delta,
-        write_delta,
+        read_delta_param,
+        write_delta_param,
         gen_delta_data,
         BE,
         false,
@@ -240,8 +240,8 @@ pub fn main() {
     bench!(
         calibration,
         "delta",
-        read_delta,
-        write_delta,
+        read_delta_param,
+        write_delta_param,
         gen_delta_data,
         LE,
         true,
@@ -250,8 +250,8 @@ pub fn main() {
     bench!(
         calibration,
         "delta",
-        read_delta,
-        write_delta,
+        read_delta_param,
+        write_delta_param,
         gen_delta_data,
         LE,
         false,
@@ -262,8 +262,8 @@ pub fn main() {
     bench!(
         calibration,
         "delta_gamma",
-        read_delta,
-        write_delta,
+        read_delta_param,
+        write_delta_param,
         gen_delta_data,
         BE,
         true,
@@ -272,8 +272,8 @@ pub fn main() {
     bench!(
         calibration,
         "delta_gamma",
-        read_delta,
-        write_delta,
+        read_delta_param,
+        write_delta_param,
         gen_delta_data,
         BE,
         false,
@@ -282,8 +282,8 @@ pub fn main() {
     bench!(
         calibration,
         "delta_gamma",
-        read_delta,
-        write_delta,
+        read_delta_param,
+        write_delta_param,
         gen_delta_data,
         LE,
         true,
@@ -292,8 +292,8 @@ pub fn main() {
     bench!(
         calibration,
         "delta_gamma",
-        read_delta,
-        write_delta,
+        read_delta_param,
+        write_delta_param,
         gen_delta_data,
         LE,
         false,

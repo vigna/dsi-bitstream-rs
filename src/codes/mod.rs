@@ -90,13 +90,13 @@ pub mod gamma_tables;
 pub mod unary_tables;
 pub mod zeta_tables;
 
-#[must_use]
-#[inline]
 /// Return how long the unary code for `value` will be
 ///
 /// `USE_TABLE` enables or disables the use of pre-computed tables
 /// for decoding
-pub fn len_unary<const USE_TABLE: bool>(value: u64) -> usize {
+#[must_use]
+#[inline]
+pub fn len_unary_param<const USE_TABLE: bool>(value: u64) -> usize {
     // we can use the table but it's not useful at all
     // I implemented if for consistency with all the other codes
     if USE_TABLE {
@@ -105,6 +105,13 @@ pub fn len_unary<const USE_TABLE: bool>(value: u64) -> usize {
         }
     }
     (value + 1) as usize
+}
+
+/// Return how long the unary code for `value` will be
+///
+#[inline(always)]
+pub fn len_unary(value: u64) -> usize {
+    len_unary_param::<false>(value)
 }
 
 #[inline(always)]

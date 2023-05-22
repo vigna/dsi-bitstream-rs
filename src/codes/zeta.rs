@@ -34,7 +34,7 @@ pub fn len_zeta_param<const USE_TABLE: bool>(mut value: u64, k: u64) -> usize {
     let h = (fast_floor_log2(value) as u64) / k;
     let u = 1 << ((h + 1) * k);
     let l = 1 << (h * k);
-    len_unary::<false>(h) + len_minimal_binary(value - l, u - l)
+    len_unary(h) + len_minimal_binary(value - l, u - l)
 }
 
 #[inline(always)]
