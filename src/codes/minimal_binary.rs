@@ -77,12 +77,12 @@ pub trait MinimalBinaryWrite<BO: BitOrder>: BitWrite<BO> {
 
         if value < limit {
             self.write_bits(value, l as _)?;
-            return Ok(l as usize);
+            Ok(l as usize)
         } else {
             let to_write = value + limit;
             self.write_bits(to_write >> 1, l as _)?;
             self.write_bits(to_write & 1, 1)?;
-            return Ok((l + 1) as usize);
+            Ok((l + 1) as usize)
         }
     }
 }
