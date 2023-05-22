@@ -1,3 +1,39 @@
+/*
+ * SPDX-FileCopyrightText: 2023 Tommaso Fontana
+ * SPDX-FileCopyrightText: 2023 Inria
+ * SPDX-FileCopyrightText: 2023 Sebastiano Vigna
+ *
+ * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
+ */
+
+/*!
+
+Traits and structures in this file are of no interest for the standard
+user. They fix a default choice of usage of tables for reading and writing
+instantaneous codes. They make available easy-to-use parameterless
+functions like [`GammaRead::read_gamma`] and [`GammaWrite::write_gamma`].,
+as opposed to the more general [`GammaReadParam::read_gamma_param`] and
+[`GammaWriteParam::write_gamma_param`].
+
+These choices work well across several architectures:
+if you thing they are not good for yours, we suggest to run
+``
+./python/bench_code_tables_read.py | ./python/plot_code_tables_read.py
+./python/bench_code_tables_write.py | ./python/plot_code_tables_write.py
+``
+These scripts will generate graph displaying the speed of reads and
+write under different table sizes (or absence of tables) and layout
+of tables (two separated arrays, or merged in a single array).
+
+By writing another implementation similar to the one in this file
+you can only choose whether to use tables or not,
+and in particular for δ codes you can choose also whether to use
+table to decode the initial γ code. To change the other choices
+you need to run `./python/gen_code_tables.py` after changing
+the values in the function `generate_default_tables()`.
+
+*/
+
 use crate::backends::*;
 use crate::codes::*;
 use crate::traits::*;
