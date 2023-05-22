@@ -6,14 +6,31 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
-use crate::codes::unary_tables;
 use crate::traits::*;
+use crate::{codes::unary_tables, prelude::DeltaRead};
 use anyhow::{bail, Context, Result};
+
+//pub struct DefaultCodes;
+//impl CodesImpl for DefaultCodes {}
+/*
+pub trait DeltaReadB {
+    fn delta_readb(&self) -> usize;
+}
+
+impl<E: BitOrder, BW: Word, WR: WordRead + Clone> DeltaReadB
+    for BufferedBitStreamRead<E, BW, WR, DefaultCodes>
+{
+    fn delta_readb(&self) -> usize {
+        self.delta_read_param::<false, true>()
+    }
+}*/
 
 /// A BitStream built uppon a generic [`WordRead`] that caches the read words
 /// in a buffer
 #[derive(Debug)]
-pub struct BufferedBitStreamRead<E: BitOrder, BW: Word, WR: WordRead> {
+pub struct BufferedBitStreamRead<E: BitOrder, BW: Word, WR: WordRead>
+//, DC: CodesImpl = DefaultCodes>
+{
     /// The backend that is used to read the words to fill the buffer.
     backend: WR,
     /// The bit buffer (at most 2 words) that is used to read the codes. It is never full.
@@ -22,6 +39,7 @@ pub struct BufferedBitStreamRead<E: BitOrder, BW: Word, WR: WordRead> {
     valid_bits: usize,
     /// Just needed to specify the BitOrder.
     _marker: core::marker::PhantomData<E>,
+    //    _marker_defaul_codes: core::marker::PhantomData<DC>,
 }
 
 impl<E: BitOrder, BW: Word, WR: WordRead + Clone> core::clone::Clone

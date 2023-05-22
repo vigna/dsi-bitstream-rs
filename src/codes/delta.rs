@@ -31,7 +31,12 @@ pub fn len_delta<const USE_TABLE: bool>(value: u64) -> usize {
 }
 
 /// Trait for objects that can read Delta codes
-pub trait DeltaRead<BO: BitOrder>: GammaRead<BO> {
+pub trait DeltaRead<
+    BO: BitOrder,
+    const USE_DELTA_TABLE: bool = false,
+    const USE_GAMMA_TABLE: bool = true,
+>: GammaRead<BO>
+{
     /// Read a delta code from the stream.
     ///
     /// `USE_TABLE` enables or disables the use of pre-computed tables
@@ -40,13 +45,15 @@ pub trait DeltaRead<BO: BitOrder>: GammaRead<BO> {
     /// # Errors
     /// This function fails only if the BitRead backend has problems reading
     /// bits, as when the stream ended unexpectedly
-    fn read_delta<const USE_TABLE: bool, const USE_GAMMA_TABLE: bool>(&mut self) -> Result<u64>;
+    fn read_delta(&mut self) -> Result<u64>;
 }
 
-impl<B: GammaRead<BE>> DeltaRead<BE> for B {
+impl<B: GammaRead<BE>, const USE_DELTA_TABLE: bool, const USE_GAMMA_TABLE: bool>
+    DeltaRead<BE, USE_DELTA_TABLE, USE_GAMMA_TABLE> for B
+{
     #[inline]
-    fn read_delta<const USE_TABLE: bool, const USE_GAMMA_TABLE: bool>(&mut self) -> Result<u64> {
-        if USE_TABLE {
+    fn read_delta(&mut self) -> Result<u64> {
+        if USE_DELTA_TABLE {
             if let Some(res) = delta_tables::read_table_be(self)? {
                 return Ok(res);
             }
@@ -54,10 +61,12 @@ impl<B: GammaRead<BE>> DeltaRead<BE> for B {
         default_read_delta::<BE, _, USE_GAMMA_TABLE>(self)
     }
 }
-impl<B: GammaRead<LE>> DeltaRead<LE> for B {
+impl<B: GammaRead<LE>, const USE_DELTA_TABLE: bool, const USE_GAMMA_TABLE: bool>
+    DeltaRead<LE, USE_DELTA_TABLE, USE_GAMMA_TABLE> for B
+{
     #[inline]
-    fn read_delta<const USE_TABLE: bool, const USE_GAMMA_TABLE: bool>(&mut self) -> Result<u64> {
-        if USE_TABLE {
+    fn read_delta(&mut self) -> Result<u64> {
+        if USE_DELTA_TABLE {
             if let Some(res) = delta_tables::read_table_le(self)? {
                 return Ok(res);
             }
