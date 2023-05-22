@@ -709,7 +709,7 @@ def generate_default_tables():
         merged_table=merged_table,
     )
     gen_zeta(
-        read_bits=12, 
+        read_bits=12,
         write_max_val=1023,
         k=3,
         merged_table=merged_table,
