@@ -16,6 +16,8 @@ mod file_backend;
 #[cfg(feature = "std")]
 pub use file_backend::*;
 
+mod codes_params;
+
 mod unbuffered_bit_stream_reader;
 pub use unbuffered_bit_stream_reader::UnbufferedBitStreamRead;
 

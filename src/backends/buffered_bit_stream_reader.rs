@@ -6,6 +6,7 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
+use crate::backends::codes_params::{DefaultReadParams, ReadCodesParams};
 use crate::codes::unary_tables;
 use crate::traits::*;
 use anyhow::{bail, Context, Result};
@@ -13,7 +14,12 @@ use anyhow::{bail, Context, Result};
 /// A BitStream built uppon a generic [`WordRead`] that caches the read words
 /// in a buffer
 #[derive(Debug)]
-pub struct BufferedBitStreamRead<E: BitOrder, BW: Word, WR: WordRead> {
+pub struct BufferedBitStreamRead<
+    E: BitOrder,
+    BW: Word,
+    WR: WordRead,
+    DC: ReadCodesParams = DefaultReadParams,
+> {
     /// The backend that is used to read the words to fill the buffer.
     backend: WR,
     /// The bit buffer (at most 2 words) that is used to read the codes. It is never full.
@@ -21,11 +27,13 @@ pub struct BufferedBitStreamRead<E: BitOrder, BW: Word, WR: WordRead> {
     /// Number of bits valid left in the buffer. It is always smaller than `BW::BITS`.
     valid_bits: usize,
     /// Just needed to specify the BitOrder.
-    _marker: core::marker::PhantomData<E>,
+    _marker_bitorder: core::marker::PhantomData<E>,
+    /// Just needed to specify the code parameters.
+    _marker_default_codes: core::marker::PhantomData<DC>,
 }
 
-impl<E: BitOrder, BW: Word, WR: WordRead + Clone> core::clone::Clone
-    for BufferedBitStreamRead<E, BW, WR>
+impl<E: BitOrder, BW: Word, WR: WordRead + Clone, DC: ReadCodesParams> core::clone::Clone
+    for BufferedBitStreamRead<E, BW, WR, DC>
 {
     // No need to copy the buffer
     // TODO!: think about how to make a lightweight clone
@@ -34,12 +42,15 @@ impl<E: BitOrder, BW: Word, WR: WordRead + Clone> core::clone::Clone
             backend: self.backend.clone(),
             buffer: BW::ZERO,
             valid_bits: 0,
-            _marker: core::marker::PhantomData::default(),
+            _marker_bitorder: core::marker::PhantomData::default(),
+            _marker_default_codes: core::marker::PhantomData::default(),
         }
     }
 }
 
-impl<E: BitOrder, BW: Word, WR: WordRead> BufferedBitStreamRead<E, BW, WR> {
+impl<E: BitOrder, BW: Word, WR: WordRead, DC: ReadCodesParams>
+    BufferedBitStreamRead<E, BW, WR, DC>
+{
     /// Create a new [`BufferedBitStreamRead`] on a generic backend
     ///
     /// ### Example
@@ -55,12 +66,13 @@ impl<E: BitOrder, BW: Word, WR: WordRead> BufferedBitStreamRead<E, BW, WR> {
             backend,
             buffer: BW::ZERO,
             valid_bits: 0,
-            _marker: core::marker::PhantomData::default(),
+            _marker_bitorder: core::marker::PhantomData::default(),
+            _marker_default_codes: core::marker::PhantomData::default(),
         }
     }
 }
 
-impl<BW: Word, WR: WordRead> BufferedBitStreamRead<BE, BW, WR>
+impl<BW: Word, WR: WordRead, DC: ReadCodesParams> BufferedBitStreamRead<BE, BW, WR, DC>
 where
     WR::Word: UpcastableInto<BW>,
 {
@@ -86,7 +98,8 @@ where
     }
 }
 
-impl<BW: Word, WR: WordRead + WordStream> BitSeek for BufferedBitStreamRead<BE, BW, WR>
+impl<BW: Word, WR: WordRead + WordStream, DC: ReadCodesParams> BitSeek
+    for BufferedBitStreamRead<BE, BW, WR, DC>
 where
     WR::Word: UpcastableInto<BW>,
 {
@@ -112,7 +125,8 @@ where
     }
 }
 
-impl<BW: Word, WR: WordRead> BitRead<BE> for BufferedBitStreamRead<BE, BW, WR>
+impl<BW: Word, WR: WordRead, DC: ReadCodesParams> BitRead<BE>
+    for BufferedBitStreamRead<BE, BW, WR, DC>
 where
     BW: DowncastableInto<WR::Word> + CastableInto<u64>,
     WR::Word: UpcastableInto<BW> + UpcastableInto<u64>,
@@ -217,7 +231,7 @@ where
     }
 
     #[inline]
-    fn read_unary<const USE_TABLE: bool>(&mut self) -> Result<u64> {
+    fn read_unary_param<const USE_TABLE: bool>(&mut self) -> Result<u64> {
         if USE_TABLE {
             if let Some(res) = unary_tables::read_table_be(self)? {
                 return Ok(res);
@@ -247,7 +261,7 @@ where
     }
 }
 
-impl<BW: Word, WR: WordRead> BufferedBitStreamRead<LE, BW, WR>
+impl<BW: Word, WR: WordRead, DC: ReadCodesParams> BufferedBitStreamRead<LE, BW, WR, DC>
 where
     WR::Word: UpcastableInto<BW>,
 {
@@ -273,7 +287,8 @@ where
     }
 }
 
-impl<BW: Word, WR: WordRead + WordStream> BitSeek for BufferedBitStreamRead<LE, BW, WR>
+impl<BW: Word, WR: WordRead + WordStream, DC: ReadCodesParams> BitSeek
+    for BufferedBitStreamRead<LE, BW, WR, DC>
 where
     WR::Word: UpcastableInto<BW>,
 {
@@ -299,7 +314,8 @@ where
     }
 }
 
-impl<BW: Word, WR: WordRead> BitRead<LE> for BufferedBitStreamRead<LE, BW, WR>
+impl<BW: Word, WR: WordRead, DC: ReadCodesParams> BitRead<LE>
+    for BufferedBitStreamRead<LE, BW, WR, DC>
 where
     BW: DowncastableInto<WR::Word> + CastableInto<u64>,
     WR::Word: UpcastableInto<BW> + UpcastableInto<u64>,
@@ -407,7 +423,7 @@ where
     }
 
     #[inline]
-    fn read_unary<const USE_TABLE: bool>(&mut self) -> Result<u64> {
+    fn read_unary_param<const USE_TABLE: bool>(&mut self) -> Result<u64> {
         if USE_TABLE {
             if let Some(res) = unary_tables::read_table_le(self)? {
                 return Ok(res);

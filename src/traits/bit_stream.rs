@@ -66,7 +66,7 @@ pub trait BitRead<BO: BitOrder> {
     /// # Errors
     /// This function return an error if we cannot read the unary code, this
     /// usually happens if we finished the stream.
-    fn read_unary<const USE_TABLE: bool>(&mut self) -> Result<u64> {
+    fn read_unary_param<const USE_TABLE: bool>(&mut self) -> Result<u64> {
         let mut count = 0;
         loop {
             let bit = self.read_bits(1)?;
@@ -75,6 +75,15 @@ pub trait BitRead<BO: BitOrder> {
             }
             count += 1;
         }
+    }
+    /// Read an unary code
+    ///
+    /// # Errors
+    /// This function return an error if we cannot read the unary code, this
+    /// usually happens if we finished the stream.
+    #[inline(always)]
+    fn read_unary(&mut self) -> Result<u64> {
+        self.read_unary_param::<false>()
     }
 }
 
@@ -100,13 +109,33 @@ pub trait BitWrite<BO: BitOrder> {
     /// # Errors
     /// This function return an error if we cannot write the unary code, this
     /// usually happens if we finished the stream.
-    fn write_unary<const USE_TABLE: bool>(&mut self, mut value: u64) -> Result<usize> {
+    fn write_unary_param<const USE_TABLE: bool>(&mut self, mut value: u64) -> Result<usize> {
         while value > 0 {
             self.write_bits(0, 1)?;
             value -= 1;
         }
         self.write_bits(1, 1)?;
         Ok((value + 1) as usize)
+    }
+
+    /// Write `value` as an unary code to the stream
+    ///
+    /// # Errors
+    /// This function return an error if we cannot write the unary code, this
+    /// usually happens if we finished the stream.
+    #[inline(always)]
+    fn write_unary(&mut self, value: u64) -> Result<()> {
+        self.write_unary_param::<false>(value)
+    }
+
+    /// Write `value` as an unary code to the stream
+    ///
+    /// # Errors
+    /// This function return an error if we cannot write the unary code, this
+    /// usually happens if we finished the stream.
+    #[inline(always)]
+    fn write_unary(&mut self, value: u64) -> Result<()> {
+        self.write_unary_param::<false>(value)
     }
 }
 

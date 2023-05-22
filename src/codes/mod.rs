@@ -70,16 +70,16 @@
 
 mod gamma;
 
-pub use gamma::{len_gamma, GammaRead, GammaWrite};
+pub use gamma::{len_gamma, GammaRead, GammaReadParam, GammaWrite, GammaWriteParam};
 
 mod delta;
-pub use delta::{len_delta, DeltaRead, DeltaWrite};
+pub use delta::{len_delta, DeltaRead, DeltaReadParam, DeltaWrite, DeltaWriteParam};
 
 mod minimal_binary;
 pub use minimal_binary::{len_minimal_binary, MinimalBinaryRead, MinimalBinaryWrite};
 
 mod zeta;
-pub use zeta::{len_zeta, ZetaRead, ZetaWrite};
+pub use zeta::{len_zeta, ZetaRead, ZetaReadParam, ZetaWrite, ZetaWriteParam};
 
 pub mod delta_tables;
 pub mod gamma_tables;

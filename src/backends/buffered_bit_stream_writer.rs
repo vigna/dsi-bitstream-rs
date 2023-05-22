@@ -6,13 +6,18 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
+use crate::backends::codes_params::{DefaultWriteParams, WriteCodesParams};
 use crate::codes::unary_tables;
 use crate::traits::*;
 use anyhow::{bail, Result};
 
 /// An implementation of [`BitWrite`] on a generic [`WordWrite`]
 #[derive(Debug)]
-pub struct BufferedBitStreamWrite<BO: BBSWDrop<WR>, WR: WordWrite> {
+pub struct BufferedBitStreamWrite<
+    BO: BBSWDrop<WR>,
+    WR: WordWrite,
+    DC: WriteCodesParams = DefaultWriteParams,
+> {
     /// The backend used to write words to
     backend: WR,
     /// The buffer where we store code writes until we have a word worth of bits
@@ -21,7 +26,9 @@ pub struct BufferedBitStreamWrite<BO: BBSWDrop<WR>, WR: WordWrite> {
     /// written to be backend
     bits_in_buffer: usize,
     /// make the compiler happy :)
-    _marker: core::marker::PhantomData<BO>,
+    _marker_bitorder: core::marker::PhantomData<BO>,
+    /// Just needed to specify the code parameters.
+    _marker_default_codes: core::marker::PhantomData<DC>,
 }
 
 impl<BO: BBSWDrop<WR>, WR: WordWrite> BufferedBitStreamWrite<BO, WR> {
@@ -31,7 +38,8 @@ impl<BO: BBSWDrop<WR>, WR: WordWrite> BufferedBitStreamWrite<BO, WR> {
             backend,
             buffer: 0,
             bits_in_buffer: 0,
-            _marker: core::marker::PhantomData::default(),
+            _marker_bitorder: core::marker::PhantomData::default(),
+            _marker_default_codes: core::marker::PhantomData::default(),
         }
     }
 
@@ -116,7 +124,7 @@ impl<WR: WordWrite<Word = u64>> BitWrite<BE> for BufferedBitStreamWrite<BE, WR> 
 
     #[inline]
     #[allow(clippy::collapsible_if)]
-    fn write_unary<const USE_TABLE: bool>(&mut self, value: u64) -> Result<usize> {
+    fn write_unary_param<const USE_TABLE: bool>(&mut self, value: u64) -> Result<(usize)> {
         debug_assert_ne!(value, u64::MAX);
         if USE_TABLE {
             if let Some(len) = unary_tables::write_table_be(self, value)? {
@@ -213,7 +221,7 @@ impl<WR: WordWrite<Word = u64>> BitWrite<LE> for BufferedBitStreamWrite<LE, WR> 
 
     #[inline]
     #[allow(clippy::collapsible_if)]
-    fn write_unary<const USE_TABLE: bool>(&mut self, value: u64) -> Result<usize> {
+    fn write_unary_param<const USE_TABLE: bool>(&mut self, value: u64) -> Result<(usize)> {
         debug_assert_ne!(value, u64::MAX);
         if USE_TABLE {
             if let Some(len) = unary_tables::write_table_le(self, value)? {
@@ -270,16 +278,16 @@ fn test_buffered_bit_stream_writer() {
     const ITER: u64 = 128;
 
     for i in 0..ITER {
-        big.write_gamma::<false>(i).unwrap();
-        little.write_gamma::<false>(i).unwrap();
-        big.write_gamma::<true>(i).unwrap();
-        little.write_gamma::<true>(i).unwrap();
+        big.write_gamma(i).unwrap();
+        little.write_gamma(i).unwrap();
+        big.write_gamma(i).unwrap();
+        little.write_gamma(i).unwrap();
         big.write_bits(1, r.gen_range(1..=64));
         little.write_bits(1, r.gen_range(1..=64));
         big.write_unary::<false>(r.gen_range(0..=1024));
         little.write_unary::<false>(r.gen_range(0..=1024));
-        big.write_unary::<true>(r.gen_range(0..=1024));
-        little.write_unary::<true>(r.gen_range(0..=1024));
+        big.write_unary(r.gen_range(0..=1024));
+        little.write_unary(r.gen_range(0..=1024));
     }
 
     drop(big);

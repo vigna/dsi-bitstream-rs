@@ -35,8 +35,12 @@ pub fn len_gamma<const USE_TABLE: bool>(mut value: u64) -> usize {
     2 * number_of_blocks_to_write as usize + 1
 }
 
+pub trait GammaRead<BO: BitOrder>: GammaReadParam<BO> {
+    fn read_gamma(&mut self) -> Result<u64>;
+}
+
 /// Trait for objects that can read Gamma codes
-pub trait GammaRead<BO: BitOrder>: BitRead<BO> {
+pub trait GammaReadParam<BO: BitOrder>: BitRead<BO> {
     /// Read a gamma code from the stream.
     ///
     /// `USE_TABLE` enables or disables the use of pre-computed tables
@@ -45,7 +49,7 @@ pub trait GammaRead<BO: BitOrder>: BitRead<BO> {
     /// # Errors
     /// This function fails only if the BitRead backend has problems reading
     /// bits, as when the stream ended unexpectedly
-    fn read_gamma<const USE_TABLE: bool>(&mut self) -> Result<u64>;
+    fn read_gamma_param<const USE_TABLE: bool>(&mut self) -> Result<u64>;
 }
 
 /// Common part of the BE and LE impl
@@ -54,14 +58,14 @@ pub trait GammaRead<BO: BitOrder>: BitRead<BO> {
 /// Forward `read_unary` and `read_bits` errors.
 #[inline(always)]
 fn default_read_gamma<BO: BitOrder, B: BitRead<BO>>(backend: &mut B) -> Result<u64> {
-    let len = backend.read_unary::<false>()?;
+    let len = backend.read_unary_param::<false>()?;
     debug_assert!(len <= 64);
     Ok(backend.read_bits(len as usize)? + (1 << len) - 1)
 }
 
-impl<B: BitRead<BE>> GammaRead<BE> for B {
+impl<B: BitRead<BE>> GammaReadParam<BE> for B {
     #[inline]
-    fn read_gamma<const USE_TABLE: bool>(&mut self) -> Result<u64> {
+    fn read_gamma_param<const USE_TABLE: bool>(&mut self) -> Result<u64> {
         if USE_TABLE {
             if let Some(res) = gamma_tables::read_table_be(self)? {
                 return Ok(res);
@@ -70,9 +74,9 @@ impl<B: BitRead<BE>> GammaRead<BE> for B {
         default_read_gamma(self)
     }
 }
-impl<B: BitRead<LE>> GammaRead<LE> for B {
+impl<B: BitRead<LE>> GammaReadParam<LE> for B {
     #[inline]
-    fn read_gamma<const USE_TABLE: bool>(&mut self) -> Result<u64> {
+    fn read_gamma_param<const USE_TABLE: bool>(&mut self) -> Result<u64> {
         if USE_TABLE {
             if let Some(res) = gamma_tables::read_table_le(self)? {
                 return Ok(res);
@@ -82,9 +86,13 @@ impl<B: BitRead<LE>> GammaRead<LE> for B {
     }
 }
 
+pub trait GammaWrite<BO: BitOrder>: GammaWriteParam<BO> {
+    fn write_gamma(&mut self, value: u64) -> Result<()>;
+}
+
 /// Trait for objects that can write Gamma codes
-pub trait GammaWrite<BO: BitOrder>: BitWrite<BO> {
-    /// Write a value on the stream and return the number of bits written.
+pub trait GammaWriteParam<BO: BitOrder>: BitWrite<BO> {
+    /// Write a value on the stream
     ///
     /// `USE_TABLE` enables or disables the use of pre-computed tables
     /// for decoding
@@ -92,13 +100,13 @@ pub trait GammaWrite<BO: BitOrder>: BitWrite<BO> {
     /// # Errors
     /// This function fails only if the BitWrite backend has problems writing
     /// bits, as when the stream ended unexpectedly
-    fn write_gamma<const USE_TABLE: bool>(&mut self, value: u64) -> Result<usize>;
+    fn write_gamma_param<const USE_TABLE: bool>(&mut self, value: u64) -> Result<()>;
 }
 
-impl<B: BitWrite<BE>> GammaWrite<BE> for B {
+impl<B: BitWrite<BE>> GammaWriteParam<BE> for B {
     #[inline]
     #[allow(clippy::collapsible_if)]
-    fn write_gamma<const USE_TABLE: bool>(&mut self, value: u64) -> Result<usize> {
+    fn write_gamma_param<const USE_TABLE: bool>(&mut self, value: u64) -> Result<()> {
         if USE_TABLE {
             if let Some(len) = gamma_tables::write_table_be(self, value)? {
                 return Ok(len);
@@ -108,10 +116,10 @@ impl<B: BitWrite<BE>> GammaWrite<BE> for B {
     }
 }
 
-impl<B: BitWrite<LE>> GammaWrite<LE> for B {
+impl<B: BitWrite<LE>> GammaWriteParam<LE> for B {
     #[inline]
     #[allow(clippy::collapsible_if)]
-    fn write_gamma<const USE_TABLE: bool>(&mut self, value: u64) -> Result<usize> {
+    fn write_gamma_param<const USE_TABLE: bool>(&mut self, value: u64) -> Result<usize> {
         if USE_TABLE {
             if let Some(len) = gamma_tables::write_table_le(self, value)? {
                 return Ok(len);
