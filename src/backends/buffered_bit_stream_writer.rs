@@ -14,9 +14,9 @@ use anyhow::{bail, Result};
 /// An implementation of [`BitWrite`] on a generic [`WordWrite`]
 #[derive(Debug)]
 pub struct BufferedBitStreamWrite<
-    BO: BBSWDrop<WR>,
+    BO: BBSWDrop<WR, WCP>,
     WR: WordWrite,
-    DC: WriteCodesParams = DefaultWriteParams,
+    WCP: WriteCodesParams = DefaultWriteParams,
 > {
     /// The backend used to write words to
     backend: WR,
@@ -28,10 +28,12 @@ pub struct BufferedBitStreamWrite<
     /// make the compiler happy :)
     _marker_bitorder: core::marker::PhantomData<BO>,
     /// Just needed to specify the code parameters.
-    _marker_default_codes: core::marker::PhantomData<DC>,
+    _marker_default_codes: core::marker::PhantomData<WCP>,
 }
 
-impl<BO: BBSWDrop<WR>, WR: WordWrite> BufferedBitStreamWrite<BO, WR> {
+impl<BO: BBSWDrop<WR, WCP>, WR: WordWrite, WCP: WriteCodesParams>
+    BufferedBitStreamWrite<BO, WR, WCP>
+{
     /// Create a new [`BufferedBitStreamWrite`] from a backend word writer
     pub fn new(backend: WR) -> Self {
         Self {
@@ -50,7 +52,9 @@ impl<BO: BBSWDrop<WR>, WR: WordWrite> BufferedBitStreamWrite<BO, WR> {
     }
 }
 
-impl<BO: BBSWDrop<WR>, WR: WordWrite> core::ops::Drop for BufferedBitStreamWrite<BO, WR> {
+impl<BO: BBSWDrop<WR, WCP>, WR: WordWrite, WCP: WriteCodesParams> core::ops::Drop
+    for BufferedBitStreamWrite<BO, WR, WCP>
+{
     fn drop(&mut self) {
         // During a drop we can't save anything if it goes bad :/
         let _ = BO::drop(self);
@@ -62,14 +66,14 @@ impl<BO: BBSWDrop<WR>, WR: WordWrite> core::ops::Drop for BufferedBitStreamWrite
 /// private traits in public defs, an user should never need to implement this.
 ///
 /// I discussed this [here](https://users.rust-lang.org/t/on-generic-associated-enum-and-type-comparisons/92072).
-pub trait BBSWDrop<WR: WordWrite>: Sized + BitOrder {
+pub trait BBSWDrop<WR: WordWrite, WCP: WriteCodesParams>: Sized + BitOrder {
     /// handle the drop
-    fn drop(data: &mut BufferedBitStreamWrite<Self, WR>) -> Result<()>;
+    fn drop(data: &mut BufferedBitStreamWrite<Self, WR, WCP>) -> Result<()>;
 }
 
-impl<WR: WordWrite<Word = u64>> BBSWDrop<WR> for BE {
+impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BBSWDrop<WR, WCP> for BE {
     #[inline]
-    fn drop(data: &mut BufferedBitStreamWrite<Self, WR>) -> Result<()> {
+    fn drop(data: &mut BufferedBitStreamWrite<Self, WR, WCP>) -> Result<()> {
         data.partial_flush()?;
         if data.bits_in_buffer > 0 {
             let mut word = data.buffer as u64;
@@ -81,7 +85,9 @@ impl<WR: WordWrite<Word = u64>> BBSWDrop<WR> for BE {
     }
 }
 
-impl<WR: WordWrite<Word = u64>> BitWriteBuffered<BE> for BufferedBitStreamWrite<BE, WR> {
+impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BitWriteBuffered<BE>
+    for BufferedBitStreamWrite<BE, WR, WCP>
+{
     #[inline]
     fn partial_flush(&mut self) -> Result<()> {
         if self.bits_in_buffer < 64 {
@@ -94,7 +100,9 @@ impl<WR: WordWrite<Word = u64>> BitWriteBuffered<BE> for BufferedBitStreamWrite<
     }
 }
 
-impl<WR: WordWrite<Word = u64>> BitWrite<BE> for BufferedBitStreamWrite<BE, WR> {
+impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BitWrite<BE>
+    for BufferedBitStreamWrite<BE, WR, WCP>
+{
     #[inline]
     fn write_bits(&mut self, value: u64, n_bits: usize) -> Result<usize> {
         if n_bits == 0 {
@@ -124,7 +132,7 @@ impl<WR: WordWrite<Word = u64>> BitWrite<BE> for BufferedBitStreamWrite<BE, WR> 
 
     #[inline]
     #[allow(clippy::collapsible_if)]
-    fn write_unary_param<const USE_TABLE: bool>(&mut self, value: u64) -> Result<(usize)> {
+    fn write_unary_param<const USE_TABLE: bool>(&mut self, value: u64) -> Result<usize> {
         debug_assert_ne!(value, u64::MAX);
         if USE_TABLE {
             if let Some(len) = unary_tables::write_table_be(self, value)? {
@@ -162,9 +170,9 @@ impl<WR: WordWrite<Word = u64>> BitWrite<BE> for BufferedBitStreamWrite<BE, WR> 
     }
 }
 
-impl<WR: WordWrite<Word = u64>> BBSWDrop<WR> for LE {
+impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BBSWDrop<WR, WCP> for LE {
     #[inline]
-    fn drop(data: &mut BufferedBitStreamWrite<Self, WR>) -> Result<()> {
+    fn drop(data: &mut BufferedBitStreamWrite<Self, WR, WCP>) -> Result<()> {
         data.partial_flush()?;
         if data.bits_in_buffer > 0 {
             let mut word = (data.buffer >> 64) as u64;
@@ -176,7 +184,9 @@ impl<WR: WordWrite<Word = u64>> BBSWDrop<WR> for LE {
     }
 }
 
-impl<WR: WordWrite<Word = u64>> BitWriteBuffered<LE> for BufferedBitStreamWrite<LE, WR> {
+impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BitWriteBuffered<LE>
+    for BufferedBitStreamWrite<LE, WR, WCP>
+{
     #[inline]
     fn partial_flush(&mut self) -> Result<()> {
         if self.bits_in_buffer < 64 {
@@ -189,7 +199,9 @@ impl<WR: WordWrite<Word = u64>> BitWriteBuffered<LE> for BufferedBitStreamWrite<
     }
 }
 
-impl<WR: WordWrite<Word = u64>> BitWrite<LE> for BufferedBitStreamWrite<LE, WR> {
+impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BitWrite<LE>
+    for BufferedBitStreamWrite<LE, WR, WCP>
+{
     #[inline]
     fn write_bits(&mut self, value: u64, n_bits: usize) -> Result<usize> {
         if n_bits == 0 {
@@ -221,7 +233,7 @@ impl<WR: WordWrite<Word = u64>> BitWrite<LE> for BufferedBitStreamWrite<LE, WR> 
 
     #[inline]
     #[allow(clippy::collapsible_if)]
-    fn write_unary_param<const USE_TABLE: bool>(&mut self, value: u64) -> Result<(usize)> {
+    fn write_unary_param<const USE_TABLE: bool>(&mut self, value: u64) -> Result<usize> {
         debug_assert_ne!(value, u64::MAX);
         if USE_TABLE {
             if let Some(len) = unary_tables::write_table_le(self, value)? {
@@ -284,8 +296,8 @@ fn test_buffered_bit_stream_writer() {
         little.write_gamma(i).unwrap();
         big.write_bits(1, r.gen_range(1..=64));
         little.write_bits(1, r.gen_range(1..=64));
-        big.write_unary::<false>(r.gen_range(0..=1024));
-        little.write_unary::<false>(r.gen_range(0..=1024));
+        big.write_unary_param::<true>(r.gen_range(0..=1024));
+        little.write_unary_param::<true>(r.gen_range(0..=1024));
         big.write_unary(r.gen_range(0..=1024));
         little.write_unary(r.gen_range(0..=1024));
     }

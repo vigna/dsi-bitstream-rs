@@ -87,7 +87,7 @@ impl<B: BitRead<LE>> GammaReadParam<LE> for B {
 }
 
 pub trait GammaWrite<BO: BitOrder>: GammaWriteParam<BO> {
-    fn write_gamma(&mut self, value: u64) -> Result<()>;
+    fn write_gamma(&mut self, value: u64) -> Result<usize>;
 }
 
 /// Trait for objects that can write Gamma codes
@@ -100,13 +100,13 @@ pub trait GammaWriteParam<BO: BitOrder>: BitWrite<BO> {
     /// # Errors
     /// This function fails only if the BitWrite backend has problems writing
     /// bits, as when the stream ended unexpectedly
-    fn write_gamma_param<const USE_TABLE: bool>(&mut self, value: u64) -> Result<()>;
+    fn write_gamma_param<const USE_TABLE: bool>(&mut self, value: u64) -> Result<usize>;
 }
 
 impl<B: BitWrite<BE>> GammaWriteParam<BE> for B {
     #[inline]
     #[allow(clippy::collapsible_if)]
-    fn write_gamma_param<const USE_TABLE: bool>(&mut self, value: u64) -> Result<()> {
+    fn write_gamma_param<const USE_TABLE: bool>(&mut self, value: u64) -> Result<usize> {
         if USE_TABLE {
             if let Some(len) = gamma_tables::write_table_be(self, value)? {
                 return Ok(len);
@@ -144,6 +144,8 @@ fn default_write_gamma<BO: BitOrder, B: BitWrite<BO>>(
     // remove the most significant 1
     let short_value = value - (1 << number_of_bits_to_write);
     // Write the code
-    Ok(backend.write_unary::<false>(number_of_bits_to_write as _)?
-        + backend.write_bits(short_value, number_of_bits_to_write as usize)?)
+    Ok(
+        backend.write_unary_param::<false>(number_of_bits_to_write as _)?
+            + backend.write_bits(short_value, number_of_bits_to_write as usize)?,
+    )
 }

@@ -18,7 +18,7 @@ pub struct BufferedBitStreamRead<
     E: BitOrder,
     BW: Word,
     WR: WordRead,
-    DC: ReadCodesParams = DefaultReadParams,
+    RCP: ReadCodesParams = DefaultReadParams,
 > {
     /// The backend that is used to read the words to fill the buffer.
     backend: WR,
@@ -29,11 +29,11 @@ pub struct BufferedBitStreamRead<
     /// Just needed to specify the BitOrder.
     _marker_bitorder: core::marker::PhantomData<E>,
     /// Just needed to specify the code parameters.
-    _marker_default_codes: core::marker::PhantomData<DC>,
+    _marker_default_codes: core::marker::PhantomData<RCP>,
 }
 
-impl<E: BitOrder, BW: Word, WR: WordRead + Clone, DC: ReadCodesParams> core::clone::Clone
-    for BufferedBitStreamRead<E, BW, WR, DC>
+impl<E: BitOrder, BW: Word, WR: WordRead + Clone, RCP: ReadCodesParams> core::clone::Clone
+    for BufferedBitStreamRead<E, BW, WR, RCP>
 {
     // No need to copy the buffer
     // TODO!: think about how to make a lightweight clone
@@ -48,8 +48,8 @@ impl<E: BitOrder, BW: Word, WR: WordRead + Clone, DC: ReadCodesParams> core::clo
     }
 }
 
-impl<E: BitOrder, BW: Word, WR: WordRead, DC: ReadCodesParams>
-    BufferedBitStreamRead<E, BW, WR, DC>
+impl<E: BitOrder, BW: Word, WR: WordRead, RCP: ReadCodesParams>
+    BufferedBitStreamRead<E, BW, WR, RCP>
 {
     /// Create a new [`BufferedBitStreamRead`] on a generic backend
     ///
@@ -72,7 +72,7 @@ impl<E: BitOrder, BW: Word, WR: WordRead, DC: ReadCodesParams>
     }
 }
 
-impl<BW: Word, WR: WordRead, DC: ReadCodesParams> BufferedBitStreamRead<BE, BW, WR, DC>
+impl<BW: Word, WR: WordRead, RCP: ReadCodesParams> BufferedBitStreamRead<BE, BW, WR, RCP>
 where
     WR::Word: UpcastableInto<BW>,
 {
@@ -98,8 +98,8 @@ where
     }
 }
 
-impl<BW: Word, WR: WordRead + WordStream, DC: ReadCodesParams> BitSeek
-    for BufferedBitStreamRead<BE, BW, WR, DC>
+impl<BW: Word, WR: WordRead + WordStream, RCP: ReadCodesParams> BitSeek
+    for BufferedBitStreamRead<BE, BW, WR, RCP>
 where
     WR::Word: UpcastableInto<BW>,
 {
@@ -125,8 +125,8 @@ where
     }
 }
 
-impl<BW: Word, WR: WordRead, DC: ReadCodesParams> BitRead<BE>
-    for BufferedBitStreamRead<BE, BW, WR, DC>
+impl<BW: Word, WR: WordRead, RCP: ReadCodesParams> BitRead<BE>
+    for BufferedBitStreamRead<BE, BW, WR, RCP>
 where
     BW: DowncastableInto<WR::Word> + CastableInto<u64>,
     WR::Word: UpcastableInto<BW> + UpcastableInto<u64>,
@@ -261,7 +261,7 @@ where
     }
 }
 
-impl<BW: Word, WR: WordRead, DC: ReadCodesParams> BufferedBitStreamRead<LE, BW, WR, DC>
+impl<BW: Word, WR: WordRead, RCP: ReadCodesParams> BufferedBitStreamRead<LE, BW, WR, RCP>
 where
     WR::Word: UpcastableInto<BW>,
 {
@@ -287,8 +287,8 @@ where
     }
 }
 
-impl<BW: Word, WR: WordRead + WordStream, DC: ReadCodesParams> BitSeek
-    for BufferedBitStreamRead<LE, BW, WR, DC>
+impl<BW: Word, WR: WordRead + WordStream, RCP: ReadCodesParams> BitSeek
+    for BufferedBitStreamRead<LE, BW, WR, RCP>
 where
     WR::Word: UpcastableInto<BW>,
 {
@@ -314,8 +314,8 @@ where
     }
 }
 
-impl<BW: Word, WR: WordRead, DC: ReadCodesParams> BitRead<LE>
-    for BufferedBitStreamRead<LE, BW, WR, DC>
+impl<BW: Word, WR: WordRead, RCP: ReadCodesParams> BitRead<LE>
+    for BufferedBitStreamRead<LE, BW, WR, RCP>
 where
     BW: DowncastableInto<WR::Word> + CastableInto<u64>,
     WR::Word: UpcastableInto<BW> + UpcastableInto<u64>,

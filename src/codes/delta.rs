@@ -90,7 +90,7 @@ fn default_read_delta<BO: BitOrder, B: GammaReadParam<BO>, const USE_GAMMA_TABLE
 }
 
 pub trait DeltaWrite<BO: BitOrder>: DeltaWriteParam<BO> {
-    fn write_delta(&mut self, value: u64) -> Result<()>;
+    fn write_delta(&mut self, value: u64) -> Result<usize>;
 }
 
 /// Trait for objects that can write Delta codes
@@ -157,7 +157,7 @@ fn default_write_delta<BO: BitOrder, B: GammaWriteParam<BO>, const USE_GAMMA_TAB
     let short_value = value - (1 << number_of_bits_to_write);
     // Write the code
     Ok(
-        backend.write_gamma::<USE_GAMMA_TABLE>(number_of_bits_to_write as _)?
+        backend.write_gamma_param::<USE_GAMMA_TABLE>(number_of_bits_to_write as _)?
             + backend.write_bits(short_value, number_of_bits_to_write as usize)?,
     )
 }

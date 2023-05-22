@@ -109,35 +109,35 @@ impl WriteCodesParams for DefaultWriteParams {}
 
 macro_rules! impl_default_write_codes {
     ($($endianess:ident),*) => {$(
-        impl<DC: WriteCodesParams> GammaWrite<$endianess>
-            for BufferedBitStreamWrite<$endianess, DC>
+        impl<WR: WordWrite<Word = u64>, DC: WriteCodesParams> GammaWrite<$endianess>
+            for BufferedBitStreamWrite<$endianess, WR, DC>
         {
             #[inline(always)]
-            fn write_gamma(&mut self) -> Result<u64> {
-                self.write_gamma_param::<true>()
+            fn write_gamma(&mut self, value: u64) -> Result<usize> {
+                self.write_gamma_param::<true>(value)
             }
         }
 
-        impl<DC: WriteCodesParams> DeltaWrite<$endianess>
-            for BufferedBitStreamWrite<$endianess, DC>
+        impl<WR: WordWrite<Word = u64>, DC: WriteCodesParams> DeltaWrite<$endianess>
+            for BufferedBitStreamWrite<$endianess, WR, DC>
         {
             #[inline(always)]
-            fn write_delta(&mut self) -> Result<u64> {
-                self.write_delta_param::<true, true>()
+            fn write_delta(&mut self, value: u64) -> Result<usize> {
+                self.write_delta_param::<true, true>(value)
             }
         }
 
-        impl<DC: WriteCodesParams> ZetaWrite<$endianess>
-            for BufferedBitStreamWrite<$endianess, DC>
+        impl<WR: WordWrite<Word = u64>, DC: WriteCodesParams> ZetaWrite<$endianess>
+            for BufferedBitStreamWrite<$endianess, WR, DC>
         {
             #[inline(always)]
-            fn write_zeta(&mut self, k: u64) -> Result<u64> {
-                self.write_zeta_param::<true>(k)
+            fn write_zeta(&mut self, value: u64, k: u64) -> Result<usize> {
+                self.write_zeta_param::<true>(value, k)
             }
 
             #[inline(always)]
-            fn write_zeta3(&mut self) -> Result<u64> {
-                self.write_zeta3_param::<true>()
+            fn write_zeta3(&mut self, value: u64) -> Result<usize> {
+                self.write_zeta3_param::<true>(value)
             }
         }
 

@@ -124,17 +124,7 @@ pub trait BitWrite<BO: BitOrder> {
     /// This function return an error if we cannot write the unary code, this
     /// usually happens if we finished the stream.
     #[inline(always)]
-    fn write_unary(&mut self, value: u64) -> Result<()> {
-        self.write_unary_param::<false>(value)
-    }
-
-    /// Write `value` as an unary code to the stream
-    ///
-    /// # Errors
-    /// This function return an error if we cannot write the unary code, this
-    /// usually happens if we finished the stream.
-    #[inline(always)]
-    fn write_unary(&mut self, value: u64) -> Result<()> {
+    fn write_unary(&mut self, value: u64) -> Result<usize> {
         self.write_unary_param::<false>(value)
     }
 }
