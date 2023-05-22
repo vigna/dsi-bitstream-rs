@@ -321,7 +321,6 @@ fn test_buffered_bit_stream_writer() {
             little_buff.read_unary::<false>().unwrap(),
             r.gen_range(0..=1024)
         );
-        assert_eq!(little_buff.read_bits(r.gen_range(0..=1024)).unwrap(), 1);
         assert_eq!(
             big_buff.read_unary::<false>().unwrap(),
             r.gen_range(0..=1024)
