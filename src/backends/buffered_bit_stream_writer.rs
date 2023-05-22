@@ -280,7 +280,7 @@ impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BitWrite<LE>
 
 #[cfg(test)]
 #[test]
-fn test_buffered_bit_stream_writer() {
+fn test_buffered_bit_stream_writer() -> Result<(), anyhow::Error> {
     use super::MemWordWriteVec;
     use crate::{
         codes::{GammaRead, GammaWrite},
@@ -298,16 +298,16 @@ fn test_buffered_bit_stream_writer() {
     const ITER: u64 = 128;
 
     for i in 0..ITER {
-        big.write_gamma(i).unwrap();
-        little.write_gamma(i).unwrap();
-        big.write_gamma(i).unwrap();
-        little.write_gamma(i).unwrap();
-        big.write_bits(1, r.gen_range(1..=64));
-        little.write_bits(1, r.gen_range(1..=64));
-        big.write_unary_param::<true>(r.gen_range(0..=1024));
-        little.write_unary_param::<true>(r.gen_range(0..=1024));
-        big.write_unary(r.gen_range(0..=1024));
-        little.write_unary(r.gen_range(0..=1024));
+        big.write_gamma(i)?;
+        little.write_gamma(i)?;
+        big.write_gamma(i)?;
+        little.write_gamma(i)?;
+        big.write_bits(1, r.gen_range(1..=64))?;
+        little.write_bits(1, r.gen_range(1..=64))?;
+        big.write_unary_param::<true>(r.gen_range(0..=1024))?;
+        little.write_unary_param::<true>(r.gen_range(0..=1024))?;
+        big.write_unary(r.gen_range(0..=1024))?;
+        little.write_unary(r.gen_range(0..=1024))?;
     }
 
     drop(big);
@@ -335,15 +335,17 @@ fn test_buffered_bit_stream_writer() {
     let mut r = SmallRng::seed_from_u64(0);
 
     for i in 0..ITER {
-        assert_eq!(big_buff.read_gamma().unwrap(), i);
-        assert_eq!(little_buff.read_gamma().unwrap(), i);
-        assert_eq!(big_buff.read_gamma().unwrap(), i);
-        assert_eq!(little_buff.read_gamma().unwrap(), i);
-        assert_eq!(big_buff.read_bits(r.gen_range(1..=64)).unwrap(), 1);
-        assert_eq!(little_buff.read_bits(r.gen_range(1..=64)).unwrap(), 1);
-        assert_eq!(big_buff.read_unary().unwrap(), r.gen_range(0..=1024));
-        assert_eq!(little_buff.read_unary().unwrap(), r.gen_range(0..=1024));
-        assert_eq!(big_buff.read_unary().unwrap(), r.gen_range(0..=1024));
-        assert_eq!(little_buff.read_unary().unwrap(), r.gen_range(0..=1024));
+        assert_eq!(big_buff.read_gamma()?, i);
+        assert_eq!(little_buff.read_gamma()?, i);
+        assert_eq!(big_buff.read_gamma()?, i);
+        assert_eq!(little_buff.read_gamma()?, i);
+        assert_eq!(big_buff.read_bits(r.gen_range(1..=64))?, 1);
+        assert_eq!(little_buff.read_bits(r.gen_range(1..=64))?, 1);
+        assert_eq!(big_buff.read_unary()?, r.gen_range(0..=1024));
+        assert_eq!(little_buff.read_unary()?, r.gen_range(0..=1024));
+        assert_eq!(big_buff.read_unary()?, r.gen_range(0..=1024));
+        assert_eq!(little_buff.read_unary()?, r.gen_range(0..=1024));
     }
+
+    Ok(())
 }
