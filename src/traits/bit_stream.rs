@@ -86,25 +86,27 @@ pub trait BitRead<BO: BitOrder> {
 /// [`BitRead`]. Nothing stops someone to implement both [`BitRead`] and
 /// [`BitWrite`] for the same structure
 pub trait BitWrite<BO: BitOrder> {
-    /// Write the lowest `n_bits` of value to the steam
+    /// Write the lowest `n_bits` of value to the steam and return the number of
+    /// bits written.
     ///
     /// # Errors
     /// This function return an error if we cannot write `n_bits`, this usually
     /// happens if we finished the stream.
-    fn write_bits(&mut self, value: u64, n_bits: usize) -> Result<()>;
+    fn write_bits(&mut self, value: u64, n_bits: usize) -> Result<usize>;
 
-    /// Write `value` as an unary code to the stream
+    /// Write `value` as an unary code to the stream and return the number of
+    /// bits written.
     ///
     /// # Errors
     /// This function return an error if we cannot write the unary code, this
     /// usually happens if we finished the stream.
-    fn write_unary<const USE_TABLE: bool>(&mut self, mut value: u64) -> Result<()> {
+    fn write_unary<const USE_TABLE: bool>(&mut self, mut value: u64) -> Result<usize> {
         while value > 0 {
             self.write_bits(0, 1)?;
             value -= 1;
         }
         self.write_bits(1, 1)?;
-        Ok(())
+        Ok((value + 1) as usize)
     }
 }
 

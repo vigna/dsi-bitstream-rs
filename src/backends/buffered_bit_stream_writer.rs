@@ -88,9 +88,9 @@ impl<WR: WordWrite<Word = u64>> BitWriteBuffered<BE> for BufferedBitStreamWrite<
 
 impl<WR: WordWrite<Word = u64>> BitWrite<BE> for BufferedBitStreamWrite<BE, WR> {
     #[inline]
-    fn write_bits(&mut self, value: u64, n_bits: usize) -> Result<()> {
+    fn write_bits(&mut self, value: u64, n_bits: usize) -> Result<usize> {
         if n_bits == 0 {
-            return Ok(());
+            return Ok(0);
         }
 
         if n_bits > 64 {
@@ -111,16 +111,16 @@ impl<WR: WordWrite<Word = u64>> BitWrite<BE> for BufferedBitStreamWrite<BE, WR> 
         self.buffer <<= n_bits;
         self.buffer |= value as u128;
         self.bits_in_buffer += n_bits;
-        Ok(())
+        Ok(n_bits)
     }
 
     #[inline]
     #[allow(clippy::collapsible_if)]
-    fn write_unary<const USE_TABLE: bool>(&mut self, value: u64) -> Result<()> {
+    fn write_unary<const USE_TABLE: bool>(&mut self, value: u64) -> Result<usize> {
         debug_assert_ne!(value, u64::MAX);
         if USE_TABLE {
-            if unary_tables::write_table_be(self, value)? {
-                return Ok(());
+            if let Some(len) = unary_tables::write_table_be(self, value)? {
+                return Ok(len);
             }
         }
 
@@ -150,7 +150,7 @@ impl<WR: WordWrite<Word = u64>> BitWrite<BE> for BufferedBitStreamWrite<BE, WR> 
         self.buffer = self.buffer << (code_length - 1) << 1;
         self.buffer |= 1_u128;
 
-        Ok(())
+        Ok((value + 1) as usize)
     }
 }
 
@@ -183,9 +183,9 @@ impl<WR: WordWrite<Word = u64>> BitWriteBuffered<LE> for BufferedBitStreamWrite<
 
 impl<WR: WordWrite<Word = u64>> BitWrite<LE> for BufferedBitStreamWrite<LE, WR> {
     #[inline]
-    fn write_bits(&mut self, value: u64, n_bits: usize) -> Result<()> {
+    fn write_bits(&mut self, value: u64, n_bits: usize) -> Result<usize> {
         if n_bits == 0 {
-            return Ok(());
+            return Ok(0);
         }
 
         if n_bits > 64 {
@@ -208,16 +208,16 @@ impl<WR: WordWrite<Word = u64>> BitWrite<LE> for BufferedBitStreamWrite<LE, WR> 
         self.buffer |= (value as u128) << (128 - n_bits);
         self.bits_in_buffer += n_bits;
 
-        Ok(())
+        Ok(n_bits)
     }
 
     #[inline]
     #[allow(clippy::collapsible_if)]
-    fn write_unary<const USE_TABLE: bool>(&mut self, value: u64) -> Result<()> {
+    fn write_unary<const USE_TABLE: bool>(&mut self, value: u64) -> Result<usize> {
         debug_assert_ne!(value, u64::MAX);
         if USE_TABLE {
-            if unary_tables::write_table_le(self, value)? {
-                return Ok(());
+            if let Some(len) = unary_tables::write_table_le(self, value)? {
+                return Ok(len);
             }
         }
         let mut code_length = value + 1;
@@ -246,7 +246,7 @@ impl<WR: WordWrite<Word = u64>> BitWrite<LE> for BufferedBitStreamWrite<LE, WR> 
         self.buffer = self.buffer >> (code_length - 1) >> 1;
         self.buffer |= 1_u128 << 127;
 
-        Ok(())
+        Ok((value + 1) as usize)
     }
 }
 

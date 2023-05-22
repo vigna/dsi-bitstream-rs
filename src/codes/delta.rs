@@ -81,7 +81,7 @@ fn default_read_delta<BO: BitOrder, B: GammaRead<BO>, const USE_GAMMA_TABLE: boo
 
 /// Trait for objects that can write Delta codes
 pub trait DeltaWrite<BO: BitOrder>: GammaWrite<BO> {
-    /// Write a value on the stream
+    /// Write a value on the stream and return the number of bits written.
     ///
     /// `USE_TABLE` enables or disables the use of pre-computed tables
     /// for decoding
@@ -92,7 +92,7 @@ pub trait DeltaWrite<BO: BitOrder>: GammaWrite<BO> {
     fn write_delta<const USE_TABLE: bool, const USE_GAMMA_TABLE: bool>(
         &mut self,
         value: u64,
-    ) -> Result<()>;
+    ) -> Result<usize>;
 }
 
 impl<B: GammaWrite<BE>> DeltaWrite<BE> for B {
@@ -101,10 +101,10 @@ impl<B: GammaWrite<BE>> DeltaWrite<BE> for B {
     fn write_delta<const USE_TABLE: bool, const USE_GAMMA_TABLE: bool>(
         &mut self,
         value: u64,
-    ) -> Result<()> {
+    ) -> Result<usize> {
         if USE_TABLE {
-            if delta_tables::write_table_be(self, value)? {
-                return Ok(());
+            if let Some(len) = delta_tables::write_table_be(self, value)? {
+                return Ok(len);
             }
         }
         default_write_delta::<BE, _, USE_GAMMA_TABLE>(self, value)
@@ -117,10 +117,10 @@ impl<B: GammaWrite<LE>> DeltaWrite<LE> for B {
     fn write_delta<const USE_TABLE: bool, const USE_GAMMA_TABLE: bool>(
         &mut self,
         value: u64,
-    ) -> Result<()> {
+    ) -> Result<usize> {
         if USE_TABLE {
-            if delta_tables::write_table_le(self, value)? {
-                return Ok(());
+            if let Some(len) = delta_tables::write_table_le(self, value)? {
+                return Ok(len);
             }
         }
         default_write_delta::<LE, _, USE_GAMMA_TABLE>(self, value)
@@ -135,14 +135,15 @@ impl<B: GammaWrite<LE>> DeltaWrite<LE> for B {
 fn default_write_delta<BO: BitOrder, B: GammaWrite<BO>, const USE_GAMMA_TABLE: bool>(
     backend: &mut B,
     mut value: u64,
-) -> Result<()> {
+) -> Result<usize> {
     value += 1;
     let number_of_bits_to_write = fast_floor_log2(value);
     debug_assert!(number_of_bits_to_write <= u8::MAX as _);
     // remove the most significant 1
     let short_value = value - (1 << number_of_bits_to_write);
     // Write the code
-    backend.write_gamma::<USE_GAMMA_TABLE>(number_of_bits_to_write as _)?;
-    backend.write_bits(short_value, number_of_bits_to_write as usize)?;
-    Ok(())
+    Ok(
+        backend.write_gamma::<USE_GAMMA_TABLE>(number_of_bits_to_write as _)?
+            + backend.write_bits(short_value, number_of_bits_to_write as usize)?,
+    )
 }

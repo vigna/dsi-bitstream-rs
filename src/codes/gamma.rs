@@ -84,7 +84,7 @@ impl<B: BitRead<LE>> GammaRead<LE> for B {
 
 /// Trait for objects that can write Gamma codes
 pub trait GammaWrite<BO: BitOrder>: BitWrite<BO> {
-    /// Write a value on the stream
+    /// Write a value on the stream and return the number of bits written.
     ///
     /// `USE_TABLE` enables or disables the use of pre-computed tables
     /// for decoding
@@ -92,16 +92,16 @@ pub trait GammaWrite<BO: BitOrder>: BitWrite<BO> {
     /// # Errors
     /// This function fails only if the BitWrite backend has problems writing
     /// bits, as when the stream ended unexpectedly
-    fn write_gamma<const USE_TABLE: bool>(&mut self, value: u64) -> Result<()>;
+    fn write_gamma<const USE_TABLE: bool>(&mut self, value: u64) -> Result<usize>;
 }
 
 impl<B: BitWrite<BE>> GammaWrite<BE> for B {
     #[inline]
     #[allow(clippy::collapsible_if)]
-    fn write_gamma<const USE_TABLE: bool>(&mut self, value: u64) -> Result<()> {
+    fn write_gamma<const USE_TABLE: bool>(&mut self, value: u64) -> Result<usize> {
         if USE_TABLE {
-            if gamma_tables::write_table_be(self, value)? {
-                return Ok(());
+            if let Some(len) = gamma_tables::write_table_be(self, value)? {
+                return Ok(len);
             }
         }
         default_write_gamma(self, value)
@@ -111,10 +111,10 @@ impl<B: BitWrite<BE>> GammaWrite<BE> for B {
 impl<B: BitWrite<LE>> GammaWrite<LE> for B {
     #[inline]
     #[allow(clippy::collapsible_if)]
-    fn write_gamma<const USE_TABLE: bool>(&mut self, value: u64) -> Result<()> {
+    fn write_gamma<const USE_TABLE: bool>(&mut self, value: u64) -> Result<usize> {
         if USE_TABLE {
-            if gamma_tables::write_table_le(self, value)? {
-                return Ok(());
+            if let Some(len) = gamma_tables::write_table_le(self, value)? {
+                return Ok(len);
             }
         }
         default_write_gamma(self, value)
@@ -129,14 +129,13 @@ impl<B: BitWrite<LE>> GammaWrite<LE> for B {
 fn default_write_gamma<BO: BitOrder, B: BitWrite<BO>>(
     backend: &mut B,
     mut value: u64,
-) -> Result<()> {
+) -> Result<usize> {
     value += 1;
     let number_of_bits_to_write = fast_floor_log2(value);
     debug_assert!(number_of_bits_to_write <= u8::MAX as _);
     // remove the most significant 1
     let short_value = value - (1 << number_of_bits_to_write);
     // Write the code
-    backend.write_unary::<false>(number_of_bits_to_write as _)?;
-    backend.write_bits(short_value, number_of_bits_to_write as usize)?;
-    Ok(())
+    Ok(backend.write_unary::<false>(number_of_bits_to_write as _)?
+        + backend.write_bits(short_value, number_of_bits_to_write as usize)?)
 }

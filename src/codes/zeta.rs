@@ -97,32 +97,32 @@ fn default_read_zeta<BO: BitOrder, B: BitRead<BO>>(backend: &mut B, k: u64) -> R
 
 /// Trait for objects that can write Zeta codes
 pub trait ZetaWrite<BO: BitOrder>: MinimalBinaryWrite<BO> {
-    /// Generic ζ code writer
+    /// Generic ζ code writer and return the number of bits written.
     ///
     /// # Errors
     /// This function fails only if the BitWrite backend has problems writing
     /// bits, as when the stream ended unexpectedly
-    fn write_zeta<const USE_TABLE: bool>(&mut self, value: u64, k: u64) -> Result<()>;
-    /// Specialized ζ code writer for k = 3
+    fn write_zeta<const USE_TABLE: bool>(&mut self, value: u64, k: u64) -> Result<usize>;
+    /// Specialized ζ code writer for k = 3 and return the number of bits written.
     ///
     /// # Errors
     /// This function fails only if the BitWrite backend has problems writing
     /// bits, as when the stream ended unexpectedly
-    fn write_zeta3<const USE_TABLE: bool>(&mut self, value: u64) -> Result<()>;
+    fn write_zeta3<const USE_TABLE: bool>(&mut self, value: u64) -> Result<usize>;
 }
 
 impl<B: BitWrite<BE>> ZetaWrite<BE> for B {
     #[inline]
-    fn write_zeta<const USE_TABLE: bool>(&mut self, value: u64, k: u64) -> Result<()> {
+    fn write_zeta<const USE_TABLE: bool>(&mut self, value: u64, k: u64) -> Result<usize> {
         default_write_zeta(self, value, k)
     }
 
     #[inline]
     #[allow(clippy::collapsible_if)]
-    fn write_zeta3<const USE_TABLE: bool>(&mut self, value: u64) -> Result<()> {
+    fn write_zeta3<const USE_TABLE: bool>(&mut self, value: u64) -> Result<usize> {
         if USE_TABLE {
-            if zeta_tables::write_table_be(self, value)? {
-                return Ok(());
+            if let Some(len) = zeta_tables::write_table_be(self, value)? {
+                return Ok(len);
             }
         }
         default_write_zeta(self, value, 3)
@@ -131,16 +131,16 @@ impl<B: BitWrite<BE>> ZetaWrite<BE> for B {
 
 impl<B: BitWrite<LE>> ZetaWrite<LE> for B {
     #[inline]
-    fn write_zeta<const USE_TABLE: bool>(&mut self, value: u64, k: u64) -> Result<()> {
+    fn write_zeta<const USE_TABLE: bool>(&mut self, value: u64, k: u64) -> Result<usize> {
         default_write_zeta(self, value, k)
     }
 
     #[inline]
     #[allow(clippy::collapsible_if)]
-    fn write_zeta3<const USE_TABLE: bool>(&mut self, value: u64) -> Result<()> {
+    fn write_zeta3<const USE_TABLE: bool>(&mut self, value: u64) -> Result<usize> {
         if USE_TABLE {
-            if zeta_tables::write_table_le(self, value)? {
-                return Ok(());
+            if let Some(len) = zeta_tables::write_table_le(self, value)? {
+                return Ok(len);
             }
         }
         default_write_zeta(self, value, 3)
@@ -156,7 +156,7 @@ fn default_write_zeta<BO: BitOrder, B: BitWrite<BO>>(
     backend: &mut B,
     mut value: u64,
     k: u64,
-) -> Result<()> {
+) -> Result<usize> {
     value += 1;
     let h = fast_floor_log2(value) as u64 / k;
     let u = 1 << ((h + 1) * k);
@@ -166,6 +166,5 @@ fn default_write_zeta<BO: BitOrder, B: BitWrite<BO>>(
     debug_assert!(value < u, "{} < {}", value, u);
 
     // Write the code
-    backend.write_unary::<true>(h)?;
-    backend.write_minimal_binary(value - l, u - l)
+    Ok(backend.write_unary::<true>(h)? + backend.write_minimal_binary(value - l, u - l)?)
 }

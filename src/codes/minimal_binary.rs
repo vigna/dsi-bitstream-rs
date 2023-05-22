@@ -62,13 +62,13 @@ pub trait MinimalBinaryRead<BO: BitOrder>: BitRead<BO> {
 
 /// Trait for objects that can write Minimal Binary codes
 pub trait MinimalBinaryWrite<BO: BitOrder>: BitWrite<BO> {
-    /// Write a value on the stream
+    /// Write a value on the stream and return the number of bits written.
     ///
     /// # Errors
     /// This function fails only if the BitRead backend has problems writing
     /// bits, as when the stream ended unexpectedly
     #[inline]
-    fn write_minimal_binary(&mut self, value: u64, max: u64) -> Result<()> {
+    fn write_minimal_binary(&mut self, value: u64, max: u64) -> Result<usize> {
         if max == 0 {
             bail!("The max of a minimal binary value can't be zero.");
         }
@@ -76,11 +76,13 @@ pub trait MinimalBinaryWrite<BO: BitOrder>: BitWrite<BO> {
         let limit = (1 << (l + 1)) - max;
 
         if value < limit {
-            self.write_bits(value, l as _)
+            self.write_bits(value, l as _)?;
+            return Ok(l as usize);
         } else {
             let to_write = value + limit;
             self.write_bits(to_write >> 1, l as _)?;
-            self.write_bits(to_write & 1, 1)
+            self.write_bits(to_write & 1, 1)?;
+            return Ok((l + 1) as usize);
         }
     }
 }

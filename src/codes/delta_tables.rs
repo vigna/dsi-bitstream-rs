@@ -37,12 +37,12 @@ pub fn read_table_le<B: BitRead<LE>>(backend: &mut B) -> Result<Option<u64>> {
 ///
 /// # Errors
 /// This function errors if it wasn't able to skip_bits
-pub fn write_table_le<B: BitWrite<LE>>(backend: &mut B, value: u64) -> Result<bool> {
+pub fn write_table_le<B: BitWrite<LE>>(backend: &mut B, value: u64) -> Result<Option<usize>> {
     Ok(if let Some((bits, len)) = WRITE_LE.get(value as usize) {
         backend.write_bits(*bits as u64, *len as usize)?;
-        true
+        Some(*len as usize)
     } else {
-        false
+        None
     })
 }
 
@@ -73,12 +73,12 @@ pub fn read_table_be<B: BitRead<BE>>(backend: &mut B) -> Result<Option<u64>> {
 ///
 /// # Errors
 /// This function errors if it wasn't able to skip_bits
-pub fn write_table_be<B: BitWrite<BE>>(backend: &mut B, value: u64) -> Result<bool> {
+pub fn write_table_be<B: BitWrite<BE>>(backend: &mut B, value: u64) -> Result<Option<usize>> {
     Ok(if let Some((bits, len)) = WRITE_BE.get(value as usize) {
         backend.write_bits(*bits as u64, *len as usize)?;
-        true
+        Some(*len as usize)
     } else {
-        false
+        None
     })
 }
 ///Table used to speed up the reading of delta codes

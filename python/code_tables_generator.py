@@ -88,12 +88,12 @@ write_func_merged_table = """
 ///
 /// # Errors
 /// This function errors if it wasn't able to skip_bits
-pub fn write_table_%(bo)s<B: BitWrite<%(BO)s>>(backend: &mut B, value: u64) -> Result<bool> {
+pub fn write_table_%(bo)s<B: BitWrite<%(BO)s>>(backend: &mut B, value: u64) -> Result<Option<usize>> {
     Ok(if let Some((bits, len)) = WRITE_%(BO)s.get(value as usize) {
         backend.write_bits(*bits as u64, *len as usize)?;
-        true        
+        Some(*len as usize)        
     } else {
-        false
+        None
     })
 }
 """
@@ -106,12 +106,12 @@ write_func_two_table = """
 ///
 /// # Errors
 /// This function errors if it wasn't able to skip_bits
-pub fn write_table_%(bo)s<B: BitWrite<%(BO)s>>(backend: &mut B, value: u64) -> Result<bool> {
+pub fn write_table_%(bo)s<B: BitWrite<%(BO)s>>(backend: &mut B, value: u64) -> Result<Option<usize>> {
     Ok(if let Some(bits) = WRITE_%(BO)s.get(value as usize) {
         backend.write_bits(*bits as u64, WRITE_LEN_%(BO)s[value as usize] as usize)?;
-        true
+        Some(*len as usize)
     } else {
-        false
+        None
     })
 }
 """
