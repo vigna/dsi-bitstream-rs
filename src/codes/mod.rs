@@ -73,6 +73,7 @@ pub enum Code {
     Unary,
     Gamma,
     Delta,
+    Zeta3,
     Zeta { k: usize },
     Golomb,
     SkewedGolomb,
