@@ -69,6 +69,7 @@
 //! ```
 
 // Available codes
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Code {
     Unary,
     Gamma,
@@ -78,6 +79,22 @@ pub enum Code {
     Golomb,
     SkewedGolomb,
     Nibble,
+}
+
+impl TryFrom<String> for Code {
+    type Error = String;
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        match value.to_uppercase().as_str() {
+            "UNARY" => Ok(Code::Unary),
+            "GAMMA" => Ok(Code::Gamma),
+            "DELTA" => Ok(Code::Delta),
+            "ZETA" => Ok(Code::Zeta3),
+            "GOLOMB" => Ok(Code::Golomb),
+            "SKEWED_GOLOMB" => Ok(Code::SkewedGolomb),
+            "NIBBLE" => Ok(Code::Nibble),
+            _ => Err(format!("Unknown code \"{}\"", value)),
+        }
+    }
 }
 
 mod gamma;
@@ -132,4 +149,16 @@ pub fn len_unary(value: u64) -> usize {
 pub fn fast_floor_log2(value: u64) -> u32 {
     debug_assert!(value > 0, "log2(0) is undefined");
     63 - value.leading_zeros()
+}
+
+#[cfg(test)]
+mod test {
+    use crate::prelude::*;
+    #[test]
+    fn test_parsing() {
+        assert_eq!(Code::Unary, Code::try_from("unary".to_string()).unwrap());
+        assert_eq!(Code::Gamma, Code::try_from("gamma".to_string()).unwrap());
+        assert_eq!(Code::Delta, Code::try_from("DelTa".to_string()).unwrap());
+        assert!(Code::try_from("XXX".to_string()).is_err());
+    }
 }
