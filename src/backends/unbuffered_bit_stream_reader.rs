@@ -17,7 +17,7 @@ use anyhow::{bail, Result};
 /// An impementation of [`BitRead`] on a Seekable word stream [`WordRead`]
 /// + [`WordStream`]
 #[derive(Debug, Clone)]
-pub struct UnbufferedBitStreamRead<BO: BitOrder, WR> {
+pub struct UnbufferedBitStreamRead<BO: Endianness, WR> {
     /// The stream which we will read words from
     data: WR,
     /// The index of the current bit we are ate
@@ -26,7 +26,7 @@ pub struct UnbufferedBitStreamRead<BO: BitOrder, WR> {
     _marker: core::marker::PhantomData<BO>,
 }
 
-impl<BO: BitOrder, WR> UnbufferedBitStreamRead<BO, WR> {
+impl<BO: Endianness, WR> UnbufferedBitStreamRead<BO, WR> {
     /// Create a new BitStreamRead on a generig WordRead
     pub fn new(data: WR) -> Self {
         Self {

@@ -44,12 +44,12 @@ pub fn len_delta(value: u64) -> usize {
     return len_delta_param::<false, true>(value);
 }
 
-pub trait DeltaRead<BO: BitOrder>: DeltaReadParam<BO> {
+pub trait DeltaRead<BO: Endianness>: DeltaReadParam<BO> {
     fn read_delta(&mut self) -> Result<u64>;
 }
 
 /// Trait for objects that can read Delta codes
-pub trait DeltaReadParam<BO: BitOrder>: GammaReadParam<BO> {
+pub trait DeltaReadParam<BO: Endianness>: GammaReadParam<BO> {
     /// Read a delta code from the stream.
     ///
     /// `USE_DELTA_TABLE` enables or disables the use of pre-computed tables
@@ -95,7 +95,7 @@ impl<B: GammaReadParam<LE>> DeltaReadParam<LE> for B {
 ///
 /// # Errors
 /// Forward `read_unary` and `read_bits` errors.
-fn default_read_delta<BO: BitOrder, B: GammaReadParam<BO>, const USE_GAMMA_TABLE: bool>(
+fn default_read_delta<BO: Endianness, B: GammaReadParam<BO>, const USE_GAMMA_TABLE: bool>(
     backend: &mut B,
 ) -> Result<u64> {
     let n_bits = backend.read_gamma_param::<USE_GAMMA_TABLE>()?;
@@ -103,12 +103,12 @@ fn default_read_delta<BO: BitOrder, B: GammaReadParam<BO>, const USE_GAMMA_TABLE
     Ok(backend.read_bits(n_bits as usize)? + (1 << n_bits) - 1)
 }
 
-pub trait DeltaWrite<BO: BitOrder>: DeltaWriteParam<BO> {
+pub trait DeltaWrite<BO: Endianness>: DeltaWriteParam<BO> {
     fn write_delta(&mut self, value: u64) -> Result<usize>;
 }
 
 /// Trait for objects that can write Delta codes
-pub trait DeltaWriteParam<BO: BitOrder>: GammaWriteParam<BO> {
+pub trait DeltaWriteParam<BO: Endianness>: GammaWriteParam<BO> {
     /// Write a value on the stream
     ///
     /// `USE_DELTA_TABLE` enables or disables the use of pre-computed tables
@@ -160,7 +160,7 @@ impl<B: GammaWriteParam<LE>> DeltaWriteParam<LE> for B {
 /// # Errors
 /// Forward `write_unary` and `write_bits` errors.
 #[inline(always)]
-fn default_write_delta<BO: BitOrder, B: GammaWriteParam<BO>, const USE_GAMMA_TABLE: bool>(
+fn default_write_delta<BO: Endianness, B: GammaWriteParam<BO>, const USE_GAMMA_TABLE: bool>(
     backend: &mut B,
     mut value: u64,
 ) -> Result<usize> {

@@ -25,7 +25,7 @@ pub trait BitSeek {
 
 /// Objects that can read a fixed number of bits and unary codes from a stream
 /// of bits. The endianess of the returned bytes HAS TO BE THE NATIVE ONE.
-pub trait BitRead<BO: BitOrder> {
+pub trait BitRead<BO: Endianness> {
     /// The type we can read form the stream without advancing.
     /// On buffered readers this is usually half the buffer size.
     type PeekType: UpcastableInto<u64>;
@@ -94,7 +94,7 @@ pub trait BitRead<BO: BitOrder> {
 /// we would have to be able to read them back, thus impling implementing
 /// [`BitRead`]. Nothing stops someone to implement both [`BitRead`] and
 /// [`BitWrite`] for the same structure
-pub trait BitWrite<BO: BitOrder> {
+pub trait BitWrite<BO: Endianness> {
     /// Write the lowest `n_bits` of value to the steam and return the number of
     /// bits written.
     ///
@@ -132,7 +132,7 @@ pub trait BitWrite<BO: BitOrder> {
 /// [`BitWrite`] objects that use buffering also need to control the flushing
 /// of said buffer. Since this is a subtrait of [`BitWrite`], objects
 /// implementing this trait **HAVE TO** call flush on drop.
-pub trait BitWriteBuffered<BO: BitOrder>: BitWrite<BO> {
+pub trait BitWriteBuffered<BO: Endianness>: BitWrite<BO> {
     /// Try to flush part of the buffer, this does not guarantee that **all**
     /// data will be flushed.
     ///
@@ -142,4 +142,7 @@ pub trait BitWriteBuffered<BO: BitOrder>: BitWrite<BO> {
     ///
     /// TODO!: figure out how to handle this situation.
     fn partial_flush(&mut self) -> Result<()>;
+
+    /// Flushes the buffer, making the bit stream no longer writable.
+    fn flush(self) -> Result<()>;
 }

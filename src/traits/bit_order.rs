@@ -8,22 +8,22 @@
 //! Marker types and trait used to conditionally implement MSB to LSB or LSB to
 //! MSB bit orders in readers and writers.
 //!
-//! Note that we use an inner private trait `BitOrderCore` so that an user can
-//! use [`BitOrder`] for its generics, but cannot implement it, so all the
-//! types that will ever implement [`BitOrder`] are defined in this file.
+//! Note that we use an inner private trait `EndiannessCore` so that an user can
+//! use [`Endianness`] for its generics, but cannot implement it, so all the
+//! types that will ever implement [`Endianness`] are defined in this file.
 //!
 //! Apparently this pattern is a [SealedTrait](https://predr.ag/blog/definitive-guide-to-sealed-traits-in-rust/).
 
 /// Inner private trait used to remove the possibility that anyone could
-/// implement [`BitOrder`] on other structs
+/// implement [`Endianness`] on other structs
 mod private {
-    pub trait BitOrderCore {}
+    pub trait Endianness {}
 }
-impl<T: private::BitOrderCore> BitOrder for T {}
+impl<T: private::Endianness> Endianness for T {}
 
 /// Marker trait to require that something is either [`LE`] or
 /// [`BE`]
-pub trait BitOrder: private::BitOrderCore {}
+pub trait Endianness: private::Endianness {}
 
 /// Marker type that represents LSB to MSB bit order
 pub struct LittleEndian;
@@ -36,5 +36,5 @@ pub type BE = BigEndian;
 /// Alias for [`LittleEndian`]
 pub type LE = LittleEndian;
 
-impl private::BitOrderCore for LittleEndian {}
-impl private::BitOrderCore for BigEndian {}
+impl private::Endianness for LittleEndian {}
+impl private::Endianness for BigEndian {}

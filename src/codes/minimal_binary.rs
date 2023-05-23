@@ -35,7 +35,7 @@ pub fn len_minimal_binary(value: u64, max: u64) -> usize {
 }
 
 /// Trait for objects that can read Minimal Binary codes
-pub trait MinimalBinaryRead<BO: BitOrder>: BitRead<BO> {
+pub trait MinimalBinaryRead<BO: Endianness>: BitRead<BO> {
     /// Read a minimal binary code from the stream.
     ///
     /// # Errors
@@ -61,7 +61,7 @@ pub trait MinimalBinaryRead<BO: BitOrder>: BitRead<BO> {
 }
 
 /// Trait for objects that can write Minimal Binary codes
-pub trait MinimalBinaryWrite<BO: BitOrder>: BitWrite<BO> {
+pub trait MinimalBinaryWrite<BO: Endianness>: BitWrite<BO> {
     /// Write a value on the stream and return the number of bits written.
     ///
     /// # Errors
@@ -87,5 +87,5 @@ pub trait MinimalBinaryWrite<BO: BitOrder>: BitWrite<BO> {
     }
 }
 
-impl<BO: BitOrder, B: BitRead<BO>> MinimalBinaryRead<BO> for B {}
-impl<BO: BitOrder, B: BitWrite<BO>> MinimalBinaryWrite<BO> for B {}
+impl<BO: Endianness, B: BitRead<BO>> MinimalBinaryRead<BO> for B {}
+impl<BO: Endianness, B: BitWrite<BO>> MinimalBinaryWrite<BO> for B {}

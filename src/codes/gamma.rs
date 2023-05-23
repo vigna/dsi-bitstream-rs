@@ -42,12 +42,12 @@ pub fn len_gamma(value: u64) -> usize {
     return len_gamma_param::<true>(value);
 }
 
-pub trait GammaRead<BO: BitOrder>: GammaReadParam<BO> {
+pub trait GammaRead<BO: Endianness>: GammaReadParam<BO> {
     fn read_gamma(&mut self) -> Result<u64>;
 }
 
 /// Trait for objects that can read Gamma codes
-pub trait GammaReadParam<BO: BitOrder>: BitRead<BO> {
+pub trait GammaReadParam<BO: Endianness>: BitRead<BO> {
     /// Read a gamma code from the stream.
     ///
     /// `USE_TABLE` enables or disables the use of pre-computed tables
@@ -64,7 +64,7 @@ pub trait GammaReadParam<BO: BitOrder>: BitRead<BO> {
 /// # Errors
 /// Forward `read_unary` and `read_bits` errors.
 #[inline(always)]
-fn default_read_gamma<BO: BitOrder, B: BitRead<BO>>(backend: &mut B) -> Result<u64> {
+fn default_read_gamma<BO: Endianness, B: BitRead<BO>>(backend: &mut B) -> Result<u64> {
     let len = backend.read_unary_param::<false>()?;
     debug_assert!(len <= 64);
     Ok(backend.read_bits(len as usize)? + (1 << len) - 1)
@@ -93,12 +93,12 @@ impl<B: BitRead<LE>> GammaReadParam<LE> for B {
     }
 }
 
-pub trait GammaWrite<BO: BitOrder>: GammaWriteParam<BO> {
+pub trait GammaWrite<BO: Endianness>: GammaWriteParam<BO> {
     fn write_gamma(&mut self, value: u64) -> Result<usize>;
 }
 
 /// Trait for objects that can write Gamma codes
-pub trait GammaWriteParam<BO: BitOrder>: BitWrite<BO> {
+pub trait GammaWriteParam<BO: Endianness>: BitWrite<BO> {
     /// Write a value on the stream
     ///
     /// `USE_TABLE` enables or disables the use of pre-computed tables
@@ -141,7 +141,7 @@ impl<B: BitWrite<LE>> GammaWriteParam<LE> for B {
 /// # Errors
 /// Forward `read_unary` and `read_bits` errors.
 #[inline(always)]
-fn default_write_gamma<BO: BitOrder, B: BitWrite<BO>>(
+fn default_write_gamma<BO: Endianness, B: BitWrite<BO>>(
     backend: &mut B,
     mut value: u64,
 ) -> Result<usize> {

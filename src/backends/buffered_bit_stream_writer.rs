@@ -14,7 +14,7 @@ use anyhow::{bail, Result};
 /// An implementation of [`BitWrite`] on a generic [`WordWrite`]
 #[derive(Debug)]
 pub struct BufferedBitStreamWrite<
-    BO: BBSWDrop<WR, WCP>,
+    E: BBSWDrop<WR, WCP>,
     WR: WordWrite,
     WCP: WriteCodesParams = DefaultWriteParams,
 > {
@@ -25,14 +25,14 @@ pub struct BufferedBitStreamWrite<
     /// Counter of how many bits in buffer are to consider valid and should be
     /// written to be backend
     bits_in_buffer: usize,
-    /// make the compiler happy :)
-    _marker_bitorder: core::marker::PhantomData<BO>,
+    /// Zero-sized marker as we do not store endianness.
+    _marker_endianness: core::marker::PhantomData<E>,
     /// Just needed to specify the code parameters.
     _marker_default_codes: core::marker::PhantomData<WCP>,
 }
 
-impl<BO: BBSWDrop<WR, WCP>, WR: WordWrite, WCP: WriteCodesParams>
-    BufferedBitStreamWrite<BO, WR, WCP>
+impl<E: BBSWDrop<WR, WCP>, WR: WordWrite, WCP: WriteCodesParams>
+    BufferedBitStreamWrite<E, WR, WCP>
 {
     /// Create a new [`BufferedBitStreamWrite`] from a backend word writer
     pub fn new(backend: WR) -> Self {
@@ -40,7 +40,7 @@ impl<BO: BBSWDrop<WR, WCP>, WR: WordWrite, WCP: WriteCodesParams>
             backend,
             buffer: 0,
             bits_in_buffer: 0,
-            _marker_bitorder: core::marker::PhantomData::default(),
+            _marker_endianness: core::marker::PhantomData::default(),
             _marker_default_codes: core::marker::PhantomData::default(),
         }
     }
@@ -52,12 +52,12 @@ impl<BO: BBSWDrop<WR, WCP>, WR: WordWrite, WCP: WriteCodesParams>
     }
 }
 
-impl<BO: BBSWDrop<WR, WCP>, WR: WordWrite, WCP: WriteCodesParams> core::ops::Drop
-    for BufferedBitStreamWrite<BO, WR, WCP>
+impl<E: BBSWDrop<WR, WCP>, WR: WordWrite, WCP: WriteCodesParams> core::ops::Drop
+    for BufferedBitStreamWrite<E, WR, WCP>
 {
     fn drop(&mut self) {
         // During a drop we can't save anything if it goes bad :/
-        let _ = BO::drop(self);
+        let _ = E::flush(self);
     }
 }
 
@@ -66,14 +66,14 @@ impl<BO: BBSWDrop<WR, WCP>, WR: WordWrite, WCP: WriteCodesParams> core::ops::Dro
 /// private traits in public defs, an user should never need to implement this.
 ///
 /// I discussed this [here](https://users.rust-lang.org/t/on-generic-associated-enum-and-type-comparisons/92072).
-pub trait BBSWDrop<WR: WordWrite, WCP: WriteCodesParams>: Sized + BitOrder {
+pub trait BBSWDrop<WR: WordWrite, WCP: WriteCodesParams>: Sized + Endianness {
     /// handle the drop
-    fn drop(data: &mut BufferedBitStreamWrite<Self, WR, WCP>) -> Result<()>;
+    fn flush(data: &mut BufferedBitStreamWrite<Self, WR, WCP>) -> Result<()>;
 }
 
 impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BBSWDrop<WR, WCP> for BE {
     #[inline]
-    fn drop(data: &mut BufferedBitStreamWrite<Self, WR, WCP>) -> Result<()> {
+    fn flush(data: &mut BufferedBitStreamWrite<Self, WR, WCP>) -> Result<()> {
         data.partial_flush()?;
         if data.bits_in_buffer > 0 {
             let mut word = data.buffer as u64;
@@ -97,6 +97,10 @@ impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BitWriteBuffered<BE>
         let word = (self.buffer >> self.bits_in_buffer) as u64;
         self.backend.write_word(word.to_be())?;
         Ok(())
+    }
+
+    fn flush(mut self) -> Result<()> {
+        BE::flush(&mut self)
     }
 }
 
@@ -176,7 +180,7 @@ impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BitWrite<BE>
 
 impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BBSWDrop<WR, WCP> for LE {
     #[inline]
-    fn drop(data: &mut BufferedBitStreamWrite<Self, WR, WCP>) -> Result<()> {
+    fn flush(data: &mut BufferedBitStreamWrite<Self, WR, WCP>) -> Result<()> {
         data.partial_flush()?;
         if data.bits_in_buffer > 0 {
             let mut word = (data.buffer >> 64) as u64;
@@ -200,6 +204,10 @@ impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BitWriteBuffered<LE>
         self.bits_in_buffer -= 64;
         self.backend.write_word(word.to_le())?;
         Ok(())
+    }
+
+    fn flush(mut self) -> Result<()> {
+        LE::flush(&mut self)
     }
 }
 

@@ -15,7 +15,7 @@ use anyhow::{bail, Context, Result};
 /// in a buffer
 #[derive(Debug)]
 pub struct BufferedBitStreamRead<
-    E: BitOrder,
+    E: Endianness,
     BW: Word,
     WR: WordRead,
     RCP: ReadCodesParams = DefaultReadParams,
@@ -26,13 +26,13 @@ pub struct BufferedBitStreamRead<
     buffer: BW,
     /// Number of bits valid left in the buffer. It is always smaller than `BW::BITS`.
     valid_bits: usize,
-    /// Just needed to specify the BitOrder.
-    _marker_bitorder: core::marker::PhantomData<E>,
+    /// Zero-sized marker as we do not store endianness.
+    _marker_endianness: core::marker::PhantomData<E>,
     /// Just needed to specify the code parameters.
     _marker_default_codes: core::marker::PhantomData<RCP>,
 }
 
-impl<E: BitOrder, BW: Word, WR: WordRead + Clone, RCP: ReadCodesParams> core::clone::Clone
+impl<E: Endianness, BW: Word, WR: WordRead + Clone, RCP: ReadCodesParams> core::clone::Clone
     for BufferedBitStreamRead<E, BW, WR, RCP>
 {
     // No need to copy the buffer
@@ -42,13 +42,13 @@ impl<E: BitOrder, BW: Word, WR: WordRead + Clone, RCP: ReadCodesParams> core::cl
             backend: self.backend.clone(),
             buffer: BW::ZERO,
             valid_bits: 0,
-            _marker_bitorder: core::marker::PhantomData::default(),
+            _marker_endianness: core::marker::PhantomData::default(),
             _marker_default_codes: core::marker::PhantomData::default(),
         }
     }
 }
 
-impl<E: BitOrder, BW: Word, WR: WordRead, RCP: ReadCodesParams>
+impl<E: Endianness, BW: Word, WR: WordRead, RCP: ReadCodesParams>
     BufferedBitStreamRead<E, BW, WR, RCP>
 {
     /// Create a new [`BufferedBitStreamRead`] on a generic backend
@@ -66,7 +66,7 @@ impl<E: BitOrder, BW: Word, WR: WordRead, RCP: ReadCodesParams>
             backend,
             buffer: BW::ZERO,
             valid_bits: 0,
-            _marker_bitorder: core::marker::PhantomData::default(),
+            _marker_endianness: core::marker::PhantomData::default(),
             _marker_default_codes: core::marker::PhantomData::default(),
         }
     }
