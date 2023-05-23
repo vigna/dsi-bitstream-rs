@@ -5,8 +5,8 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
-//! Marker types and trait used to conditionally implement MSB to LSB or LSB to
-//! MSB bit orders in readers and writers.
+//! Marker types and trait used to conditionally different
+//! endianness in readers and writers.
 //!
 //! Note that we use an inner private trait `EndiannessCore` so that an user can
 //! use [`Endianness`] for its generics, but cannot implement it, so all the
@@ -25,9 +25,7 @@ impl<T: private::Endianness> Endianness for T {}
 /// [`BE`]
 pub trait Endianness: private::Endianness {}
 
-/// Marker type that represents LSB to MSB bit order
 pub struct LittleEndian;
-/// Marker type that represents MSB to LSB bit order
 pub struct BigEndian;
 
 /// Alias for [`BigEndian`]

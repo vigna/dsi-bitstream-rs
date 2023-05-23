@@ -28,5 +28,5 @@ pub use bit_stream::*;
 mod word_stream;
 pub use word_stream::*;
 
-mod bit_order;
-pub use bit_order::*;
+mod endianness;
+pub use endianness::*;
