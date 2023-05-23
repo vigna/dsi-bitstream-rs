@@ -16,11 +16,11 @@ pub trait BitSeek {
     /// # Errors
     /// This function return an error if the bit_index is not within the available
     /// span of bits.
-    fn seek_bit(&mut self, bit_index: usize) -> Result<()>;
+    fn set_pos(&mut self, bit_index: usize) -> Result<()>;
 
     #[must_use]
     /// Return the current bit index
-    fn get_position(&self) -> usize;
+    fn get_pos(&self) -> usize;
 }
 
 /// Objects that can read a fixed number of bits and unary codes from a stream

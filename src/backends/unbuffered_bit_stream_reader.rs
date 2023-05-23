@@ -134,22 +134,22 @@ impl<WR: WordRead<Word = u64> + WordStream> BitRead<BE> for UnbufferedBitStreamR
 }
 
 impl<WR: WordStream> BitSeek for UnbufferedBitStreamRead<LE, WR> {
-    fn get_position(&self) -> usize {
+    fn get_pos(&self) -> usize {
         self.bit_idx
     }
 
-    fn seek_bit(&mut self, bit_index: usize) -> Result<()> {
+    fn set_pos(&mut self, bit_index: usize) -> Result<()> {
         self.bit_idx = bit_index;
         Ok(())
     }
 }
 
 impl<WR: WordStream> BitSeek for UnbufferedBitStreamRead<BE, WR> {
-    fn get_position(&self) -> usize {
+    fn get_pos(&self) -> usize {
         self.bit_idx
     }
 
-    fn seek_bit(&mut self, bit_index: usize) -> Result<()> {
+    fn set_pos(&mut self, bit_index: usize) -> Result<()> {
         self.bit_idx = bit_index;
         Ok(())
     }

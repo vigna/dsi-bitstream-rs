@@ -68,6 +68,17 @@
 //! assert_eq!(bitstream_be.read_unary().unwrap(), 5);
 //! ```
 
+// Available codes
+pub enum Code {
+    Unary,
+    Gamma,
+    Delta,
+    Zeta { k: usize },
+    Golomb,
+    SkewedGolomb,
+    Nibble,
+}
+
 mod gamma;
 
 pub use gamma::{

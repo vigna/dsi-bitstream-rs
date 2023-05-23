@@ -104,12 +104,12 @@ where
     WR::Word: UpcastableInto<BW>,
 {
     #[inline]
-    fn get_position(&self) -> usize {
+    fn get_pos(&self) -> usize {
         self.backend.get_position() * WR::Word::BITS - self.valid_bits
     }
 
     #[inline]
-    fn seek_bit(&mut self, bit_index: usize) -> Result<()> {
+    fn set_pos(&mut self, bit_index: usize) -> Result<()> {
         self.backend
             .set_position(bit_index / WR::Word::BITS)
             .with_context(|| "BufferedBitStreamRead was seeking_bit")?;
@@ -293,12 +293,12 @@ where
     WR::Word: UpcastableInto<BW>,
 {
     #[inline]
-    fn get_position(&self) -> usize {
+    fn get_pos(&self) -> usize {
         self.backend.get_position() * WR::Word::BITS - self.valid_bits
     }
 
     #[inline]
-    fn seek_bit(&mut self, bit_index: usize) -> Result<()> {
+    fn set_pos(&mut self, bit_index: usize) -> Result<()> {
         self.backend
             .set_position(bit_index / WR::Word::BITS)
             .with_context(|| "BufferedBitStreamRead was seeking_bit")?;
