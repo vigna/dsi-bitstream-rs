@@ -81,10 +81,10 @@ pub enum Code {
     Nibble,
 }
 
-impl TryFrom<String> for Code {
-    type Error = String;
-    fn try_from(value: String) -> Result<Self, Self::Error> {
-        match value.to_uppercase().as_str() {
+impl FromStr for Code {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_uppercase().as_str() {
             "UNARY" => Ok(Code::Unary),
             "GAMMA" => Ok(Code::Gamma),
             "DELTA" => Ok(Code::Delta),
@@ -92,12 +92,14 @@ impl TryFrom<String> for Code {
             "GOLOMB" => Ok(Code::Golomb),
             "SKEWED_GOLOMB" => Ok(Code::SkewedGolomb),
             "NIBBLE" => Ok(Code::Nibble),
-            _ => Err(format!("Unknown code \"{}\"", value)),
+            _ => Err(format!("Unknown code \"{}\"", s)),
         }
     }
 }
 
 mod gamma;
+
+use core::str::FromStr;
 
 pub use gamma::{
     len_gamma, len_gamma_param, GammaRead, GammaReadParam, GammaWrite, GammaWriteParam,
@@ -154,11 +156,12 @@ pub fn fast_floor_log2(value: u64) -> u32 {
 #[cfg(test)]
 mod test {
     use crate::prelude::*;
+    use std::str::FromStr;
     #[test]
     fn test_parsing() {
-        assert_eq!(Code::Unary, Code::try_from("unary".to_string()).unwrap());
-        assert_eq!(Code::Gamma, Code::try_from("gamma".to_string()).unwrap());
-        assert_eq!(Code::Delta, Code::try_from("DelTa".to_string()).unwrap());
-        assert!(Code::try_from("XXX".to_string()).is_err());
+        assert_eq!(Code::Unary, Code::from_str("unary").unwrap());
+        assert_eq!(Code::Gamma, Code::from_str("gamma").unwrap());
+        assert_eq!(Code::Delta, Code::from_str("DelTa").unwrap());
+        assert!(Code::from_str("XXX").is_err());
     }
 }
