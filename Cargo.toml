@@ -6,6 +6,8 @@ description = "A Rust implementation of read/write bit streams supporting severa
 repository = "https://github.com/vigna/dsi-bitstream-rs/"
 license = "Apache-2.0 OR LGPL-2.1-or-later"
 readme = "README.md"
+keywords = ["bitstream", "codes", "compression"]
+categories = ["compression"]
 authors = ["Tommaso Fontana", "Sebastiano Vigna <sebastiano.vigna@unimi.it>"]
 
 [dependencies]
