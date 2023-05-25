@@ -74,32 +74,14 @@ pub enum Code {
     Unary,
     Gamma,
     Delta,
-    Zeta3,
-    Zeta { k: usize },
-    Golomb,
-    SkewedGolomb,
+    Zeta { k: u32 },
+    Golomb { b: u32 },
+    SkewedGolomb { b: u32 },
+    MinimalBinary { k: u64 },
     Nibble,
 }
 
-impl FromStr for Code {
-    type Err = String;
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_uppercase().as_str() {
-            "UNARY" => Ok(Code::Unary),
-            "GAMMA" => Ok(Code::Gamma),
-            "DELTA" => Ok(Code::Delta),
-            "ZETA" => Ok(Code::Zeta3),
-            "GOLOMB" => Ok(Code::Golomb),
-            "SKEWED_GOLOMB" => Ok(Code::SkewedGolomb),
-            "NIBBLE" => Ok(Code::Nibble),
-            _ => Err(format!("Unknown code \"{}\"", s)),
-        }
-    }
-}
-
 mod gamma;
-
-use core::str::FromStr;
 
 pub use gamma::{
     len_gamma, len_gamma_param, GammaRead, GammaReadParam, GammaWrite, GammaWriteParam,
