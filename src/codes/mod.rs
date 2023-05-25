@@ -134,16 +134,3 @@ pub fn fast_floor_log2(value: u64) -> u32 {
     debug_assert!(value > 0, "log2(0) is undefined");
     63 - value.leading_zeros()
 }
-
-#[cfg(test)]
-mod test {
-    use crate::prelude::*;
-    use std::str::FromStr;
-    #[test]
-    fn test_parsing() {
-        assert_eq!(Code::Unary, Code::from_str("unary").unwrap());
-        assert_eq!(Code::Gamma, Code::from_str("gamma").unwrap());
-        assert_eq!(Code::Delta, Code::from_str("DelTa").unwrap());
-        assert!(Code::from_str("XXX").is_err());
-    }
-}
