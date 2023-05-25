@@ -74,9 +74,9 @@ pub enum Code {
     Unary,
     Gamma,
     Delta,
-    Zeta { k: u32 },
-    Golomb { b: u32 },
-    SkewedGolomb { b: u32 },
+    Zeta { k: u64 },
+    Golomb { b: u64 },
+    SkewedGolomb { b: u64 },
     MinimalBinary { k: u64 },
     Nibble,
 }
