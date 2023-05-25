@@ -85,9 +85,7 @@ impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BBSWDrop<WR, WCP> for BE 
     }
 }
 
-impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BitWriteBuffered<BE>
-    for BufferedBitStreamWrite<BE, WR, WCP>
-{
+impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BufferedBitStreamWrite<BE, WR, WCP> {
     #[inline]
     fn partial_flush(&mut self) -> Result<()> {
         if self.bits_in_buffer < 64 {
@@ -98,15 +96,15 @@ impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BitWriteBuffered<BE>
         self.backend.write_word(word.to_be())?;
         Ok(())
     }
-
-    fn flush(mut self) -> Result<()> {
-        BE::flush(&mut self)
-    }
 }
 
 impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BitWrite<BE>
     for BufferedBitStreamWrite<BE, WR, WCP>
 {
+    fn flush(mut self) -> Result<()> {
+        BE::flush(&mut self)
+    }
+
     #[inline]
     fn write_bits(&mut self, value: u64, n_bits: usize) -> Result<usize> {
         if n_bits == 0 {
@@ -192,9 +190,7 @@ impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BBSWDrop<WR, WCP> for LE 
     }
 }
 
-impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BitWriteBuffered<LE>
-    for BufferedBitStreamWrite<LE, WR, WCP>
-{
+impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BufferedBitStreamWrite<LE, WR, WCP> {
     #[inline]
     fn partial_flush(&mut self) -> Result<()> {
         if self.bits_in_buffer < 64 {
@@ -205,15 +201,15 @@ impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BitWriteBuffered<LE>
         self.backend.write_word(word.to_le())?;
         Ok(())
     }
-
-    fn flush(mut self) -> Result<()> {
-        LE::flush(&mut self)
-    }
 }
 
 impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BitWrite<LE>
     for BufferedBitStreamWrite<LE, WR, WCP>
 {
+    fn flush(mut self) -> Result<()> {
+        LE::flush(&mut self)
+    }
+
     #[inline]
     fn write_bits(&mut self, value: u64, n_bits: usize) -> Result<usize> {
         if n_bits == 0 {

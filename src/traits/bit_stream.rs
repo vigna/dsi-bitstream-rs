@@ -127,21 +127,6 @@ pub trait BitWrite<BO: Endianness> {
     fn write_unary(&mut self, value: u64) -> Result<usize> {
         self.write_unary_param::<false>(value)
     }
-}
-
-/// [`BitWrite`] objects that use buffering also need to control the flushing
-/// of said buffer. Since this is a subtrait of [`BitWrite`], objects
-/// implementing this trait **HAVE TO** call flush on drop.
-pub trait BitWriteBuffered<BO: Endianness>: BitWrite<BO> {
-    /// Try to flush part of the buffer, this does not guarantee that **all**
-    /// data will be flushed.
-    ///
-    /// # Errors
-    /// This function might fail if we have bits in the buffer, but we finished
-    /// the writable stream.
-    ///
-    /// TODO!: figure out how to handle this situation.
-    fn partial_flush(&mut self) -> Result<()>;
 
     /// Flushes the buffer, making the bit stream no longer writable.
     fn flush(self) -> Result<()>;
