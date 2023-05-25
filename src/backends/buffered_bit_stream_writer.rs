@@ -80,6 +80,8 @@ impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BBSWDrop<WR, WCP> for BE 
             let shamt = 64 - data.bits_in_buffer;
             word <<= shamt;
             data.backend.write_word(word.to_be())?;
+
+            data.bits_in_buffer = 0;
         }
         Ok(())
     }
@@ -185,6 +187,7 @@ impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BBSWDrop<WR, WCP> for LE 
             let shamt = 64 - data.bits_in_buffer;
             word >>= shamt;
             data.backend.write_word(word.to_le())?;
+            data.bits_in_buffer = 0;
         }
         Ok(())
     }
