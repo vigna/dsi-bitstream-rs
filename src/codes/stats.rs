@@ -13,7 +13,7 @@ pub struct CodesStats {
     pub gamma: usize,
     pub delta: usize,
     pub zeta: [usize; 10],
-    pub golomb: [usize; 10],
+    pub golomb: [usize; 20],
 }
 
 impl CodesStats {
