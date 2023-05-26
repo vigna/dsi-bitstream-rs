@@ -31,8 +31,8 @@ pub fn len_gamma_param<const USE_TABLE: bool>(mut value: u64) -> usize {
         }
     }
     value += 1;
-    let number_of_blocks_to_write = value.trailing_zeros();
-    2 * number_of_blocks_to_write as usize + 1
+    let number_of_bits_to_write = fast_floor_log2(value);
+    2 * number_of_bits_to_write as usize + 1
 }
 
 pub fn len_gamma(value: u64) -> usize {
