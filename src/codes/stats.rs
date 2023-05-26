@@ -19,14 +19,16 @@ impl CodesStats {
         Default::default()
     }
 
-    /// Update the stats with the length of the code for `value`
-    pub fn update(&mut self, value: u64) {
+    /// Update the stats with the length of the code for `value` and return back
+    /// `value` for convienience
+    pub fn update(&mut self, value: u64) -> u64 {
         self.unary = self.unary.saturating_add(len_unary(value));
         self.gamma = self.gamma.saturating_add(len_gamma(value));
         self.delta = self.delta.saturating_add(len_delta(value));
         self.zeta2 = self.zeta2.saturating_add(len_zeta(2, value));
         self.zeta3 = self.zeta3.saturating_add(len_zeta(3, value));
         self.zeta4 = self.zeta4.saturating_add(len_zeta(4, value));
+        value
     }
     /// Return the best code for the stream, as in the one that needed the
     /// least space
