@@ -103,6 +103,9 @@ pub mod gamma_tables;
 pub mod unary_tables;
 pub mod zeta_tables;
 
+mod stats;
+pub use stats::*;
+
 /// Return how long the unary code for `value` will be
 ///
 /// `USE_TABLE` enables or disables the use of pre-computed tables
