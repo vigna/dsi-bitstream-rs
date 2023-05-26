@@ -31,8 +31,9 @@ impl CodesStats {
         value
     }
     /// Return the best code for the stream, as in the one that needed the
-    /// least space
-    pub fn get_best_code(&self) -> Code {
+    /// least space, and the space needed by that code
+    pub fn get_best_code(&self) -> (Code, usize) {
+        // TODO!: make cleaner
         let mut best = self.unary;
         let mut best_code = Code::Unary;
 
@@ -57,9 +58,10 @@ impl CodesStats {
         }
 
         if self.zeta4 < best {
+            best = self.zeta4;
             best_code = Code::Zeta { k: 4 };
         }
 
-        best_code
+        (best_code, best)
     }
 }
