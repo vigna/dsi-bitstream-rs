@@ -38,7 +38,7 @@ pub fn len_zeta_param<const USE_TABLE: bool>(mut value: u64, k: u64) -> usize {
 }
 
 #[inline(always)]
-pub fn len_zeta(k: u64, value: u64) -> usize {
+pub fn len_zeta(value: u64, k: u64) -> usize {
     len_zeta_param::<true>(k, value)
 }
 

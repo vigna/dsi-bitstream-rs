@@ -25,9 +25,9 @@ impl CodesStats {
         self.unary = self.unary.saturating_add(len_unary(value));
         self.gamma = self.gamma.saturating_add(len_gamma(value));
         self.delta = self.delta.saturating_add(len_delta(value));
-        self.zeta2 = self.zeta2.saturating_add(len_zeta(2, value));
-        self.zeta3 = self.zeta3.saturating_add(len_zeta(3, value));
-        self.zeta4 = self.zeta4.saturating_add(len_zeta(4, value));
+        self.zeta2 = self.zeta2.saturating_add(len_zeta(value, 2));
+        self.zeta3 = self.zeta3.saturating_add(len_zeta(value, 3));
+        self.zeta4 = self.zeta4.saturating_add(len_zeta(value, 4));
         value
     }
     /// Return the best code for the stream, as in the one that needed the
