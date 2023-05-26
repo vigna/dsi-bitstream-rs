@@ -1,5 +1,9 @@
 use super::*;
 
+pub fn len_golomb(value: u64, b: u64) -> usize {
+    len_unary(value / b) + len_minimal_binary(value % b, b)
+}
+
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
 /// A struct to keep track of the space needed to store a stream of integers
 /// using different codes, this can be used to determine which code is the
@@ -11,6 +15,9 @@ pub struct CodesStats {
     pub zeta2: usize,
     pub zeta3: usize,
     pub zeta4: usize,
+    pub golomb2: usize,
+    pub golomb3: usize,
+    pub golomb4: usize,
 }
 
 impl CodesStats {
@@ -28,6 +35,9 @@ impl CodesStats {
         self.zeta2 = self.zeta2.saturating_add(len_zeta(value, 2));
         self.zeta3 = self.zeta3.saturating_add(len_zeta(value, 3));
         self.zeta4 = self.zeta4.saturating_add(len_zeta(value, 4));
+        self.golomb2 = self.golomb2.saturating_add(len_golomb(value, 2));
+        self.golomb3 = self.golomb3.saturating_add(len_golomb(value, 3));
+        self.golomb4 = self.golomb4.saturating_add(len_golomb(value, 4));
         value
     }
     /// Return the best code for the stream, as in the one that needed the
@@ -60,6 +70,21 @@ impl CodesStats {
         if self.zeta4 < best {
             best = self.zeta4;
             best_code = Code::Zeta { k: 4 };
+        }
+
+        if self.golomb2 < best {
+            best = self.golomb2;
+            best_code = Code::Golomb { b: 2 };
+        }
+
+        if self.golomb3 < best {
+            best = self.golomb3;
+            best_code = Code::Golomb { b: 3 };
+        }
+
+        if self.golomb4 < best {
+            best = self.golomb4;
+            best_code = Code::Golomb { b: 4 };
         }
 
         (best_code, best)
