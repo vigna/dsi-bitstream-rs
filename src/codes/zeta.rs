@@ -39,7 +39,7 @@ pub fn len_zeta_param<const USE_TABLE: bool>(mut value: u64, k: u64) -> usize {
 
 #[inline(always)]
 pub fn len_zeta(value: u64, k: u64) -> usize {
-    len_zeta_param::<true>(k, value)
+    len_zeta_param::<true>(value, k)
 }
 
 pub trait ZetaRead<BO: Endianness>: ZetaReadParam<BO> {
