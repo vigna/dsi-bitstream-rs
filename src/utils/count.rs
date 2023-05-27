@@ -4,7 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
-use crate::traits::*;
+use crate::{
+    prelude::{
+        len_delta, len_gamma, len_zeta, DeltaRead, DeltaWrite, GammaRead, GammaWrite,
+        GammaWriteParam, ZetaRead, ZetaWrite,
+    },
+    traits::*,
+};
 use anyhow::Result;
 
 /// Wrapping struct that keep tracks of written bits. Optionally,
@@ -73,6 +79,70 @@ impl<E: Endianness, BW: BitWrite<E>, const PRINT: bool> BitWrite<E>
 
     fn flush(self) -> Result<()> {
         self.bit_write.flush()
+    }
+}
+
+impl<E: Endianness, BW: BitWrite<E> + GammaWrite<E>, const PRINT: bool> GammaWrite<E>
+    for CountBitWrite<E, BW, PRINT>
+{
+    fn write_gamma(&mut self, value: u64) -> Result<usize> {
+        self.bit_write.write_gamma(value).map(|x| {
+            self.bits_written += x;
+            if PRINT {
+                eprintln!(
+                    "write_gamma({}) = {} (total = {})",
+                    value, x, self.bits_written
+                );
+            }
+            x
+        })
+    }
+}
+
+impl<E: Endianness, BW: BitWrite<E> + DeltaWrite<E>, const PRINT: bool> DeltaWrite<E>
+    for CountBitWrite<E, BW, PRINT>
+{
+    fn write_delta(&mut self, value: u64) -> Result<usize> {
+        self.bit_write.write_delta(value).map(|x| {
+            self.bits_written += x;
+            if PRINT {
+                eprintln!(
+                    "write_delta({}) = {} (total = {})",
+                    value, x, self.bits_written
+                );
+            }
+            x
+        })
+    }
+}
+
+impl<E: Endianness, BW: BitWrite<E> + ZetaWrite<E>, const PRINT: bool> ZetaWrite<E>
+    for CountBitWrite<E, BW, PRINT>
+{
+    fn write_zeta(&mut self, value: u64, k: u64) -> Result<usize> {
+        self.bit_write.write_zeta(value, k).map(|x| {
+            self.bits_written += x;
+            if PRINT {
+                eprintln!(
+                    "write_zeta({}, {}) = {} (total = {})",
+                    value, x, k, self.bits_written
+                );
+            }
+            x
+        })
+    }
+
+    fn write_zeta3(&mut self, value: u64) -> Result<usize> {
+        self.bit_write.write_zeta3(value).map(|x| {
+            self.bits_written += x;
+            if PRINT {
+                eprintln!(
+                    "write_zeta({}) = {} (total = {})",
+                    value, x, self.bits_written
+                );
+            }
+            x
+        })
     }
 }
 
@@ -146,6 +216,61 @@ impl<E: Endianness, BR: BitRead<E>, const PRINT: bool> BitRead<E> for CountBitRe
     }
 }
 
+impl<E: Endianness, BR: BitRead<E> + GammaRead<E>, const PRINT: bool> GammaRead<E>
+    for CountBitRead<E, BR, PRINT>
+{
+    fn read_gamma(&mut self) -> Result<u64> {
+        self.bit_read.read_gamma().map(|x| {
+            self.bits_read += len_gamma(x);
+            if PRINT {
+                eprintln!("read_gamma() = {:#016x} (total = {})", x, self.bits_read);
+            }
+            x
+        })
+    }
+}
+
+impl<E: Endianness, BR: BitRead<E> + DeltaRead<E>, const PRINT: bool> DeltaRead<E>
+    for CountBitRead<E, BR, PRINT>
+{
+    fn read_delta(&mut self) -> Result<u64> {
+        self.bit_read.read_delta().map(|x| {
+            self.bits_read += len_delta(x);
+            if PRINT {
+                eprintln!("read_delta() = {:#016x} (total = {})", x, self.bits_read);
+            }
+            x
+        })
+    }
+}
+
+impl<E: Endianness, BR: BitRead<E> + ZetaRead<E>, const PRINT: bool> ZetaRead<E>
+    for CountBitRead<E, BR, PRINT>
+{
+    fn read_zeta(&mut self, k: u64) -> Result<u64> {
+        self.bit_read.read_zeta(k).map(|x| {
+            self.bits_read += len_zeta(x, k);
+            if PRINT {
+                eprintln!(
+                    "read_zeta({}) = {:#016x} (total = {})",
+                    k, x, self.bits_read
+                );
+            }
+            x
+        })
+    }
+
+    fn read_zeta3(&mut self) -> Result<u64> {
+        self.bit_read.read_zeta3().map(|x| {
+            self.bits_read += len_zeta(x, 3);
+            if PRINT {
+                eprintln!("read_zeta3() = {:#016x} (total = {})", x, self.bits_read);
+            }
+            x
+        })
+    }
+}
+
 #[cfg(test)]
 #[test]
 fn test_count() -> Result<()> {
@@ -162,6 +287,14 @@ fn test_count() -> Result<()> {
     assert_eq!(count_bit_write.bits_written, 127);
     count_bit_write.write_bits(1, 33)?;
     assert_eq!(count_bit_write.bits_written, 160);
+    count_bit_write.write_gamma(2)?;
+    assert_eq!(count_bit_write.bits_written, 163);
+    count_bit_write.write_delta(1)?;
+    assert_eq!(count_bit_write.bits_written, 167);
+    count_bit_write.write_zeta(0, 4)?;
+    assert_eq!(count_bit_write.bits_written, 171);
+    count_bit_write.write_zeta3(0)?;
+    assert_eq!(count_bit_write.bits_written, 174);
     count_bit_write.flush()?;
 
     let bit_read =
@@ -177,6 +310,14 @@ fn test_count() -> Result<()> {
     assert_eq!(count_bit_read.bits_read, 127);
     count_bit_read.skip_bits(33)?;
     assert_eq!(count_bit_read.bits_read, 160);
+    assert_eq!(count_bit_read.read_gamma()?, 2);
+    assert_eq!(count_bit_read.bits_read, 163);
+    assert_eq!(count_bit_read.read_delta()?, 1);
+    assert_eq!(count_bit_read.bits_read, 167);
+    assert_eq!(count_bit_read.read_zeta(4)?, 0);
+    assert_eq!(count_bit_read.bits_read, 171);
+    assert_eq!(count_bit_read.read_zeta3()?, 0);
+    assert_eq!(count_bit_read.bits_read, 174);
 
     Ok(())
 }

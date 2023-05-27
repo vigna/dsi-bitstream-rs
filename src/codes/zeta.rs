@@ -42,13 +42,13 @@ pub fn len_zeta(value: u64, k: u64) -> usize {
     len_zeta_param::<true>(value, k)
 }
 
-pub trait ZetaRead<BO: Endianness>: ZetaReadParam<BO> {
+pub trait ZetaRead<E: Endianness>: BitRead<E> {
     fn read_zeta(&mut self, k: u64) -> Result<u64>;
     fn read_zeta3(&mut self) -> Result<u64>;
 }
 
 /// Trait for objects that can read Zeta codes
-pub trait ZetaReadParam<BO: Endianness>: MinimalBinaryRead<BO> {
+pub trait ZetaReadParam<E: Endianness>: MinimalBinaryRead<E> {
     /// Generic ζ code reader
     ///
     /// # Errors
@@ -105,13 +105,13 @@ fn default_read_zeta_param<BO: Endianness, B: BitRead<BO>>(backend: &mut B, k: u
     Ok(l + res - 1)
 }
 
-pub trait ZetaWrite<BO: Endianness>: ZetaWriteParam<BO> {
+pub trait ZetaWrite<E: Endianness>: BitWrite<E> {
     fn write_zeta(&mut self, value: u64, k: u64) -> Result<usize>;
     fn write_zeta3(&mut self, value: u64) -> Result<usize>;
 }
 
 /// Trait for objects that can write Zeta codes
-pub trait ZetaWriteParam<BO: Endianness>: MinimalBinaryWrite<BO> {
+pub trait ZetaWriteParam<E: Endianness>: MinimalBinaryWrite<E> {
     /// Generic ζ code writer
     ///
     /// # Errors
@@ -167,7 +167,7 @@ impl<B: BitWrite<LE>> ZetaWriteParam<LE> for B {
 /// # Errors
 /// Forward `read_unary` and `read_bits` errors.
 #[inline(always)]
-fn default_write_zeta<BO: Endianness, B: BitWrite<BO>>(
+fn default_write_zeta<E: Endianness, B: BitWrite<E>>(
     backend: &mut B,
     mut value: u64,
     k: u64,
