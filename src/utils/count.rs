@@ -146,6 +146,18 @@ impl<E: Endianness, BW: BitWrite<E> + ZetaWrite<E>, const PRINT: bool> ZetaWrite
     }
 }
 
+impl<E: Endianness, BR: BitWrite<E> + BitSeek, const PRINT: bool> BitSeek
+    for CountBitWrite<E, BR, PRINT>
+{
+    fn set_pos(&mut self, bit_index: usize) -> Result<()> {
+        self.bit_write.set_pos(bit_index)
+    }
+
+    fn get_pos(&self) -> usize {
+        self.bit_write.get_pos()
+    }
+}
+
 /// Wrapping struct that keep tracks of read bits. Optionally,
 /// prints to standard error information about methods called.
 pub struct CountBitRead<E: Endianness, BR: BitRead<E>, const PRINT: bool = false> {
@@ -268,6 +280,18 @@ impl<E: Endianness, BR: BitRead<E> + ZetaRead<E>, const PRINT: bool> ZetaRead<E>
             }
             x
         })
+    }
+}
+
+impl<E: Endianness, BR: BitRead<E> + BitSeek, const PRINT: bool> BitSeek
+    for CountBitRead<E, BR, PRINT>
+{
+    fn set_pos(&mut self, bit_index: usize) -> Result<()> {
+        self.bit_read.set_pos(bit_index)
+    }
+
+    fn get_pos(&self) -> usize {
+        self.bit_read.get_pos()
     }
 }
 
