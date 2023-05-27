@@ -9,5 +9,5 @@
 //! They are collected into a module so you can do `use dsi_bitstream::utils::*;`
 //! for ease of use.
 
-mod count;
+pub mod count;
 pub use count::*;
