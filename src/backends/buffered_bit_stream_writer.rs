@@ -291,7 +291,10 @@ fn test_buffered_bit_stream_writer() -> Result<(), anyhow::Error> {
     use super::MemWordWriteVec;
     use crate::{
         codes::{GammaRead, GammaWrite},
-        prelude::{BufferedBitStreamRead, MemWordRead},
+        prelude::{
+            len_delta, len_gamma, len_unary, BufferedBitStreamRead, DeltaRead, DeltaWrite,
+            MemWordRead,
+        },
     };
     use rand::Rng;
     use rand::{rngs::SmallRng, SeedableRng};
@@ -305,16 +308,20 @@ fn test_buffered_bit_stream_writer() -> Result<(), anyhow::Error> {
     const ITER: u64 = 128;
 
     for i in 0..ITER {
-        big.write_gamma(i)?;
-        little.write_gamma(i)?;
-        big.write_gamma(i)?;
-        little.write_gamma(i)?;
+        assert_eq!(big.write_gamma(i)?, len_gamma(i));
+        assert_eq!(little.write_gamma(i)?, len_gamma(i));
+        assert_eq!(big.write_gamma(i)?, len_gamma(i));
+        assert_eq!(little.write_gamma(i)?, len_gamma(i));
+        assert_eq!(big.write_delta(i)?, len_delta(i));
+        assert_eq!(little.write_delta(i)?, len_delta(i));
+        assert_eq!(big.write_delta(i)?, len_delta(i));
+        assert_eq!(little.write_delta(i)?, len_delta(i));
         big.write_bits(1, r.gen_range(1..=64))?;
         little.write_bits(1, r.gen_range(1..=64))?;
-        big.write_unary_param::<true>(r.gen_range(0..=1024))?;
-        little.write_unary_param::<true>(r.gen_range(0..=1024))?;
-        big.write_unary(r.gen_range(0..=1024))?;
-        little.write_unary(r.gen_range(0..=1024))?;
+        assert_eq!(big.write_unary_param::<true>(i)?, len_unary(i));
+        assert_eq!(little.write_unary_param::<true>(i)?, len_unary(i));
+        assert_eq!(big.write_unary(i)?, len_unary(i));
+        assert_eq!(little.write_unary(i)?, len_unary(i));
     }
 
     drop(big);
@@ -346,12 +353,16 @@ fn test_buffered_bit_stream_writer() -> Result<(), anyhow::Error> {
         assert_eq!(little_buff.read_gamma()?, i);
         assert_eq!(big_buff.read_gamma()?, i);
         assert_eq!(little_buff.read_gamma()?, i);
+        assert_eq!(big_buff.read_delta()?, i);
+        assert_eq!(little_buff.read_delta()?, i);
+        assert_eq!(big_buff.read_delta()?, i);
+        assert_eq!(little_buff.read_delta()?, i);
         assert_eq!(big_buff.read_bits(r.gen_range(1..=64))?, 1);
         assert_eq!(little_buff.read_bits(r.gen_range(1..=64))?, 1);
-        assert_eq!(big_buff.read_unary()?, r.gen_range(0..=1024));
-        assert_eq!(little_buff.read_unary()?, r.gen_range(0..=1024));
-        assert_eq!(big_buff.read_unary()?, r.gen_range(0..=1024));
-        assert_eq!(little_buff.read_unary()?, r.gen_range(0..=1024));
+        assert_eq!(big_buff.read_unary()?, i);
+        assert_eq!(little_buff.read_unary()?, i);
+        assert_eq!(big_buff.read_unary()?, i);
+        assert_eq!(little_buff.read_unary()?, i);
     }
 
     Ok(())
