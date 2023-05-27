@@ -57,7 +57,7 @@ impl<E: Endianness, BW: BitWrite<E>> BitWrite<E> for CountBitWrite<E, BW> {
 /// Wrapping struct that keep tracks of read bits.
 pub struct CountBitRead<E: Endianness, BR: BitRead<E>> {
     bit_read: BR,
-    /// The number of bits read so far from the underlying [`BitRead`].
+    /// The number of bits read (or skipped) so far from the underlying [`BitRead`].
     pub bits_read: usize,
     _marker: std::marker::PhantomData<E>,
 }
@@ -111,7 +111,7 @@ impl<E: Endianness, BR: BitRead<E>> BitRead<E> for CountBitRead<E, BR> {
 fn test() -> Result<()> {
     use crate::prelude::*;
     let mut buffer = <Vec<u64>>::new();
-    let mut bit_write = <BufferedBitStreamWrite<LE, _>>::new(MemWordWriteVec::new(&mut buffer));
+    let bit_write = <BufferedBitStreamWrite<LE, _>>::new(MemWordWriteVec::new(&mut buffer));
     let mut count_bit_write = CountBitWrite::new(bit_write);
 
     count_bit_write.write_unary(5)?;
@@ -124,7 +124,7 @@ fn test() -> Result<()> {
     assert_eq!(count_bit_write.bits_written, 160);
     count_bit_write.flush()?;
 
-    let mut bit_read =
+    let bit_read =
         <BufferedBitStreamRead<LE, u64, _>>::new(MemWordReadInfinite::<u64, _>::new(&buffer));
     let mut count_bit_read = CountBitRead::new(bit_read);
 
