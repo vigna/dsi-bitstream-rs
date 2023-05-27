@@ -47,10 +47,12 @@ extern crate alloc;
 pub mod backends;
 pub mod codes;
 pub mod traits;
+pub mod utils;
 
 /// Prelude module to import everything from this crate
 pub mod prelude {
     pub use crate::backends::*;
     pub use crate::codes::*;
     pub use crate::traits::*;
+    pub use crate::utils::*;
 }
