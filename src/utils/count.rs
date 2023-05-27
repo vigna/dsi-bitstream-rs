@@ -9,6 +9,7 @@ use anyhow::Result;
 
 /// Wrapping struct that keep tracks of written bits. Optionally,
 /// prints to standard error information about methods called.
+#[derive(Debug, Clone)]
 pub struct CountBitWrite<E: Endianness, BW: BitWrite<E>, const PRINT: bool = false> {
     bit_write: BW,
     /// The number of bits written so far on the underlying [`BitWrite`].
