@@ -160,6 +160,7 @@ impl<E: Endianness, BR: BitWrite<E> + BitSeek, const PRINT: bool> BitSeek
 
 /// Wrapping struct that keep tracks of read bits. Optionally,
 /// prints to standard error information about methods called.
+#[derive(Debug, Clone)]
 pub struct CountBitRead<E: Endianness, BR: BitRead<E>, const PRINT: bool = false> {
     bit_read: BR,
     /// The number of bits read (or skipped) so far from the underlying [`BitRead`].
