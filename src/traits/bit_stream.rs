@@ -9,18 +9,18 @@
 use crate::traits::*;
 use anyhow::Result;
 
-/// Trait to convert a Stream to a Seekable Stream
+/// Trait providing bit-based positional methods.
 pub trait BitSeek {
     /// Move the stream cursor so that if we call `read_bits(1)` we will read
-    /// the `bit_index`-th bit in the stream
+    /// the `bit_pos`-th bit in the stream
     ///
     /// # Errors
-    /// This function return an error if the bit_index is not within the available
-    /// span of bits.
-    fn set_pos(&mut self, bit_index: usize) -> Result<()>;
+    /// This function return an error if the specified bit position
+    /// is not available
+    fn set_pos(&mut self, bit_pos: usize) -> Result<()>;
 
     #[must_use]
-    /// Return the current bit index
+    /// Return the current bit position in the stream
     fn get_pos(&self) -> usize;
 }
 

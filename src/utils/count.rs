@@ -28,7 +28,7 @@ impl<E: Endianness, BW: BitWrite<E>, const PRINT: bool> CountBitWrite<E, BW, PRI
         Self {
             bit_write,
             bits_written: 0,
-            _marker: std::marker::PhantomData,
+            _marker: std::marker::PhantomData::default(),
         }
     }
 }
@@ -149,8 +149,8 @@ impl<E: Endianness, BW: BitWrite<E> + ZetaWrite<E>, const PRINT: bool> ZetaWrite
 impl<E: Endianness, BR: BitWrite<E> + BitSeek, const PRINT: bool> BitSeek
     for CountBitWrite<E, BR, PRINT>
 {
-    fn set_pos(&mut self, bit_index: usize) -> Result<()> {
-        self.bit_write.set_pos(bit_index)
+    fn set_pos(&mut self, bit_pos: usize) -> Result<()> {
+        self.bit_write.set_pos(bit_pos)
     }
 
     fn get_pos(&self) -> usize {
@@ -173,7 +173,7 @@ impl<E: Endianness, BR: BitRead<E>, const PRINT: bool> CountBitRead<E, BR, PRINT
         Self {
             bit_read,
             bits_read: 0,
-            _marker: std::marker::PhantomData,
+            _marker: std::marker::PhantomData::default(),
         }
     }
 }
@@ -287,8 +287,8 @@ impl<E: Endianness, BR: BitRead<E> + ZetaRead<E>, const PRINT: bool> ZetaRead<E>
 impl<E: Endianness, BR: BitRead<E> + BitSeek, const PRINT: bool> BitSeek
     for CountBitRead<E, BR, PRINT>
 {
-    fn set_pos(&mut self, bit_index: usize) -> Result<()> {
-        self.bit_read.set_pos(bit_index)
+    fn set_pos(&mut self, bit_pos: usize) -> Result<()> {
+        self.bit_read.set_pos(bit_pos)
     }
 
     fn get_pos(&self) -> usize {
