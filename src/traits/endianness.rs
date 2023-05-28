@@ -25,7 +25,10 @@ impl<T: private::Endianness> Endianness for T {}
 /// [`BE`]
 pub trait Endianness: private::Endianness {}
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LittleEndian;
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct BigEndian;
 
 /// Alias for [`BigEndian`]
