@@ -236,7 +236,7 @@ impl<E: Endianness, BR: BitRead<E> + GammaRead<E>, const PRINT: bool> GammaRead<
         self.bit_read.read_gamma().map(|x| {
             self.bits_read += len_gamma(x);
             if PRINT {
-                eprintln!("read_gamma() = {:#016x} (total = {})", x, self.bits_read);
+                eprintln!("read_gamma() = {} (total = {})", x, self.bits_read);
             }
             x
         })
@@ -250,7 +250,7 @@ impl<E: Endianness, BR: BitRead<E> + DeltaRead<E>, const PRINT: bool> DeltaRead<
         self.bit_read.read_delta().map(|x| {
             self.bits_read += len_delta(x);
             if PRINT {
-                eprintln!("read_delta() = {:#016x} (total = {})", x, self.bits_read);
+                eprintln!("read_delta() = {} (total = {})", x, self.bits_read);
             }
             x
         })
@@ -264,10 +264,7 @@ impl<E: Endianness, BR: BitRead<E> + ZetaRead<E>, const PRINT: bool> ZetaRead<E>
         self.bit_read.read_zeta(k).map(|x| {
             self.bits_read += len_zeta(x, k);
             if PRINT {
-                eprintln!(
-                    "read_zeta({}) = {:#016x} (total = {})",
-                    k, x, self.bits_read
-                );
+                eprintln!("read_zeta({}) = {} (total = {})", k, x, self.bits_read);
             }
             x
         })
@@ -277,7 +274,7 @@ impl<E: Endianness, BR: BitRead<E> + ZetaRead<E>, const PRINT: bool> ZetaRead<E>
         self.bit_read.read_zeta3().map(|x| {
             self.bits_read += len_zeta(x, 3);
             if PRINT {
-                eprintln!("read_zeta3() = {:#016x} (total = {})", x, self.bits_read);
+                eprintln!("read_zeta3() = {} (total = {})", x, self.bits_read);
             }
             x
         })
