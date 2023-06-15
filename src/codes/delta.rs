@@ -57,7 +57,7 @@ pub trait DeltaReadParam<E: Endianness>: GammaReadParam<E> {
     ///
     /// # Errors
     /// This function fails only if the BitRead backend has problems reading
-    /// bits, as when the stream ended unexpectedly
+    /// bits, as when the stream ends unexpectedly
     fn read_delta_param<const USE_DELTA_TABLE: bool, const USE_GAMMA_TABLE: bool>(
         &mut self,
     ) -> Result<u64>;
@@ -116,7 +116,7 @@ pub trait DeltaWriteParam<E: Endianness>: GammaWriteParam<E> {
     ///
     /// # Errors
     /// This function fails only if the BitWrite backend has problems writing
-    /// bits, as when the stream ended unexpectedly
+    /// bits, as when the stream ends unexpectedly
     fn write_delta_param<const USE_DELTA_TABLE: bool, const USE_GAMMA_TABLE: bool>(
         &mut self,
         value: u64,

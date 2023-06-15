@@ -40,7 +40,7 @@ pub trait MinimalBinaryRead<BO: Endianness>: BitRead<BO> {
     ///
     /// # Errors
     /// This function fails only if the BitRead backend has problems reading
-    /// bits, as when the stream ended unexpectedly
+    /// bits, as when the stream ends unexpectedly
     #[inline]
     fn read_minimal_binary(&mut self, max: u64) -> Result<u64> {
         if max == 0 {
@@ -66,7 +66,7 @@ pub trait MinimalBinaryWrite<BO: Endianness>: BitWrite<BO> {
     ///
     /// # Errors
     /// This function fails only if the BitRead backend has problems writing
-    /// bits, as when the stream ended unexpectedly
+    /// bits, as when the stream ends unexpectedly
     #[inline]
     fn write_minimal_binary(&mut self, value: u64, max: u64) -> Result<usize> {
         if max == 0 {

@@ -53,13 +53,13 @@ pub trait ZetaReadParam<E: Endianness>: MinimalBinaryRead<E> {
     ///
     /// # Errors
     /// This function fails only if the BitRead backend has problems reading
-    /// bits, as when the stream ended unexpectedly
+    /// bits, as when the stream ends unexpectedly
     fn read_zeta_param<const USE_TABLE: bool>(&mut self, k: u64) -> Result<u64>;
     /// Specialized ζ code reader for k = 3
     ///
     /// # Errors
     /// This function fails only if the BitRead backend has problems reading
-    /// bits, as when the stream ended unexpectedly
+    /// bits, as when the stream ends unexpectedly
     fn read_zeta3_param<const USE_TABLE: bool>(&mut self) -> Result<u64>;
 }
 
@@ -116,13 +116,13 @@ pub trait ZetaWriteParam<E: Endianness>: MinimalBinaryWrite<E> {
     ///
     /// # Errors
     /// This function fails only if the BitWrite backend has problems writing
-    /// bits, as when the stream ended unexpectedly
+    /// bits, as when the stream ends unexpectedly
     fn write_zeta_param<const USE_TABLE: bool>(&mut self, value: u64, k: u64) -> Result<usize>;
     /// Specialized ζ code writer for k = 3 and return the number of bits written.
     ///
     /// # Errors
     /// This function fails only if the BitWrite backend has problems writing
-    /// bits, as when the stream ended unexpectedly
+    /// bits, as when the stream ends unexpectedly
     fn write_zeta3_param<const USE_TABLE: bool>(&mut self, value: u64) -> Result<usize>;
 }
 

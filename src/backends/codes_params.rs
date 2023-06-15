@@ -61,6 +61,16 @@ macro_rules! impl_default_read_codes {
                 #[cfg(not(target_arch = "arm" ))]
                 return self.read_gamma_param::<true>();
             }
+
+            #[inline(always)]
+            fn skip_gammas(&mut self, n: usize) -> Result<usize> {
+                // From our tests, the ARM architecture is faster
+                // without tables ɣ codes.
+                #[cfg(target_arch = "arm" )]
+                return self.skip_gammas_param::<false>(n);
+                #[cfg(not(target_arch = "arm" ))]
+                return self.skip_gammas_param::<true>(n);
+            }
         }
 
         impl<BW: Word, WR: WordRead, DC: ReadCodesParams> DeltaRead<$endianess>

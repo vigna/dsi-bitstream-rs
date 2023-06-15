@@ -6,8 +6,8 @@
 
 use crate::{
     prelude::{
-        len_delta, len_gamma, len_zeta, DeltaRead, DeltaWrite, GammaRead, GammaWrite,
-        GammaWriteParam, ZetaRead, ZetaWrite,
+        len_delta, len_gamma, len_zeta, DeltaRead, DeltaWrite, GammaRead, GammaWrite, ZetaRead,
+        ZetaWrite,
     },
     traits::*,
 };
@@ -237,6 +237,16 @@ impl<E: Endianness, BR: BitRead<E> + GammaRead<E>, const PRINT: bool> GammaRead<
             self.bits_read += len_gamma(x);
             if PRINT {
                 eprintln!("read_gamma() = {} (total = {})", x, self.bits_read);
+            }
+            x
+        })
+    }
+
+    fn skip_gammas(&mut self, n: usize) -> Result<usize> {
+        self.bit_read.skip_gammas(n).map(|x| {
+            self.bits_read += x;
+            if PRINT {
+                eprintln!("skip_gammas({}) = {} (total = {})", n, x, self.bits_read);
             }
             x
         })
