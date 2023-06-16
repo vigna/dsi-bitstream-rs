@@ -1,4 +1,4 @@
-// THIS FILE HAS BEEN GENERATED WITH THE SCRIPT code_tables_generator.py
+// THIS FILE HAS BEEN GENERATED WITH THE SCRIPT gen_code_tables.py
 // ~~~~~~~~~~~~~~~~~~~ DO NOT MODIFY ~~~~~~~~~~~~~~~~~~~~~~
 // Pre-computed constants used to speedup the reading and writing of zeta codes
 use crate::traits::{BitRead, BitWrite, UpcastableInto, BE, LE};
@@ -17,13 +17,13 @@ pub const WRITE_MAX: u64 = 1023;
 ///
 /// # Errors
 /// This function errors if it wasn't able to skip_bits
-pub fn read_table_le<B: BitRead<LE>>(backend: &mut B) -> Result<Option<u64>> {
+pub fn read_table_le<B: BitRead<LE>>(backend: &mut B) -> Result<Option<(u64, usize)>> {
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
         let idx: u64 = idx.upcast();
         let (value, len) = READ_LE[idx as usize];
         if len != MISSING_VALUE_LEN {
             backend.skip_bits_after_table_lookup(len as usize)?;
-            return Ok(Some(value as u64));
+            return Ok(Some((value as u64, len as usize)));
         }
     }
     Ok(None)
@@ -53,13 +53,13 @@ pub fn write_table_le<B: BitWrite<LE>>(backend: &mut B, value: u64) -> Result<Op
 ///
 /// # Errors
 /// This function errors if it wasn't able to skip_bits
-pub fn read_table_be<B: BitRead<BE>>(backend: &mut B) -> Result<Option<u64>> {
+pub fn read_table_be<B: BitRead<BE>>(backend: &mut B) -> Result<Option<(u64, usize)>> {
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
         let idx: u64 = idx.upcast();
         let (value, len) = READ_BE[idx as usize];
         if len != MISSING_VALUE_LEN {
             backend.skip_bits_after_table_lookup(len as usize)?;
-            return Ok(Some(value as u64));
+            return Ok(Some((value as u64, len as usize)));
         }
     }
     Ok(None)

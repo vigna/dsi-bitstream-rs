@@ -72,7 +72,7 @@ impl<B: BitRead<BE>> ZetaReadParam<BE> for B {
     #[inline]
     fn read_zeta3_param<const USE_TABLE: bool>(&mut self) -> Result<u64> {
         if USE_TABLE {
-            if let Some(res) = zeta_tables::read_table_be(self)? {
+            if let Some((res, _)) = zeta_tables::read_table_be(self)? {
                 return Ok(res);
             }
         }
@@ -88,7 +88,7 @@ impl<B: BitRead<LE>> ZetaReadParam<LE> for B {
     #[inline]
     fn read_zeta3_param<const USE_TABLE: bool>(&mut self) -> Result<u64> {
         if USE_TABLE {
-            if let Some(res) = zeta_tables::read_table_le(self)? {
+            if let Some((res, _)) = zeta_tables::read_table_le(self)? {
                 return Ok(res);
             }
         }

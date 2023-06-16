@@ -93,7 +93,7 @@ impl<B: BitRead<BE>> GammaReadParam<BE> for B {
     #[inline]
     fn read_gamma_param<const USE_TABLE: bool>(&mut self) -> Result<u64> {
         if USE_TABLE {
-            if let Some(res) = gamma_tables::read_table_be(self)? {
+            if let Some((res, _)) = gamma_tables::read_table_be(self)? {
                 return Ok(res);
             }
         }
@@ -105,13 +105,13 @@ impl<B: BitRead<BE>> GammaReadParam<BE> for B {
         let mut skipped_bits = 0;
         for _ in 0..n {
             if USE_TABLE {
-                if let Some(value) = gamma_tables::read_table_be(self)? {
+                if let Some((_, len)) = gamma_tables::read_table_be(self)? {
                     // This is wrong, we already know the length from the tables
-                    skipped_bits += len_gamma(value) as usize;
+                    skipped_bits += len;
                     continue;
                 }
             }
-            skipped_bits += default_skip_gamma(self)? as usize;
+            skipped_bits += default_skip_gamma(self)?;
         }
 
         Ok(skipped_bits)
@@ -121,7 +121,7 @@ impl<B: BitRead<LE>> GammaReadParam<LE> for B {
     #[inline]
     fn read_gamma_param<const USE_TABLE: bool>(&mut self) -> Result<u64> {
         if USE_TABLE {
-            if let Some(res) = gamma_tables::read_table_le(self)? {
+            if let Some((res, _)) = gamma_tables::read_table_le(self)? {
                 return Ok(res);
             }
         }
@@ -133,9 +133,9 @@ impl<B: BitRead<LE>> GammaReadParam<LE> for B {
         let mut skipped_bits = 0;
         for _ in 0..n {
             if USE_TABLE {
-                if let Some(value) = gamma_tables::read_table_le(self)? {
+                if let Some((value, _)) = gamma_tables::read_table_le(self)? {
                     // This is wrong, we already know the length from the tables
-                    skipped_bits += len_gamma(value) as usize;
+                    skipped_bits += len_gamma(value);
                     continue;
                 }
             }

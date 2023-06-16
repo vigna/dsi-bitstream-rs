@@ -10,7 +10,9 @@
 //! universal coding of x ∈ N+ is obtained by representing x in binary
 //! preceded by a representation of its length in γ.
 
-use super::{delta_tables, fast_floor_log2, len_gamma_param, GammaReadParam, GammaWriteParam};
+use super::{
+    delta_tables, fast_floor_log2, gamma_tables, len_gamma_param, GammaReadParam, GammaWriteParam,
+};
 use crate::traits::*;
 use anyhow::Result;
 
@@ -46,6 +48,7 @@ pub fn len_delta(value: u64) -> usize {
 
 pub trait DeltaRead<E: Endianness>: BitRead<E> {
     fn read_delta(&mut self) -> Result<u64>;
+    //fn skip_deltas(&mut self, n: usize) -> Result<usize>;
 }
 
 /// Trait for objects that can read Delta codes
@@ -53,7 +56,9 @@ pub trait DeltaReadParam<E: Endianness>: GammaReadParam<E> {
     /// Read a delta code from the stream.
     ///
     /// `USE_DELTA_TABLE` enables or disables the use of pre-computed tables
-    /// for decoding
+    /// for decoding delta codes. `USE_GAMMA_TABLE` enables or disables the use
+    /// of pre-computed tables for decoding the gamma-coded length of the
+    /// delta code.
     ///
     /// # Errors
     /// This function fails only if the BitRead backend has problems reading
@@ -61,7 +66,65 @@ pub trait DeltaReadParam<E: Endianness>: GammaReadParam<E> {
     fn read_delta_param<const USE_DELTA_TABLE: bool, const USE_GAMMA_TABLE: bool>(
         &mut self,
     ) -> Result<u64>;
+
+    /// Skip a number of dleta codes from the stream.
+    ///
+    /// `USE_DELTA_TABLE` enables or disables the use of pre-computed tables
+    /// for decoding delta codes. `USE_GAMMA_TABLE` enables or disables the use
+    /// of pre-computed tables for decoding the gamma-coded length of the
+    /// delta code.
+    ///
+    /// # Errors
+    /// This function fails only if the BitRead backend has problems reading
+    /// bits, as when the stream ends unexpectedly
+    fn skip_deltas_param<const USE_DELTA_TABLE: bool, const USE_GAMMA_TABLE: bool>(
+        &mut self,
+        n: usize,
+    ) -> Result<usize>;
 }
+
+/// Common part of the BE and LE impl
+///
+/// # Errors
+/// Forward `read_unary` and `read_bits` errors.
+#[inline(always)]
+fn default_read_delta<E: Endianness, B: GammaReadParam<E>, const USE_GAMMA_TABLE: bool>(
+    backend: &mut B,
+) -> Result<u64> {
+    let len = backend.read_gamma_param::<USE_GAMMA_TABLE>()?;
+    debug_assert!(len <= 64);
+    Ok(backend.read_bits(len as usize)? + (1 << len) - 1)
+}
+
+macro_rules! default_skip_delta_impl {
+    ($endian:ty, $default_skip_delta: ident, $read_table: ident) => {
+        #[inline(always)]
+        fn $default_skip_delta<B: GammaReadParam<$endian>, const USE_GAMMA_TABLE: bool>(
+            backend: &mut B,
+        ) -> Result<usize> {
+            let (value, len) = 'gamma: {
+                if USE_GAMMA_TABLE {
+                    if let Some((value, len)) = gamma_tables::$read_table(backend)? {
+                        break 'gamma (value, len);
+                    }
+                };
+                let len = backend.read_unary_param::<false>()?;
+                debug_assert!(len <= 64);
+                (
+                    backend.read_bits(len as usize)? + (1 << len) - 1,
+                    len as usize,
+                )
+            };
+
+            debug_assert!(len <= 64);
+            backend.read_bits(value as usize)?;
+            Ok(value as usize + len)
+        }
+    };
+}
+
+default_skip_delta_impl!(LE, default_skip_delta_le, read_table_le);
+default_skip_delta_impl!(BE, default_skip_delta_be, read_table_be);
 
 impl<B: GammaReadParam<BE>> DeltaReadParam<BE> for B {
     #[inline]
@@ -69,11 +132,30 @@ impl<B: GammaReadParam<BE>> DeltaReadParam<BE> for B {
         &mut self,
     ) -> Result<u64> {
         if USE_DELTA_TABLE {
-            if let Some(res) = delta_tables::read_table_be(self)? {
+            if let Some((res, _)) = delta_tables::read_table_be(self)? {
                 return Ok(res);
             }
         }
         default_read_delta::<BE, _, USE_GAMMA_TABLE>(self)
+    }
+
+    #[inline]
+    fn skip_deltas_param<const USE_DELTA_TABLE: bool, const USE_GAMMA_TABLE: bool>(
+        &mut self,
+        n: usize,
+    ) -> Result<usize> {
+        let mut skipped_bits = 0;
+        for _ in 0..n {
+            if USE_DELTA_TABLE {
+                if let Some((_, len)) = delta_tables::read_table_be(self)? {
+                    skipped_bits += len;
+                    continue;
+                }
+            }
+            skipped_bits += default_skip_delta_be::<_, USE_GAMMA_TABLE>(self)?;
+        }
+
+        Ok(skipped_bits)
     }
 }
 impl<B: GammaReadParam<LE>> DeltaReadParam<LE> for B {
@@ -82,25 +164,31 @@ impl<B: GammaReadParam<LE>> DeltaReadParam<LE> for B {
         &mut self,
     ) -> Result<u64> {
         if USE_DELTA_TABLE {
-            if let Some(res) = delta_tables::read_table_le(self)? {
+            if let Some((res, _)) = delta_tables::read_table_le(self)? {
                 return Ok(res);
             }
         }
         default_read_delta::<LE, _, USE_GAMMA_TABLE>(self)
     }
-}
 
-#[inline(always)]
-/// Default impl, so specialized impls can call it
-///
-/// # Errors
-/// Forward `read_unary` and `read_bits` errors.
-fn default_read_delta<E: Endianness, B: GammaReadParam<E>, const USE_GAMMA_TABLE: bool>(
-    backend: &mut B,
-) -> Result<u64> {
-    let n_bits = backend.read_gamma_param::<USE_GAMMA_TABLE>()?;
-    debug_assert!(n_bits <= 64);
-    Ok(backend.read_bits(n_bits as usize)? + (1 << n_bits) - 1)
+    #[inline]
+    fn skip_deltas_param<const USE_DELTA_TABLE: bool, const USE_GAMMA_TABLE: bool>(
+        &mut self,
+        n: usize,
+    ) -> Result<usize> {
+        let mut skipped_bits = 0;
+        for _ in 0..n {
+            if USE_DELTA_TABLE {
+                if let Some((_, len)) = delta_tables::read_table_le(self)? {
+                    skipped_bits += len;
+                    continue;
+                }
+            }
+            skipped_bits += default_skip_delta_le::<_, USE_GAMMA_TABLE>(self)?;
+        }
+
+        Ok(skipped_bits)
+    }
 }
 
 pub trait DeltaWrite<E: Endianness>: BitWrite<E> {
