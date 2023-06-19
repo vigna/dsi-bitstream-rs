@@ -32,11 +32,17 @@ struct FuzzCase {
 
 #[derive(Arbitrary, Debug, Clone)]
 enum RandomCommand {
+    #[cfg(feature = "bits")]
     Bits(u64, usize),
+    #[cfg(feature = "minimal_binary")]
     MinimalBinary(u64, u64),
+    #[cfg(feature = "unary")]
     Unary(u64, bool, bool),
+    #[cfg(feature = "gamma")]
     Gamma(u64, bool, bool),
+    #[cfg(feature = "delta")]
     Delta(u64, bool, bool),
+    #[cfg(feature = "zeta")]
     Zeta(u64, u64, bool, bool),
 }
 
@@ -44,23 +50,29 @@ fuzz_target!(|data: FuzzCase| {
     let mut data = data;
     for command in &mut data.commands {
         match command {
+            #[cfg(feature = "bits")]
             RandomCommand::Bits(value, n_bits) => {
                 *n_bits = 1 + (*n_bits % 63);
                 *value &= (1 << *n_bits) - 1;
             }
+            #[cfg(feature = "minimal_binary")]
             RandomCommand::MinimalBinary(value, max) => {
                 *max = (*max).max(1);
                 *value = (*value) % *max;
             }
+            #[cfg(feature = "unary")]
             RandomCommand::Unary(value, _, _) => {
                 *value = (*value).min(300);
             }
+            #[cfg(feature = "gamma")]
             RandomCommand::Gamma(value, _, _) => {
                 *value = (*value).min(u64::MAX - 1);
             }
+            #[cfg(feature = "delta")]
             RandomCommand::Delta(value, _, _) => {
                 *value = (*value).min(u64::MAX - 1);
             }
+            #[cfg(feature = "zeta")]
             RandomCommand::Zeta(value, k, _, _) => {
                 *value = (*value).min(u64::MAX - 1);
                 *k = (*k).max(1).min(7);
@@ -80,12 +92,21 @@ fuzz_target!(|data: FuzzCase| {
 
         for command in data.commands.iter() {
             match command {
+                #[cfg(feature = "bits")]
                 RandomCommand::Bits(value, n_bits) => {
                     let big_success = big.write_bits(*value, *n_bits).is_ok();
                     let little_success = little.write_bits(*value, *n_bits).is_ok();
                     assert_eq!(big_success, little_success);
                     writes.push(big_success);
                 }
+                #[cfg(feature = "minimal_binary")]
+                RandomCommand::MinimalBinary(value, max) => {
+                    let big_success = big.write_minimal_binary(*value, *max).is_ok();
+                    let little_success = little.write_minimal_binary(*value, *max).is_ok();
+                    assert_eq!(big_success, little_success);
+                    writes.push(big_success);
+                }
+                #[cfg(feature = "unary")]
                 RandomCommand::Unary(value, _read_tab, write_tab) => {
                     let (big_success, little_success) = if *write_tab {
                         (
@@ -101,7 +122,7 @@ fuzz_target!(|data: FuzzCase| {
                     assert_eq!(big_success, little_success);
                     writes.push(big_success);
                 }
-                _ => {}
+                #[cfg(feature = "gamma")]
                 RandomCommand::Gamma(value, _, write_tab) => {
                     let (big_success, little_success) = if *write_tab {
                         (
@@ -117,6 +138,7 @@ fuzz_target!(|data: FuzzCase| {
                     assert_eq!(big_success, little_success);
                     writes.push(big_success);
                 }
+                #[cfg(feature = "delta")]
                 RandomCommand::Delta(value, _, write_tab) => {
                     let (big_success, little_success) = if *write_tab {
                         (
@@ -132,12 +154,7 @@ fuzz_target!(|data: FuzzCase| {
                     assert_eq!(big_success, little_success);
                     writes.push(big_success);
                 }
-                RandomCommand::MinimalBinary(value, max) => {
-                    let big_success = big.write_minimal_binary(*value, *max).is_ok();
-                    let little_success = little.write_minimal_binary(*value, *max).is_ok();
-                    assert_eq!(big_success, little_success);
-                    writes.push(big_success);
-                }
+                #[cfg(feature = "zeta")]
                 RandomCommand::Zeta(value, k, _, write_tab) => {
                     let (big_success, little_success) = if *write_tab {
                         (
@@ -199,12 +216,15 @@ fuzz_target!(|data: FuzzCase| {
             assert_eq!(pos, little_buff.get_pos());
 
             match command {
+                #[cfg(feature = "bits")]
                 RandomCommand::Bits(value, n_bits) => {
                     let b = big.read_bits(n_bits);
                     let l = little.read_bits(n_bits);
                     let bb = big_buff.read_bits(n_bits);
                     let lb = little_buff.read_bits(n_bits);
                     if succ {
+                        big_buff_skip.skip_bits(n_bits).unwrap();
+                        little_buff_skip.skip_bits(n_bits).unwrap();
                         let b = b.unwrap();
                         let l = l.unwrap();
                         let bb = bb.unwrap();
@@ -256,6 +276,76 @@ fuzz_target!(|data: FuzzCase| {
                         assert_eq!(pos, little_buff.get_pos());
                     }
                 }
+                #[cfg(feature = "minimal_binary")]
+                RandomCommand::MinimalBinary(value, max) => {
+                    let n_bits = len_minimal_binary(value, max) as u8;
+                    let b = big.read_minimal_binary(max);
+                    let l = little.read_minimal_binary(max);
+                    let bb = big_buff.read_minimal_binary(max);
+                    let lb = little_buff.read_minimal_binary(max);
+                    if succ {
+                        assert_eq!(
+                            big_buff_skip.skip_minimal_binary(1).unwrap_or(usize::MAX),
+                            n_bits
+                        );
+                        assert_eq!(
+                            little_buff_skip
+                                .skip_minimal_binary(1)
+                                .unwrap_or(usize::MAX),
+                            n_bits
+                        );
+                        let b = b.unwrap();
+                        let l = l.unwrap();
+                        let bb = bb.unwrap();
+                        let lb = lb.unwrap();
+                        assert_eq!(
+                            b,
+                            value,
+                            "\nread : {:0n$b}\ntruth: {:0n$b}",
+                            b,
+                            value,
+                            n = n_bits as _
+                        );
+                        assert_eq!(
+                            l,
+                            value,
+                            "\nread : {:0n$b}\ntruth: {:0n$b}",
+                            l,
+                            value,
+                            n = n_bits as _
+                        );
+                        assert_eq!(
+                            bb,
+                            value,
+                            "\nread : {:0n$b}\ntruth: {:0n$b}",
+                            bb,
+                            value,
+                            n = n_bits as _
+                        );
+                        assert_eq!(
+                            lb,
+                            value,
+                            "\nread : {:0n$b}\ntruth: {:0n$b}",
+                            lb,
+                            value,
+                            n = n_bits as _
+                        );
+                        assert_eq!(pos + n_bits as usize, big.get_pos());
+                        assert_eq!(pos + n_bits as usize, little.get_pos());
+                        assert_eq!(pos + n_bits as usize, big_buff.get_pos());
+                        assert_eq!(pos + n_bits as usize, little_buff.get_pos());
+                    } else {
+                        assert!(b.is_err());
+                        assert!(l.is_err());
+                        assert!(bb.is_err());
+                        assert!(lb.is_err());
+                        assert_eq!(pos, big.get_pos());
+                        assert_eq!(pos, little.get_pos());
+                        assert_eq!(pos, big_buff.get_pos());
+                        assert_eq!(pos, little_buff.get_pos());
+                    }
+                }
+                #[cfg(feature = "unary")]
                 RandomCommand::Unary(value, read_tab, _write_tab) => {
                     let (b, l, bb, lb) = if read_tab {
                         (
@@ -273,6 +363,14 @@ fuzz_target!(|data: FuzzCase| {
                         )
                     };
                     if succ {
+                        assert_eq!(
+                            big_buff_skip.skip_unary(1).unwrap_or(usize::MAX),
+                            len_unary_param::<false>(value)
+                        );
+                        assert_eq!(
+                            little_buff_skip.skip_unary(1).unwrap_or(usize::MAX),
+                            len_unary_param::<false>(value)
+                        );
                         assert_eq!(b.unwrap(), value as u64);
                         assert_eq!(l.unwrap(), value as u64);
                         assert_eq!(bb.unwrap(), value as u64);
@@ -314,7 +412,7 @@ fuzz_target!(|data: FuzzCase| {
                         assert_eq!(pos, little_buff.get_pos());
                     }
                 }
-                _ => {}
+                #[cfg(feature = "gamma")]
                 RandomCommand::Gamma(value, read_tab, _) => {
                     let (b, l, bb, lb) = if read_tab {
                         (
@@ -334,12 +432,11 @@ fuzz_target!(|data: FuzzCase| {
                     if succ {
                         assert_eq!(
                             big_buff_skip.skip_gamma(1).unwrap_or(usize::MAX),
+                            len_gamma_param::<false>(value)
+                        );
+                        assert_eq!(
                             little_buff_skip.skip_gamma(1).unwrap_or(usize::MAX),
-                            "{} {} {} {}",
-                            b.unwrap_or(u64::MAX),
-                            l.unwrap_or(u64::MAX),
-                            bb.unwrap_or(u64::MAX),
-                            lb.unwrap_or(u64::MAX),
+                            len_gamma_param::<false>(value)
                         );
                         assert_eq!(b.unwrap(), value);
                         assert_eq!(l.unwrap(), value);
@@ -364,6 +461,7 @@ fuzz_target!(|data: FuzzCase| {
                         assert_eq!(pos, little_buff.get_pos());
                     }
                 }
+                #[cfg(feature = "delta")]
                 RandomCommand::Delta(value, read_tab, _) => {
                     let (b, l, bb, lb) = if read_tab {
                         (
@@ -383,7 +481,11 @@ fuzz_target!(|data: FuzzCase| {
                     if succ {
                         assert_eq!(
                             big_buff_skip.skip_delta(1).unwrap_or(usize::MAX),
+                            len_delta_param::<false>(value)
+                        );
+                        assert_eq!(
                             little_buff_skip.skip_delta(1).unwrap_or(usize::MAX),
+                            len_delta_param::<false>(value)
                         );
                         assert_eq!(b.unwrap(), value);
                         assert_eq!(l.unwrap(), value);
@@ -449,72 +551,7 @@ fuzz_target!(|data: FuzzCase| {
                         assert_eq!(pos, little_buff.get_pos());
                     }
                 }
-                RandomCommand::MinimalBinary(value, max) => {
-                    let n_bits = len_minimal_binary(value, max) as u8;
-                    let b = big.read_minimal_binary(max);
-                    let l = little.read_minimal_binary(max);
-                    let bb = big_buff.read_minimal_binary(max);
-                    let lb = little_buff.read_minimal_binary(max);
-                    if succ {
-                        assert_eq!(
-                            big_buff_skip
-                                .skip_minimal_binary(max, 1)
-                                .unwrap_or(usize::MAX),
-                            little_buff_skip
-                                .skip_minimal_binary(max, 1)
-                                .unwrap_or(usize::MAX),
-                        );
-                        let b = b.unwrap();
-                        let l = l.unwrap();
-                        let bb = bb.unwrap();
-                        let lb = lb.unwrap();
-                        assert_eq!(
-                            b,
-                            value,
-                            "\nread : {:0n$b}\ntruth: {:0n$b}",
-                            b,
-                            value,
-                            n = n_bits as _
-                        );
-                        assert_eq!(
-                            l,
-                            value,
-                            "\nread : {:0n$b}\ntruth: {:0n$b}",
-                            l,
-                            value,
-                            n = n_bits as _
-                        );
-                        assert_eq!(
-                            bb,
-                            value,
-                            "\nread : {:0n$b}\ntruth: {:0n$b}",
-                            bb,
-                            value,
-                            n = n_bits as _
-                        );
-                        assert_eq!(
-                            lb,
-                            value,
-                            "\nread : {:0n$b}\ntruth: {:0n$b}",
-                            lb,
-                            value,
-                            n = n_bits as _
-                        );
-                        assert_eq!(pos + n_bits as usize, big.get_pos());
-                        assert_eq!(pos + n_bits as usize, little.get_pos());
-                        assert_eq!(pos + n_bits as usize, big_buff.get_pos());
-                        assert_eq!(pos + n_bits as usize, little_buff.get_pos());
-                    } else {
-                        assert!(b.is_err());
-                        assert!(l.is_err());
-                        assert!(bb.is_err());
-                        assert!(lb.is_err());
-                        assert_eq!(pos, big.get_pos());
-                        assert_eq!(pos, little.get_pos());
-                        assert_eq!(pos, big_buff.get_pos());
-                        assert_eq!(pos, little_buff.get_pos());
-                    }
-                }
+                #[cfg(feature = "zeta")]
                 RandomCommand::Zeta(value, k, read_tab, _) => {
                     let (b, l, bb, lb) = if read_tab {
                         (
@@ -534,7 +571,11 @@ fuzz_target!(|data: FuzzCase| {
                     if succ {
                         assert_eq!(
                             big_buff_skip.skip_zeta(k, 1).unwrap_or(usize::MAX),
+                            len_zeta_param::<false>(k, value)
+                        );
+                        assert_eq!(
                             little_buff_skip.skip_zeta(k, 1).unwrap_or(usize::MAX),
+                            len_zeta_param::<false>(k, value)
                         );
                         assert_eq!(bb.unwrap(), value);
                         assert_eq!(lb.unwrap(), value);
