@@ -45,7 +45,7 @@ read_func_merged_table = """
 ///
 /// # Errors
 /// This function errors if it wasn't able to skip_bits
-pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> Result<Option<(u64,usize)>> {
+pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> Result<Option<(u64, usize)>> {
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
         let idx: u64 = idx.upcast();
         let (value, len) = READ_%(BO)s[idx as usize];
@@ -66,7 +66,7 @@ read_func_two_table = """
 ///
 /// # Errors
 /// This function errors if it wasn't able to skip_bits
-pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> Result<Option<(u64,usize)>> {
+pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> Result<Option<(u64, usize)>> {
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
         let idx: u64 = idx.upcast();
         let len = READ_LEN_%(BO)s[idx as usize];

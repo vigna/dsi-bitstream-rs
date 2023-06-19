@@ -88,6 +88,16 @@ macro_rules! impl_default_read_codes {
                 #[cfg(not(target_arch = "arm" ))]
                 return self.read_delta_param::<false, true>();
             }
+            #[inline(always)]
+            fn skip_deltas(&mut self, n: usize) -> Result<usize> {
+                // From our tests, the ARM architecture is faster
+                // without tables for ɣ codes.
+                #[cfg(target_arch = "arm" )]
+                return self.skip_deltas_param::<false, false>(n);
+                #[cfg(not(target_arch = "arm" ))]
+                return self.skip_deltas_param::<false, true>(n);
+            }
+
         }
 
         impl<BW: Word, WR: WordRead, DC: ReadCodesParams> ZetaRead<$endianess>
@@ -100,10 +110,19 @@ macro_rules! impl_default_read_codes {
             fn read_zeta(&mut self, k: u64) -> Result<u64> {
                 self.read_zeta_param::<true>(k)
             }
+            #[inline(always)]
+            fn skip_zetas(&mut self, k: u64, n: usize) -> Result<usize> {
+                self.skip_zetas_param::<true>(k, n)
+            }
 
             #[inline(always)]
             fn read_zeta3(&mut self) -> Result<u64> {
                 self.read_zeta3_param::<true>()
+            }
+
+            #[inline(always)]
+            fn skip_zeta3s(&mut self, n: usize) -> Result<usize> {
+                self.skip_zeta3s_param::<true>(n)
             }
         }
 

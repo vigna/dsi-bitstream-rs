@@ -48,7 +48,7 @@ pub fn len_delta(value: u64) -> usize {
 
 pub trait DeltaRead<E: Endianness>: BitRead<E> {
     fn read_delta(&mut self) -> Result<u64>;
-    //fn skip_deltas(&mut self, n: usize) -> Result<usize>;
+    fn skip_deltas(&mut self, n: usize) -> Result<usize>;
 }
 
 /// Trait for objects that can read Delta codes
