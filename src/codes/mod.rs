@@ -104,7 +104,20 @@ pub mod unary_tables;
 pub mod zeta_tables;
 
 mod stats;
+use crate::traits::Endianness;
 pub use stats::*;
+
+// A trait combining the codes used by BVGraph when reading.
+pub trait ReadCodes<E: Endianness>: GammaRead<E> + DeltaRead<E> + ZetaRead<E> {}
+// A trait combining the codes used by BVGraph when writing.
+pub trait WriteCodes<E: Endianness>: GammaWrite<E> + DeltaWrite<E> + ZetaWrite<E> {}
+
+/// Blanket implementation so we can consider [`ReadCodes`] just as an alias for
+/// a sum of traits
+impl<E: Endianness, T> ReadCodes<E> for T where T: GammaRead<E> + DeltaRead<E> + ZetaRead<E> {}
+/// Blanket implementation so we can consider [`WriteCodes`] just as an alias for
+/// a sum of traits
+impl<E: Endianness, T> WriteCodes<E> for T where T: GammaWrite<E> + DeltaWrite<E> + ZetaWrite<E> {}
 
 /// Return how long the unary code for `value` will be
 ///

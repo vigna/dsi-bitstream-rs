@@ -102,7 +102,7 @@ fn test_skips() -> Result<()> {
         }
     }
 
-    read.set_pos(0);
+    read.set_pos(0)?;
     for i in 0..2 {
         eprintln!("second round {} ", i);
         match dbg!(r.gen_range(0..6)) {
@@ -112,7 +112,7 @@ fn test_skips() -> Result<()> {
                     .map(|_| read.read_unary().unwrap() as usize + 1)
                     .sum::<usize>()
             ),
-            1 => assert_eq!(pos[i], read.skip_gammas(r.gen_range(1..10))?),
+            1 => assert_eq!(pos[i], read.skip_gamma(r.gen_range(1..10))?),
             2 =>
             //assert_eq!(pos[i], read.skip_deltas(r.gen_range(1..10))?),
             {

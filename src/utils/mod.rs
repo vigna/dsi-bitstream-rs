@@ -5,9 +5,11 @@
  */
 
 //! # Traits
-//! This modules contains the traits that are used throughout the crate.
 //! They are collected into a module so you can do `use dsi_bitstream::utils::*;`
 //! for ease of use.
 
 pub mod count;
 pub use count::*;
+
+pub mod dbg_codes;
+pub use dbg_codes::*;
