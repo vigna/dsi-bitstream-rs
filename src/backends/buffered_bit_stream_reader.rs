@@ -93,7 +93,7 @@ where
             .to_be()
             .upcast();
         self.valid_bits += WR::Word::BITS;
-        self.buffer |= new_word << (BW::BITS - self.valid_bits);
+        self.buffer |= (new_word << (BW::BITS - self.valid_bits - 1)) << 1;
         Ok(())
     }
 }
@@ -167,6 +167,7 @@ where
         // clean the buffer data
         n_bits -= self.valid_bits;
         self.valid_bits = 0;
+        self.buffer = BW::ZERO;
         // skip words as needed
         while n_bits > WR::Word::BITS {
             let _ = self.backend.read_next_word()?;
@@ -334,6 +335,7 @@ where
         // clean the buffer data
         n_bits -= self.valid_bits;
         self.valid_bits = 0;
+        self.buffer = BW::ZERO;
         // skip words as needed
         while n_bits > WR::Word::BITS {
             let _ = self.backend.read_next_word()?;

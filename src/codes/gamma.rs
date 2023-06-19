@@ -106,7 +106,6 @@ impl<B: BitRead<BE>> GammaReadParam<BE> for B {
         for _ in 0..n {
             if USE_TABLE {
                 if let Some((_, len)) = gamma_tables::read_table_be(self)? {
-                    // This is wrong, we already know the length from the tables
                     skipped_bits += len;
                     continue;
                 }
@@ -134,7 +133,6 @@ impl<B: BitRead<LE>> GammaReadParam<LE> for B {
         for _ in 0..n {
             if USE_TABLE {
                 if let Some((_, len)) = gamma_tables::read_table_le(self)? {
-                    // This is wrong, we already know the length from the tables
                     skipped_bits += len;
                     continue;
                 }
