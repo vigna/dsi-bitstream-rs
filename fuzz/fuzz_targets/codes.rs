@@ -57,7 +57,7 @@ fuzz_target!(|data: FuzzCase| {
             }
             #[cfg(feature = "minimal_binary")]
             RandomCommand::MinimalBinary(value, max) => {
-                *max = (*max).max(1);
+                *max = (*max).max(1).min(u32::MAX as _);
                 *value = (*value) % *max;
             }
             #[cfg(feature = "unary")]
@@ -74,7 +74,7 @@ fuzz_target!(|data: FuzzCase| {
             }
             #[cfg(feature = "zeta")]
             RandomCommand::Zeta(value, k, _, _) => {
-                *value = (*value).min(u64::MAX - 1);
+                *value = (*value).min(u32::MAX as u64 - 1);
                 *k = (*k).max(1).min(7);
             }
         };
@@ -285,14 +285,16 @@ fuzz_target!(|data: FuzzCase| {
                     let lb = little_buff.read_minimal_binary(max);
                     if succ {
                         assert_eq!(
-                            big_buff_skip.skip_minimal_binary(1).unwrap_or(usize::MAX),
-                            n_bits
+                            big_buff_skip
+                                .skip_minimal_binary(max, 1)
+                                .unwrap_or(usize::MAX),
+                            n_bits as _
                         );
                         assert_eq!(
                             little_buff_skip
-                                .skip_minimal_binary(1)
+                                .skip_minimal_binary(max, 1)
                                 .unwrap_or(usize::MAX),
-                            n_bits
+                            n_bits as _
                         );
                         let b = b.unwrap();
                         let l = l.unwrap();
@@ -481,11 +483,11 @@ fuzz_target!(|data: FuzzCase| {
                     if succ {
                         assert_eq!(
                             big_buff_skip.skip_delta(1).unwrap_or(usize::MAX),
-                            len_delta_param::<false>(value)
+                            len_delta_param::<false, false>(value)
                         );
                         assert_eq!(
                             little_buff_skip.skip_delta(1).unwrap_or(usize::MAX),
-                            len_delta_param::<false>(value)
+                            len_delta_param::<false, false>(value)
                         );
                         assert_eq!(b.unwrap(), value);
                         assert_eq!(l.unwrap(), value);
@@ -571,11 +573,11 @@ fuzz_target!(|data: FuzzCase| {
                     if succ {
                         assert_eq!(
                             big_buff_skip.skip_zeta(k, 1).unwrap_or(usize::MAX),
-                            len_zeta_param::<false>(k, value)
+                            len_zeta_param::<false>(value, k)
                         );
                         assert_eq!(
                             little_buff_skip.skip_zeta(k, 1).unwrap_or(usize::MAX),
-                            len_zeta_param::<false>(k, value)
+                            len_zeta_param::<false>(value, k)
                         );
                         assert_eq!(bb.unwrap(), value);
                         assert_eq!(lb.unwrap(), value);

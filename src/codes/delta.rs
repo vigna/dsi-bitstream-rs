@@ -102,6 +102,8 @@ macro_rules! default_skip_delta_impl {
         fn $default_skip_delta<B: GammaReadParam<$endianness>, const USE_GAMMA_TABLE: bool>(
             backend: &mut B,
         ) -> Result<usize> {
+            /*
+            // TODO: debug this faster implementation
             let (value, len) = 'gamma: {
                 eprintln!("skip delta");
                 if USE_GAMMA_TABLE {
@@ -121,6 +123,10 @@ macro_rules! default_skip_delta_impl {
             debug_assert!(len <= 64);
             backend.skip_bits(value as usize)?;
             Ok(value as usize + len)
+            */
+            let value = backend.read_gamma_param::<USE_GAMMA_TABLE>()?;
+            backend.skip_bits(value as usize)?;
+            Ok(len_gamma_param::<USE_GAMMA_TABLE>(value as _) + value as usize)
         }
     };
 }
