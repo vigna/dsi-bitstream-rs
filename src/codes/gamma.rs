@@ -133,9 +133,9 @@ impl<B: BitRead<LE>> GammaReadParam<LE> for B {
         let mut skipped_bits = 0;
         for _ in 0..n {
             if USE_TABLE {
-                if let Some((value, _)) = gamma_tables::read_table_le(self)? {
+                if let Some((_, len)) = gamma_tables::read_table_le(self)? {
                     // This is wrong, we already know the length from the tables
-                    skipped_bits += len_gamma(value);
+                    skipped_bits += len;
                     continue;
                 }
             }
