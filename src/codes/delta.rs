@@ -48,7 +48,7 @@ pub fn len_delta(value: u64) -> usize {
 
 pub trait DeltaRead<E: Endianness>: BitRead<E> {
     fn read_delta(&mut self) -> Result<u64>;
-    //fn skip_deltas(&mut self, n: usize) -> Result<usize>;
+    fn skip_deltas(&mut self, n: usize) -> Result<usize>;
 }
 
 /// Trait for objects that can read Delta codes
@@ -97,27 +97,29 @@ fn default_read_delta<E: Endianness, B: GammaReadParam<E>, const USE_GAMMA_TABLE
 }
 
 macro_rules! default_skip_delta_impl {
-    ($endian:ty, $default_skip_delta: ident, $read_table: ident) => {
+    ($endianness:ty, $default_skip_delta: ident, $read_table: ident) => {
         #[inline(always)]
-        fn $default_skip_delta<B: GammaReadParam<$endian>, const USE_GAMMA_TABLE: bool>(
+        fn $default_skip_delta<B: GammaReadParam<$endianness>, const USE_GAMMA_TABLE: bool>(
             backend: &mut B,
         ) -> Result<usize> {
             let (value, len) = 'gamma: {
+                eprintln!("skip delta");
                 if USE_GAMMA_TABLE {
                     if let Some((value, len)) = gamma_tables::$read_table(backend)? {
                         break 'gamma (value, len);
                     }
                 };
-                let len = backend.read_unary_param::<false>()?;
+                let len = backend.read_unary()?;
+                dbg!(len);
                 debug_assert!(len <= 64);
                 (
                     backend.read_bits(len as usize)? + (1 << len) - 1,
-                    len as usize,
+                    2 * len as usize - 1,
                 )
             };
-
+            dbg!(value, len);
             debug_assert!(len <= 64);
-            backend.read_bits(value as usize)?;
+            backend.skip_bits(value as usize)?;
             Ok(value as usize + len)
         }
     };

@@ -58,6 +58,32 @@ pub trait MinimalBinaryRead<BO: Endianness>: BitRead<BO> {
             value - limit
         })
     }
+
+    /// Read a minimal binary code from the stream.
+    ///
+    /// # Errors
+    /// This function fails only if the BitRead backend has problems reading
+    /// bits, as when the stream ends unexpectedly
+    #[inline]
+    fn skip_minimal_binary(&mut self, max: u64, n: usize) -> Result<usize> {
+        if max == 0 {
+            bail!("The max of a minimal binary value can't be zero.");
+        }
+        let l = fast_floor_log2(max);
+        let mut skipped_bits = 0;
+        for _ in 0..n {
+            let value = self.read_bits(l as _)?;
+            let limit = (1 << (l + 1)) - max;
+
+            if value < limit {
+                skipped_bits += l as usize;
+            } else {
+                self.read_bits(1)?;
+                skipped_bits += l as usize + 1;
+            }
+        }
+        Ok(skipped_bits)
+    }
 }
 
 /// Trait for objects that can write Minimal Binary codes
