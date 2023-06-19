@@ -219,8 +219,8 @@ fuzz_target!(|data: FuzzCase| {
                 }
                 RandomCommand::WriteUnary(value, read_tab, _write_tab) => {
                     assert_eq!(
-                        big_buff_skip.skip_unaries(1).unwrap_or(usize::MAX),
-                        little_buff_skip.skip_unaries(1).unwrap_or(usize::MAX),
+                        big_buff_skip.skip_unary(1).unwrap_or(usize::MAX),
+                        little_buff_skip.skip_unary(1).unwrap_or(usize::MAX),
                     );
                     let (b, l, bb, lb) = if *read_tab {
                         (

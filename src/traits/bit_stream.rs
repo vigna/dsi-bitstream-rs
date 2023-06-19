@@ -88,7 +88,7 @@ pub trait BitRead<BO: Endianness> {
     }
 
     #[inline(always)]
-    fn skip_unaries(&mut self, n: usize) -> Result<usize> {
+    fn skip_unary(&mut self, n: usize) -> Result<usize> {
         let mut skipped_bits = 0;
         for _ in 0..n {
             skipped_bits += self.read_unary()? as usize + 1;
