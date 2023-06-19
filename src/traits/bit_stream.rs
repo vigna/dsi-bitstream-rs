@@ -86,6 +86,15 @@ pub trait BitRead<BO: Endianness> {
     fn read_unary(&mut self) -> Result<u64> {
         self.read_unary_param::<false>()
     }
+
+    #[inline(always)]
+    fn skip_unaries(&mut self, n: usize) -> Result<usize> {
+        let mut skipped_bits = 0;
+        for _ in 0..n {
+            skipped_bits += self.read_unary()? as usize + 1;
+        }
+        Ok(skipped_bits)
+    }
 }
 
 /// Objects that can read a fixed number of bits and unary codes from a stream
