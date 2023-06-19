@@ -48,7 +48,7 @@ pub fn len_delta(value: u64) -> usize {
 
 pub trait DeltaRead<E: Endianness>: BitRead<E> {
     fn read_delta(&mut self) -> Result<u64>;
-    fn skip_deltas(&mut self, n: usize) -> Result<usize>;
+    fn skip_delta(&mut self, n: usize) -> Result<usize>;
 }
 
 /// Trait for objects that can read Delta codes
@@ -77,7 +77,7 @@ pub trait DeltaReadParam<E: Endianness>: GammaReadParam<E> {
     /// # Errors
     /// This function fails only if the BitRead backend has problems reading
     /// bits, as when the stream ends unexpectedly
-    fn skip_deltas_param<const USE_DELTA_TABLE: bool, const USE_GAMMA_TABLE: bool>(
+    fn skip_delta_param<const USE_DELTA_TABLE: bool, const USE_GAMMA_TABLE: bool>(
         &mut self,
         n: usize,
     ) -> Result<usize>;
@@ -142,7 +142,7 @@ impl<B: GammaReadParam<BE>> DeltaReadParam<BE> for B {
     }
 
     #[inline]
-    fn skip_deltas_param<const USE_DELTA_TABLE: bool, const USE_GAMMA_TABLE: bool>(
+    fn skip_delta_param<const USE_DELTA_TABLE: bool, const USE_GAMMA_TABLE: bool>(
         &mut self,
         n: usize,
     ) -> Result<usize> {
@@ -174,7 +174,7 @@ impl<B: GammaReadParam<LE>> DeltaReadParam<LE> for B {
     }
 
     #[inline]
-    fn skip_deltas_param<const USE_DELTA_TABLE: bool, const USE_GAMMA_TABLE: bool>(
+    fn skip_delta_param<const USE_DELTA_TABLE: bool, const USE_GAMMA_TABLE: bool>(
         &mut self,
         n: usize,
     ) -> Result<usize> {

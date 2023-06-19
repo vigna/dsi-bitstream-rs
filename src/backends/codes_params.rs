@@ -63,13 +63,13 @@ macro_rules! impl_default_read_codes {
             }
 
             #[inline(always)]
-            fn skip_gammas(&mut self, n: usize) -> Result<usize> {
+            fn skip_gamma(&mut self, n: usize) -> Result<usize> {
                 // From our tests, the ARM architecture is faster
                 // without tables ɣ codes.
                 #[cfg(target_arch = "arm" )]
-                return self.skip_gammas_param::<false>(n);
+                return self.skip_gamma_param::<false>(n);
                 #[cfg(not(target_arch = "arm" ))]
-                return self.skip_gammas_param::<true>(n);
+                return self.skip_gamma_param::<true>(n);
             }
         }
 
@@ -90,13 +90,13 @@ macro_rules! impl_default_read_codes {
             }
 
             #[inline(always)]
-            fn skip_deltas(&mut self, n: usize) -> Result<usize> {
+            fn skip_delta(&mut self, n: usize) -> Result<usize> {
                 // From our tests, the ARM architecture is faster
                 // without tables for ɣ codes.
                 #[cfg(target_arch = "arm" )]
-                return self.skip_deltas_param::<false, false>(n);
+                return self.skip_delta_param::<false, false>(n);
                 #[cfg(not(target_arch = "arm" ))]
-                return self.skip_deltas_param::<false, true>(n);
+                return self.skip_delta_param::<false, true>(n);
             }
         }
 

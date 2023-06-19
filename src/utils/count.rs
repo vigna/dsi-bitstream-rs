@@ -242,8 +242,8 @@ impl<E: Endianness, BR: BitRead<E> + GammaRead<E>, const PRINT: bool> GammaRead<
         })
     }
 
-    fn skip_gammas(&mut self, n: usize) -> Result<usize> {
-        self.bit_read.skip_gammas(n).map(|x| {
+    fn skip_gamma(&mut self, n: usize) -> Result<usize> {
+        self.bit_read.skip_gamma(n).map(|x| {
             self.bits_read += x;
             if PRINT {
                 eprintln!("skip_gammas({}) = {} (total = {})", n, x, self.bits_read);
@@ -265,8 +265,8 @@ impl<E: Endianness, BR: BitRead<E> + DeltaRead<E>, const PRINT: bool> DeltaRead<
             x
         })
     }
-    fn skip_deltas(&mut self, n: usize) -> Result<usize> {
-        self.bit_read.skip_deltas(n).map(|x| {
+    fn skip_delta(&mut self, n: usize) -> Result<usize> {
+        self.bit_read.skip_delta(n).map(|x| {
             self.bits_read += x;
             if PRINT {
                 eprintln!("skip_deltas({}) = {} (total = {})", n, x, self.bits_read);

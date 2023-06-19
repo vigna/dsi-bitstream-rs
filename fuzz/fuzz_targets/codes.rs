@@ -282,8 +282,8 @@ fuzz_target!(|data: FuzzCase| {
                 RandomCommand::Gamma(value, read_tab, _) => {
                     let value = (*value).min(u64::MAX - 1);
                     assert_eq!(
-                        big_buff_skip.skip_gammas(1).unwrap_or(usize::MAX),
-                        little_buff_skip.skip_gammas(1).unwrap_or(usize::MAX),
+                        big_buff_skip.skip_gamma(1).unwrap_or(usize::MAX),
+                        little_buff_skip.skip_gamma(1).unwrap_or(usize::MAX),
                     );
                     let (b, l, bb, lb) = if *read_tab {
                         (
@@ -327,8 +327,8 @@ fuzz_target!(|data: FuzzCase| {
                 RandomCommand::Delta(value, read_tab, _) => {
                     let value = (*value).min(u64::MAX - 1);
                     assert_eq!(
-                        big_buff_skip.skip_deltas(1).unwrap_or(usize::MAX),
-                        little_buff_skip.skip_deltas(1).unwrap_or(usize::MAX),
+                        big_buff_skip.skip_delta(1).unwrap_or(usize::MAX),
+                        little_buff_skip.skip_delta(1).unwrap_or(usize::MAX),
                     );
                     let (b, l, bb, lb) = if *read_tab {
                         (
@@ -420,10 +420,10 @@ fuzz_target!(|data: FuzzCase| {
                     let lb = little_buff.read_minimal_binary(max);
                     assert_eq!(
                         big_buff_skip
-                            .skip_minimal_binaries(max, 1)
+                            .skip_minimal_binary(max, 1)
                             .unwrap_or(usize::MAX),
                         little_buff_skip
-                            .skip_minimal_binaries(max, 1)
+                            .skip_minimal_binary(max, 1)
                             .unwrap_or(usize::MAX),
                     );
                     if *succ {
@@ -482,8 +482,8 @@ fuzz_target!(|data: FuzzCase| {
                     let value = *value as u64;
                     let k = (*k).max(1).min(7) as u64;
                     assert_eq!(
-                        big_buff_skip.skip_zetas(k, 1).unwrap_or(usize::MAX),
-                        little_buff_skip.skip_zetas(k, 1).unwrap_or(usize::MAX),
+                        big_buff_skip.skip_zeta(k, 1).unwrap_or(usize::MAX),
+                        little_buff_skip.skip_zeta(k, 1).unwrap_or(usize::MAX),
                     );
                     let (b, l, bb, lb) = if *read_tab {
                         (
