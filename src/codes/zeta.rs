@@ -44,9 +44,9 @@ pub fn len_zeta(value: u64, k: u64) -> usize {
 
 pub trait ZetaRead<E: Endianness>: BitRead<E> {
     fn read_zeta(&mut self, k: u64) -> Result<u64>;
-    fn skip_zetas(&mut self, k: u64, n: usize) -> Result<usize>;
     fn read_zeta3(&mut self) -> Result<u64>;
-    fn skip_zeta3s(&mut self, n: usize) -> Result<usize>;
+    fn skip_zeta(&mut self, k: u64, n: usize) -> Result<usize>;
+    fn skip_zeta3(&mut self, n: usize) -> Result<usize>;
 }
 
 /// Trait for objects that can read Zeta codes
@@ -58,27 +58,37 @@ pub trait ZetaReadParam<E: Endianness>: MinimalBinaryRead<E> {
     /// bits, as when the stream ends unexpectedly
     fn read_zeta_param<const USE_TABLE: bool>(&mut self, k: u64) -> Result<u64>;
 
-    fn skip_zetas_param<const USE_TABLE: bool>(&mut self, k: u64, n: usize) -> Result<usize>;
     /// Specialized ζ code reader for k = 3
     ///
     /// # Errors
     /// This function fails only if the BitRead backend has problems reading
     /// bits, as when the stream ends unexpectedly
     fn read_zeta3_param<const USE_TABLE: bool>(&mut self) -> Result<u64>;
-    fn skip_zeta3s_param<const USE_TABLE: bool>(&mut self, n: usize) -> Result<usize>;
+
+    /// Generic ζ code reader
+    ///
+    /// # Errors
+    /// This function fails only if the BitRead backend has problems reading
+    /// bits, as when the stream ends unexpectedly
+    fn skip_zeta_param<const USE_TABLE: bool>(&mut self, k: u64, n: usize) -> Result<usize>;
+    /// Specialized ζ code reader for k = 3
+    ///
+    /// # Errors
+    /// This function fails only if the BitRead backend has problems reading
+    /// bits, as when the stream ends unexpectedly
+    fn skip_zeta3_param<const USE_TABLE: bool>(&mut self, n: usize) -> Result<usize>;
 }
 
 impl<B: BitRead<BE>> ZetaReadParam<BE> for B {
     #[inline]
     fn read_zeta_param<const USE_TABLE: bool>(&mut self, k: u64) -> Result<u64> {
-        default_read_zeta_param(self, k)
+        default_read_zeta(self, k)
     }
 
-    #[inline]
-    fn skip_zetas_param<const USE_TABLE: bool>(&mut self, k: u64, n: usize) -> Result<usize> {
+    fn skip_zeta_param<const USE_TABLE: bool>(&mut self, k: u64, n: usize) -> Result<usize> {
         let mut skipped_bits = 0;
         for _ in 0..n {
-            skipped_bits += default_skip_zetas_param(self, k)?;
+            skipped_bits += default_skip_zeta(self, k)?;
         }
         Ok(skipped_bits)
     }
@@ -90,21 +100,20 @@ impl<B: BitRead<BE>> ZetaReadParam<BE> for B {
                 return Ok(res);
             }
         }
-        default_read_zeta_param(self, 3)
+        default_read_zeta(self, 3)
     }
 
     #[inline]
-    fn skip_zeta3s_param<const USE_TABLE: bool>(&mut self, n: usize) -> Result<usize> {
+    fn skip_zeta3_param<const USE_TABLE: bool>(&mut self, n: usize) -> Result<usize> {
         let mut skipped_bits = 0;
         for _ in 0..n {
-            skipped_bits += 'outer: {
-                if USE_TABLE {
-                    if let Some((_, len)) = zeta_tables::read_table_be(self)? {
-                        break 'outer len;
-                    }
+            if USE_TABLE {
+                if let Some((_, len)) = zeta_tables::read_table_be(self)? {
+                    skipped_bits += len;
+                    continue;
                 }
-                default_skip_zetas_param(self, 3)?
             }
+            skipped_bits += default_skip_zeta(self, 3)?;
         }
         Ok(skipped_bits)
     }
@@ -113,14 +122,13 @@ impl<B: BitRead<BE>> ZetaReadParam<BE> for B {
 impl<B: BitRead<LE>> ZetaReadParam<LE> for B {
     #[inline]
     fn read_zeta_param<const USE_TABLE: bool>(&mut self, k: u64) -> Result<u64> {
-        default_read_zeta_param(self, k)
+        default_read_zeta(self, k)
     }
 
-    #[inline]
-    fn skip_zetas_param<const USE_TABLE: bool>(&mut self, k: u64, n: usize) -> Result<usize> {
+    fn skip_zeta_param<const USE_TABLE: bool>(&mut self, k: u64, n: usize) -> Result<usize> {
         let mut skipped_bits = 0;
         for _ in 0..n {
-            skipped_bits += default_skip_zetas_param(self, k)?;
+            skipped_bits += default_skip_zeta(self, k)?;
         }
         Ok(skipped_bits)
     }
@@ -132,45 +140,40 @@ impl<B: BitRead<LE>> ZetaReadParam<LE> for B {
                 return Ok(res);
             }
         }
-        default_read_zeta_param(self, 3)
+        default_read_zeta(self, 3)
     }
 
     #[inline]
-    fn skip_zeta3s_param<const USE_TABLE: bool>(&mut self, n: usize) -> Result<usize> {
+    fn skip_zeta3_param<const USE_TABLE: bool>(&mut self, n: usize) -> Result<usize> {
         let mut skipped_bits = 0;
         for _ in 0..n {
-            skipped_bits += 'outer: {
-                if USE_TABLE {
-                    if let Some((_, len)) = zeta_tables::read_table_le(self)? {
-                        break 'outer len;
-                    }
+            if USE_TABLE {
+                if let Some((_, len)) = zeta_tables::read_table_le(self)? {
+                    skipped_bits += len;
+                    continue;
                 }
-                default_skip_zetas_param(self, 3)?
             }
+            skipped_bits += default_skip_zeta(self, 3)?;
         }
         Ok(skipped_bits)
     }
 }
 
 #[inline(always)]
-fn default_skip_zetas_param<BO: Endianness, B: BitRead<BO>>(
-    backend: &mut B,
-    k: u64,
-) -> Result<usize> {
-    let h = backend.read_unary_param::<false>()?;
-    let u = 1 << ((h + 1) * k);
-    let l = 1 << (h * k);
-    let res = backend.skip_minimal_binaries(u - l, 1)?;
-    Ok(h as usize + 1 + res)
-}
-
-#[inline(always)]
-fn default_read_zeta_param<BO: Endianness, B: BitRead<BO>>(backend: &mut B, k: u64) -> Result<u64> {
+fn default_read_zeta<BO: Endianness, B: BitRead<BO>>(backend: &mut B, k: u64) -> Result<u64> {
     let h = backend.read_unary_param::<false>()?;
     let u = 1 << ((h + 1) * k);
     let l = 1 << (h * k);
     let res = backend.read_minimal_binary(u - l)?;
     Ok(l + res - 1)
+}
+
+#[inline(always)]
+fn default_skip_zeta<BO: Endianness, B: BitRead<BO>>(backend: &mut B, k: u64) -> Result<usize> {
+    let h = backend.read_unary_param::<false>()?;
+    let u = 1 << ((h + 1) * k);
+    let l = 1 << (h * k);
+    Ok(h as usize + 1 + backend.skip_minimal_binary(u - l, 1)?)
 }
 
 pub trait ZetaWrite<E: Endianness>: BitWrite<E> {

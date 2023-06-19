@@ -11,7 +11,7 @@ categories = ["compression"]
 authors = ["Tommaso Fontana", "Sebastiano Vigna <sebastiano.vigna@unimi.it>"]
 
 [dependencies]
-anyhow = { version = "1.0.71", default-features = false }
+anyhow = { version = "1.0.71", default-features = false, features = ["backtrace"] }
 rand = { version = "0.8.5", features = ["small_rng"] }
 
 [features]

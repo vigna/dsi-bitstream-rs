@@ -288,12 +288,13 @@ impl<E: Endianness, BR: BitRead<E> + ZetaRead<E>, const PRINT: bool> ZetaRead<E>
             x
         })
     }
-    fn skip_zetas(&mut self, k: u64, n: usize) -> Result<usize> {
-        self.bit_read.skip_zetas(k, n).map(|x| {
+
+    fn skip_zeta(&mut self, k: u64, n: usize) -> Result<usize> {
+        self.bit_read.skip_zeta(k, n).map(|x| {
             self.bits_read += x;
             if PRINT {
                 eprintln!(
-                    "skip_zetas({}, {}) = {} (total = {})",
+                    "skip_zeta({}, {}) = {} (total = {})",
                     k, n, x, self.bits_read
                 );
             }
@@ -311,11 +312,11 @@ impl<E: Endianness, BR: BitRead<E> + ZetaRead<E>, const PRINT: bool> ZetaRead<E>
         })
     }
 
-    fn skip_zeta3s(&mut self, n: usize) -> Result<usize> {
-        self.bit_read.skip_zeta3s(n).map(|x| {
+    fn skip_zeta3(&mut self, n: usize) -> Result<usize> {
+        self.bit_read.skip_zeta3(n).map(|x| {
             self.bits_read += x;
             if PRINT {
-                eprintln!("skip_zeta3s({}) = {} (total = {})", n, x, self.bits_read);
+                eprintln!("skip_deltas({}) = {} (total = {})", n, x, self.bits_read);
             }
             x
         })
