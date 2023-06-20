@@ -156,7 +156,7 @@ if __name__ == "__main__":
     parser.add_argument('-d', '--doc-tests', action='store_true', help='Compute the coverage of the doc tests (this implies `-t`)')
     parser.add_argument('-n', '--no-show', action='store_false', help='Show the coverage')
 
-    parser.add_argument('-c', '--final-coverage-file', type=str, default="target/total_coverage.profdata", help='The file where to store the final coverage')
+    parser.add_argument('-c', '--final-coverage-file', type=str, default="target/total_coverage.profdata", help='The file where to store the final coverage. Default: %(default)s')
 
     args = parser.parse_args()
 
