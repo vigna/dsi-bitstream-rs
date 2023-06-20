@@ -154,11 +154,15 @@ if __name__ == "__main__":
     parser.add_argument('-f', '--fuzzing', action='store_true', help='Compute the coverage of the fuzzing')
     parser.add_argument('-t', '--tests', action='store_true', help='Compute the coverage of the tests')
     parser.add_argument('-d', '--doc-tests', action='store_true', help='Compute the coverage of the doc tests')
-    parser.add_argument('-s', '--show', action='store_true', help='Show the coverage')
+    parser.add_argument('-n', '--no-show', action='store_false', help='Show the coverage')
 
     parser.add_argument('-c', '--final-coverage-file', type=str, default="target/total_coverage.profdata", help='The file where to store the final coverage')
 
     args = parser.parse_args()
+
+    if not any((args.fuzzing, args.tests, args.doc_tests)):
+        parser.print_help()
+        sys.exit(1)
 
     compute_coverage(
         FUZZING=args.fuzzing,
