@@ -78,7 +78,7 @@ pub trait MinimalBinaryRead<BO: Endianness>: BitRead<BO> {
             if value < limit {
                 skipped_bits += l as usize;
             } else {
-                self.read_bits(1)?;
+                self.skip_bits(1)?;
                 skipped_bits += l as usize + 1;
             }
         }
