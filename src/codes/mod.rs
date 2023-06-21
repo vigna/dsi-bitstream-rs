@@ -70,6 +70,7 @@
 
 // Available codes
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "fuzz", derive(arbitrary::Arbitrary))]
 pub enum Code {
     Unary,
     Gamma,
