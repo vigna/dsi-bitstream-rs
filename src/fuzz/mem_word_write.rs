@@ -16,7 +16,7 @@ pub enum RandomCommand {
     WriteWord(u64),
 }
 
-pub fn mem_word_write(data: FuzzCase) {
+pub fn harness(data: FuzzCase) {
     let mut idx = 0;
     let mut buffer = data.init.clone();
     let mut buffer2 = data.init.clone();

@@ -29,7 +29,7 @@ macro_rules! impl_fuzz_repr {
 
                 let mut unstructured = arbitrary::Unstructured::new(&file_bytes);
                 let data = FuzzCase::arbitrary(&mut unstructured)?;
-                dsi_bitstream::fuzz::$fuzz_name::$fuzz_name(data);
+                dsi_bitstream::fuzz::$fuzz_name::harness(data);
             }
 
             Ok(())
@@ -58,7 +58,7 @@ macro_rules! impl_fuzz_repr {
 
                 let mut unstructured = arbitrary::Unstructured::new(&file_bytes);
                 let data = FuzzCase::arbitrary(&mut unstructured)?;
-                dsi_bitstream::fuzz::$fuzz_name::$fuzz_name(data);
+                dsi_bitstream::fuzz::$fuzz_name::harness(data);
             }
 
             Ok(())

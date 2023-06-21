@@ -15,7 +15,7 @@ pub enum RandomCommand {
     ReadNextWord,
 }
 
-pub fn mem_word_read(data: FuzzCase) {
+pub fn harness(data: FuzzCase) {
     let mut idx = 0;
     let mut reader = MemWordRead::new(&data.init);
     for command in data.commands {

@@ -37,7 +37,7 @@ pub enum RandomCommand {
     Zeta(u64, u64, bool, bool),
 }
 
-pub fn codes(data: FuzzCase) {
+pub fn harness(data: FuzzCase) {
     let mut data = data;
     for command in &mut data.commands {
         match command {

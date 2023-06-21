@@ -15,7 +15,7 @@ pub enum RandomCommand {
     WriteWord(u64),
 }
 
-pub fn mem_word_write_vec(data: FuzzCase) {
+pub fn harness(data: FuzzCase) {
     let mut idx = 0;
     let mut buffer = vec![];
     let mut buffer2 = vec![];
