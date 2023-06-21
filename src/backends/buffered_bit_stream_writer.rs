@@ -285,6 +285,22 @@ impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BitWrite<LE>
     }
 }
 
+impl<WR: WordWrite<Word = u64> + WordStream, WCP: WriteCodesParams>
+    BufferedBitStreamWrite<LE, WR, WCP>
+{
+    pub fn get_pos(&self) -> usize {
+        self.backend.get_position() * 64 - self.bits_in_buffer
+    }
+}
+
+impl<WR: WordWrite<Word = u64> + WordStream, WCP: WriteCodesParams>
+    BufferedBitStreamWrite<BE, WR, WCP>
+{
+    pub fn get_pos(&self) -> usize {
+        self.backend.get_position() * 64 - self.bits_in_buffer
+    }
+}
+
 #[cfg(test)]
 #[test]
 fn test_buffered_bit_stream_writer() -> Result<(), anyhow::Error> {

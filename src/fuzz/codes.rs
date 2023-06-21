@@ -76,6 +76,7 @@ pub fn harness(data: FuzzCase) {
         let mut little = BufferedBitStreamWrite::<LE, _>::new(MemWordWriteVec::new(&mut buffer_le));
 
         for command in data.commands.iter() {
+            assert_eq!(big.get_pos(), little.get_pos());
             match command {
                 RandomCommand::Bits(value, n_bits) => {
                     let big_success = big.write_bits(*value, *n_bits).is_ok();
