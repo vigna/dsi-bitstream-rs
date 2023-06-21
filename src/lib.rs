@@ -46,6 +46,8 @@ extern crate alloc;
 
 pub mod backends;
 pub mod codes;
+#[cfg(feature = "fuzz")]
+pub mod fuzz;
 pub mod traits;
 pub mod utils;
 

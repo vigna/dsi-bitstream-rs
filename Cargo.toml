@@ -13,8 +13,10 @@ authors = ["Tommaso Fontana", "Sebastiano Vigna <sebastiano.vigna@unimi.it>"]
 [dependencies]
 anyhow = { version = "1.0.71", default-features = false, features = ["backtrace"] }
 rand = { version = "0.8.5", features = ["small_rng"] }
+arbitrary = { version = "1", features = ["derive"], optional = true }
 
 [features]
 default = ["std"]
 std = ["alloc", "anyhow/std"]
 alloc = []
+fuzz = ["dep:arbitrary"]

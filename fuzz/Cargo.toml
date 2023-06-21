@@ -13,19 +13,11 @@ arbitrary = { version = "1", features = ["derive"] }
 
 [dependencies.dsi-bitstream]
 path = ".."
+features = ["fuzz"]
 
 # Prevent this from interfering with workspaces
 [workspace]
 members = ["."]
-
-[features]
-default = ["bits", "minimal_binary", "unary", "gamma", "delta", "zeta"]
-bits = []
-minimal_binary = []
-unary = []
-gamma = []
-delta = []
-zeta = []
 
 [profile.release]
 debug = 1
