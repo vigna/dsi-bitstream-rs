@@ -2,7 +2,7 @@
 use anyhow::Result;
 
 macro_rules! impl_fuzz_repr {
-    ($func_name:ident, $fuzz_name:ident) => {
+    ($func_name:ident, $func_zip_name:ident, $fuzz_name:ident) => {
         #[cfg(feature = "fuzz")]
         #[test]
         fn $func_name() -> Result<()> {
@@ -10,6 +10,10 @@ macro_rules! impl_fuzz_repr {
             use dsi_bitstream::fuzz::$fuzz_name::*;
             use std::io::Read;
             let dir = format!("fuzz/corpus/{}", stringify!($fuzz_name));
+            if !std::path::Path::new(&dir).exists() {
+                eprintln!("The corpus directory {} does not exist", dir);
+                return Ok(());
+            }
             for file in std::fs::read_dir(&dir)? {
                 let file = file?;
 
@@ -30,10 +34,43 @@ macro_rules! impl_fuzz_repr {
 
             Ok(())
         }
+
+        #[cfg(feature = "fuzz")]
+        #[test]
+        fn $func_zip_name() -> Result<()> {
+            use arbitrary::Arbitrary;
+            use dsi_bitstream::fuzz::$fuzz_name::*;
+            use std::io::prelude::*;
+
+            let zip_path = format!("tests/corpus/{}.zip", stringify!($fuzz_name));
+            let zip_file = std::fs::File::open(&zip_path)?;
+            let mut zip = zip::ZipArchive::new(zip_file)?;
+
+            for i in 0..zip.len() {
+                let mut file = zip.by_index(i)?;
+
+                if file.is_dir() {
+                    continue;
+                }
+
+                let mut file_bytes = vec![0; file.size() as usize];
+                file.read(&mut file_bytes)?;
+
+                let mut unstructured = arbitrary::Unstructured::new(&file_bytes);
+                let data = FuzzCase::arbitrary(&mut unstructured)?;
+                dsi_bitstream::fuzz::$fuzz_name::$fuzz_name(data);
+            }
+
+            Ok(())
+        }
     };
 }
 
-impl_fuzz_repr!(test_rep_fuzz_codes, codes);
-impl_fuzz_repr!(test_rep_fuzz_mem_word_read, mem_word_read);
-impl_fuzz_repr!(test_rep_fuzz_mem_word_write, mem_word_write);
-impl_fuzz_repr!(test_rep_fuzz_mem_word_write_vec, mem_word_write_vec);
+impl_fuzz_repr!(fuzz_codes, fuzz_codes_zip, codes);
+impl_fuzz_repr!(fuzz_mem_word_read, fuzz_mem_word_read_zip, mem_word_read);
+impl_fuzz_repr!(fuzz_mem_word_write, fuzz_mem_word_write_zip, mem_word_write);
+impl_fuzz_repr!(
+    fuzz_mem_word_write_vec,
+    fuzz_mem_word_write_vec_zip,
+    mem_word_write_vec
+);
