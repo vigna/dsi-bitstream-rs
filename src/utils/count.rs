@@ -216,6 +216,24 @@ impl<E: Endianness, BR: BitRead<E>, const PRINT: bool> BitRead<E> for CountBitRe
         })
     }
 
+    fn skip_unary(&mut self, n: usize) -> Result<()> {
+        let mut skipped_bits = 0;
+        for _ in 0..n {
+            let x = self.bit_read.read_unary()?;
+            skipped_bits += x as usize + 1;
+        }
+
+        self.bits_read += skipped_bits;
+
+        if PRINT {
+            eprintln!(
+                "skip_unary({}) = {} (total = {})",
+                n, skipped_bits, self.bits_read
+            );
+        }
+        Ok(())
+    }
+
     fn peek_bits(&mut self, n_bits: usize) -> Result<Self::PeekType> {
         self.bit_read.peek_bits(n_bits)
     }
@@ -242,14 +260,22 @@ impl<E: Endianness, BR: BitRead<E> + GammaRead<E>, const PRINT: bool> GammaRead<
         })
     }
 
-    fn skip_gamma(&mut self, n: usize) -> Result<usize> {
-        self.bit_read.skip_gamma(n).map(|x| {
-            self.bits_read += x;
-            if PRINT {
-                eprintln!("skip_gammas({}) = {} (total = {})", n, x, self.bits_read);
-            }
-            x
-        })
+    fn skip_gamma(&mut self, n: usize) -> Result<()> {
+        let mut skipped_bits = 0;
+        for _ in 0..n {
+            let x = self.bit_read.read_gamma()?;
+            skipped_bits += len_gamma(x);
+        }
+
+        self.bits_read += skipped_bits;
+
+        if PRINT {
+            eprintln!(
+                "skip_gamma({}) = {} (total = {})",
+                n, skipped_bits, self.bits_read
+            );
+        }
+        Ok(())
     }
 }
 
@@ -265,14 +291,22 @@ impl<E: Endianness, BR: BitRead<E> + DeltaRead<E>, const PRINT: bool> DeltaRead<
             x
         })
     }
-    fn skip_delta(&mut self, n: usize) -> Result<usize> {
-        self.bit_read.skip_delta(n).map(|x| {
-            self.bits_read += x;
-            if PRINT {
-                eprintln!("skip_deltas({}) = {} (total = {})", n, x, self.bits_read);
-            }
-            x
-        })
+    fn skip_delta(&mut self, n: usize) -> Result<()> {
+        let mut skipped_bits = 0;
+        for _ in 0..n {
+            let x = self.bit_read.read_delta()?;
+            skipped_bits += len_delta(x);
+        }
+
+        self.bits_read += skipped_bits;
+
+        if PRINT {
+            eprintln!(
+                "skip_delta({}) = {} (total = {})",
+                n, skipped_bits, self.bits_read
+            );
+        }
+        Ok(())
     }
 }
 
@@ -289,17 +323,22 @@ impl<E: Endianness, BR: BitRead<E> + ZetaRead<E>, const PRINT: bool> ZetaRead<E>
         })
     }
 
-    fn skip_zeta(&mut self, k: u64, n: usize) -> Result<usize> {
-        self.bit_read.skip_zeta(k, n).map(|x| {
-            self.bits_read += x;
-            if PRINT {
-                eprintln!(
-                    "skip_zeta({}, {}) = {} (total = {})",
-                    k, n, x, self.bits_read
-                );
-            }
-            x
-        })
+    fn skip_zeta(&mut self, k: u64, n: usize) -> Result<()> {
+        let mut skipped_bits = 0;
+        for _ in 0..n {
+            let x = self.bit_read.read_zeta(k)?;
+            skipped_bits += len_zeta(x, k);
+        }
+
+        self.bits_read += skipped_bits;
+
+        if PRINT {
+            eprintln!(
+                "skip_zeta({}, {}) = {} (total = {})",
+                k, n, skipped_bits, self.bits_read
+            );
+        }
+        Ok(())
     }
 
     fn read_zeta3(&mut self) -> Result<u64> {
@@ -312,14 +351,22 @@ impl<E: Endianness, BR: BitRead<E> + ZetaRead<E>, const PRINT: bool> ZetaRead<E>
         })
     }
 
-    fn skip_zeta3(&mut self, n: usize) -> Result<usize> {
-        self.bit_read.skip_zeta3(n).map(|x| {
-            self.bits_read += x;
-            if PRINT {
-                eprintln!("skip_deltas({}) = {} (total = {})", n, x, self.bits_read);
-            }
-            x
-        })
+    fn skip_zeta3(&mut self, n: usize) -> Result<()> {
+        let mut skipped_bits = 0;
+        for _ in 0..n {
+            let x = self.bit_read.read_zeta3()?;
+            skipped_bits += len_zeta(x, 3);
+        }
+
+        self.bits_read += skipped_bits;
+
+        if PRINT {
+            eprintln!(
+                "skip_zeta3({}) = {} (total = {})",
+                n, skipped_bits, self.bits_read
+            );
+        }
+        Ok(())
     }
 }
 

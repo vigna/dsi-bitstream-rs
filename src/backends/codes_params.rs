@@ -63,7 +63,7 @@ macro_rules! impl_default_read_codes {
             }
 
             #[inline(always)]
-            fn skip_gamma(&mut self, n: usize) -> Result<usize> {
+            fn skip_gamma(&mut self, n: usize) -> Result<()> {
                 // From our tests, the ARM architecture is faster
                 // without tables ɣ codes.
                 #[cfg(target_arch = "arm" )]
@@ -90,7 +90,7 @@ macro_rules! impl_default_read_codes {
             }
 
             #[inline(always)]
-            fn skip_delta(&mut self, n: usize) -> Result<usize> {
+            fn skip_delta(&mut self, n: usize) -> Result<()> {
                 // From our tests, the ARM architecture is faster
                 // without tables for ɣ codes.
                 #[cfg(target_arch = "arm" )]
@@ -112,7 +112,7 @@ macro_rules! impl_default_read_codes {
             }
 
             #[inline(always)]
-            fn skip_zeta(&mut self, k: u64, n: usize) -> Result<usize> {
+            fn skip_zeta(&mut self, k: u64, n: usize) -> Result<()> {
                 self.skip_zeta_param::<true>(k, n)
             }
 
@@ -122,7 +122,7 @@ macro_rules! impl_default_read_codes {
             }
 
             #[inline(always)]
-            fn skip_zeta3(&mut self, n: usize) -> Result<usize> {
+            fn skip_zeta3(&mut self, n: usize) -> Result<()> {
                 self.skip_zeta3_param::<true>(n)
             }
         }

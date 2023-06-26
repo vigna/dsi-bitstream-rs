@@ -44,7 +44,7 @@ pub fn len_gamma(value: u64) -> usize {
 
 pub trait GammaRead<E: Endianness>: BitRead<E> {
     fn read_gamma(&mut self) -> Result<u64>;
-    fn skip_gamma(&mut self, n: usize) -> Result<usize>;
+    fn skip_gamma(&mut self, n: usize) -> Result<()>;
 }
 
 /// Trait for objects that can read Gamma codes
@@ -67,7 +67,7 @@ pub trait GammaReadParam<E: Endianness>: BitRead<E> {
     /// # Errors
     /// This function fails only if the BitRead backend has problems reading
     /// bits, as when the stream ends unexpectedly
-    fn skip_gamma_param<const USE_TABLE: bool>(&mut self, n: usize) -> Result<usize>;
+    fn skip_gamma_param<const USE_TABLE: bool>(&mut self, n: usize) -> Result<()>;
 }
 
 /// Common part of the BE and LE impl
@@ -82,11 +82,10 @@ fn default_read_gamma<E: Endianness, B: BitRead<E>>(backend: &mut B) -> Result<u
 }
 
 #[inline(always)]
-fn default_skip_gamma<E: Endianness, B: BitRead<E>>(backend: &mut B) -> Result<usize> {
+fn default_skip_gamma<E: Endianness, B: BitRead<E>>(backend: &mut B) -> Result<()> {
     let len = backend.read_unary_param::<false>()?;
     debug_assert!(len <= 64);
-    backend.skip_bits(len as usize)?;
-    Ok(2 * len as usize + 1)
+    backend.skip_bits(len as usize)
 }
 
 impl<B: BitRead<BE>> GammaReadParam<BE> for B {
@@ -101,19 +100,17 @@ impl<B: BitRead<BE>> GammaReadParam<BE> for B {
     }
 
     #[inline]
-    fn skip_gamma_param<const USE_TABLE: bool>(&mut self, n: usize) -> Result<usize> {
-        let mut skipped_bits = 0;
+    fn skip_gamma_param<const USE_TABLE: bool>(&mut self, n: usize) -> Result<()> {
         for _ in 0..n {
             if USE_TABLE {
-                if let Some((_, len)) = gamma_tables::read_table_be(self)? {
-                    skipped_bits += len;
+                if let Some((_, _)) = gamma_tables::read_table_be(self)? {
                     continue;
                 }
             }
-            skipped_bits += default_skip_gamma(self)?;
+            default_skip_gamma(self)?;
         }
 
-        Ok(skipped_bits)
+        Ok(())
     }
 }
 impl<B: BitRead<LE>> GammaReadParam<LE> for B {
@@ -128,19 +125,17 @@ impl<B: BitRead<LE>> GammaReadParam<LE> for B {
     }
 
     #[inline]
-    fn skip_gamma_param<const USE_TABLE: bool>(&mut self, n: usize) -> Result<usize> {
-        let mut skipped_bits = 0;
+    fn skip_gamma_param<const USE_TABLE: bool>(&mut self, n: usize) -> Result<()> {
         for _ in 0..n {
             if USE_TABLE {
-                if let Some((_, len)) = gamma_tables::read_table_le(self)? {
-                    skipped_bits += len;
+                if let Some((_, _)) = gamma_tables::read_table_le(self)? {
                     continue;
                 }
             }
-            skipped_bits += default_skip_gamma(self)?;
+            default_skip_gamma(self)?;
         }
 
-        Ok(skipped_bits)
+        Ok(())
     }
 }
 

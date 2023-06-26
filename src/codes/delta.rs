@@ -48,7 +48,7 @@ pub fn len_delta(value: u64) -> usize {
 
 pub trait DeltaRead<E: Endianness>: BitRead<E> {
     fn read_delta(&mut self) -> Result<u64>;
-    fn skip_delta(&mut self, n: usize) -> Result<usize>;
+    fn skip_delta(&mut self, n: usize) -> Result<()>;
 }
 
 /// Trait for objects that can read Delta codes
@@ -80,7 +80,7 @@ pub trait DeltaReadParam<E: Endianness>: GammaReadParam<E> {
     fn skip_delta_param<const USE_DELTA_TABLE: bool, const USE_GAMMA_TABLE: bool>(
         &mut self,
         n: usize,
-    ) -> Result<usize>;
+    ) -> Result<()>;
 }
 
 /// Common part of the BE and LE impl
@@ -101,28 +101,24 @@ macro_rules! default_skip_delta_impl {
         #[inline(always)]
         fn $default_skip_delta<B: GammaReadParam<$endianness>, const USE_GAMMA_TABLE: bool>(
             backend: &mut B,
-        ) -> Result<usize> {
+        ) -> Result<()> {
             // slower but correct implementation
             //let value = backend.read_gamma_param::<USE_GAMMA_TABLE>()?;
             //backend.skip_bits(value as usize)?;
             //Ok(len_gamma_param::<USE_GAMMA_TABLE>(value as _) + value as usize)
 
-            let (value, len) = 'outer: {
+            let value = 'outer: {
                 if USE_GAMMA_TABLE {
-                    if let Some((value, len)) = gamma_tables::$read_table(backend)? {
-                        break 'outer (value, len);
+                    if let Some((value, _)) = gamma_tables::$read_table(backend)? {
+                        break 'outer value;
                     }
                 }
 
                 let len = backend.read_unary_param::<false>()?;
                 debug_assert!(len <= 64);
-                (
-                    backend.read_bits(len as usize)? + (1 << len) - 1,
-                    2 * len as usize + 1,
-                )
+                backend.read_bits(len as usize)? + (1 << len) - 1
             };
-            backend.skip_bits(value as usize)?;
-            Ok(value as usize + len)
+            backend.skip_bits(value as usize)
         }
     };
 }
@@ -147,19 +143,17 @@ impl<B: GammaReadParam<BE>> DeltaReadParam<BE> for B {
     fn skip_delta_param<const USE_DELTA_TABLE: bool, const USE_GAMMA_TABLE: bool>(
         &mut self,
         n: usize,
-    ) -> Result<usize> {
-        let mut skipped_bits = 0;
+    ) -> Result<()> {
         for _ in 0..n {
             if USE_DELTA_TABLE {
-                if let Some((_, len)) = delta_tables::read_table_be(self)? {
-                    skipped_bits += len;
+                if let Some((_, _)) = delta_tables::read_table_be(self)? {
                     continue;
                 }
             }
-            skipped_bits += default_skip_delta_be::<_, USE_GAMMA_TABLE>(self)?;
+            default_skip_delta_be::<_, USE_GAMMA_TABLE>(self)?;
         }
 
-        Ok(skipped_bits)
+        Ok(())
     }
 }
 impl<B: GammaReadParam<LE>> DeltaReadParam<LE> for B {
@@ -179,19 +173,17 @@ impl<B: GammaReadParam<LE>> DeltaReadParam<LE> for B {
     fn skip_delta_param<const USE_DELTA_TABLE: bool, const USE_GAMMA_TABLE: bool>(
         &mut self,
         n: usize,
-    ) -> Result<usize> {
-        let mut skipped_bits = 0;
+    ) -> Result<()> {
         for _ in 0..n {
             if USE_DELTA_TABLE {
-                if let Some((_, len)) = delta_tables::read_table_le(self)? {
-                    skipped_bits += len;
+                if let Some((_, _)) = delta_tables::read_table_le(self)? {
                     continue;
                 }
             }
-            skipped_bits += default_skip_delta_le::<_, USE_GAMMA_TABLE>(self)?;
+            default_skip_delta_le::<_, USE_GAMMA_TABLE>(self)?;
         }
 
-        Ok(skipped_bits)
+        Ok(())
     }
 }
 

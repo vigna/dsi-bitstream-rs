@@ -88,12 +88,11 @@ pub trait BitRead<BO: Endianness> {
     }
 
     #[inline(always)]
-    fn skip_unary(&mut self, n: usize) -> Result<usize> {
-        let mut skipped_bits = 0;
+    fn skip_unary(&mut self, n: usize) -> Result<()> {
         for _ in 0..n {
-            skipped_bits += self.read_unary()? as usize + 1;
+            self.read_unary()?;
         }
-        Ok(skipped_bits)
+        Ok(())
     }
 }
 

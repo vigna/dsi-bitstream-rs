@@ -109,28 +109,41 @@ macro_rules! test_stream {
 
             let mut r = SmallRng::seed_from_u64(0);
             read.set_pos(0)?;
+            let mut count = dsi_bitstream::prelude::CountBitRead::<_, _, true>::new(read);
+            let mut bits_read = 0;
 
             for i in 0..N {
                 match r.gen_range(0..6) {
-                    0 => assert_eq!(
-                        pos[i],
-                        (0..r.gen_range(1..10))
-                            .map(|_| read.read_unary().unwrap() as usize + 1)
-                            .sum::<usize>()
-                    ),
-                    1 => assert_eq!(pos[i], read.skip_gamma(r.gen_range(1..10))?),
-                    2 => assert_eq!(pos[i], read.skip_delta(r.gen_range(1..10))?),
+                    0 => {
+                        count.skip_unary(r.gen_range(1..10))?;
+                        assert_eq!(pos[i], count.bits_read - bits_read);
+                    }
+                    1 => {
+                        count.skip_gamma(r.gen_range(1..10))?;
+                        assert_eq!(pos[i], count.bits_read - bits_read);
+                    }
+                    2 => {
+                        count.skip_delta(r.gen_range(1..10))?;
+                        assert_eq!(pos[i], count.bits_read - bits_read);
+                    }
                     3 => {
                         let k = r.gen_range(2..4);
-                        assert_eq!(pos[i], read.skip_zeta(k, r.gen_range(1..10))?)
+                        count.skip_zeta(k, r.gen_range(1..10))?;
+                        assert_eq!(pos[i], count.bits_read - bits_read);
                     }
-                    4 => assert_eq!(pos[i], read.skip_zeta3(r.gen_range(1..10))?),
+                    4 => {
+                        count.skip_zeta3(r.gen_range(1..10))?;
+                        assert_eq!(pos[i], count.bits_read - bits_read);
+                    }
                     5 => {
                         let max = r.gen_range(1..17);
-                        assert_eq!(pos[i], read.skip_minimal_binary(max, r.gen_range(1..10))?);
+                        count.skip_minimal_binary(max, r.gen_range(1..10))?;
+                        assert_eq!(pos[i], count.bits_read - bits_read);
                     }
                     _ => unreachable!(),
                 }
+
+                bits_read = count.bits_read;
             }
 
             Ok(())
