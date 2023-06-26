@@ -233,6 +233,7 @@ where
 
     #[inline]
     fn read_unary_param<const USE_TABLE: bool>(&mut self) -> Result<u64> {
+        println!("BE: UNARY {:064b}", self.buffer);
         if USE_TABLE {
             if let Some((res, _)) = unary_tables::read_table_be(self)? {
                 return Ok(res);
@@ -309,7 +310,7 @@ where
         if bit_offset != 0 {
             let new_word: BW = self.backend.read_next_word()?.to_le().upcast();
             self.valid_bits = WR::Word::BITS - bit_offset;
-            self.buffer = new_word >> self.valid_bits;
+            self.buffer = new_word >> bit_offset;
         }
         Ok(())
     }
@@ -426,6 +427,7 @@ where
 
     #[inline]
     fn read_unary_param<const USE_TABLE: bool>(&mut self) -> Result<u64> {
+        println!("LE: UNARY {:064b}", self.buffer);
         if USE_TABLE {
             if let Some((res, _)) = unary_tables::read_table_le(self)? {
                 return Ok(res);
