@@ -44,7 +44,7 @@ pub fn len_gamma(value: u64) -> usize {
 
 pub trait GammaRead<E: Endianness>: BitRead<E> {
     fn read_gamma(&mut self) -> Result<u64>;
-    fn skip_gamma(&mut self, n: usize) -> Result<()>;
+    fn skip_gamma(&mut self) -> Result<()>;
 }
 
 /// Trait for objects that can read Gamma codes
@@ -67,7 +67,7 @@ pub trait GammaReadParam<E: Endianness>: BitRead<E> {
     /// # Errors
     /// This function fails only if the BitRead backend has problems reading
     /// bits, as when the stream ends unexpectedly
-    fn skip_gamma_param<const USE_TABLE: bool>(&mut self, n: usize) -> Result<()>;
+    fn skip_gamma_param<const USE_TABLE: bool>(&mut self) -> Result<()>;
 }
 
 /// Common part of the BE and LE impl
@@ -100,17 +100,13 @@ impl<B: BitRead<BE>> GammaReadParam<BE> for B {
     }
 
     #[inline]
-    fn skip_gamma_param<const USE_TABLE: bool>(&mut self, n: usize) -> Result<()> {
-        for _ in 0..n {
-            if USE_TABLE {
-                if let Some((_, _)) = gamma_tables::read_table_be(self)? {
-                    continue;
-                }
+    fn skip_gamma_param<const USE_TABLE: bool>(&mut self) -> Result<()> {
+        if USE_TABLE {
+            if let Some((_, _)) = gamma_tables::read_table_be(self)? {
+                return Ok(());
             }
-            default_skip_gamma(self)?;
         }
-
-        Ok(())
+        default_skip_gamma(self)
     }
 }
 impl<B: BitRead<LE>> GammaReadParam<LE> for B {
@@ -125,17 +121,13 @@ impl<B: BitRead<LE>> GammaReadParam<LE> for B {
     }
 
     #[inline]
-    fn skip_gamma_param<const USE_TABLE: bool>(&mut self, n: usize) -> Result<()> {
-        for _ in 0..n {
-            if USE_TABLE {
-                if let Some((_, _)) = gamma_tables::read_table_le(self)? {
-                    continue;
-                }
+    fn skip_gamma_param<const USE_TABLE: bool>(&mut self) -> Result<()> {
+        if USE_TABLE {
+            if let Some((_, _)) = gamma_tables::read_table_le(self)? {
+                return Ok(());
             }
-            default_skip_gamma(self)?;
         }
-
-        Ok(())
+        default_skip_gamma(self)
     }
 }
 

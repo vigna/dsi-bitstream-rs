@@ -14,7 +14,7 @@ use super::{
     delta_tables, fast_floor_log2, gamma_tables, len_gamma_param, GammaReadParam, GammaWriteParam,
 };
 use crate::traits::*;
-use anyhow::Result;
+use anyhow::{Ok, Result};
 
 #[must_use]
 #[inline]
@@ -48,7 +48,7 @@ pub fn len_delta(value: u64) -> usize {
 
 pub trait DeltaRead<E: Endianness>: BitRead<E> {
     fn read_delta(&mut self) -> Result<u64>;
-    fn skip_delta(&mut self, n: usize) -> Result<()>;
+    fn skip_delta(&mut self) -> Result<()>;
 }
 
 /// Trait for objects that can read Delta codes
@@ -79,7 +79,6 @@ pub trait DeltaReadParam<E: Endianness>: GammaReadParam<E> {
     /// bits, as when the stream ends unexpectedly
     fn skip_delta_param<const USE_DELTA_TABLE: bool, const USE_GAMMA_TABLE: bool>(
         &mut self,
-        n: usize,
     ) -> Result<()>;
 }
 
@@ -142,18 +141,13 @@ impl<B: GammaReadParam<BE>> DeltaReadParam<BE> for B {
     #[inline]
     fn skip_delta_param<const USE_DELTA_TABLE: bool, const USE_GAMMA_TABLE: bool>(
         &mut self,
-        n: usize,
     ) -> Result<()> {
-        for _ in 0..n {
-            if USE_DELTA_TABLE {
-                if let Some((_, _)) = delta_tables::read_table_be(self)? {
-                    continue;
-                }
+        if USE_DELTA_TABLE {
+            if let Some((_, _)) = delta_tables::read_table_be(self)? {
+                return Ok(());
             }
-            default_skip_delta_be::<_, USE_GAMMA_TABLE>(self)?;
         }
-
-        Ok(())
+        default_skip_delta_be::<_, USE_GAMMA_TABLE>(self)
     }
 }
 impl<B: GammaReadParam<LE>> DeltaReadParam<LE> for B {
@@ -172,18 +166,13 @@ impl<B: GammaReadParam<LE>> DeltaReadParam<LE> for B {
     #[inline]
     fn skip_delta_param<const USE_DELTA_TABLE: bool, const USE_GAMMA_TABLE: bool>(
         &mut self,
-        n: usize,
     ) -> Result<()> {
-        for _ in 0..n {
-            if USE_DELTA_TABLE {
-                if let Some((_, _)) = delta_tables::read_table_le(self)? {
-                    continue;
-                }
+        if USE_DELTA_TABLE {
+            if let Some((_, _)) = delta_tables::read_table_le(self)? {
+                return Ok(());
             }
-            default_skip_delta_le::<_, USE_GAMMA_TABLE>(self)?;
         }
-
-        Ok(())
+        default_skip_delta_le::<_, USE_GAMMA_TABLE>(self)
     }
 }
 

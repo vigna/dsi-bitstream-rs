@@ -9,14 +9,15 @@ use rand::rngs::SmallRng;
 use rand::{Rng, SeedableRng};
 
 macro_rules! test_stream {
-    ($endianness: ty, $name: ident) => {
+    ($endianness: ident, $name: ident) => {
         #[test]
         fn $name() -> Result<()> {
             const N: usize = 100000;
             let mut r = SmallRng::seed_from_u64(0);
             let mut v = SmallRng::seed_from_u64(1);
             let mut buffer = Vec::<u64>::new();
-            let mut write = BufferedBitStreamWrite::<LE, _>::new(MemWordWriteVec::new(&mut buffer));
+            let mut write =
+                BufferedBitStreamWrite::<$endianness, _>::new(MemWordWriteVec::new(&mut buffer));
 
             let mut pos = vec![];
 
@@ -63,8 +64,9 @@ macro_rules! test_stream {
             drop(write);
 
             let buffer_32: &[u32] = unsafe { &buffer.align_to::<u32>().1 };
-            let mut read =
-                BufferedBitStreamRead::<LE, u64, _>::new(MemWordReadInfinite::new(buffer_32));
+            let mut read = BufferedBitStreamRead::<$endianness, u64, _>::new(
+                MemWordReadInfinite::new(buffer_32),
+            );
 
             let mut r = SmallRng::seed_from_u64(0);
             let mut v = SmallRng::seed_from_u64(1);
@@ -115,29 +117,41 @@ macro_rules! test_stream {
             for i in 0..N {
                 match r.gen_range(0..6) {
                     0 => {
-                        count.skip_unary(r.gen_range(1..10))?;
+                        for _ in 0..r.gen_range(1..10) {
+                            count.skip_unary()?;
+                        }
                         assert_eq!(pos[i], count.bits_read - bits_read);
                     }
                     1 => {
-                        count.skip_gamma(r.gen_range(1..10))?;
+                        for _ in 0..r.gen_range(1..10) {
+                            count.skip_gamma()?;
+                        }
                         assert_eq!(pos[i], count.bits_read - bits_read);
                     }
                     2 => {
-                        count.skip_delta(r.gen_range(1..10))?;
+                        for _ in 0..r.gen_range(1..10) {
+                            count.skip_delta()?;
+                        }
                         assert_eq!(pos[i], count.bits_read - bits_read);
                     }
                     3 => {
                         let k = r.gen_range(2..4);
-                        count.skip_zeta(k, r.gen_range(1..10))?;
+                        for _ in 0..r.gen_range(1..10) {
+                            count.skip_zeta(k)?;
+                        }
                         assert_eq!(pos[i], count.bits_read - bits_read);
                     }
                     4 => {
-                        count.skip_zeta3(r.gen_range(1..10))?;
+                        for _ in 0..r.gen_range(1..10) {
+                            count.skip_zeta3()?;
+                        }
                         assert_eq!(pos[i], count.bits_read - bits_read);
                     }
                     5 => {
                         let max = r.gen_range(1..17);
-                        count.skip_minimal_binary(max, r.gen_range(1..10))?;
+                        for _ in 0..r.gen_range(1..10) {
+                            count.skip_minimal_binary(max)?;
+                        }
                         assert_eq!(pos[i], count.bits_read - bits_read);
                     }
                     _ => unreachable!(),

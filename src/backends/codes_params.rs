@@ -63,13 +63,13 @@ macro_rules! impl_default_read_codes {
             }
 
             #[inline(always)]
-            fn skip_gamma(&mut self, n: usize) -> Result<()> {
+            fn skip_gamma(&mut self) -> Result<()> {
                 // From our tests, the ARM architecture is faster
                 // without tables ɣ codes.
                 #[cfg(target_arch = "arm" )]
-                return self.skip_gamma_param::<false>(n);
+                return self.skip_gamma_param::<false>();
                 #[cfg(not(target_arch = "arm" ))]
-                return self.skip_gamma_param::<true>(n);
+                return self.skip_gamma_param::<true>();
             }
         }
 
@@ -90,13 +90,13 @@ macro_rules! impl_default_read_codes {
             }
 
             #[inline(always)]
-            fn skip_delta(&mut self, n: usize) -> Result<()> {
+            fn skip_delta(&mut self) -> Result<()> {
                 // From our tests, the ARM architecture is faster
                 // without tables for ɣ codes.
                 #[cfg(target_arch = "arm" )]
-                return self.skip_delta_param::<false, false>(n);
+                return self.skip_delta_param::<false, false>();
                 #[cfg(not(target_arch = "arm" ))]
-                return self.skip_delta_param::<false, true>(n);
+                return self.skip_delta_param::<false, true>();
             }
         }
 
@@ -112,8 +112,8 @@ macro_rules! impl_default_read_codes {
             }
 
             #[inline(always)]
-            fn skip_zeta(&mut self, k: u64, n: usize) -> Result<()> {
-                self.skip_zeta_param::<true>(k, n)
+            fn skip_zeta(&mut self, k: u64) -> Result<()> {
+                self.skip_zeta_param::<true>(k)
             }
 
             #[inline(always)]
@@ -122,8 +122,8 @@ macro_rules! impl_default_read_codes {
             }
 
             #[inline(always)]
-            fn skip_zeta3(&mut self, n: usize) -> Result<()> {
-                self.skip_zeta3_param::<true>(n)
+            fn skip_zeta3(&mut self) -> Result<()> {
+                self.skip_zeta3_param::<true>()
             }
         }
 
