@@ -143,11 +143,3 @@ pub fn len_unary_param<const USE_TABLE: bool>(value: u64) -> usize {
 pub fn len_unary(value: u64) -> usize {
     len_unary_param::<false>(value)
 }
-
-#[inline(always)]
-/// Return the floor of the base 2 logarithm of `value`,
-/// which must be nonzero.
-pub fn fast_floor_log2(value: u64) -> u32 {
-    debug_assert!(value > 0, "log2(0) is undefined");
-    63 - value.leading_zeros()
-}

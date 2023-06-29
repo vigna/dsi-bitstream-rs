@@ -10,9 +10,7 @@
 //! universal coding of x ∈ N+ is obtained by representing x in binary
 //! preceded by a representation of its length in γ.
 
-use super::{
-    delta_tables, fast_floor_log2, gamma_tables, len_gamma_param, GammaReadParam, GammaWriteParam,
-};
+use super::{delta_tables, gamma_tables, len_gamma_param, GammaReadParam, GammaWriteParam};
 use crate::traits::*;
 use anyhow::{Ok, Result};
 
@@ -30,7 +28,7 @@ pub fn len_delta_param<const USE_DELTA_TABLE: bool, const USE_GAMMA_TABLE: bool>
             return *idx as usize;
         }
     }
-    let l = fast_floor_log2(value + 1);
+    let l = (value + 1).ilog2();
     l as usize + len_gamma_param::<USE_GAMMA_TABLE>(l as _)
 }
 
@@ -238,7 +236,7 @@ fn default_write_delta<E: Endianness, B: GammaWriteParam<E>, const USE_GAMMA_TAB
     mut value: u64,
 ) -> Result<usize> {
     value += 1;
-    let number_of_bits_to_write = fast_floor_log2(value);
+    let number_of_bits_to_write = value.ilog2();
     debug_assert!(number_of_bits_to_write <= u8::MAX as _);
     // remove the most significant 1
     let short_value = value - (1 << number_of_bits_to_write);

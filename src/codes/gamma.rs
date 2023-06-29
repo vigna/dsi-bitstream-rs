@@ -14,7 +14,7 @@
 //! binary x - 2^ceil(log(x)) (on floor(log(x)) bits)
 //!
 
-use super::{fast_floor_log2, gamma_tables};
+use super::gamma_tables;
 use crate::traits::*;
 use anyhow::Result;
 
@@ -31,7 +31,7 @@ pub fn len_gamma_param<const USE_TABLE: bool>(mut value: u64) -> usize {
         }
     }
     value += 1;
-    let number_of_bits_to_write = fast_floor_log2(value);
+    let number_of_bits_to_write = value.ilog2();
     2 * number_of_bits_to_write as usize + 1
 }
 
@@ -184,7 +184,7 @@ fn default_write_gamma<E: Endianness, B: BitWrite<E>>(
     mut value: u64,
 ) -> Result<usize> {
     value += 1;
-    let number_of_bits_to_write = fast_floor_log2(value);
+    let number_of_bits_to_write = value.ilog2();
     debug_assert!(number_of_bits_to_write <= u8::MAX as _);
     // remove the most significant 1
     let short_value = value - (1 << number_of_bits_to_write);

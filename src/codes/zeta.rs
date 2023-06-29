@@ -31,7 +31,7 @@ pub fn len_zeta_param<const USE_TABLE: bool>(mut value: u64, k: u64) -> usize {
         }
     }
     value += 1;
-    let h = (fast_floor_log2(value) as u64) / k;
+    let h = value.ilog2() as u64 / k;
     let u = 1 << ((h + 1) * k);
     let l = 1 << (h * k);
     len_unary(h) + len_minimal_binary(value - l, u - l)
@@ -228,7 +228,7 @@ fn default_write_zeta<E: Endianness, B: BitWrite<E>>(
     k: u64,
 ) -> Result<usize> {
     value += 1;
-    let h = fast_floor_log2(value) as u64 / k;
+    let h = value.ilog2() as u64 / k;
     let u = 1 << ((h + 1) * k);
     let l = 1 << (h * k);
 

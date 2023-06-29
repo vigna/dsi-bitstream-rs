@@ -13,7 +13,6 @@
 //! When the size of the alphabet is a power of two, this is equivalent to
 //! the classical binary encoding.
 
-use super::fast_floor_log2;
 use crate::traits::*;
 use anyhow::{bail, Result};
 
@@ -25,7 +24,7 @@ pub fn len_minimal_binary(value: u64, max: u64) -> usize {
     if max == 0 {
         return 0;
     }
-    let l = fast_floor_log2(max);
+    let l = max.ilog2();
     let limit = (1 << (l + 1)) - max;
     let mut result = l as usize;
     if value >= limit {
@@ -46,7 +45,7 @@ pub trait MinimalBinaryRead<BO: Endianness>: BitRead<BO> {
         if max == 0 {
             bail!("The max of a minimal binary value can't be zero.");
         }
-        let l = fast_floor_log2(max);
+        let l = max.ilog2();
         let mut value = self.read_bits(l as _)?;
         let limit = (1 << (l + 1)) - max;
 
@@ -69,7 +68,7 @@ pub trait MinimalBinaryRead<BO: Endianness>: BitRead<BO> {
         if max == 0 {
             bail!("The max of a minimal binary value can't be zero.");
         }
-        let l = fast_floor_log2(max);
+        let l = max.ilog2();
         let limit = (1 << (l + 1)) - max;
 
         let value = self.read_bits(l as _)?;
@@ -93,7 +92,7 @@ pub trait MinimalBinaryWrite<BO: Endianness>: BitWrite<BO> {
         if max == 0 {
             bail!("The max of a minimal binary value can't be zero.");
         }
-        let l = fast_floor_log2(max);
+        let l = max.ilog2();
         let limit = (1 << (l + 1)) - max;
 
         if value < limit {
