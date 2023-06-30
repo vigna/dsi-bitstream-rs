@@ -11,7 +11,6 @@
 
 use anyhow::Result;
 
-use super::*;
 use super::{len_minimal_binary, len_unary, zeta_tables, MinimalBinaryRead, MinimalBinaryWrite};
 use crate::traits::*;
 

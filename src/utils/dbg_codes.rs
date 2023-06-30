@@ -54,10 +54,10 @@ where
         Ok(value)
     }
 
-    fn skip_gamma(&mut self, n: usize) -> Result<usize> {
-        let value = self.reader.skip_gamma(n)?;
-        println!("{{skip {} g:{}}}", n, value);
-        Ok(value)
+    fn skip_gamma(&mut self) -> Result<()> {
+        self.reader.skip_gamma()?;
+        println!("{{skip g}}");
+        Ok(())
     }
 }
 
@@ -71,10 +71,10 @@ where
         Ok(value)
     }
 
-    fn skip_delta(&mut self, n: usize) -> Result<usize> {
-        let value = self.reader.skip_delta(n)?;
-        println!("skip: {} {{d}}", n);
-        Ok(value)
+    fn skip_delta(&mut self) -> Result<()> {
+        self.reader.skip_delta()?;
+        println!("{{skip d}}");
+        Ok(())
     }
 }
 
@@ -88,10 +88,10 @@ where
         Ok(value)
     }
 
-    fn skip_zeta3(&mut self, n: usize) -> Result<usize> {
-        let value = self.reader.skip_zeta3(n)?;
-        println!("skip: {} {{z3}}", n);
-        Ok(value)
+    fn skip_zeta3(&mut self) -> Result<()> {
+        self.reader.skip_zeta3()?;
+        println!("{{skip z3}}");
+        Ok(())
     }
 
     fn read_zeta(&mut self, k: u64) -> Result<u64> {
@@ -100,10 +100,10 @@ where
         Ok(value)
     }
 
-    fn skip_zeta(&mut self, k: u64, n: usize) -> Result<usize> {
-        let value = self.reader.skip_zeta(k, n)?;
-        println!("skip: {} {{z{}}}", n, k);
-        Ok(value)
+    fn skip_zeta(&mut self, k: u64) -> Result<()> {
+        self.reader.skip_zeta(k)?;
+        println!("{{skip z {}}}", k);
+        Ok(())
     }
 }
 
