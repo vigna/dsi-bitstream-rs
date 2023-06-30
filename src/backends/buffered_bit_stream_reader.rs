@@ -13,7 +13,7 @@ use anyhow::{bail, Context, Result};
 
 /// A BitStream built uppon a generic [`WordRead`] that caches the read words
 /// in a buffer
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct BufferedBitStreamRead<
     E: Endianness,
     BW: Word,
@@ -30,6 +30,22 @@ pub struct BufferedBitStreamRead<
     _marker_endianness: core::marker::PhantomData<E>,
     /// Just needed to specify the code parameters.
     _marker_default_codes: core::marker::PhantomData<RCP>,
+}
+
+impl<E: Endianness, BW: Word, WR: WordRead + Clone, RCP: ReadCodesParams> core::clone::Clone
+    for BufferedBitStreamRead<E, BW, WR, RCP>
+{
+    // No need to copy the buffer
+    // TODO!: think about how to make a lightweight clone
+    fn clone(&self) -> Self {
+        Self {
+            backend: self.backend.clone(),
+            buffer: self.buffer,
+            valid_bits: self.valid_bits,
+            _marker_endianness: core::marker::PhantomData::default(),
+            _marker_default_codes: core::marker::PhantomData::default(),
+        }
+    }
 }
 
 impl<E: Endianness, BW: Word, WR: WordRead, RCP: ReadCodesParams>
