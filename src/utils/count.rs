@@ -28,7 +28,7 @@ impl<E: Endianness, BW: BitWrite<E>, const PRINT: bool> CountBitWrite<E, BW, PRI
         Self {
             bit_write,
             bits_written: 0,
-            _marker: std::marker::PhantomData::default(),
+            _marker: std::marker::PhantomData,
         }
     }
 }
@@ -173,7 +173,7 @@ impl<E: Endianness, BR: BitRead<E>, const PRINT: bool> CountBitRead<E, BR, PRINT
         Self {
             bit_read,
             bits_read: 0,
-            _marker: std::marker::PhantomData::default(),
+            _marker: std::marker::PhantomData,
         }
     }
 }

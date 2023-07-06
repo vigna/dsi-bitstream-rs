@@ -25,9 +25,9 @@ use anyhow::Result;
 ///
 /// TODO!: maybe FileBackend is not the best name, as it's more generic than
 /// that
-#[repr(transparent)]
 pub struct FileBackend<W: Word, B> {
     file: B,
+    position: usize,
     _marker: core::marker::PhantomData<W>,
 }
 
@@ -36,7 +36,8 @@ impl<W: Word, B> FileBackend<W, B> {
     pub fn new(file: B) -> Self {
         Self {
             file,
-            _marker: core::marker::PhantomData::default(),
+            position: 0,
+            _marker: core::marker::PhantomData,
         }
     }
 }
@@ -46,7 +47,8 @@ impl<W: Word, B: Clone> Clone for FileBackend<W, B> {
     fn clone(&self) -> Self {
         Self {
             file: self.file.clone(),
-            _marker: core::marker::PhantomData::default(),
+            position: self.position,
+            _marker: core::marker::PhantomData,
         }
     }
 }
@@ -66,6 +68,7 @@ impl<W: Word, B: std::io::Read> WordRead for FileBackend<W, B> {
     fn read_next_word(&mut self) -> Result<W> {
         let mut res: W::BytesForm = Default::default();
         let _ = self.file.read(res.as_mut())?;
+        self.position += W::BYTES;
         Ok(W::from_ne_bytes(res))
     }
 }
@@ -77,6 +80,23 @@ impl<W: Word, B: std::io::Write> WordWrite for FileBackend<W, B> {
     #[inline]
     fn write_word(&mut self, word: W) -> Result<()> {
         let _ = self.file.write(word.to_ne_bytes().as_ref())?;
+        self.position += W::BYTES;
+        Ok(())
+    }
+}
+
+/// Convert [`std::io::Seek`] to [`WordStream`]
+impl<W: Word, B: std::io::Seek> WordStream for FileBackend<W, B> {
+    #[inline(always)]
+    fn get_position(&self) -> usize {
+        self.position
+    }
+
+    #[inline(always)]
+    fn set_position(&mut self, word_index: usize) -> Result<()> {
+        self.position = word_index * W::BYTES;
+        self.file
+            .seek(std::io::SeekFrom::Start(self.position as u64))?;
         Ok(())
     }
 }

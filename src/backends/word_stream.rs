@@ -23,7 +23,6 @@ use anyhow::{bail, Result};
 /// let mut word_reader = MemWordRead::new(&words);
 ///
 /// // the stream is read sequentially
-/// assert_eq!(word_reader.len(), 2);
 /// assert_eq!(word_reader.get_position(), 0);
 /// assert_eq!(word_reader.read_next_word().unwrap(), 0x0043b59fcdf16077);
 /// assert_eq!(word_reader.get_position(), 1);
@@ -98,12 +97,6 @@ impl<W: Word, B: AsRef<[W]>> WordRead for MemWordReadInfinite<W, B> {
 impl<W: Word, B: AsRef<[W]>> WordStream for MemWordReadInfinite<W, B> {
     #[inline(always)]
     #[must_use]
-    fn len(&self) -> usize {
-        self.data.as_ref().len()
-    }
-
-    #[inline(always)]
-    #[must_use]
     fn get_position(&self) -> usize {
         self.word_index
     }
@@ -130,7 +123,6 @@ impl<W: Word, B: AsRef<[W]>> WordStream for MemWordReadInfinite<W, B> {
 /// let mut word_writer = MemWordWrite::new(&mut words);
 ///
 /// // the stream is read sequentially
-/// assert_eq!(word_writer.len(), 2);
 /// assert_eq!(word_writer.get_position(), 0);
 /// assert_eq!(word_writer.read_next_word().unwrap(), 0x0043b59fcdf16077);
 /// assert_eq!(word_writer.get_position(), 1);
@@ -191,13 +183,10 @@ impl<W: Word, B: AsMut<[W]>> MemWordWrite<W, B> {
 /// let mut word_writer = MemWordWriteVec::new(&mut words);
 ///
 /// // the stream is read sequentially
-/// assert_eq!(word_writer.len(), 1);
 /// assert_eq!(word_writer.get_position(), 0);
 /// assert!(word_writer.write_word(0).is_ok());
-/// assert_eq!(word_writer.len(), 1);
 /// assert_eq!(word_writer.get_position(), 1);
 /// assert!(word_writer.write_word(1).is_ok());
-/// assert_eq!(word_writer.len(), 2);
 /// assert_eq!(word_writer.get_position(), 2);
 /// ```
 #[derive(Debug, PartialEq)]
@@ -241,23 +230,17 @@ impl<W: Word, B: AsRef<[W]>> WordRead for MemWordRead<W, B> {
 impl<W: Word, B: AsRef<[W]>> WordStream for MemWordRead<W, B> {
     #[inline]
     #[must_use]
-    fn len(&self) -> usize {
-        self.data.as_ref().len()
-    }
-
-    #[inline]
-    #[must_use]
     fn get_position(&self) -> usize {
         self.word_index
     }
 
     #[inline]
     fn set_position(&mut self, word_index: usize) -> Result<()> {
-        if word_index >= self.len() {
+        if word_index >= self.data.as_ref().len() {
             bail!(
                 "Index {} is out of bound on a MemWordRead of length {}",
                 word_index,
-                self.len()
+                self.data.as_ref().len()
             );
         }
         self.word_index = word_index;
@@ -285,23 +268,17 @@ impl<W: Word, B: AsMut<[W]>> WordRead for MemWordWrite<W, B> {
 impl<W: Word, B: AsRef<[W]> + AsMut<[W]>> WordStream for MemWordWrite<W, B> {
     #[inline]
     #[must_use]
-    fn len(&self) -> usize {
-        self.data.as_ref().len()
-    }
-
-    #[inline]
-    #[must_use]
     fn get_position(&self) -> usize {
         self.word_index
     }
 
     #[inline]
     fn set_position(&mut self, word_index: usize) -> Result<()> {
-        if word_index >= self.len() {
+        if word_index >= self.data.as_ref().len() {
             bail!(
                 "Index {} is out of bound on a MemWordRead of length {}",
                 word_index,
-                self.len()
+                self.data.as_ref().len()
             );
         }
         self.word_index = word_index;
@@ -366,23 +343,17 @@ impl<W: Word, B: AsMut<alloc::vec::Vec<W>> + AsRef<alloc::vec::Vec<W>>> WordStre
 {
     #[inline]
     #[must_use]
-    fn len(&self) -> usize {
-        self.data.as_ref().len()
-    }
-
-    #[inline]
-    #[must_use]
     fn get_position(&self) -> usize {
         self.word_index
     }
 
     #[inline]
     fn set_position(&mut self, word_index: usize) -> Result<()> {
-        if word_index >= self.len() {
+        if word_index >= self.data.as_ref().len() {
             bail!(
                 "Index {} is out of bound on a MemWordRead of length {}",
                 word_index,
-                self.len()
+                self.data.as_ref().len()
             );
         }
         self.word_index = word_index;

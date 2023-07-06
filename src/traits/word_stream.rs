@@ -10,17 +10,6 @@ use anyhow::Result;
 
 /// A Seekable word stream
 pub trait WordStream {
-    /// Return the number of [`u64`] words readable from the start of the stream.
-    /// Any index in  `[0, self.len())` is valid.
-    #[must_use]
-    fn len(&self) -> usize;
-
-    #[must_use]
-    /// Return if the stream has any words or it's empty
-    fn is_empty(&self) -> bool {
-        self.len() == 0
-    }
-
     /// Return the index of the **next** word that  will be
     /// read on the next [`WordRead::read_next_word`] call.
     #[must_use]

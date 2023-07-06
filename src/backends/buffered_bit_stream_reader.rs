@@ -42,8 +42,8 @@ impl<E: Endianness, BW: Word, WR: WordRead + Clone, RCP: ReadCodesParams> core::
             backend: self.backend.clone(),
             buffer: self.buffer,
             valid_bits: self.valid_bits,
-            _marker_endianness: core::marker::PhantomData::default(),
-            _marker_default_codes: core::marker::PhantomData::default(),
+            _marker_endianness: core::marker::PhantomData,
+            _marker_default_codes: core::marker::PhantomData,
         }
     }
 }
@@ -66,8 +66,8 @@ impl<E: Endianness, BW: Word, WR: WordRead, RCP: ReadCodesParams>
             backend,
             buffer: BW::ZERO,
             valid_bits: 0,
-            _marker_endianness: core::marker::PhantomData::default(),
-            _marker_default_codes: core::marker::PhantomData::default(),
+            _marker_endianness: core::marker::PhantomData,
+            _marker_default_codes: core::marker::PhantomData,
         }
     }
 }

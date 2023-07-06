@@ -40,8 +40,8 @@ impl<E: BBSWDrop<WR, WCP>, WR: WordWrite, WCP: WriteCodesParams>
             backend,
             buffer: 0,
             bits_in_buffer: 0,
-            _marker_endianness: core::marker::PhantomData::default(),
-            _marker_default_codes: core::marker::PhantomData::default(),
+            _marker_endianness: core::marker::PhantomData,
+            _marker_default_codes: core::marker::PhantomData,
         }
     }
 
@@ -285,19 +285,47 @@ impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BitWrite<LE>
     }
 }
 
-impl<WR: WordWrite<Word = u64> + WordStream, WCP: WriteCodesParams>
+impl<WR: WordWrite<Word = u64> + WordStream + WordRead<Word = u64>, WCP: WriteCodesParams>
     BufferedBitStreamWrite<LE, WR, WCP>
 {
     pub fn get_pos(&self) -> usize {
         self.backend.get_position() * 64 + self.bits_in_buffer
     }
+
+    pub fn set_pos(&mut self, bit_index: usize) -> Result<()> {
+        // TODO: This ensures that we have written everything
+        // but it might overwrite some finals bits, so it could cause bugs
+        LE::flush(self)?;
+        let word_index = bit_index / 64;
+        let bit_index = bit_index % 64;
+        self.backend.set_position(word_index)?;
+        let word = self.backend.read_next_word()?;
+        self.backend.set_position(word_index)?;
+        self.bits_in_buffer = bit_index;
+        self.buffer = word as u128;
+        Ok(())
+    }
 }
 
-impl<WR: WordWrite<Word = u64> + WordStream, WCP: WriteCodesParams>
+impl<WR: WordWrite<Word = u64> + WordStream + WordRead<Word = u64>, WCP: WriteCodesParams>
     BufferedBitStreamWrite<BE, WR, WCP>
 {
     pub fn get_pos(&self) -> usize {
         self.backend.get_position() * 64 + self.bits_in_buffer
+    }
+
+    pub fn set_pos(&mut self, bit_index: usize) -> Result<()> {
+        // TODO: This ensures that we have written everything
+        // but it might overwrite some finals bits, so it could cause bugs
+        BE::flush(self)?;
+        let word_index = bit_index / 64;
+        let bit_index = bit_index % 64;
+        self.backend.set_position(word_index)?;
+        let word = self.backend.read_next_word()?;
+        self.backend.set_position(word_index)?;
+        self.bits_in_buffer = bit_index;
+        self.buffer = (word as u128) << 64;
+        Ok(())
     }
 }
 

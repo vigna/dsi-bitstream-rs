@@ -32,7 +32,7 @@ impl<BO: Endianness, WR> UnbufferedBitStreamRead<BO, WR> {
         Self {
             data,
             bit_idx: 0,
-            _marker: core::marker::PhantomData::default(),
+            _marker: core::marker::PhantomData,
         }
     }
 }
