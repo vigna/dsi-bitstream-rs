@@ -41,6 +41,7 @@ use anyhow::Result;
 
 pub trait ReadCodesParams {}
 
+#[derive(Debug, Clone)]
 pub struct DefaultReadParams;
 impl ReadCodesParams for DefaultReadParams {}
 
@@ -134,6 +135,7 @@ impl_default_read_codes! {LittleEndian, BigEndian}
 
 pub trait WriteCodesParams {}
 
+#[derive(Debug, Clone)]
 pub struct DefaultWriteParams;
 impl WriteCodesParams for DefaultWriteParams {}
 
