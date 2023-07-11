@@ -25,6 +25,7 @@ use anyhow::Result;
 ///
 /// TODO!: maybe FileBackend is not the best name, as it's more generic than
 /// that
+#[derive(Debug, Clone)]
 pub struct FileBackend<W: Word, B> {
     file: B,
     position: usize,
@@ -39,24 +40,6 @@ impl<W: Word, B> FileBackend<W, B> {
             position: 0,
             _marker: core::marker::PhantomData,
         }
-    }
-}
-
-/// forward [`Clone`] if the backend supports it
-impl<W: Word, B: Clone> Clone for FileBackend<W, B> {
-    fn clone(&self) -> Self {
-        Self {
-            file: self.file.clone(),
-            position: self.position,
-            _marker: core::marker::PhantomData,
-        }
-    }
-}
-
-/// forward [`core::fmt::Debug`] if the backend supports it
-impl<W: Word, B: core::fmt::Debug> core::fmt::Debug for FileBackend<W, B> {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        self.file.fmt(f)
     }
 }
 
