@@ -43,7 +43,7 @@ impl<W: Word, B> FileBackend<W, B> {
     }
 }
 
-impl<W: Word, B: core::fmt::Debug> core::fmt::Debug for FileBackend<W, B> {
+impl<W: Word, B> core::fmt::Debug for FileBackend<W, B> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("FileBackend")
             .field("file", &"CAN'T PRINT FILE")
