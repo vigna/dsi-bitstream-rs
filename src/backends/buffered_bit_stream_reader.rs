@@ -99,8 +99,7 @@ where
 impl<BW: Word, WR: WordRead + WordStream, RCP: ReadCodesParams> BitSeek
     for BufferedBitStreamRead<BE, BW, WR, RCP>
 where
-    BW: DowncastableInto<WR::Word> + CastableInto<u64>,
-    WR::Word: UpcastableInto<BW> + UpcastableInto<u64>,
+    WR::Word: UpcastableInto<BW>,
 {
     #[inline]
     fn get_pos(&self) -> usize {
@@ -116,7 +115,9 @@ where
         self.buffer = BW::ZERO;
         self.valid_bits = 0;
         if bit_offset != 0 {
-            let _ = self.read_bits(bit_offset)?;
+            let new_word: BW = self.backend.read_next_word()?.to_be().upcast();
+            self.valid_bits = WR::Word::BITS - bit_offset;
+            self.buffer = new_word << (BW::BITS - self.valid_bits);
         }
         Ok(())
     }
@@ -288,8 +289,7 @@ where
 impl<BW: Word, WR: WordRead + WordStream, RCP: ReadCodesParams> BitSeek
     for BufferedBitStreamRead<LE, BW, WR, RCP>
 where
-    BW: DowncastableInto<WR::Word> + CastableInto<u64>,
-    WR::Word: UpcastableInto<BW> + UpcastableInto<u64>,
+    WR::Word: UpcastableInto<BW>,
 {
     #[inline]
     fn get_pos(&self) -> usize {
@@ -305,7 +305,9 @@ where
         self.buffer = BW::ZERO;
         self.valid_bits = 0;
         if bit_offset != 0 {
-            let _ = self.read_bits(bit_offset);
+            let new_word: BW = self.backend.read_next_word()?.to_le().upcast();
+            self.valid_bits = WR::Word::BITS - bit_offset;
+            self.buffer = new_word >> bit_offset;
         }
         Ok(())
     }

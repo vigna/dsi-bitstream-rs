@@ -86,9 +86,9 @@ impl<W: Word, B: std::io::Seek> WordStream for FileBackend<W, B> {
 
     #[inline(always)]
     fn set_position(&mut self, word_index: usize) -> Result<()> {
-        self.position = word_index * W::BYTES;
+        self.position = word_index;
         self.file
-            .seek(std::io::SeekFrom::Start(self.position as u64))?;
+            .seek(std::io::SeekFrom::Start((word_index * W::BYTES) as u64))?;
         Ok(())
     }
 }
