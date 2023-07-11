@@ -35,8 +35,6 @@ pub struct BufferedBitStreamRead<
 impl<E: Endianness, BW: Word, WR: WordRead + Clone, RCP: ReadCodesParams> core::clone::Clone
     for BufferedBitStreamRead<E, BW, WR, RCP>
 {
-    // No need to copy the buffer
-    // TODO!: think about how to make a lightweight clone
     fn clone(&self) -> Self {
         Self {
             backend: self.backend.clone(),
@@ -101,7 +99,8 @@ where
 impl<BW: Word, WR: WordRead + WordStream, RCP: ReadCodesParams> BitSeek
     for BufferedBitStreamRead<BE, BW, WR, RCP>
 where
-    WR::Word: UpcastableInto<BW>,
+    BW: DowncastableInto<WR::Word> + CastableInto<u64>,
+    WR::Word: UpcastableInto<BW> + UpcastableInto<u64>,
 {
     #[inline]
     fn get_pos(&self) -> usize {
@@ -117,9 +116,7 @@ where
         self.buffer = BW::ZERO;
         self.valid_bits = 0;
         if bit_offset != 0 {
-            let new_word: BW = self.backend.read_next_word()?.to_be().upcast();
-            self.valid_bits = WR::Word::BITS - bit_offset;
-            self.buffer = new_word << (BW::BITS - self.valid_bits);
+            let _ = self.read_bits(bit_offset)?;
         }
         Ok(())
     }
@@ -291,7 +288,8 @@ where
 impl<BW: Word, WR: WordRead + WordStream, RCP: ReadCodesParams> BitSeek
     for BufferedBitStreamRead<LE, BW, WR, RCP>
 where
-    WR::Word: UpcastableInto<BW>,
+    BW: DowncastableInto<WR::Word> + CastableInto<u64>,
+    WR::Word: UpcastableInto<BW> + UpcastableInto<u64>,
 {
     #[inline]
     fn get_pos(&self) -> usize {
@@ -307,9 +305,7 @@ where
         self.buffer = BW::ZERO;
         self.valid_bits = 0;
         if bit_offset != 0 {
-            let new_word: BW = self.backend.read_next_word()?.to_le().upcast();
-            self.valid_bits = WR::Word::BITS - bit_offset;
-            self.buffer = new_word >> bit_offset;
+            let _ = self.read_bits(bit_offset);
         }
         Ok(())
     }
