@@ -25,7 +25,7 @@ use anyhow::Result;
 ///
 /// TODO!: maybe FileBackend is not the best name, as it's more generic than
 /// that
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct FileBackend<W: Word, B> {
     file: B,
     position: usize,
@@ -40,6 +40,15 @@ impl<W: Word, B> FileBackend<W, B> {
             position: 0,
             _marker: core::marker::PhantomData,
         }
+    }
+}
+
+impl<W: Word, B: core::fmt::Debug> core::fmt::Debug for FileBackend<W, B> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_struct("FileBackend")
+            .field("file", &"CAN'T PRINT FILE")
+            .field("position", &self.position)
+            .finish()
     }
 }
 
