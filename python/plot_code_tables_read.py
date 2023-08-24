@@ -122,4 +122,4 @@ for code in ["unary", "gamma", "delta", "delta_gamma", "zeta3"]:
     )
     plt.xlabel("Table Bits")
     plt.ylabel("ns")
-    plt.savefig("%s_read_tables.png" % code, bbox_inches="tight")
+    plt.savefig("%s_read_tables.svg" % code, bbox_inches="tight")

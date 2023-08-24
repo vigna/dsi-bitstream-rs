@@ -90,7 +90,7 @@ pub fn len_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> Result<Option<us
         let len = READ_LEN_%(BO)s[idx as usize];
         if len != MISSING_VALUE_LEN {
             backend.skip_bits_after_table_lookup(len as usize)?;
-            return Ok(Some(len));
+            return Ok(Some(len as usize));
         }
     }
     Ok(None)
@@ -125,9 +125,10 @@ write_func_two_table = """
 /// # Errors
 /// This function errors if it wasn't able to skip_bits
 pub fn write_table_%(bo)s<B: BitWrite<%(BO)s>>(backend: &mut B, value: u64) -> Result<Option<usize>> {
-    Ok(if let Some(bits) = WRITE_%(BO)s.get(value as usize) {
-        backend.write_bits(*bits as u64, WRITE_LEN_%(BO)s[value as usize] as usize)?;
-        Some(*len as usize)
+    Ok(if let Some(len) = WRITE_%(BO)s.get(value as usize) {
+        let len = WRITE_LEN_%(BO)s[value as usize] as usize;
+        backend.write_bits(*len as u64, len)?;
+        Some(len)
     } else {
         None
     })
