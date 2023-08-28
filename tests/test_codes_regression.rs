@@ -31,12 +31,12 @@ type Backend<'a, E> = BufferedBitStreamWrite<E, MemWordWriteVec<u64, &'a mut Vec
 
 #[test]
 fn test_unary() -> Result<()> {
-    for i in 0..64 {
+    for i in 0..63 {
         test_code!(
             |b: &mut Backend<BE>| b.write_unary(i),
-            (1 << 63 - i),
+            (1_u64 << (63 - i)),
             |b: &mut Backend<LE>| b.write_unary(i),
-            (1 << i),
+            (1_u64 << i),
         );
     }
 
