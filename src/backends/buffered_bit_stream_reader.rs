@@ -194,7 +194,7 @@ where
         // most common path, we just read the buffer
         if n_bits <= self.valid_bits {
             // Valid right shift of BW::BITS - n_bits, even when n_bits is zero
-            let result: u64 = (self.buffer >> (BW::BITS - n_bits - 1) >> 1).cast();
+            let result: u64 = (self.buffer >> (BW::BITS - n_bits - 1) >> 1_u8).cast();
             self.valid_bits -= n_bits;
             self.buffer <<= n_bits;
             return Ok(result);
@@ -207,7 +207,7 @@ where
             );
         }
 
-        let mut result: u64 = (self.buffer >> (BW::BITS - 1 - self.valid_bits) >> 1).cast();
+        let mut result: u64 = (self.buffer >> (BW::BITS - 1 - self.valid_bits) >> 1_u8).cast();
         n_bits -= self.valid_bits;
 
         // Directly read to the result without updating the buffer
