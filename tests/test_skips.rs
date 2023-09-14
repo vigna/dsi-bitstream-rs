@@ -108,7 +108,7 @@ macro_rules! test_stream {
 
             let mut r = SmallRng::seed_from_u64(0);
             read.set_bit_pos(0)?;
-            let mut count = dsi_bitstream::prelude::CountBitRead::<_, _, true>::new(read);
+            let mut count = dsi_bitstream::prelude::CountBitReader::<_, _, true>::new(read);
             let mut bits_read = 0;
 
             for i in 0..N {

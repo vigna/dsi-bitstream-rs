@@ -16,14 +16,14 @@ use anyhow::Result;
 /// Wrapping struct that keep tracks of written bits. Optionally,
 /// prints to standard error information about methods called.
 #[derive(Debug, Clone)]
-pub struct CountBitWrite<E: Endianness, BW: BitWrite<E>, const PRINT: bool = false> {
+pub struct CountBitWriter<E: Endianness, BW: BitWrite<E>, const PRINT: bool = false> {
     bit_write: BW,
     /// The number of bits written so far on the underlying [`BitWrite`].
     pub bits_written: usize,
     _marker: std::marker::PhantomData<E>,
 }
 
-impl<E: Endianness, BW: BitWrite<E>, const PRINT: bool> CountBitWrite<E, BW, PRINT> {
+impl<E: Endianness, BW: BitWrite<E>, const PRINT: bool> CountBitWriter<E, BW, PRINT> {
     pub fn new(bit_write: BW) -> Self {
         Self {
             bit_write,
@@ -34,7 +34,7 @@ impl<E: Endianness, BW: BitWrite<E>, const PRINT: bool> CountBitWrite<E, BW, PRI
 }
 
 impl<E: Endianness, BW: BitWrite<E>, const PRINT: bool> BitWrite<E>
-    for CountBitWrite<E, BW, PRINT>
+    for CountBitWriter<E, BW, PRINT>
 {
     fn write_bits(&mut self, value: u64, n_bits: usize) -> Result<usize> {
         self.bit_write.write_bits(value, n_bits).map(|x| {
@@ -83,7 +83,7 @@ impl<E: Endianness, BW: BitWrite<E>, const PRINT: bool> BitWrite<E>
 }
 
 impl<E: Endianness, BW: BitWrite<E> + GammaWrite<E>, const PRINT: bool> GammaWrite<E>
-    for CountBitWrite<E, BW, PRINT>
+    for CountBitWriter<E, BW, PRINT>
 {
     fn write_gamma(&mut self, value: u64) -> Result<usize> {
         self.bit_write.write_gamma(value).map(|x| {
@@ -100,7 +100,7 @@ impl<E: Endianness, BW: BitWrite<E> + GammaWrite<E>, const PRINT: bool> GammaWri
 }
 
 impl<E: Endianness, BW: BitWrite<E> + DeltaWrite<E>, const PRINT: bool> DeltaWrite<E>
-    for CountBitWrite<E, BW, PRINT>
+    for CountBitWriter<E, BW, PRINT>
 {
     fn write_delta(&mut self, value: u64) -> Result<usize> {
         self.bit_write.write_delta(value).map(|x| {
@@ -117,7 +117,7 @@ impl<E: Endianness, BW: BitWrite<E> + DeltaWrite<E>, const PRINT: bool> DeltaWri
 }
 
 impl<E: Endianness, BW: BitWrite<E> + ZetaWrite<E>, const PRINT: bool> ZetaWrite<E>
-    for CountBitWrite<E, BW, PRINT>
+    for CountBitWriter<E, BW, PRINT>
 {
     fn write_zeta(&mut self, value: u64, k: u64) -> Result<usize> {
         self.bit_write.write_zeta(value, k).map(|x| {
@@ -147,7 +147,7 @@ impl<E: Endianness, BW: BitWrite<E> + ZetaWrite<E>, const PRINT: bool> ZetaWrite
 }
 
 impl<E: Endianness, BR: BitWrite<E> + BitSeek, const PRINT: bool> BitSeek
-    for CountBitWrite<E, BR, PRINT>
+    for CountBitWriter<E, BR, PRINT>
 {
     fn set_bit_pos(&mut self, bit_pos: usize) -> Result<()> {
         self.bit_write.set_bit_pos(bit_pos)
@@ -161,14 +161,14 @@ impl<E: Endianness, BR: BitWrite<E> + BitSeek, const PRINT: bool> BitSeek
 /// Wrapping struct that keep tracks of read bits. Optionally,
 /// prints to standard error information about methods called.
 #[derive(Debug, Clone)]
-pub struct CountBitRead<E: Endianness, BR: BitRead<E>, const PRINT: bool = false> {
+pub struct CountBitReader<E: Endianness, BR: BitRead<E>, const PRINT: bool = false> {
     bit_read: BR,
     /// The number of bits read (or skipped) so far from the underlying [`BitRead`].
     pub bits_read: usize,
     _marker: std::marker::PhantomData<E>,
 }
 
-impl<E: Endianness, BR: BitRead<E>, const PRINT: bool> CountBitRead<E, BR, PRINT> {
+impl<E: Endianness, BR: BitRead<E>, const PRINT: bool> CountBitReader<E, BR, PRINT> {
     pub fn new(bit_read: BR) -> Self {
         Self {
             bit_read,
@@ -178,7 +178,7 @@ impl<E: Endianness, BR: BitRead<E>, const PRINT: bool> CountBitRead<E, BR, PRINT
     }
 }
 
-impl<E: Endianness, BR: BitRead<E>, const PRINT: bool> BitRead<E> for CountBitRead<E, BR, PRINT> {
+impl<E: Endianness, BR: BitRead<E>, const PRINT: bool> BitRead<E> for CountBitReader<E, BR, PRINT> {
     type PeekWord = BR::PeekWord;
     fn read_bits(&mut self, n_bits: usize) -> Result<u64> {
         self.bit_read.read_bits(n_bits).map(|x| {
@@ -244,7 +244,7 @@ impl<E: Endianness, BR: BitRead<E>, const PRINT: bool> BitRead<E> for CountBitRe
 }
 
 impl<E: Endianness, BR: BitRead<E> + GammaRead<E>, const PRINT: bool> GammaRead<E>
-    for CountBitRead<E, BR, PRINT>
+    for CountBitReader<E, BR, PRINT>
 {
     fn read_gamma(&mut self) -> Result<u64> {
         self.bit_read.read_gamma().map(|x| {
@@ -272,7 +272,7 @@ impl<E: Endianness, BR: BitRead<E> + GammaRead<E>, const PRINT: bool> GammaRead<
 }
 
 impl<E: Endianness, BR: BitRead<E> + DeltaRead<E>, const PRINT: bool> DeltaRead<E>
-    for CountBitRead<E, BR, PRINT>
+    for CountBitReader<E, BR, PRINT>
 {
     fn read_delta(&mut self) -> Result<u64> {
         self.bit_read.read_delta().map(|x| {
@@ -299,7 +299,7 @@ impl<E: Endianness, BR: BitRead<E> + DeltaRead<E>, const PRINT: bool> DeltaRead<
 }
 
 impl<E: Endianness, BR: BitRead<E> + ZetaRead<E>, const PRINT: bool> ZetaRead<E>
-    for CountBitRead<E, BR, PRINT>
+    for CountBitReader<E, BR, PRINT>
 {
     fn read_zeta(&mut self, k: u64) -> Result<u64> {
         self.bit_read.read_zeta(k).map(|x| {
@@ -351,7 +351,7 @@ impl<E: Endianness, BR: BitRead<E> + ZetaRead<E>, const PRINT: bool> ZetaRead<E>
 }
 
 impl<E: Endianness, BR: BitRead<E> + BitSeek, const PRINT: bool> BitSeek
-    for CountBitRead<E, BR, PRINT>
+    for CountBitReader<E, BR, PRINT>
 {
     fn set_bit_pos(&mut self, bit_pos: usize) -> Result<()> {
         self.bit_read.set_bit_pos(bit_pos)
@@ -368,7 +368,7 @@ fn test_count() -> Result<()> {
     use crate::prelude::*;
     let mut buffer = <Vec<u64>>::new();
     let bit_write = <BufBitWriter<LE, _>>::new(MemWordWriterVec::new(&mut buffer));
-    let mut count_bit_write = CountBitWrite::<_, _, true>::new(bit_write);
+    let mut count_bit_write = CountBitWriter::<_, _, true>::new(bit_write);
 
     count_bit_write.write_unary(5)?;
     assert_eq!(count_bit_write.bits_written, 6);
@@ -389,7 +389,7 @@ fn test_count() -> Result<()> {
     count_bit_write.flush()?;
 
     let bit_read = <BufBitReader<LE, u64, _>>::new(MemWordReaderInf::<u64, _>::new(&buffer));
-    let mut count_bit_read = CountBitRead::<_, _, true>::new(bit_read);
+    let mut count_bit_read = CountBitReader::<_, _, true>::new(bit_read);
 
     assert_eq!(count_bit_read.peek_bits(5)?, 0);
     assert_eq!(count_bit_read.read_unary()?, 5);
