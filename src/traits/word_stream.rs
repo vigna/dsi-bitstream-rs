@@ -5,8 +5,8 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
-use crate::traits::Word;
 use anyhow::Result;
+use common_traits::*;
 
 /// A Seekable word stream
 pub trait WordStream {

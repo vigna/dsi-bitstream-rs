@@ -160,7 +160,8 @@ def gen_table(
             )
         )
         f.write("use anyhow::Result;\n")
-        f.write("use crate::traits::{BitRead, BitWrite, BE, LE, UpcastableInto};\n")
+        f.write("use crate::traits::{BitRead, BitWrite, BE, LE};\n")
+        f.write("use common_traits::*;\n")
 
         f.write("/// How many bits are needed to read the tables in this\n")
         f.write("pub const READ_BITS: usize = {};\n".format(read_bits))

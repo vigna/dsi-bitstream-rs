@@ -10,6 +10,7 @@ use crate::backends::codes_params::{DefaultReadParams, ReadCodesParams};
 use crate::codes::unary_tables;
 use crate::traits::*;
 use anyhow::{bail, Context, Result};
+use common_traits::*;
 
 /// A BitStream built uppon a generic [`WordRead`] that caches the read words
 /// in a buffer

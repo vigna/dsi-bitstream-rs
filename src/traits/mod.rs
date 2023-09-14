@@ -5,22 +5,11 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
-//! # Traits
-//! This modules contains the traits that are used throughout the crate.
-//! They are collected into a module so you can do `use dsi_bitstream::traits::*;`
-//! for ease of use.
+/*!
 
-mod castable;
-pub use castable::*;
+Traits
 
-mod downcastable;
-pub use downcastable::*;
-
-mod upcastable;
-pub use upcastable::*;
-
-mod word;
-pub use word::*;
+*/
 
 mod bit_stream;
 pub use bit_stream::*;

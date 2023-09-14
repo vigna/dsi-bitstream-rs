@@ -8,6 +8,7 @@
 
 use crate::traits::*;
 use anyhow::Result;
+use common_traits::*;
 
 /// A word backend implementation of [`WordStream`], [`WordRead`], [`WordWrite`]
 /// for a generic file, this could transparently handle [`std::fs::File`],
@@ -58,7 +59,7 @@ impl<W: Word, B: std::io::Read> WordRead for FileBackend<W, B> {
 
     #[inline]
     fn read_next_word(&mut self) -> Result<W> {
-        let mut res: W::BytesForm = Default::default();
+        let mut res: W::Bytes = Default::default();
         let _ = self.file.read(res.as_mut())?;
         self.position += 1;
         Ok(W::from_ne_bytes(res))
