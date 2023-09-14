@@ -5,6 +5,6 @@
  */
 
 pub mod codes;
-pub mod mem_word_read;
-pub mod mem_word_write;
-pub mod mem_word_write_vec;
+pub mod mem_word_reader;
+pub mod mem_word_writer;
+pub mod mem_word_writer_vec;
