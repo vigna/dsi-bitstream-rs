@@ -39,7 +39,7 @@ for code in ["unary", "gamma", "delta", "delta_gamma", "zeta3"]:
                 plt.errorbar(
                     values.n_bits,
                     values.ns_median,  # values.ns_std,
-                    label="{}::{}::{} (min: {:.3f}ns {} bits)".format(
+                    label="{}::{}::{} (min: {:.3f}ns @ {} bits)".format(
                         "::".join(pat.split("::")[1:]), table_txt, ty, m, i
                     ),
                     marker=marker,

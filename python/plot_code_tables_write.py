@@ -38,12 +38,12 @@ for code in ["unary", "gamma", "delta", "delta_gamma", "zeta3"]:
             plt.errorbar(
                 values[x_label],
                 values.ns_median,  # values.ns_std,
-                label="{}::{} (min: {:.3f}ns {} {})".format(
+                label="{}::{} (min: {:.3f}ns @ {} {})".format(
                     "::".join(pat.split("::")[1:]),
                     table_txt,
                     m,
                     i,
-                    "bits" if x_label == "n_bits" else "max",
+                    "bits",
                 ),
                 marker=marker,
             )
