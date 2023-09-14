@@ -1,5 +1,4 @@
 #![no_main]
-use arbitrary::Arbitrary;
 use dsi_bitstream::fuzz::mem_word_write_vec::*;
 use libfuzzer_sys::fuzz_target;
 

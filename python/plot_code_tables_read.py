@@ -55,7 +55,11 @@ for code in ["unary", "gamma", "delta", "delta_gamma", "zeta3"]:
             "%s::LE::NoTable" % code,
             "%s::BE::NoTable" % code,
         ]:
-            values = df[(df.pat == pat) & (df.type == ty)].groupby("n_bits").mean(numeric_only=True)
+            values = (
+                df[(df.pat == pat) & (df.type == ty)]
+                .groupby("n_bits")
+                .mean(numeric_only=True)
+            )
             m = min(values.ns_median)
             plt.errorbar(
                 values.index,
@@ -116,7 +120,7 @@ for code in ["unary", "gamma", "delta", "delta_gamma", "zeta3"]:
         (
             "Performances of %s codes read in function of the table size\n"
             "Shaded areas are the 25%% and 75%% percentiles and the plots "
-            "are medians with stds."
+            "are medians"
         )
         % (code.capitalize())
     )

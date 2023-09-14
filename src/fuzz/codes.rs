@@ -250,6 +250,8 @@ pub fn harness(data: FuzzCase) {
                         assert_eq!(pos + n_bits as usize, little.get_pos());
                         assert_eq!(pos + n_bits as usize, big_buff.get_pos());
                         assert_eq!(pos + n_bits as usize, little_buff.get_pos());
+                        assert_eq!(pos + n_bits as usize, big_buff_skip.get_pos());
+                        assert_eq!(pos + n_bits as usize, little_buff_skip.get_pos());
                     } else {
                         assert!(b.is_err());
                         assert!(l.is_err());
@@ -269,18 +271,8 @@ pub fn harness(data: FuzzCase) {
                     let bb = big_buff.read_minimal_binary(max);
                     let lb = little_buff.read_minimal_binary(max);
                     if succ {
-                        assert_eq!(
-                            big_buff_skip
-                                .skip_minimal_binary(max, 1)
-                                .unwrap_or(usize::MAX),
-                            n_bits as _
-                        );
-                        assert_eq!(
-                            little_buff_skip
-                                .skip_minimal_binary(max, 1)
-                                .unwrap_or(usize::MAX),
-                            n_bits as _
-                        );
+                        big_buff_skip.skip_minimal_binary(max).unwrap();
+                        little_buff_skip.skip_minimal_binary(max).unwrap();
                         let b = b.unwrap();
                         let l = l.unwrap();
                         let bb = bb.unwrap();
@@ -321,6 +313,8 @@ pub fn harness(data: FuzzCase) {
                         assert_eq!(pos + n_bits as usize, little.get_pos());
                         assert_eq!(pos + n_bits as usize, big_buff.get_pos());
                         assert_eq!(pos + n_bits as usize, little_buff.get_pos());
+                        assert_eq!(pos + n_bits as usize, big_buff_skip.get_pos());
+                        assert_eq!(pos + n_bits as usize, little_buff_skip.get_pos());
                     } else {
                         assert!(b.is_err());
                         assert!(l.is_err());
@@ -350,14 +344,8 @@ pub fn harness(data: FuzzCase) {
                         )
                     };
                     if succ {
-                        assert_eq!(
-                            big_buff_skip.skip_unary(1).unwrap_or(usize::MAX),
-                            len_unary_param::<false>(value)
-                        );
-                        assert_eq!(
-                            little_buff_skip.skip_unary(1).unwrap_or(usize::MAX),
-                            len_unary_param::<false>(value)
-                        );
+                        big_buff_skip.skip_unary().unwrap();
+                        little_buff_skip.skip_unary().unwrap();
                         assert_eq!(b.unwrap(), value as u64);
                         assert_eq!(l.unwrap(), value as u64);
                         assert_eq!(bb.unwrap(), value as u64);
@@ -375,6 +363,15 @@ pub fn harness(data: FuzzCase) {
                             pos + len_unary_param::<true>(value as u64),
                             little_buff.get_pos()
                         );
+                        assert_eq!(
+                            pos + len_unary_param::<true>(value as u64),
+                            big_buff_skip.get_pos()
+                        );
+                        assert_eq!(
+                            pos + len_unary_param::<true>(value as u64),
+                            little_buff_skip.get_pos()
+                        );
+
                         assert_eq!(pos + len_unary_param::<false>(value as u64), big.get_pos());
                         assert_eq!(
                             pos + len_unary_param::<false>(value as u64),
@@ -387,6 +384,14 @@ pub fn harness(data: FuzzCase) {
                         assert_eq!(
                             pos + len_unary_param::<false>(value as u64),
                             little_buff.get_pos()
+                        );
+                        assert_eq!(
+                            pos + len_unary_param::<false>(value as u64),
+                            big_buff_skip.get_pos()
+                        );
+                        assert_eq!(
+                            pos + len_unary_param::<false>(value as u64),
+                            little_buff_skip.get_pos()
                         );
                     } else {
                         assert!(b.is_err());
@@ -417,14 +422,8 @@ pub fn harness(data: FuzzCase) {
                         )
                     };
                     if succ {
-                        assert_eq!(
-                            big_buff_skip.skip_gamma(1).unwrap_or(usize::MAX),
-                            len_gamma_param::<false>(value)
-                        );
-                        assert_eq!(
-                            little_buff_skip.skip_gamma(1).unwrap_or(usize::MAX),
-                            len_gamma_param::<false>(value)
-                        );
+                        big_buff_skip.skip_gamma().unwrap();
+                        little_buff_skip.skip_gamma().unwrap();
                         assert_eq!(b.unwrap(), value);
                         assert_eq!(l.unwrap(), value);
                         assert_eq!(bb.unwrap(), value);
@@ -433,10 +432,27 @@ pub fn harness(data: FuzzCase) {
                         assert_eq!(pos + len_gamma_param::<false>(value), little.get_pos());
                         assert_eq!(pos + len_gamma_param::<false>(value), big_buff.get_pos());
                         assert_eq!(pos + len_gamma_param::<false>(value), little_buff.get_pos());
+                        assert_eq!(
+                            pos + len_gamma_param::<false>(value),
+                            big_buff_skip.get_pos()
+                        );
+                        assert_eq!(
+                            pos + len_gamma_param::<false>(value),
+                            little_buff_skip.get_pos()
+                        );
+
                         assert_eq!(pos + len_gamma_param::<true>(value), big.get_pos());
                         assert_eq!(pos + len_gamma_param::<true>(value), little.get_pos());
                         assert_eq!(pos + len_gamma_param::<true>(value), big_buff.get_pos());
                         assert_eq!(pos + len_gamma_param::<true>(value), little_buff.get_pos());
+                        assert_eq!(
+                            pos + len_gamma_param::<true>(value),
+                            big_buff_skip.get_pos()
+                        );
+                        assert_eq!(
+                            pos + len_gamma_param::<true>(value),
+                            little_buff_skip.get_pos()
+                        );
                     } else {
                         assert!(b.is_err());
                         assert!(l.is_err());
@@ -466,14 +482,8 @@ pub fn harness(data: FuzzCase) {
                         )
                     };
                     if succ {
-                        assert_eq!(
-                            big_buff_skip.skip_delta(1).unwrap_or(usize::MAX),
-                            len_delta_param::<false, false>(value)
-                        );
-                        assert_eq!(
-                            little_buff_skip.skip_delta(1).unwrap_or(usize::MAX),
-                            len_delta_param::<false, false>(value)
-                        );
+                        big_buff_skip.skip_delta().unwrap();
+                        little_buff_skip.skip_delta().unwrap();
                         assert_eq!(b.unwrap(), value);
                         assert_eq!(l.unwrap(), value);
                         assert_eq!(bb.unwrap(), value);
@@ -488,6 +498,15 @@ pub fn harness(data: FuzzCase) {
                             pos + len_delta_param::<true, true>(value),
                             little_buff.get_pos()
                         );
+                        assert_eq!(
+                            pos + len_delta_param::<true, true>(value),
+                            big_buff_skip.get_pos()
+                        );
+                        assert_eq!(
+                            pos + len_delta_param::<true, true>(value),
+                            little_buff_skip.get_pos()
+                        );
+
                         assert_eq!(pos + len_delta_param::<false, true>(value), big.get_pos());
                         assert_eq!(
                             pos + len_delta_param::<false, true>(value),
@@ -501,6 +520,15 @@ pub fn harness(data: FuzzCase) {
                             pos + len_delta_param::<false, true>(value),
                             little_buff.get_pos()
                         );
+                        assert_eq!(
+                            pos + len_delta_param::<false, true>(value),
+                            big_buff_skip.get_pos()
+                        );
+                        assert_eq!(
+                            pos + len_delta_param::<false, true>(value),
+                            little_buff_skip.get_pos()
+                        );
+
                         assert_eq!(pos + len_delta_param::<true, false>(value), big.get_pos());
                         assert_eq!(
                             pos + len_delta_param::<true, false>(value),
@@ -514,6 +542,15 @@ pub fn harness(data: FuzzCase) {
                             pos + len_delta_param::<true, false>(value),
                             little_buff.get_pos()
                         );
+                        assert_eq!(
+                            pos + len_delta_param::<true, false>(value),
+                            big_buff_skip.get_pos()
+                        );
+                        assert_eq!(
+                            pos + len_delta_param::<true, false>(value),
+                            little_buff_skip.get_pos()
+                        );
+
                         assert_eq!(pos + len_delta_param::<false, false>(value), big.get_pos());
                         assert_eq!(
                             pos + len_delta_param::<false, false>(value),
@@ -526,6 +563,14 @@ pub fn harness(data: FuzzCase) {
                         assert_eq!(
                             pos + len_delta_param::<false, false>(value),
                             little_buff.get_pos()
+                        );
+                        assert_eq!(
+                            pos + len_delta_param::<false, false>(value),
+                            big_buff_skip.get_pos()
+                        );
+                        assert_eq!(
+                            pos + len_delta_param::<false, false>(value),
+                            little_buff_skip.get_pos()
                         );
                     } else {
                         assert!(b.is_err());
@@ -556,14 +601,8 @@ pub fn harness(data: FuzzCase) {
                         )
                     };
                     if succ {
-                        assert_eq!(
-                            big_buff_skip.skip_zeta(k, 1).unwrap_or(usize::MAX),
-                            len_zeta_param::<false>(value, k)
-                        );
-                        assert_eq!(
-                            little_buff_skip.skip_zeta(k, 1).unwrap_or(usize::MAX),
-                            len_zeta_param::<false>(value, k)
-                        );
+                        big_buff_skip.skip_zeta(k).unwrap();
+                        little_buff_skip.skip_zeta(k).unwrap();
                         assert_eq!(bb.unwrap(), value);
                         assert_eq!(lb.unwrap(), value);
                         assert_eq!(b.unwrap(), value);
@@ -575,12 +614,28 @@ pub fn harness(data: FuzzCase) {
                             pos + len_zeta_param::<false>(value, k),
                             little_buff.get_pos()
                         );
+                        assert_eq!(
+                            pos + len_zeta_param::<false>(value, k),
+                            big_buff_skip.get_pos()
+                        );
+                        assert_eq!(
+                            pos + len_zeta_param::<false>(value, k),
+                            little_buff_skip.get_pos()
+                        );
                         assert_eq!(pos + len_zeta_param::<true>(value, k), big.get_pos());
                         assert_eq!(pos + len_zeta_param::<true>(value, k), little.get_pos());
                         assert_eq!(pos + len_zeta_param::<true>(value, k), big_buff.get_pos());
                         assert_eq!(
                             pos + len_zeta_param::<true>(value, k),
                             little_buff.get_pos()
+                        );
+                        assert_eq!(
+                            pos + len_zeta_param::<true>(value, k),
+                            big_buff_skip.get_pos()
+                        );
+                        assert_eq!(
+                            pos + len_zeta_param::<true>(value, k),
+                            little_buff_skip.get_pos()
                         );
                     } else {
                         assert!(b.is_err());

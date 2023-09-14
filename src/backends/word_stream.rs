@@ -57,6 +57,14 @@ impl<W: Word, B: AsRef<[W]>> MemWordRead<W, B> {
             _marker: Default::default(),
         }
     }
+
+    pub fn len(&self) -> usize {
+        self.data.as_ref().len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
 }
 
 ///
@@ -155,7 +163,7 @@ pub struct MemWordWrite<W: Word, B: AsMut<[W]>> {
     _marker: core::marker::PhantomData<W>,
 }
 
-impl<W: Word, B: AsMut<[W]>> MemWordWrite<W, B> {
+impl<W: Word, B: AsMut<[W]> + AsRef<[W]>> MemWordWrite<W, B> {
     /// Create a new [`MemWordWrite`] from a slice of **ZERO INITIALIZED** data
     #[must_use]
     pub fn new(data: B) -> Self {
@@ -164,6 +172,14 @@ impl<W: Word, B: AsMut<[W]>> MemWordWrite<W, B> {
             word_index: 0,
             _marker: Default::default(),
         }
+    }
+
+    pub fn len(&self) -> usize {
+        self.data.as_ref().len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
     }
 }
 
@@ -198,7 +214,7 @@ pub struct MemWordWriteVec<W: Word, B: AsMut<alloc::vec::Vec<W>>> {
 }
 
 #[cfg(feature = "alloc")]
-impl<W: Word, B: AsMut<alloc::vec::Vec<W>>> MemWordWriteVec<W, B> {
+impl<W: Word, B: AsMut<alloc::vec::Vec<W>> + AsRef<alloc::vec::Vec<W>>> MemWordWriteVec<W, B> {
     /// Create a new [`MemWordWrite`] from a slice of **ZERO INITIALIZED** data
     #[must_use]
     pub fn new(data: B) -> Self {
@@ -207,6 +223,14 @@ impl<W: Word, B: AsMut<alloc::vec::Vec<W>>> MemWordWriteVec<W, B> {
             word_index: 0,
             _marker: Default::default(),
         }
+    }
+
+    pub fn len(&self) -> usize {
+        self.data.as_ref().len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
     }
 }
 

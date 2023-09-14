@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 
 df = pd.read_csv(sys.stdin, index_col=None, header=0)
 x_label = "max_log2"
-df[x_label] = np.log2(df["max"]) 
+df[x_label] = np.log2(df["max"])
 
 for code in ["unary", "gamma", "delta", "delta_gamma", "zeta3"]:
     plt.figure(figsize=(10, 8), dpi=200, facecolor="white")
@@ -32,16 +32,17 @@ for code in ["unary", "gamma", "delta", "delta_gamma", "zeta3"]:
             "%s::LE::Table" % code,
             "%s::BE::Table" % code,
         ]:
-            values = df[
-                (df.pat == pat) & (df.tables_num == tables_n)
-            ]
+            values = df[(df.pat == pat) & (df.tables_num == tables_n)]
             m = min(values.ns_median)
             i = np.argmin(values.ns_median)
             plt.errorbar(
                 values[x_label],
                 values.ns_median,  # values.ns_std,
                 label="{}::{} (min: {:.3f}ns {} {})".format(
-                    "::".join(pat.split("::")[1:]), table_txt, m, i,
+                    "::".join(pat.split("::")[1:]),
+                    table_txt,
+                    m,
+                    i,
                     "bits" if x_label == "n_bits" else "max",
                 ),
                 marker=marker,
@@ -62,9 +63,7 @@ for code in ["unary", "gamma", "delta", "delta_gamma", "zeta3"]:
         plt.errorbar(
             values.index,
             values.ns_median,  # values.ns_std,
-            label="{} (min: {:.3f}ns)".format(
-                "::".join(pat.split("::")[1:]), m
-            ),
+            label="{} (min: {:.3f}ns)".format("::".join(pat.split("::")[1:]), m),
             marker="^",
         )
         plt.fill_between(
@@ -118,7 +117,7 @@ for code in ["unary", "gamma", "delta", "delta_gamma", "zeta3"]:
         (
             "Performances of %s codes writes in function of the table size\n"
             "Shaded areas are the 25%% and 75%% percentiles and the plots "
-            "are medians with stds."
+            "are medians"
         )
         % (code.capitalize())
     )
