@@ -38,7 +38,7 @@ impl<BO: Endianness, WR> UnbufferedBitStreamRead<BO, WR> {
 }
 
 impl<WR: WordRead<Word = u64> + WordSeek> BitRead<BE> for UnbufferedBitStreamRead<BE, WR> {
-    type PeekType = u32;
+    type PeekWord = u32;
 
     #[inline]
     fn skip_bits(&mut self, n_bits: usize) -> Result<()> {
@@ -57,7 +57,7 @@ impl<WR: WordRead<Word = u64> + WordSeek> BitRead<BE> for UnbufferedBitStreamRea
         if n_bits == 0 {
             return Ok(0);
         }
-        self.data.set_position(self.bit_idx / 64)?;
+        self.data.set_pos(self.bit_idx / 64)?;
         let in_word_offset = self.bit_idx % 64;
 
         let res = if (in_word_offset + n_bits) <= 64 {
@@ -87,7 +87,7 @@ impl<WR: WordRead<Word = u64> + WordSeek> BitRead<BE> for UnbufferedBitStreamRea
         if n_bits == 0 {
             return Ok(0);
         }
-        self.data.set_position(self.bit_idx / 64)?;
+        self.data.set_pos(self.bit_idx / 64)?;
         let in_word_offset = self.bit_idx % 64;
 
         let res = if (in_word_offset + n_bits) <= 64 {
@@ -112,7 +112,7 @@ impl<WR: WordRead<Word = u64> + WordSeek> BitRead<BE> for UnbufferedBitStreamRea
                 return Ok(res);
             }
         }
-        self.data.set_position(self.bit_idx / 64)?;
+        self.data.set_pos(self.bit_idx / 64)?;
         let in_word_offset = self.bit_idx % 64;
         let mut bits_in_word = 64 - in_word_offset;
         let mut total = 0;
@@ -156,7 +156,7 @@ impl<WR: WordSeek> BitSeek for UnbufferedBitStreamRead<BE, WR> {
 }
 
 impl<WR: WordRead<Word = u64> + WordSeek> BitRead<LE> for UnbufferedBitStreamRead<LE, WR> {
-    type PeekType = u32;
+    type PeekWord = u32;
     #[inline]
     fn skip_bits(&mut self, n_bits: usize) -> Result<()> {
         self.bit_idx += n_bits;
@@ -174,7 +174,7 @@ impl<WR: WordRead<Word = u64> + WordSeek> BitRead<LE> for UnbufferedBitStreamRea
         if n_bits == 0 {
             return Ok(0);
         }
-        self.data.set_position(self.bit_idx / 64)?;
+        self.data.set_pos(self.bit_idx / 64)?;
         let in_word_offset = self.bit_idx % 64;
 
         let res = if (in_word_offset + n_bits) <= 64 {
@@ -205,7 +205,7 @@ impl<WR: WordRead<Word = u64> + WordSeek> BitRead<LE> for UnbufferedBitStreamRea
         if n_bits == 0 {
             return Ok(0);
         }
-        self.data.set_position(self.bit_idx / 64)?;
+        self.data.set_pos(self.bit_idx / 64)?;
         let in_word_offset = self.bit_idx % 64;
 
         let res = if (in_word_offset + n_bits) <= 64 {
@@ -231,7 +231,7 @@ impl<WR: WordRead<Word = u64> + WordSeek> BitRead<LE> for UnbufferedBitStreamRea
                 return Ok(res);
             }
         }
-        self.data.set_position(self.bit_idx / 64)?;
+        self.data.set_pos(self.bit_idx / 64)?;
         let in_word_offset = self.bit_idx % 64;
         let mut bits_in_word = 64 - in_word_offset;
         let mut total = 0;

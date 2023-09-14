@@ -25,11 +25,11 @@ impl<E: Endianness, CR: ReadCodes<E>> DbgCodeRead<E, CR> {
 
 impl<E: Endianness, CR: ReadCodes<E>> BitRead<E> for DbgCodeRead<E, CR>
 where
-    CR::PeekType: core::fmt::Display,
+    CR::PeekWord: core::fmt::Display,
 {
-    type PeekType = CR::PeekType;
+    type PeekWord = CR::PeekWord;
 
-    fn peek_bits(&mut self, n_bits: usize) -> Result<Self::PeekType> {
+    fn peek_bits(&mut self, n_bits: usize) -> Result<Self::PeekWord> {
         let value = self.reader.peek_bits(n_bits)?;
         println!("peek_bits({}): {}", n_bits, value);
         Ok(value)
@@ -43,6 +43,11 @@ where
         println!("read_bits({}): {}", n_bits, value);
         Ok(value)
     }
+    fn read_unary_param<const USE_TABLE: bool>(&mut self) -> Result<u64> {
+        let value = self.reader.read_unary_param::<USE_TABLE>()?;
+        println!("{{U<{}>:{}}}", USE_TABLE, value);
+        Ok(value)
+    }
     fn read_unary(&mut self) -> Result<u64> {
         let value = self.reader.read_unary()?;
         println!("{{U:{}}}", value);
@@ -52,7 +57,7 @@ where
 
 impl<E: Endianness, CR: ReadCodes<E>> GammaRead<E> for DbgCodeRead<E, CR>
 where
-    CR::PeekType: core::fmt::Display,
+    CR::PeekWord: core::fmt::Display,
 {
     fn read_gamma(&mut self) -> Result<u64> {
         let value = self.reader.read_gamma()?;
@@ -69,7 +74,7 @@ where
 
 impl<E: Endianness, CR: ReadCodes<E>> DeltaRead<E> for DbgCodeRead<E, CR>
 where
-    CR::PeekType: core::fmt::Display,
+    CR::PeekWord: core::fmt::Display,
 {
     fn read_delta(&mut self) -> Result<u64> {
         let value = self.reader.read_delta()?;
@@ -86,7 +91,7 @@ where
 
 impl<E: Endianness, CR: ReadCodes<E>> ZetaRead<E> for DbgCodeRead<E, CR>
 where
-    CR::PeekType: core::fmt::Display,
+    CR::PeekWord: core::fmt::Display,
 {
     fn read_zeta3(&mut self) -> Result<u64> {
         let value = self.reader.read_zeta3()?;
@@ -132,6 +137,10 @@ impl<E: Endianness, CW: WriteCodes<E>> BitWrite<E> for DbgCodeWrite<E, CW> {
     fn write_bits(&mut self, value: u64, n_bits: usize) -> Result<usize> {
         println!("write_bits({}, {})", value, n_bits);
         self.writer.write_bits(value, n_bits)
+    }
+    fn write_unary_param<const USE_TABLE: bool>(&mut self, value: u64) -> Result<usize> {
+        println!("{{U<{}>:{}}}", USE_TABLE, value);
+        self.writer.write_unary(value)
     }
     fn write_unary(&mut self, value: u64) -> Result<usize> {
         println!("{{U:{}}}", value);

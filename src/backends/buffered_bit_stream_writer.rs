@@ -289,7 +289,7 @@ impl<WR: WordWrite<Word = u64> + WordSeek + WordRead<Word = u64>, WCP: WriteCode
     BufferedBitStreamWrite<LE, WR, WCP>
 {
     pub fn get_pos(&self) -> usize {
-        self.backend.get_position() * 64 + self.bits_in_buffer
+        self.backend.get_pos() * 64 + self.bits_in_buffer
     }
 
     pub fn set_pos(&mut self, bit_index: usize) -> Result<()> {
@@ -298,9 +298,9 @@ impl<WR: WordWrite<Word = u64> + WordSeek + WordRead<Word = u64>, WCP: WriteCode
         LE::flush(self)?;
         let word_index = bit_index / 64;
         let bit_index = bit_index % 64;
-        self.backend.set_position(word_index)?;
+        self.backend.set_pos(word_index)?;
         let word = self.backend.read()?;
-        self.backend.set_position(word_index)?;
+        self.backend.set_pos(word_index)?;
         self.bits_in_buffer = bit_index;
         self.buffer = word as u128;
         Ok(())
@@ -311,7 +311,7 @@ impl<WR: WordWrite<Word = u64> + WordSeek + WordRead<Word = u64>, WCP: WriteCode
     BufferedBitStreamWrite<BE, WR, WCP>
 {
     pub fn get_pos(&self) -> usize {
-        self.backend.get_position() * 64 + self.bits_in_buffer
+        self.backend.get_pos() * 64 + self.bits_in_buffer
     }
 
     pub fn set_pos(&mut self, bit_index: usize) -> Result<()> {
@@ -320,9 +320,9 @@ impl<WR: WordWrite<Word = u64> + WordSeek + WordRead<Word = u64>, WCP: WriteCode
         BE::flush(self)?;
         let word_index = bit_index / 64;
         let bit_index = bit_index % 64;
-        self.backend.set_position(word_index)?;
+        self.backend.set_pos(word_index)?;
         let word = self.backend.read()?;
-        self.backend.set_position(word_index)?;
+        self.backend.set_pos(word_index)?;
         self.bits_in_buffer = bit_index;
         self.buffer = (word as u128) << 64;
         Ok(())

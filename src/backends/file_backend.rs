@@ -81,12 +81,12 @@ impl<W: Word, B: std::io::Write> WordWrite for FileBackend<W, B> {
 /// Convert [`std::io::Seek`] to [`WordSeek`]
 impl<W: Word, B: std::io::Seek> WordSeek for FileBackend<W, B> {
     #[inline(always)]
-    fn get_position(&self) -> usize {
+    fn get_pos(&self) -> usize {
         self.position
     }
 
     #[inline(always)]
-    fn set_position(&mut self, word_index: usize) -> Result<()> {
+    fn set_pos(&mut self, word_index: usize) -> Result<()> {
         self.position = word_index;
         self.file
             .seek(std::io::SeekFrom::Start((word_index * W::BYTES) as u64))?;

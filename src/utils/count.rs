@@ -179,7 +179,7 @@ impl<E: Endianness, BR: BitRead<E>, const PRINT: bool> CountBitRead<E, BR, PRINT
 }
 
 impl<E: Endianness, BR: BitRead<E>, const PRINT: bool> BitRead<E> for CountBitRead<E, BR, PRINT> {
-    type PeekType = BR::PeekType;
+    type PeekWord = BR::PeekWord;
     fn read_bits(&mut self, n_bits: usize) -> Result<u64> {
         self.bit_read.read_bits(n_bits).map(|x| {
             self.bits_read += n_bits;
@@ -230,7 +230,7 @@ impl<E: Endianness, BR: BitRead<E>, const PRINT: bool> BitRead<E> for CountBitRe
         Ok(())
     }
 
-    fn peek_bits(&mut self, n_bits: usize) -> Result<Self::PeekType> {
+    fn peek_bits(&mut self, n_bits: usize) -> Result<Self::PeekWord> {
         self.bit_read.peek_bits(n_bits)
     }
 

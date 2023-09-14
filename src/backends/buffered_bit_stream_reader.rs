@@ -104,13 +104,13 @@ where
 {
     #[inline]
     fn get_pos(&self) -> usize {
-        self.backend.get_position() * WR::Word::BITS - self.valid_bits
+        self.backend.get_pos() * WR::Word::BITS - self.valid_bits
     }
 
     #[inline]
     fn set_pos(&mut self, bit_index: usize) -> Result<()> {
         self.backend
-            .set_position(bit_index / WR::Word::BITS)
+            .set_pos(bit_index / WR::Word::BITS)
             .with_context(|| "BufferedBitStreamRead was seeking_bit")?;
         let bit_offset = bit_index % WR::Word::BITS;
         self.buffer = BW::ZERO;
@@ -130,19 +130,19 @@ where
     BW: DowncastableInto<WR::Word> + CastableInto<u64>,
     WR::Word: UpcastableInto<BW> + UpcastableInto<u64>,
 {
-    type PeekType = WR::Word;
+    type PeekWord = WR::Word;
 
     #[inline]
-    fn peek_bits(&mut self, n_bits: usize) -> Result<Self::PeekType> {
-        if n_bits > WR::Word::BITS {
+    fn peek_bits(&mut self, n_bits: usize) -> Result<Self::PeekWord> {
+        if n_bits > Self::PeekWord::BITS {
             bail!(
                 "The n of bits to peek has to be in [0, {}] and {} is not.",
-                WR::Word::BITS,
+                Self::PeekWord::BITS,
                 n_bits
             );
         }
         if n_bits == 0 {
-            return Ok(WR::Word::ZERO);
+            return Ok(Self::PeekWord::ZERO);
         }
         // a peek can do at most one refill, otherwise we might loose data
         if n_bits > self.valid_bits {
@@ -294,13 +294,13 @@ where
 {
     #[inline]
     fn get_pos(&self) -> usize {
-        self.backend.get_position() * WR::Word::BITS - self.valid_bits
+        self.backend.get_pos() * WR::Word::BITS - self.valid_bits
     }
 
     #[inline]
     fn set_pos(&mut self, bit_index: usize) -> Result<()> {
         self.backend
-            .set_position(bit_index / WR::Word::BITS)
+            .set_pos(bit_index / WR::Word::BITS)
             .with_context(|| "BufferedBitStreamRead was seeking_bit")?;
         let bit_offset = bit_index % WR::Word::BITS;
         self.buffer = BW::ZERO;
@@ -320,7 +320,7 @@ where
     BW: DowncastableInto<WR::Word> + CastableInto<u64>,
     WR::Word: UpcastableInto<BW> + UpcastableInto<u64>,
 {
-    type PeekType = WR::Word;
+    type PeekWord = WR::Word;
 
     #[inline]
     fn skip_bits(&mut self, mut n_bits: usize) -> Result<()> {
@@ -401,16 +401,16 @@ where
     }
 
     #[inline]
-    fn peek_bits(&mut self, n_bits: usize) -> Result<Self::PeekType> {
-        if n_bits > WR::Word::BITS {
+    fn peek_bits(&mut self, n_bits: usize) -> Result<Self::PeekWord> {
+        if n_bits > Self::PeekWord::BITS {
             bail!(
                 "The n of bits to peek has to be in [0, {}] and {} is not.",
-                WR::Word::BITS,
+                Self::PeekWord::BITS,
                 n_bits
             );
         }
         if n_bits == 0 {
-            return Ok(WR::Word::ZERO);
+            return Ok(Self::PeekWord::ZERO);
         }
         // a peek can do at most one refill, otherwise we might loose data
         if n_bits > self.valid_bits {

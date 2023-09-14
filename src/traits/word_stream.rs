@@ -12,8 +12,6 @@ Traits for word-by-word I/O.
 The traits in this module are used by all bit-based backends to access the underlying
 source of data (e.g., memory or file) word-by-word with a programmable word size.
 
-Presently only [`WordRead`] has a settable word type; this might change in the future.
-
  */
 
 use anyhow::Result;
@@ -37,7 +35,7 @@ pub trait WordWrite {
 /// Seekability for [`WordRead`] and [`WordWrite`] streams.
 pub trait WordSeek {
     #[must_use]
-    fn get_position(&self) -> usize;
+    fn get_pos(&self) -> usize;
 
-    fn set_position(&mut self, word_index: usize) -> Result<()>;
+    fn set_pos(&mut self, word_index: usize) -> Result<()>;
 }

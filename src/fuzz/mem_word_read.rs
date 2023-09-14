@@ -30,10 +30,10 @@ pub fn harness(data: FuzzCase) {
                 assert_eq!(reader.len(), data.init.len());
             }
             RandomCommand::GetPosition => {
-                assert_eq!(reader.get_position(), idx);
+                assert_eq!(reader.get_pos(), idx);
             }
             RandomCommand::SetPosition(word_index) => {
-                let _ = reader.set_position(word_index);
+                let _ = reader.set_pos(word_index);
                 if data.init.get(word_index).is_some() {
                     idx = word_index;
                 }

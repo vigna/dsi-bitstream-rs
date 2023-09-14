@@ -24,22 +24,22 @@ use common_traits::Word;
 /// let mut word_reader = MemWordRead::new(&words);
 ///
 /// // the stream is read sequentially
-/// assert_eq!(word_reader.get_position(), 0);
+/// assert_eq!(word_reader.get_pos(), 0);
 /// assert_eq!(word_reader.read().unwrap(), 0x0043b59fcdf16077);
-/// assert_eq!(word_reader.get_position(), 1);
+/// assert_eq!(word_reader.get_pos(), 1);
 /// assert_eq!(word_reader.read().unwrap(), 0x702863e6f9739b86);
-/// assert_eq!(word_reader.get_position(), 2);
+/// assert_eq!(word_reader.get_pos(), 2);
 /// assert!(word_reader.read().is_err());
 ///
 /// // you can change position
-/// assert!(word_reader.set_position(1).is_ok());
-/// assert_eq!(word_reader.get_position(), 1);
+/// assert!(word_reader.set_pos(1).is_ok());
+/// assert_eq!(word_reader.get_pos(), 1);
 /// assert_eq!(word_reader.read().unwrap(), 0x702863e6f9739b86);
 ///
 /// // errored set position doesn't change the current position
-/// assert_eq!(word_reader.get_position(), 2);
-/// assert!(word_reader.set_position(100).is_err());
-/// assert_eq!(word_reader.get_position(), 2);
+/// assert_eq!(word_reader.get_pos(), 2);
+/// assert!(word_reader.set_pos(100).is_err());
+/// assert_eq!(word_reader.get_pos(), 2);
 /// ```
 #[derive(Debug, Clone, PartialEq)]
 pub struct MemWordRead<W: Word, B: AsRef<[W]>> {
@@ -106,12 +106,12 @@ impl<W: Word, B: AsRef<[W]>> WordRead for MemWordReadInfinite<W, B> {
 impl<W: Word, B: AsRef<[W]>> WordSeek for MemWordReadInfinite<W, B> {
     #[inline(always)]
     #[must_use]
-    fn get_position(&self) -> usize {
+    fn get_pos(&self) -> usize {
         self.word_index
     }
 
     #[inline(always)]
-    fn set_position(&mut self, word_index: usize) -> Result<()> {
+    fn set_pos(&mut self, word_index: usize) -> Result<()> {
         self.word_index = word_index;
         Ok(())
     }
@@ -132,30 +132,30 @@ impl<W: Word, B: AsRef<[W]>> WordSeek for MemWordReadInfinite<W, B> {
 /// let mut word_writer = MemWordWrite::new(&mut words);
 ///
 /// // the stream is read sequentially
-/// assert_eq!(word_writer.get_position(), 0);
+/// assert_eq!(word_writer.get_pos(), 0);
 /// assert_eq!(word_writer.read().unwrap(), 0x0043b59fcdf16077);
-/// assert_eq!(word_writer.get_position(), 1);
+/// assert_eq!(word_writer.get_pos(), 1);
 /// assert_eq!(word_writer.read().unwrap(), 0x702863e6f9739b86);
-/// assert_eq!(word_writer.get_position(), 2);
+/// assert_eq!(word_writer.get_pos(), 2);
 /// assert!(word_writer.read().is_err());
 ///
 /// // you can change position
-/// assert!(word_writer.set_position(1).is_ok());
-/// assert_eq!(word_writer.get_position(), 1);
+/// assert!(word_writer.set_pos(1).is_ok());
+/// assert_eq!(word_writer.get_pos(), 1);
 /// assert_eq!(word_writer.read().unwrap(), 0x702863e6f9739b86);
 ///
 /// // errored set position doesn't change the current position
-/// assert_eq!(word_writer.get_position(), 2);
-/// assert!(word_writer.set_position(100).is_err());
-/// assert_eq!(word_writer.get_position(), 2);
+/// assert_eq!(word_writer.get_pos(), 2);
+/// assert!(word_writer.set_pos(100).is_err());
+/// assert_eq!(word_writer.get_pos(), 2);
 ///
 /// // we can write and read back!
-/// assert!(word_writer.set_position(0).is_ok());
+/// assert!(word_writer.set_pos(0).is_ok());
 /// assert!(word_writer.write(0x0b801b2bf696e8d2).is_ok());
-/// assert_eq!(word_writer.get_position(), 1);
-/// assert!(word_writer.set_position(0).is_ok());
+/// assert_eq!(word_writer.get_pos(), 1);
+/// assert!(word_writer.set_pos(0).is_ok());
 /// assert_eq!(word_writer.read().unwrap(), 0x0b801b2bf696e8d2);
-/// assert_eq!(word_writer.get_position(), 1);
+/// assert_eq!(word_writer.get_pos(), 1);
 /// ```
 #[derive(Debug, PartialEq)]
 pub struct MemWordWrite<W: Word, B: AsMut<[W]>> {
@@ -200,11 +200,11 @@ impl<W: Word, B: AsMut<[W]> + AsRef<[W]>> MemWordWrite<W, B> {
 /// let mut word_writer = MemWordWriteVec::new(&mut words);
 ///
 /// // the stream is read sequentially
-/// assert_eq!(word_writer.get_position(), 0);
+/// assert_eq!(word_writer.get_pos(), 0);
 /// assert!(word_writer.write(0).is_ok());
-/// assert_eq!(word_writer.get_position(), 1);
+/// assert_eq!(word_writer.get_pos(), 1);
 /// assert!(word_writer.write(1).is_ok());
-/// assert_eq!(word_writer.get_position(), 2);
+/// assert_eq!(word_writer.get_pos(), 2);
 /// ```
 #[derive(Debug, PartialEq)]
 #[cfg(feature = "alloc")]
@@ -255,12 +255,12 @@ impl<W: Word, B: AsRef<[W]>> WordRead for MemWordRead<W, B> {
 impl<W: Word, B: AsRef<[W]>> WordSeek for MemWordRead<W, B> {
     #[inline]
     #[must_use]
-    fn get_position(&self) -> usize {
+    fn get_pos(&self) -> usize {
         self.word_index
     }
 
     #[inline]
-    fn set_position(&mut self, word_index: usize) -> Result<()> {
+    fn set_pos(&mut self, word_index: usize) -> Result<()> {
         if word_index >= self.data.as_ref().len() {
             bail!(
                 "Index {} is out of bound on a MemWordRead of length {}",
@@ -293,12 +293,12 @@ impl<W: Word, B: AsMut<[W]>> WordRead for MemWordWrite<W, B> {
 impl<W: Word, B: AsRef<[W]> + AsMut<[W]>> WordSeek for MemWordWrite<W, B> {
     #[inline]
     #[must_use]
-    fn get_position(&self) -> usize {
+    fn get_pos(&self) -> usize {
         self.word_index
     }
 
     #[inline]
-    fn set_position(&mut self, word_index: usize) -> Result<()> {
+    fn set_pos(&mut self, word_index: usize) -> Result<()> {
         if word_index >= self.data.as_ref().len() {
             bail!(
                 "Index {} is out of bound on a MemWordRead of length {}",
@@ -368,12 +368,12 @@ impl<W: Word, B: AsMut<alloc::vec::Vec<W>> + AsRef<alloc::vec::Vec<W>>> WordSeek
 {
     #[inline]
     #[must_use]
-    fn get_position(&self) -> usize {
+    fn get_pos(&self) -> usize {
         self.word_index
     }
 
     #[inline]
-    fn set_position(&mut self, word_index: usize) -> Result<()> {
+    fn set_pos(&mut self, word_index: usize) -> Result<()> {
         if word_index >= self.data.as_ref().len() {
             bail!(
                 "Index {} is out of bound on a MemWordRead of length {}",
