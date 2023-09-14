@@ -36,19 +36,20 @@ let mut data = Vec::<u64>::new();
 }
 ```
 
-# Testing
+## Coverage
 ```shell
 cargo tarpaulin --engine llvm
 ```
-If you also want to use the fuzzing cases use:
+If you also want to run the fuzzing test cases use:
 ```shell
 cargo tarpaulin --engine llvm --features="fuzz"
 ```
-this will reproduce our selected corpus zip files at `tests/corpus/` and
+This will reproduce our selected corpus zip files at `tests/corpus/` and
 run your local data corpus in `fuzz/corpus/`.
-# Fuzzing
-The fuzzing harnesses can be found in `dsi-bitstream::fuzz` so you can use 
-whatever fuzzing framework you want. The simplest is `cargo-fuzz` which
+
+## Fuzzing
+The fuzzing harnesses can be found in `dsi-bitstream::fuzz`, so you can use 
+any fuzzing framework you want. The simplest is `cargo-fuzz`, which
 can be installed as:
 ```shell
 cargo install cargo-fuzz
@@ -61,13 +62,15 @@ To start the fuzzing
 ```shell
 cargo fuzz run codes
 ```
-# Coverage
+### Coverage
+
 To compute the coverage in `lcov` format:
 ```shell
 cargo tarpaulin --engine llvm --features="fuzz" -o lcov
 ```
-# Corpus.zip
-To update one of the selected corpus zip files the procedure is:
+### Corpus.zip
+
+To update one of the selected corpus zip files:
 ```shell
 TARGET="codes"
 # temp dir
@@ -76,7 +79,7 @@ mkdir tmp
 unzip "tests/corpus/${TARGET}.zip" -d tmp
 # Merge and deduplicate the current corpus 
 cargo fuzz run ${TARGET} -- -merge=1 tmp fuzz/corpus/${TARGET}
-# Recomprss
+# Recompress
 zip tests/corpus/${TARGET}.zip tmp/*
 # Delete tmp folder
 rm -rfd tmp
