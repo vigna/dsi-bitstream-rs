@@ -16,8 +16,8 @@ Presently only [`WordRead`] has a settable word type; this might change in the f
 
  */
 
-use crate::traits::Word;
 use anyhow::Result;
+use common_traits::*;
 
 /// Sequential, streaming word-by-word reads.
 pub trait WordRead {

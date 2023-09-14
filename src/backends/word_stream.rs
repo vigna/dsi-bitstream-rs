@@ -8,6 +8,7 @@
 
 use crate::traits::*;
 use anyhow::{bail, Result};
+use common_traits::Word;
 
 /// An Implementation of [`WordRead`] for a slice of memory `&[u64]`
 ///

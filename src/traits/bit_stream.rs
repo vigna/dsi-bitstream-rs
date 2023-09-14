@@ -8,6 +8,7 @@
 
 use crate::traits::*;
 use anyhow::Result;
+use common_traits::UpcastableInto;
 
 /// Trait providing bit-based positional methods.
 pub trait BitSeek {

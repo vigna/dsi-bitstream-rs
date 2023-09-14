@@ -10,6 +10,7 @@ use crate::backends::codes_params::{DefaultReadParams, ReadCodesParams};
 use crate::codes::unary_tables;
 use crate::traits::*;
 use anyhow::{bail, Context, Result};
+use common_traits::*;
 
 /// A BitStream built uppon a generic [`WordRead`] that caches the read words
 /// in a buffer
@@ -193,7 +194,7 @@ where
         // most common path, we just read the buffer
         if n_bits <= self.valid_bits {
             // Valid right shift of BW::BITS - n_bits, even when n_bits is zero
-            let result: u64 = (self.buffer >> (BW::BITS - n_bits - 1) >> 1).cast();
+            let result: u64 = (self.buffer >> (BW::BITS - n_bits - 1) >> 1_u8).cast();
             self.valid_bits -= n_bits;
             self.buffer <<= n_bits;
             return Ok(result);
@@ -206,7 +207,7 @@ where
             );
         }
 
-        let mut result: u64 = (self.buffer >> (BW::BITS - 1 - self.valid_bits) >> 1).cast();
+        let mut result: u64 = (self.buffer >> (BW::BITS - 1 - self.valid_bits) >> 1_u8).cast();
         n_bits -= self.valid_bits;
 
         // Directly read to the result without updating the buffer
@@ -239,7 +240,7 @@ where
         let mut result: u64 = 0;
         loop {
             // count the zeros from the left
-            let zeros: usize = self.buffer.leading_zeros();
+            let zeros: usize = self.buffer.leading_zeros() as usize;
 
             // if we encountered an 1 in the valid_bits we can return
             if zeros < self.valid_bits {
@@ -432,7 +433,7 @@ where
         let mut result: u64 = 0;
         loop {
             // count the zeros from the left
-            let zeros: usize = self.buffer.trailing_zeros();
+            let zeros: usize = self.buffer.trailing_zeros() as usize;
 
             // if we encountered an 1 in the valid_bits we can return
             if zeros < self.valid_bits {
