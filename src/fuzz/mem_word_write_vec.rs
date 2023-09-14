@@ -17,7 +17,7 @@ pub enum RandomCommand {
     Len,
     GetPosition,
     SetPosition(usize),
-    ReadNextWord,
+    ReadWord,
     WriteWord(u64),
 }
 
@@ -33,16 +33,16 @@ pub fn harness(data: FuzzCase) {
                 assert_eq!(writer.len(), buffer.len());
             }
             RandomCommand::GetPosition => {
-                assert_eq!(writer.get_pos(), idx);
+                assert_eq!(writer.get_word_pos(), idx);
             }
             RandomCommand::SetPosition(word_index) => {
-                let _ = writer.set_pos(word_index);
+                let _ = writer.set_word_pos(word_index);
                 if buffer.get(word_index).is_some() {
                     idx = word_index;
                 }
             }
-            RandomCommand::ReadNextWord => {
-                assert_eq!(writer.read().ok(), buffer.get(idx).copied());
+            RandomCommand::ReadWord => {
+                assert_eq!(writer.read_word().ok(), buffer.get(idx).copied());
                 if buffer.get(idx).is_some() {
                     idx += 1;
                 }
@@ -51,7 +51,7 @@ pub fn harness(data: FuzzCase) {
                 if idx >= buffer.len() {
                     buffer.resize(idx + 1, 0);
                 }
-                assert!(writer.write(word).is_ok());
+                assert!(writer.write_word(word).is_ok());
                 buffer[idx] = word;
                 idx += 1;
             }

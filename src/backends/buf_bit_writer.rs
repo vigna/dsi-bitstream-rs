@@ -282,11 +282,11 @@ impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BitWrite<LE> for BufBitWr
 impl<WR: WordWrite<Word = u64> + WordSeek + WordRead<Word = u64>, WCP: WriteCodesParams>
     BufBitWriter<LE, WR, WCP>
 {
-    pub fn get_pos(&self) -> usize {
+    pub fn get_bit_pos(&self) -> usize {
         self.backend.get_word_pos() * 64 + self.bits_in_buffer
     }
 
-    pub fn set_pos(&mut self, bit_index: usize) -> Result<()> {
+    pub fn set_bit_pos(&mut self, bit_index: usize) -> Result<()> {
         // TODO: This ensures that we have written everything
         // but it might overwrite some finals bits, so it could cause bugs
         LE::flush(self)?;
@@ -304,11 +304,11 @@ impl<WR: WordWrite<Word = u64> + WordSeek + WordRead<Word = u64>, WCP: WriteCode
 impl<WR: WordWrite<Word = u64> + WordSeek + WordRead<Word = u64>, WCP: WriteCodesParams>
     BufBitWriter<BE, WR, WCP>
 {
-    pub fn get_pos(&self) -> usize {
+    pub fn get_bit_pos(&self) -> usize {
         self.backend.get_word_pos() * 64 + self.bits_in_buffer
     }
 
-    pub fn set_pos(&mut self, bit_index: usize) -> Result<()> {
+    pub fn set_bit_pos(&mut self, bit_index: usize) -> Result<()> {
         // TODO: This ensures that we have written everything
         // but it might overwrite some finals bits, so it could cause bugs
         BE::flush(self)?;
