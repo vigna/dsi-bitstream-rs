@@ -9,7 +9,7 @@
 use crate::traits::*;
 use anyhow::Result;
 
-/// A word backend implementation of [`WordStream`], [`WordRead`], [`WordWrite`]
+/// A word backend implementation of [`WordSeek`], [`WordRead`], [`WordWrite`]
 /// for a generic file, this could transparently handle [`std::fs::File`],
 /// [`std::io::BufReader`], [`std::io::BufWriter`], and sockets.
 ///
@@ -57,7 +57,7 @@ impl<W: Word, B: std::io::Read> WordRead for FileBackend<W, B> {
     type Word = W;
 
     #[inline]
-    fn read_next_word(&mut self) -> Result<W> {
+    fn read(&mut self) -> Result<W> {
         let mut res: W::BytesForm = Default::default();
         let _ = self.file.read(res.as_mut())?;
         self.position += 1;
@@ -70,15 +70,15 @@ impl<W: Word, B: std::io::Write> WordWrite for FileBackend<W, B> {
     type Word = W;
 
     #[inline]
-    fn write_word(&mut self, word: W) -> Result<()> {
+    fn write(&mut self, word: W) -> Result<()> {
         let _ = self.file.write(word.to_ne_bytes().as_ref())?;
         self.position += 1;
         Ok(())
     }
 }
 
-/// Convert [`std::io::Seek`] to [`WordStream`]
-impl<W: Word, B: std::io::Seek> WordStream for FileBackend<W, B> {
+/// Convert [`std::io::Seek`] to [`WordSeek`]
+impl<W: Word, B: std::io::Seek> WordSeek for FileBackend<W, B> {
     #[inline(always)]
     fn get_position(&self) -> usize {
         self.position
@@ -107,13 +107,13 @@ mod test {
         {
             let mut writer = <FileBackend<u32, _>>::new(std::fs::File::create(&path).unwrap());
             for value in &data {
-                writer.write_word(*value).unwrap();
+                writer.write(*value).unwrap();
             }
         }
         {
             let mut reader = <FileBackend<u32, _>>::new(std::fs::File::open(&path).unwrap());
             for value in &data {
-                assert_eq!(*value, reader.read_next_word().unwrap());
+                assert_eq!(*value, reader.read().unwrap());
             }
         }
     }

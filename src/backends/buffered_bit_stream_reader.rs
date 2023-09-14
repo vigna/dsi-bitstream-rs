@@ -86,7 +86,7 @@ where
 
         let new_word: BW = self
             .backend
-            .read_next_word()
+            .read()
             .with_context(|| "Error while reflling BufferedBitStreamRead")?
             .to_be()
             .upcast();
@@ -96,7 +96,7 @@ where
     }
 }
 
-impl<BW: Word, WR: WordRead + WordStream, RCP: ReadCodesParams> BitSeek
+impl<BW: Word, WR: WordRead + WordSeek, RCP: ReadCodesParams> BitSeek
     for BufferedBitStreamRead<BE, BW, WR, RCP>
 where
     WR::Word: UpcastableInto<BW>,
@@ -115,7 +115,7 @@ where
         self.buffer = BW::ZERO;
         self.valid_bits = 0;
         if bit_offset != 0 {
-            let new_word: BW = self.backend.read_next_word()?.to_be().upcast();
+            let new_word: BW = self.backend.read()?.to_be().upcast();
             self.valid_bits = WR::Word::BITS - bit_offset;
             self.buffer = new_word << (BW::BITS - self.valid_bits);
         }
@@ -168,7 +168,7 @@ where
         self.buffer = BW::ZERO;
         // skip words as needed
         while n_bits > WR::Word::BITS {
-            let _ = self.backend.read_next_word()?;
+            let _ = self.backend.read()?;
             n_bits -= WR::Word::BITS;
         }
         // read the new word and clear the final bits
@@ -211,12 +211,12 @@ where
 
         // Directly read to the result without updating the buffer
         while n_bits > WR::Word::BITS {
-            let new_word: u64 = self.backend.read_next_word()?.to_be().upcast();
+            let new_word: u64 = self.backend.read()?.to_be().upcast();
             result = (result << WR::Word::BITS) | new_word;
             n_bits -= WR::Word::BITS;
         }
         // get the final word
-        let new_word = self.backend.read_next_word()?.to_be();
+        let new_word = self.backend.read()?.to_be();
         self.valid_bits = WR::Word::BITS - n_bits;
         // compose the remaining bits
         let upcasted: u64 = new_word.upcast();
@@ -253,7 +253,7 @@ where
 
             // otherwise we didn't encounter the ending 1 yet so we need to
             // refill and iter again
-            let new_word: BW = self.backend.read_next_word()?.to_be().upcast();
+            let new_word: BW = self.backend.read()?.to_be().upcast();
             self.valid_bits = WR::Word::BITS;
             self.buffer = new_word << (BW::BITS - WR::Word::BITS);
         }
@@ -276,7 +276,7 @@ where
 
         let new_word: BW = self
             .backend
-            .read_next_word()
+            .read()
             .with_context(|| "Error while reflling BufferedBitStreamRead")?
             .to_le()
             .upcast();
@@ -286,7 +286,7 @@ where
     }
 }
 
-impl<BW: Word, WR: WordRead + WordStream, RCP: ReadCodesParams> BitSeek
+impl<BW: Word, WR: WordRead + WordSeek, RCP: ReadCodesParams> BitSeek
     for BufferedBitStreamRead<LE, BW, WR, RCP>
 where
     WR::Word: UpcastableInto<BW>,
@@ -305,7 +305,7 @@ where
         self.buffer = BW::ZERO;
         self.valid_bits = 0;
         if bit_offset != 0 {
-            let new_word: BW = self.backend.read_next_word()?.to_le().upcast();
+            let new_word: BW = self.backend.read()?.to_le().upcast();
             self.valid_bits = WR::Word::BITS - bit_offset;
             self.buffer = new_word >> bit_offset;
         }
@@ -336,7 +336,7 @@ where
         self.buffer = BW::ZERO;
         // skip words as needed
         while n_bits > WR::Word::BITS {
-            let _ = self.backend.read_next_word()?;
+            let _ = self.backend.read()?;
             n_bits -= WR::Word::BITS;
         }
         // read the new word and clear the final bits
@@ -378,14 +378,14 @@ where
 
         // Directly read to the result without updating the buffer
         while n_bits > WR::Word::BITS + bits_in_res {
-            let new_word: u64 = self.backend.read_next_word()?.to_le().upcast();
+            let new_word: u64 = self.backend.read()?.to_le().upcast();
             result |= new_word << bits_in_res;
             bits_in_res += WR::Word::BITS;
         }
 
         // get the final word
         n_bits -= bits_in_res;
-        let new_word = self.backend.read_next_word()?.to_le();
+        let new_word = self.backend.read()?.to_le();
         self.valid_bits = WR::Word::BITS - n_bits;
         // compose the remaining bits
         let shamt = 64 - n_bits;
@@ -446,7 +446,7 @@ where
 
             // otherwise we didn't encounter the ending 1 yet so we need to
             // refill and iter again
-            let new_word: BW = self.backend.read_next_word()?.to_le().upcast();
+            let new_word: BW = self.backend.read()?.to_le().upcast();
             self.valid_bits = WR::Word::BITS;
             self.buffer = new_word;
         }

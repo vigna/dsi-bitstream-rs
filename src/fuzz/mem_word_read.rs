@@ -39,7 +39,7 @@ pub fn harness(data: FuzzCase) {
                 }
             }
             RandomCommand::ReadNextWord => {
-                assert_eq!(reader.read_next_word().ok(), data.init.get(idx).copied());
+                assert_eq!(reader.read().ok(), data.init.get(idx).copied());
                 if data.init.get(idx).is_some() {
                     idx += 1;
                 }

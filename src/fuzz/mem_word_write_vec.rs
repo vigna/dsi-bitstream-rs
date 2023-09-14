@@ -42,7 +42,7 @@ pub fn harness(data: FuzzCase) {
                 }
             }
             RandomCommand::ReadNextWord => {
-                assert_eq!(writer.read_next_word().ok(), buffer.get(idx).copied());
+                assert_eq!(writer.read().ok(), buffer.get(idx).copied());
                 if buffer.get(idx).is_some() {
                     idx += 1;
                 }
@@ -51,7 +51,7 @@ pub fn harness(data: FuzzCase) {
                 if idx >= buffer.len() {
                     buffer.resize(idx + 1, 0);
                 }
-                assert!(writer.write_word(word).is_ok());
+                assert!(writer.write(word).is_ok());
                 buffer[idx] = word;
                 idx += 1;
             }

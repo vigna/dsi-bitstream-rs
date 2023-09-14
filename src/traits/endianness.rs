@@ -5,20 +5,21 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
-//! Marker types and trait used to conditionally different
+//! Marker types and traits used to implement conditionally different
 //! endianness in readers and writers.
 //!
 //! Note that we use an inner private trait `EndiannessCore` so that an user can
 //! use [`Endianness`] for its generics, but cannot implement it, so all the
 //! types that will ever implement [`Endianness`] are defined in this file.
 //!
-//! Apparently this pattern is a [SealedTrait](https://predr.ag/blog/definitive-guide-to-sealed-traits-in-rust/).
+//! This is a [SealedTrait](https://predr.ag/blog/definitive-guide-to-sealed-traits-in-rust/).
 
 /// Inner private trait used to remove the possibility that anyone could
-/// implement [`Endianness`] on other structs
+/// implement [`Endianness`] fort other structs.
 mod private {
     pub trait Endianness {}
 }
+
 impl<T: private::Endianness> Endianness for T {}
 
 /// Marker trait to require that something is either [`LE`] or

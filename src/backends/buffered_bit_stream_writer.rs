@@ -79,7 +79,7 @@ impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BBSWDrop<WR, WCP> for BE 
             let mut word = data.buffer as u64;
             let shamt = 64 - data.bits_in_buffer;
             word <<= shamt;
-            data.backend.write_word(word.to_be())?;
+            data.backend.write(word.to_be())?;
 
             data.bits_in_buffer = 0;
         }
@@ -95,7 +95,7 @@ impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BufferedBitStreamWrite<BE
         }
         self.bits_in_buffer -= 64;
         let word = (self.buffer >> self.bits_in_buffer) as u64;
-        self.backend.write_word(word.to_be())?;
+        self.backend.write(word.to_be())?;
         Ok(())
     }
 }
@@ -153,14 +153,14 @@ impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BitWrite<BE>
             }
             if space_left == 128 {
                 self.buffer = 0;
-                self.backend.write_word(0)?;
-                self.backend.write_word(0)?;
+                self.backend.write(0)?;
+                self.backend.write(0)?;
             } else {
                 self.buffer <<= space_left;
                 let high_word = (self.buffer >> 64) as u64;
                 let low_word = self.buffer as u64;
-                self.backend.write_word(high_word.to_be())?;
-                self.backend.write_word(low_word.to_be())?;
+                self.backend.write(high_word.to_be())?;
+                self.backend.write(low_word.to_be())?;
                 self.buffer = 0;
             }
             code_length -= space_left;
@@ -186,7 +186,7 @@ impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BBSWDrop<WR, WCP> for LE 
             let mut word = (data.buffer >> 64) as u64;
             let shamt = 64 - data.bits_in_buffer;
             word >>= shamt;
-            data.backend.write_word(word.to_le())?;
+            data.backend.write(word.to_le())?;
             data.bits_in_buffer = 0;
         }
         Ok(())
@@ -201,7 +201,7 @@ impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BufferedBitStreamWrite<LE
         }
         let word = (self.buffer >> (128 - self.bits_in_buffer)) as u64;
         self.bits_in_buffer -= 64;
-        self.backend.write_word(word.to_le())?;
+        self.backend.write(word.to_le())?;
         Ok(())
     }
 }
@@ -260,14 +260,14 @@ impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BitWrite<LE>
             }
             if space_left == 128 {
                 self.buffer = 0;
-                self.backend.write_word(0)?;
-                self.backend.write_word(0)?;
+                self.backend.write(0)?;
+                self.backend.write(0)?;
             } else {
                 self.buffer >>= space_left;
                 let high_word = (self.buffer >> 64) as u64;
                 let low_word = self.buffer as u64;
-                self.backend.write_word(low_word.to_le())?;
-                self.backend.write_word(high_word.to_le())?;
+                self.backend.write(low_word.to_le())?;
+                self.backend.write(high_word.to_le())?;
                 self.buffer = 0;
             }
             code_length -= space_left;
@@ -285,7 +285,7 @@ impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BitWrite<LE>
     }
 }
 
-impl<WR: WordWrite<Word = u64> + WordStream + WordRead<Word = u64>, WCP: WriteCodesParams>
+impl<WR: WordWrite<Word = u64> + WordSeek + WordRead<Word = u64>, WCP: WriteCodesParams>
     BufferedBitStreamWrite<LE, WR, WCP>
 {
     pub fn get_pos(&self) -> usize {
@@ -299,7 +299,7 @@ impl<WR: WordWrite<Word = u64> + WordStream + WordRead<Word = u64>, WCP: WriteCo
         let word_index = bit_index / 64;
         let bit_index = bit_index % 64;
         self.backend.set_position(word_index)?;
-        let word = self.backend.read_next_word()?;
+        let word = self.backend.read()?;
         self.backend.set_position(word_index)?;
         self.bits_in_buffer = bit_index;
         self.buffer = word as u128;
@@ -307,7 +307,7 @@ impl<WR: WordWrite<Word = u64> + WordStream + WordRead<Word = u64>, WCP: WriteCo
     }
 }
 
-impl<WR: WordWrite<Word = u64> + WordStream + WordRead<Word = u64>, WCP: WriteCodesParams>
+impl<WR: WordWrite<Word = u64> + WordSeek + WordRead<Word = u64>, WCP: WriteCodesParams>
     BufferedBitStreamWrite<BE, WR, WCP>
 {
     pub fn get_pos(&self) -> usize {
@@ -321,7 +321,7 @@ impl<WR: WordWrite<Word = u64> + WordStream + WordRead<Word = u64>, WCP: WriteCo
         let word_index = bit_index / 64;
         let bit_index = bit_index % 64;
         self.backend.set_position(word_index)?;
-        let word = self.backend.read_next_word()?;
+        let word = self.backend.read()?;
         self.backend.set_position(word_index)?;
         self.bits_in_buffer = bit_index;
         self.buffer = (word as u128) << 64;
