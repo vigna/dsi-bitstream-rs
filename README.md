@@ -84,3 +84,46 @@ zip tests/corpus/${TARGET}.zip tmp/*
 # Delete tmp folder
 rm -rfd tmp
 ```
+
+## Benchmarking
+
+The implementation has several tunable parameters that can be used to improve performance 
+on certain platforms. The default values are set to work well on most platforms, but you can
+customize them creating your own copy of the library.
+
+Benchmarks can be run as:
+```shell
+# Run the read benchmarks
+python3 ./python/bench_code_tables_read.py > read.csv
+# Make the plots
+cat read.csv | python3 ./python/plot_code_tables_read.py
+# Run the write benchmarks
+python3 ./python/bench_code_tables_write.py > write.csv
+# Make the plots
+cat write.csv | python3 ./python/plot_code_tables_write.py
+```
+The cargo options in `benchmarks`select aggressive optimizations, and the 
+the python scripts run the benchmarks `--target-cpu=native`.
+
+The resulting figures report the performance of read and write operation
+on all codes, in both little-ending and big-endiang format. The code may
+use or not decoding tables, and in the first case results are reported
+for different sizes of the decoding tables.
+
+There are three entry points for altering the behavior of the code:
+
+- The size of the tables can be set in the source of the script
+  `gen_code_tables.py`. Running the script will generate new tables
+   with the provided parameters.
+- Whether to use tables for unary code can only be configured in the source
+  of the [`BitRead::read_unary`](crate::traits::BitRead::read_unary) and 
+  [`BitWrite::write_unary`](crate::traits::BitWrite::write_unary) functions, but the
+  default (no table) is the best choice on all architetures we are
+  aware of.
+- Whether to use tables for all other codes can be configured by
+  passing around a different implementations of 
+  [`ReadCodeParam`](crate::backends::codes::codes_param::ReadCodeParams)
+  and [`WriteCodeParam`](crate::backends::codes::codes_param::WriteCodeParams)
+  in place of the default 
+  [`DeafaultReadParams`](crate::backends::codes::codes_param::DeafaultReadParams) and
+  [`DeafaultWriteParams`](crate::backends::codes::codes_param::DeafaultWriteParams).
