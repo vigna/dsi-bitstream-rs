@@ -19,8 +19,6 @@ mod file_backend;
 #[cfg(feature = "std")]
 pub use file_backend::*;
 
-mod codes_params;
-
 mod bit_reader;
 pub use bit_reader::BitReader;
 

@@ -6,7 +6,7 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
-use crate::backends::codes_params::{DefaultWriteParams, WriteCodesParams};
+use crate::codes::codes_params::{DefaultWriteParams, WriteCodesParams};
 use crate::codes::unary_tables;
 use crate::traits::*;
 use anyhow::{bail, Result};
@@ -32,7 +32,7 @@ pub struct BufBitWriter<
 }
 
 impl<E: BBSWDrop<WR, WCP>, WR: WordWrite, WCP: WriteCodesParams> BufBitWriter<E, WR, WCP> {
-    /// Create a new [`BufferedBitStreamWrite`] from a backend word writer
+    /// Create a new [`BufBitWriter`] from a backend word writer
     pub fn new(backend: WR) -> Self {
         Self {
             backend,
@@ -60,7 +60,7 @@ impl<E: BBSWDrop<WR, WCP>, WR: WordWrite, WCP: WriteCodesParams> core::ops::Drop
 }
 
 /// Ignore. Inner trait needed for dispatching of drop logic based on endianess
-/// of a [`BufferedBitStreamWrite`]. This is public to avoid the leak of
+/// of a [`BufBitWriter`]. This is public to avoid the leak of
 /// private traits in public defs, an user should never need to implement this.
 ///
 /// I discussed this [here](https://users.rust-lang.org/t/on-generic-associated-enum-and-type-comparisons/92072).

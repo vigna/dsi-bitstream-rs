@@ -44,7 +44,7 @@
 //!     .map(|data| u64::from_ne_bytes(data.try_into().unwrap()))
 //!     .collect::<Vec<_>>();
 //!
-//! let mut bitstream_be = <UnbufferedBitStreamRead<BE, _>>::new(
+//! let mut bitstream_be = <BitReader<BE, _>>::new(
 //!     MemWordReader::new(&words_be)
 //! );
 //! assert_eq!(bitstream_be.read_bits(8).unwrap(), 0b0111_0110);
@@ -81,6 +81,8 @@ pub enum Code {
     MinimalBinary { k: u64 },
     Nibble,
 }
+
+pub mod codes_params;
 
 mod gamma;
 

@@ -58,7 +58,7 @@ pub struct MemWordWriter<W: Word, B: AsMut<[W]>> {
 }
 
 impl<W: Word, B: AsMut<[W]> + AsRef<[W]>> MemWordWriter<W, B> {
-    /// Create a new [`MemWordWrite`] from a slice of **ZERO INITIALIZED** data
+    /// Create a new [`MemWordWriter`] from a slice of **ZERO INITIALIZED** data
     #[must_use]
     pub fn new(data: B) -> Self {
         Self {
@@ -79,7 +79,7 @@ impl<W: Word, B: AsMut<[W]> + AsRef<[W]>> MemWordWriter<W, B> {
 
 /// An Implementation of [`WordSeek`], [`WordRead`], [`WordWrite`]
 /// for a mutable [`Vec<u64>`]. The core difference between [`MemWordWriter`]
-/// and [`MemWordWriteVec`] is that the former allocates new memory
+/// and [`MemWordWriterVec`] is that the former allocates new memory
 /// if the stream writes out of bound by 1.
 ///
 /// # Example
@@ -90,14 +90,14 @@ impl<W: Word, B: AsMut<[W]> + AsRef<[W]>> MemWordWriter<W, B> {
 ///     0x0043b59fcdf16077,
 /// ];
 ///
-/// let mut word_writer = MemWordWriteVec::new(&mut words);
+/// let mut word_writer = MemWordWriterVec::new(&mut words);
 ///
 /// // the stream is read sequentially
-/// assert_eq!(word_writer.get_pos(), 0);
-/// assert!(word_writer.write(0).is_ok());
-/// assert_eq!(word_writer.get_pos(), 1);
-/// assert!(word_writer.write(1).is_ok());
-/// assert_eq!(word_writer.get_pos(), 2);
+/// assert_eq!(word_writer.get_word_pos(), 0);
+/// assert!(word_writer.write_word(0).is_ok());
+/// assert_eq!(word_writer.get_word_pos(), 1);
+/// assert!(word_writer.write_word(1).is_ok());
+/// assert_eq!(word_writer.get_word_pos(), 2);
 /// ```
 #[derive(Debug, PartialEq)]
 #[cfg(feature = "alloc")]
@@ -109,7 +109,7 @@ pub struct MemWordWriterVec<W: Word, B: AsMut<alloc::vec::Vec<W>>> {
 
 #[cfg(feature = "alloc")]
 impl<W: Word, B: AsMut<alloc::vec::Vec<W>> + AsRef<alloc::vec::Vec<W>>> MemWordWriterVec<W, B> {
-    /// Create a new [`MemWordWrite`] from a slice of **ZERO INITIALIZED** data
+    /// Create a new [`MemWordWriter`] from a slice of **ZERO INITIALIZED** data
     #[must_use]
     pub fn new(data: B) -> Self {
         Self {
@@ -156,7 +156,7 @@ impl<W: Word, B: AsRef<[W]> + AsMut<[W]>> WordSeek for MemWordWriter<W, B> {
     fn set_word_pos(&mut self, word_index: usize) -> Result<()> {
         if word_index >= self.data.as_ref().len() {
             bail!(
-                "Index {} is out of bound on a MemWordRead of length {}",
+                "Index {} is out of bound on a MemWordReader of length {}",
                 word_index,
                 self.data.as_ref().len()
             );
@@ -231,7 +231,7 @@ impl<W: Word, B: AsMut<alloc::vec::Vec<W>> + AsRef<alloc::vec::Vec<W>>> WordSeek
     fn set_word_pos(&mut self, word_index: usize) -> Result<()> {
         if word_index >= self.data.as_ref().len() {
             bail!(
-                "Index {} is out of bound on a MemWordRead of length {}",
+                "Index {} is out of bound on a MemWordReader of length {}",
                 word_index,
                 self.data.as_ref().len()
             );

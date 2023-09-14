@@ -15,8 +15,7 @@ macro_rules! test_stream {
             let mut r = SmallRng::seed_from_u64(0);
             let mut v = SmallRng::seed_from_u64(1);
             let mut buffer = Vec::<u64>::new();
-            let mut write =
-                BufferedBitStreamWrite::<$endianness, _>::new(MemWordWriterVec::new(&mut buffer));
+            let mut write = BufBitWriter::<$endianness, _>::new(MemWordWriterVec::new(&mut buffer));
 
             let mut pos = vec![];
 
@@ -64,7 +63,7 @@ macro_rules! test_stream {
 
             let buffer_32: &[u32] = unsafe { &buffer.align_to::<u32>().1 };
             let mut read =
-                BufferedBitStreamRead::<$endianness, u64, _>::new(MemWordReaderInf::new(buffer_32));
+                BufBitReader::<$endianness, u64, _>::new(MemWordReaderInf::new(buffer_32));
 
             let mut r = SmallRng::seed_from_u64(0);
             let mut v = SmallRng::seed_from_u64(1);

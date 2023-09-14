@@ -6,7 +6,7 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
-use crate::backends::codes_params::{DefaultReadParams, ReadCodesParams};
+use crate::codes::codes_params::{DefaultReadParams, ReadCodesParams};
 use crate::codes::unary_tables;
 use crate::traits::*;
 use anyhow::{bail, Context, Result};
@@ -48,14 +48,14 @@ impl<E: Endianness, BW: Word, WR: WordRead + Clone, RCP: ReadCodesParams> core::
 }
 
 impl<E: Endianness, BW: Word, WR: WordRead, RCP: ReadCodesParams> BufBitReader<E, BW, WR, RCP> {
-    /// Create a new [`BufferedBitStreamRead`] on a generic backend
+    /// Create a new [`BufBitReader`] on a generic backend
     ///
     /// ### Example
     /// ```
     /// use dsi_bitstream::prelude::*;
     /// let words: [u64; 1] = [0x0043b59fccf16077];
     /// let word_reader = MemWordReader::new(&words);
-    /// let mut bitstream = <BufferedBitStreamRead<BE, u128, _>>::new(word_reader);
+    /// let mut bitstream = <BufBitReader<BE, u128, _>>::new(word_reader);
     /// ```
     #[must_use]
     pub fn new(backend: WR) -> Self {
@@ -86,7 +86,7 @@ where
         let new_word: BW = self
             .backend
             .read_word()
-            .with_context(|| "Error while reflling BufferedBitStreamRead")?
+            .with_context(|| "Error while reflling BufBitReader")?
             .to_be()
             .upcast();
         self.valid_bits += WR::Word::BITS;
@@ -109,7 +109,7 @@ where
     fn set_bit_pos(&mut self, bit_index: usize) -> Result<()> {
         self.backend
             .set_word_pos(bit_index / WR::Word::BITS)
-            .with_context(|| "BufferedBitStreamRead was seeking_bit")?;
+            .with_context(|| "BufBitReader was seeking_bit")?;
         let bit_offset = bit_index % WR::Word::BITS;
         self.buffer = BW::ZERO;
         self.valid_bits = 0;
@@ -275,7 +275,7 @@ where
         let new_word: BW = self
             .backend
             .read_word()
-            .with_context(|| "Error while reflling BufferedBitStreamRead")?
+            .with_context(|| "Error while reflling BufBitReader")?
             .to_le()
             .upcast();
         self.buffer |= new_word << self.valid_bits;
@@ -298,7 +298,7 @@ where
     fn set_bit_pos(&mut self, bit_index: usize) -> Result<()> {
         self.backend
             .set_word_pos(bit_index / WR::Word::BITS)
-            .with_context(|| "BufferedBitStreamRead was seeking_bit")?;
+            .with_context(|| "BufBitReader was seeking_bit")?;
         let bit_offset = bit_index % WR::Word::BITS;
         self.buffer = BW::ZERO;
         self.valid_bits = 0;

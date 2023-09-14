@@ -78,8 +78,8 @@ pub fn harness(data: FuzzCase) {
     let mut writes = vec![];
     // write
     {
-        let mut big = BufferedBitStreamWrite::<BE, _>::new(MemWordWriteVec::new(&mut buffer_be));
-        let mut little = BufferedBitStreamWrite::<LE, _>::new(MemWordWriteVec::new(&mut buffer_le));
+        let mut big = BufBitWriter::<BE, _>::new(MemWordWriterVec::new(&mut buffer_be));
+        let mut little = BufBitWriter::<LE, _>::new(MemWordWriterVec::new(&mut buffer_le));
 
         for command in data.commands.iter() {
             assert_eq!(big.get_pos(), little.get_pos());
@@ -183,17 +183,15 @@ pub fn harness(data: FuzzCase) {
         )
     };
     {
-        let mut big = UnbufferedBitStreamRead::<BE, _>::new(MemWordRead::new(&buffer_be));
-        let mut big_buff =
-            BufferedBitStreamRead::<BE, ReadBuffer, _>::new(MemWordRead::new(be_trans));
+        let mut big = BitReader::<BE, _>::new(MemWordReader::new(&buffer_be));
+        let mut big_buff = BufBitReader::<BE, ReadBuffer, _>::new(MemWordReader::new(be_trans));
         let mut big_buff_skip =
-            BufferedBitStreamRead::<BE, ReadBuffer, _>::new(MemWordRead::new(be_trans));
+            BufBitReader::<BE, ReadBuffer, _>::new(MemWordReader::new(be_trans));
 
-        let mut little = UnbufferedBitStreamRead::<LE, _>::new(MemWordRead::new(&buffer_le));
-        let mut little_buff =
-            BufferedBitStreamRead::<LE, ReadBuffer, _>::new(MemWordRead::new(le_trans));
+        let mut little = BitReader::<LE, _>::new(MemWordReader::new(&buffer_le));
+        let mut little_buff = BufBitReader::<LE, ReadBuffer, _>::new(MemWordReader::new(le_trans));
         let mut little_buff_skip =
-            BufferedBitStreamRead::<LE, ReadBuffer, _>::new(MemWordRead::new(le_trans));
+            BufBitReader::<LE, ReadBuffer, _>::new(MemWordReader::new(le_trans));
 
         for (succ, command) in writes.into_iter().zip(data.commands.into_iter()) {
             let pos = big.get_pos();

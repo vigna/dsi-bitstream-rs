@@ -49,7 +49,7 @@ impl ReadCodesParams for DefaultReadParams {}
 macro_rules! impl_default_read_codes {
     ($($endianess:ident),*) => {$(
         impl<BW: Word, WR: WordRead, DC: ReadCodesParams> GammaRead<$endianess>
-            for BufferedBitStreamRead<$endianess, BW, WR, DC>
+            for BufBitReader<$endianess, BW, WR, DC>
         where
             BW: DowncastableInto<WR::Word> + CastableInto<u64>,
             WR::Word: UpcastableInto<BW> + UpcastableInto<u64>,
@@ -76,7 +76,7 @@ macro_rules! impl_default_read_codes {
         }
 
         impl<BW: Word, WR: WordRead, DC: ReadCodesParams> DeltaRead<$endianess>
-            for BufferedBitStreamRead<$endianess, BW, WR, DC>
+            for BufBitReader<$endianess, BW, WR, DC>
         where
             BW: DowncastableInto<WR::Word> + CastableInto<u64>,
             WR::Word: UpcastableInto<BW> + UpcastableInto<u64>,
@@ -103,7 +103,7 @@ macro_rules! impl_default_read_codes {
         }
 
         impl<BW: Word, WR: WordRead, DC: ReadCodesParams> ZetaRead<$endianess>
-            for BufferedBitStreamRead<$endianess, BW, WR, DC>
+            for BufBitReader<$endianess, BW, WR, DC>
         where
             BW: DowncastableInto<WR::Word> + CastableInto<u64>,
             WR::Word: UpcastableInto<BW> + UpcastableInto<u64>,
@@ -143,7 +143,7 @@ impl WriteCodesParams for DefaultWriteParams {}
 macro_rules! impl_default_write_codes {
     ($($endianess:ident),*) => {$(
         impl<WR: WordWrite<Word = u64>, DC: WriteCodesParams> GammaWrite<$endianess>
-            for BufferedBitStreamWrite<$endianess, WR, DC>
+            for BufBitWriter<$endianess, WR, DC>
         {
             #[inline(always)]
             fn write_gamma(&mut self, value: u64) -> Result<usize> {
@@ -152,7 +152,7 @@ macro_rules! impl_default_write_codes {
         }
 
         impl<WR: WordWrite<Word = u64>, DC: WriteCodesParams> DeltaWrite<$endianess>
-            for BufferedBitStreamWrite<$endianess, WR, DC>
+            for BufBitWriter<$endianess, WR, DC>
         {
             #[inline(always)]
             fn write_delta(&mut self, value: u64) -> Result<usize> {
@@ -161,7 +161,7 @@ macro_rules! impl_default_write_codes {
         }
 
         impl<WR: WordWrite<Word = u64>, DC: WriteCodesParams> ZetaWrite<$endianess>
-            for BufferedBitStreamWrite<$endianess, WR, DC>
+            for BufBitWriter<$endianess, WR, DC>
         {
             #[inline(always)]
             fn write_zeta(&mut self, value: u64, k: u64) -> Result<usize> {

@@ -21,25 +21,25 @@ use common_traits::Word;
 ///     0x702863e6f9739b86,
 /// ];
 ///
-/// let mut word_reader = MemWordRead::new(&words);
+/// let mut word_reader = MemWordReader::new(&words);
 ///
 /// // the stream is read sequentially
-/// assert_eq!(word_reader.get_pos(), 0);
-/// assert_eq!(word_reader.read().unwrap(), 0x0043b59fcdf16077);
-/// assert_eq!(word_reader.get_pos(), 1);
-/// assert_eq!(word_reader.read().unwrap(), 0x702863e6f9739b86);
-/// assert_eq!(word_reader.get_pos(), 2);
-/// assert!(word_reader.read().is_err());
+/// assert_eq!(word_reader.get_word_pos(), 0);
+/// assert_eq!(word_reader.read_word().unwrap(), 0x0043b59fcdf16077);
+/// assert_eq!(word_reader.get_word_pos(), 1);
+/// assert_eq!(word_reader.read_word().unwrap(), 0x702863e6f9739b86);
+/// assert_eq!(word_reader.get_word_pos(), 2);
+/// assert!(word_reader.read_word().is_err());
 ///
 /// // you can change position
-/// assert!(word_reader.set_pos(1).is_ok());
-/// assert_eq!(word_reader.get_pos(), 1);
-/// assert_eq!(word_reader.read().unwrap(), 0x702863e6f9739b86);
+/// assert!(word_reader.set_word_pos(1).is_ok());
+/// assert_eq!(word_reader.get_word_pos(), 1);
+/// assert_eq!(word_reader.read_word().unwrap(), 0x702863e6f9739b86);
 ///
 /// // errored set position doesn't change the current position
-/// assert_eq!(word_reader.get_pos(), 2);
-/// assert!(word_reader.set_pos(100).is_err());
-/// assert_eq!(word_reader.get_pos(), 2);
+/// assert_eq!(word_reader.get_word_pos(), 2);
+/// assert!(word_reader.set_word_pos(100).is_err());
+/// assert_eq!(word_reader.get_word_pos(), 2);
 /// ```
 #[derive(Debug, Clone, PartialEq)]
 pub struct MemWordReader<W: Word, B: AsRef<[W]>> {
@@ -49,7 +49,7 @@ pub struct MemWordReader<W: Word, B: AsRef<[W]>> {
 }
 
 impl<W: Word, B: AsRef<[W]>> MemWordReader<W, B> {
-    /// Create a new [`MemWordRead`] from a slice of data
+    /// Create a new [`MemWordReader`] from a slice of data
     #[must_use]
     pub fn new(data: B) -> Self {
         Self {
@@ -77,7 +77,7 @@ pub struct MemWordReaderInf<W: Word, B: AsRef<[W]>> {
 }
 
 impl<W: Word, B: AsRef<[W]>> MemWordReaderInf<W, B> {
-    /// Create a new [`MemWordReadInfinite`] from a slice of data
+    /// Create a new [`MemWordReaderInfinite`] from a slice of data
     #[must_use]
     pub fn new(data: B) -> Self {
         Self {
@@ -145,7 +145,7 @@ impl<W: Word, B: AsRef<[W]>> WordSeek for MemWordReader<W, B> {
     fn set_word_pos(&mut self, word_index: usize) -> Result<()> {
         if word_index >= self.data.as_ref().len() {
             bail!(
-                "Index {} is out of bound on a MemWordRead of length {}",
+                "Index {} is out of bound on a MemWordReader of length {}",
                 word_index,
                 self.data.as_ref().len()
             );
