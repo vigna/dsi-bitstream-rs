@@ -23,14 +23,14 @@ members = ["."]
 debug = 1
 
 [[bin]]
-name = "mem_word_read"
-path = "fuzz_targets/mem_word_read.rs"
+name = "mem_word_reader"
+path = "fuzz_targets/mem_word_reader.rs"
 test = false
 doc = false
 
 [[bin]]
-name = "mem_word_write"
-path = "fuzz_targets/mem_word_write.rs"
+name = "mem_word_writer"
+path = "fuzz_targets/mem_word_writer.rs"
 test = false
 doc = false
 
@@ -41,7 +41,7 @@ test = false
 doc = false
 
 [[bin]]
-name = "mem_word_write_vec"
-path = "fuzz_targets/mem_word_write_vec.rs"
+name = "mem_word_writer_vec"
+path = "fuzz_targets/mem_word_writer_vec.rs"
 test = false
 doc = false
