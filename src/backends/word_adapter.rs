@@ -89,13 +89,13 @@ impl<W: Word, B: std::io::Seek> WordSeek for WordAdapter<W, B> {
 mod test {
     use crate::prelude::*;
     #[test]
-    fn test_file_backend() {
+    fn test_file_adapter() {
         let data: Vec<u32> = vec![
             0xa6032421, 0xc9d01b28, 0x168b4ecd, 0xc5ccbed9, 0xfd007100, 0x08469d41, 0x989fd8c2,
             0x954d351a, 0x3225ec9f, 0xbca253f9, 0x915aad84, 0x274c0de1, 0x4bfc6982, 0x59a47341,
             0x4e32a33a, 0x9e0d2208,
         ];
-        let path = std::env::temp_dir().join("test_file_backend");
+        let path = std::env::temp_dir().join("test_file_adapter");
         {
             let mut writer = <WordAdapter<u32, _>>::new(std::fs::File::create(&path).unwrap());
             for value in &data {
@@ -111,7 +111,7 @@ mod test {
     }
 
     #[test]
-    fn test_file_backend_codes() {
+    fn test_file_adapter_codes() {
         let data: Vec<u8> = vec![
             0x5f, 0x68, 0xdb, 0xca, 0x79, 0x17, 0xf3, 0x37, 0x2c, 0x46, 0x63, 0xf7, 0xf3, 0x28,
             0xa4, 0x8d, 0x29, 0x3b, 0xb6, 0xd5, 0xc7, 0xe2, 0x22, 0x3f, 0x6e, 0xb5, 0xf2, 0xda,
@@ -119,7 +119,7 @@ mod test {
             0x78, 0x81, 0xc8, 0xc3, 0xdb, 0xab, 0x23, 0xe1, 0x13, 0xb0, 0x04, 0xd7, 0x3c, 0x21,
             0x0e, 0xba, 0x5d, 0xfc, 0xac, 0x4f, 0x04, 0x2d,
         ];
-        let path = std::env::temp_dir().join("test_file_backend_codes");
+        let path = std::env::temp_dir().join("test_file_adapter_codes");
         {
             let mut writer = <BufBitWriter<BE, _>>::new(<WordAdapter<u64, _>>::new(
                 std::fs::File::create(&path).unwrap(),
