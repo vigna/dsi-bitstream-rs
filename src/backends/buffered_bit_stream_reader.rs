@@ -240,7 +240,7 @@ where
         let mut result: u64 = 0;
         loop {
             // count the zeros from the left
-            let zeros: usize = self.buffer.leading_zeros();
+            let zeros: usize = self.buffer.leading_zeros() as usize;
 
             // if we encountered an 1 in the valid_bits we can return
             if zeros < self.valid_bits {
@@ -433,7 +433,7 @@ where
         let mut result: u64 = 0;
         loop {
             // count the zeros from the left
-            let zeros: usize = self.buffer.trailing_zeros();
+            let zeros: usize = self.buffer.trailing_zeros() as usize;
 
             // if we encountered an 1 in the valid_bits we can return
             if zeros < self.valid_bits {
