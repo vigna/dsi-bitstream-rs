@@ -13,7 +13,7 @@ use anyhow::{bail, Result};
 
 /// An implementation of [`BitWrite`] on a generic [`WordWrite`]
 #[derive(Debug)]
-pub struct BufferedBitStreamWrite<
+pub struct BufBitWriter<
     E: BBSWDrop<WR, WCP>,
     WR: WordWrite,
     WCP: WriteCodesParams = DefaultWriteParams,
@@ -31,9 +31,7 @@ pub struct BufferedBitStreamWrite<
     _marker_default_codes: core::marker::PhantomData<WCP>,
 }
 
-impl<E: BBSWDrop<WR, WCP>, WR: WordWrite, WCP: WriteCodesParams>
-    BufferedBitStreamWrite<E, WR, WCP>
-{
+impl<E: BBSWDrop<WR, WCP>, WR: WordWrite, WCP: WriteCodesParams> BufBitWriter<E, WR, WCP> {
     /// Create a new [`BufferedBitStreamWrite`] from a backend word writer
     pub fn new(backend: WR) -> Self {
         Self {
@@ -53,7 +51,7 @@ impl<E: BBSWDrop<WR, WCP>, WR: WordWrite, WCP: WriteCodesParams>
 }
 
 impl<E: BBSWDrop<WR, WCP>, WR: WordWrite, WCP: WriteCodesParams> core::ops::Drop
-    for BufferedBitStreamWrite<E, WR, WCP>
+    for BufBitWriter<E, WR, WCP>
 {
     fn drop(&mut self) {
         // During a drop we can't save anything if it goes bad :/
@@ -68,18 +66,18 @@ impl<E: BBSWDrop<WR, WCP>, WR: WordWrite, WCP: WriteCodesParams> core::ops::Drop
 /// I discussed this [here](https://users.rust-lang.org/t/on-generic-associated-enum-and-type-comparisons/92072).
 pub trait BBSWDrop<WR: WordWrite, WCP: WriteCodesParams>: Sized + Endianness {
     /// handle the drop
-    fn flush(data: &mut BufferedBitStreamWrite<Self, WR, WCP>) -> Result<()>;
+    fn flush(data: &mut BufBitWriter<Self, WR, WCP>) -> Result<()>;
 }
 
 impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BBSWDrop<WR, WCP> for BE {
     #[inline]
-    fn flush(data: &mut BufferedBitStreamWrite<Self, WR, WCP>) -> Result<()> {
+    fn flush(data: &mut BufBitWriter<Self, WR, WCP>) -> Result<()> {
         data.partial_flush()?;
         if data.bits_in_buffer > 0 {
             let mut word = data.buffer as u64;
             let shamt = 64 - data.bits_in_buffer;
             word <<= shamt;
-            data.backend.write(word.to_be())?;
+            data.backend.write_word(word.to_be())?;
 
             data.bits_in_buffer = 0;
         }
@@ -87,7 +85,7 @@ impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BBSWDrop<WR, WCP> for BE 
     }
 }
 
-impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BufferedBitStreamWrite<BE, WR, WCP> {
+impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BufBitWriter<BE, WR, WCP> {
     #[inline]
     fn partial_flush(&mut self) -> Result<()> {
         if self.bits_in_buffer < 64 {
@@ -95,14 +93,12 @@ impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BufferedBitStreamWrite<BE
         }
         self.bits_in_buffer -= 64;
         let word = (self.buffer >> self.bits_in_buffer) as u64;
-        self.backend.write(word.to_be())?;
+        self.backend.write_word(word.to_be())?;
         Ok(())
     }
 }
 
-impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BitWrite<BE>
-    for BufferedBitStreamWrite<BE, WR, WCP>
-{
+impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BitWrite<BE> for BufBitWriter<BE, WR, WCP> {
     fn flush(mut self) -> Result<()> {
         BE::flush(&mut self)
     }
@@ -153,14 +149,14 @@ impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BitWrite<BE>
             }
             if space_left == 128 {
                 self.buffer = 0;
-                self.backend.write(0)?;
-                self.backend.write(0)?;
+                self.backend.write_word(0)?;
+                self.backend.write_word(0)?;
             } else {
                 self.buffer <<= space_left;
                 let high_word = (self.buffer >> 64) as u64;
                 let low_word = self.buffer as u64;
-                self.backend.write(high_word.to_be())?;
-                self.backend.write(low_word.to_be())?;
+                self.backend.write_word(high_word.to_be())?;
+                self.backend.write_word(low_word.to_be())?;
                 self.buffer = 0;
             }
             code_length -= space_left;
@@ -180,20 +176,20 @@ impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BitWrite<BE>
 
 impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BBSWDrop<WR, WCP> for LE {
     #[inline]
-    fn flush(data: &mut BufferedBitStreamWrite<Self, WR, WCP>) -> Result<()> {
+    fn flush(data: &mut BufBitWriter<Self, WR, WCP>) -> Result<()> {
         data.partial_flush()?;
         if data.bits_in_buffer > 0 {
             let mut word = (data.buffer >> 64) as u64;
             let shamt = 64 - data.bits_in_buffer;
             word >>= shamt;
-            data.backend.write(word.to_le())?;
+            data.backend.write_word(word.to_le())?;
             data.bits_in_buffer = 0;
         }
         Ok(())
     }
 }
 
-impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BufferedBitStreamWrite<LE, WR, WCP> {
+impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BufBitWriter<LE, WR, WCP> {
     #[inline]
     fn partial_flush(&mut self) -> Result<()> {
         if self.bits_in_buffer < 64 {
@@ -201,14 +197,12 @@ impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BufferedBitStreamWrite<LE
         }
         let word = (self.buffer >> (128 - self.bits_in_buffer)) as u64;
         self.bits_in_buffer -= 64;
-        self.backend.write(word.to_le())?;
+        self.backend.write_word(word.to_le())?;
         Ok(())
     }
 }
 
-impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BitWrite<LE>
-    for BufferedBitStreamWrite<LE, WR, WCP>
-{
+impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BitWrite<LE> for BufBitWriter<LE, WR, WCP> {
     fn flush(mut self) -> Result<()> {
         LE::flush(&mut self)
     }
@@ -260,14 +254,14 @@ impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BitWrite<LE>
             }
             if space_left == 128 {
                 self.buffer = 0;
-                self.backend.write(0)?;
-                self.backend.write(0)?;
+                self.backend.write_word(0)?;
+                self.backend.write_word(0)?;
             } else {
                 self.buffer >>= space_left;
                 let high_word = (self.buffer >> 64) as u64;
                 let low_word = self.buffer as u64;
-                self.backend.write(low_word.to_le())?;
-                self.backend.write(high_word.to_le())?;
+                self.backend.write_word(low_word.to_le())?;
+                self.backend.write_word(high_word.to_le())?;
                 self.buffer = 0;
             }
             code_length -= space_left;
@@ -286,10 +280,10 @@ impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BitWrite<LE>
 }
 
 impl<WR: WordWrite<Word = u64> + WordSeek + WordRead<Word = u64>, WCP: WriteCodesParams>
-    BufferedBitStreamWrite<LE, WR, WCP>
+    BufBitWriter<LE, WR, WCP>
 {
     pub fn get_pos(&self) -> usize {
-        self.backend.get_pos() * 64 + self.bits_in_buffer
+        self.backend.get_word_pos() * 64 + self.bits_in_buffer
     }
 
     pub fn set_pos(&mut self, bit_index: usize) -> Result<()> {
@@ -298,9 +292,9 @@ impl<WR: WordWrite<Word = u64> + WordSeek + WordRead<Word = u64>, WCP: WriteCode
         LE::flush(self)?;
         let word_index = bit_index / 64;
         let bit_index = bit_index % 64;
-        self.backend.set_pos(word_index)?;
-        let word = self.backend.read()?;
-        self.backend.set_pos(word_index)?;
+        self.backend.set_word_pos(word_index)?;
+        let word = self.backend.read_word()?;
+        self.backend.set_word_pos(word_index)?;
         self.bits_in_buffer = bit_index;
         self.buffer = word as u128;
         Ok(())
@@ -308,10 +302,10 @@ impl<WR: WordWrite<Word = u64> + WordSeek + WordRead<Word = u64>, WCP: WriteCode
 }
 
 impl<WR: WordWrite<Word = u64> + WordSeek + WordRead<Word = u64>, WCP: WriteCodesParams>
-    BufferedBitStreamWrite<BE, WR, WCP>
+    BufBitWriter<BE, WR, WCP>
 {
     pub fn get_pos(&self) -> usize {
-        self.backend.get_pos() * 64 + self.bits_in_buffer
+        self.backend.get_word_pos() * 64 + self.bits_in_buffer
     }
 
     pub fn set_pos(&mut self, bit_index: usize) -> Result<()> {
@@ -320,9 +314,9 @@ impl<WR: WordWrite<Word = u64> + WordSeek + WordRead<Word = u64>, WCP: WriteCode
         BE::flush(self)?;
         let word_index = bit_index / 64;
         let bit_index = bit_index % 64;
-        self.backend.set_pos(word_index)?;
-        let word = self.backend.read()?;
-        self.backend.set_pos(word_index)?;
+        self.backend.set_word_pos(word_index)?;
+        let word = self.backend.read_word()?;
+        self.backend.set_word_pos(word_index)?;
         self.bits_in_buffer = bit_index;
         self.buffer = (word as u128) << 64;
         Ok(())
@@ -332,12 +326,11 @@ impl<WR: WordWrite<Word = u64> + WordSeek + WordRead<Word = u64>, WCP: WriteCode
 #[cfg(test)]
 #[test]
 fn test_buffered_bit_stream_writer() -> Result<(), anyhow::Error> {
-    use super::MemWordWriteVec;
+    use super::MemWordWriterVec;
     use crate::{
         codes::{GammaRead, GammaWrite},
         prelude::{
-            len_delta, len_gamma, len_unary, BufferedBitStreamRead, DeltaRead, DeltaWrite,
-            MemWordRead,
+            len_delta, len_gamma, len_unary, BufBitReader, DeltaRead, DeltaWrite, MemWordReader,
         },
     };
     use rand::Rng;
@@ -345,8 +338,8 @@ fn test_buffered_bit_stream_writer() -> Result<(), anyhow::Error> {
 
     let mut buffer_be: Vec<u64> = vec![];
     let mut buffer_le: Vec<u64> = vec![];
-    let mut big = BufferedBitStreamWrite::<BE, _>::new(MemWordWriteVec::new(&mut buffer_be));
-    let mut little = BufferedBitStreamWrite::<LE, _>::new(MemWordWriteVec::new(&mut buffer_le));
+    let mut big = BufBitWriter::<BE, _>::new(MemWordWriterVec::new(&mut buffer_be));
+    let mut little = BufBitWriter::<LE, _>::new(MemWordWriterVec::new(&mut buffer_le));
 
     let mut r = SmallRng::seed_from_u64(0);
     const ITER: u64 = 128;
@@ -386,9 +379,8 @@ fn test_buffered_bit_stream_writer() -> Result<(), anyhow::Error> {
         )
     };
 
-    let mut big_buff = BufferedBitStreamRead::<BE, ReadBuffer, _>::new(MemWordRead::new(be_trans));
-    let mut little_buff =
-        BufferedBitStreamRead::<LE, ReadBuffer, _>::new(MemWordRead::new(le_trans));
+    let mut big_buff = BufBitReader::<BE, ReadBuffer, _>::new(MemWordReader::new(be_trans));
+    let mut little_buff = BufBitReader::<LE, ReadBuffer, _>::new(MemWordReader::new(le_trans));
 
     let mut r = SmallRng::seed_from_u64(0);
 

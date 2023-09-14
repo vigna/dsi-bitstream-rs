@@ -58,7 +58,7 @@ impl<W: Word, B: std::io::Read> WordRead for FileBackend<W, B> {
     type Word = W;
 
     #[inline]
-    fn read(&mut self) -> Result<W> {
+    fn read_word(&mut self) -> Result<W> {
         let mut res: W::Bytes = Default::default();
         let _ = self.file.read(res.as_mut())?;
         self.position += 1;
@@ -71,7 +71,7 @@ impl<W: Word, B: std::io::Write> WordWrite for FileBackend<W, B> {
     type Word = W;
 
     #[inline]
-    fn write(&mut self, word: W) -> Result<()> {
+    fn write_word(&mut self, word: W) -> Result<()> {
         let _ = self.file.write(word.to_ne_bytes().as_ref())?;
         self.position += 1;
         Ok(())
@@ -81,12 +81,12 @@ impl<W: Word, B: std::io::Write> WordWrite for FileBackend<W, B> {
 /// Convert [`std::io::Seek`] to [`WordSeek`]
 impl<W: Word, B: std::io::Seek> WordSeek for FileBackend<W, B> {
     #[inline(always)]
-    fn get_pos(&self) -> usize {
+    fn get_word_pos(&self) -> usize {
         self.position
     }
 
     #[inline(always)]
-    fn set_pos(&mut self, word_index: usize) -> Result<()> {
+    fn set_word_pos(&mut self, word_index: usize) -> Result<()> {
         self.position = word_index;
         self.file
             .seek(std::io::SeekFrom::Start((word_index * W::BYTES) as u64))?;
@@ -108,13 +108,13 @@ mod test {
         {
             let mut writer = <FileBackend<u32, _>>::new(std::fs::File::create(&path).unwrap());
             for value in &data {
-                writer.write(*value).unwrap();
+                writer.write_word(*value).unwrap();
             }
         }
         {
             let mut reader = <FileBackend<u32, _>>::new(std::fs::File::open(&path).unwrap());
             for value in &data {
-                assert_eq!(*value, reader.read().unwrap());
+                assert_eq!(*value, reader.read_word().unwrap());
             }
         }
     }
@@ -130,7 +130,7 @@ mod test {
         ];
         let path = std::env::temp_dir().join("test_file_backend_codes");
         {
-            let mut writer = <BufferedBitStreamWrite<BE, _>>::new(<FileBackend<u64, _>>::new(
+            let mut writer = <BufBitWriter<BE, _>>::new(<FileBackend<u64, _>>::new(
                 std::fs::File::create(&path).unwrap(),
             ));
             for value in &data {
@@ -138,7 +138,7 @@ mod test {
             }
         }
         {
-            let mut reader = <BufferedBitStreamRead<BE, u64, _>>::new(<FileBackend<u32, _>>::new(
+            let mut reader = <BufBitReader<BE, u64, _>>::new(<FileBackend<u32, _>>::new(
                 std::fs::File::open(&path).unwrap(),
             ));
             for value in &data {
@@ -146,7 +146,7 @@ mod test {
             }
         }
         {
-            let mut writer = <BufferedBitStreamWrite<LE, _>>::new(<FileBackend<u64, _>>::new(
+            let mut writer = <BufBitWriter<LE, _>>::new(<FileBackend<u64, _>>::new(
                 std::fs::File::create(&path).unwrap(),
             ));
             for value in &data {
@@ -154,7 +154,7 @@ mod test {
             }
         }
         {
-            let mut reader = <BufferedBitStreamRead<LE, u64, _>>::new(<FileBackend<u32, _>>::new(
+            let mut reader = <BufBitReader<LE, u64, _>>::new(<FileBackend<u32, _>>::new(
                 std::fs::File::open(&path).unwrap(),
             ));
             for value in &data {

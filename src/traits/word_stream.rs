@@ -22,7 +22,7 @@ pub trait WordRead {
     /// The word type (the type of the result of [`WordRead::read`]).
     type Word: Word;
     /// Read a word and advance the current position.
-    fn read(&mut self) -> Result<Self::Word>;
+    fn read_word(&mut self) -> Result<Self::Word>;
 }
 
 /// Sequential, streaming word-by-word writes.
@@ -30,12 +30,12 @@ pub trait WordWrite {
     /// The word type (the type of the argument of [`WordWrite::write`]).
     type Word: Word;
     /// Write a word and advance the current position.
-    fn write(&mut self, word: Self::Word) -> Result<()>;
+    fn write_word(&mut self, word: Self::Word) -> Result<()>;
 }
 /// Seekability for [`WordRead`] and [`WordWrite`] streams.
 pub trait WordSeek {
     #[must_use]
-    fn get_pos(&self) -> usize;
+    fn get_word_pos(&self) -> usize;
 
-    fn set_pos(&mut self, word_index: usize) -> Result<()>;
+    fn set_word_pos(&mut self, word_index: usize) -> Result<()>;
 }

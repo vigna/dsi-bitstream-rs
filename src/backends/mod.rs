@@ -8,8 +8,11 @@
 
 //! Implementations of Word readers and writers and Bit readers and writers.
 
-mod word_stream;
-pub use word_stream::*;
+mod mem_word_reader;
+pub use mem_word_reader::*;
+
+mod mem_word_writer;
+pub use mem_word_writer::*;
 
 #[cfg(feature = "std")]
 mod file_backend;
@@ -18,11 +21,11 @@ pub use file_backend::*;
 
 mod codes_params;
 
-mod unbuffered_bit_stream_reader;
-pub use unbuffered_bit_stream_reader::UnbufferedBitStreamRead;
+mod bit_reader;
+pub use bit_reader::BitReader;
 
-mod buffered_bit_stream_reader;
-pub use buffered_bit_stream_reader::BufferedBitStreamRead;
+mod buf_bit_reader;
+pub use buf_bit_reader::BufBitReader;
 
-mod buffered_bit_stream_writer;
-pub use buffered_bit_stream_writer::BufferedBitStreamWrite;
+mod buf_bit_writer;
+pub use buf_bit_writer::BufBitWriter;

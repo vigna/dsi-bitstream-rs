@@ -11,7 +11,7 @@ let mut data = Vec::<u64>::new();
 // write some data
 {
     // create a codes writer
-    let mut writer = BufferedBitStreamWrite::<BigEndian, _>::new(MemWordWriteVec::new(&mut data));
+    let mut writer = BufferedBitStreamWriter::<BigEndian, _>::new(MemWordWriteerVec::new(&mut data));
     // write 0 using 10 bits
     writer.write_bits(0, 10).unwrap();
     // write 1 in unary
@@ -26,7 +26,7 @@ let mut data = Vec::<u64>::new();
 // read them back
 {
     // create a codes reader
-    let mut reader = BufferedBitStreamRead::<BigEndian, u128, _>::new(MemWordRead::new(&data));
+    let mut reader = BufferedBitStreamReader::<BigEndian, u128, _>::new(MemWordReader::new(&data));
     // read back the data
     assert_eq!(reader.read_bits(10).unwrap(), 0);
     assert_eq!(reader.read_unary().unwrap(), 1);

@@ -149,12 +149,12 @@ impl<E: Endianness, BW: BitWrite<E> + ZetaWrite<E>, const PRINT: bool> ZetaWrite
 impl<E: Endianness, BR: BitWrite<E> + BitSeek, const PRINT: bool> BitSeek
     for CountBitWrite<E, BR, PRINT>
 {
-    fn set_pos(&mut self, bit_pos: usize) -> Result<()> {
-        self.bit_write.set_pos(bit_pos)
+    fn set_bit_pos(&mut self, bit_pos: usize) -> Result<()> {
+        self.bit_write.set_bit_pos(bit_pos)
     }
 
-    fn get_pos(&self) -> usize {
-        self.bit_write.get_pos()
+    fn get_bit_pos(&self) -> usize {
+        self.bit_write.get_bit_pos()
     }
 }
 
@@ -353,12 +353,12 @@ impl<E: Endianness, BR: BitRead<E> + ZetaRead<E>, const PRINT: bool> ZetaRead<E>
 impl<E: Endianness, BR: BitRead<E> + BitSeek, const PRINT: bool> BitSeek
     for CountBitRead<E, BR, PRINT>
 {
-    fn set_pos(&mut self, bit_pos: usize) -> Result<()> {
-        self.bit_read.set_pos(bit_pos)
+    fn set_bit_pos(&mut self, bit_pos: usize) -> Result<()> {
+        self.bit_read.set_bit_pos(bit_pos)
     }
 
-    fn get_pos(&self) -> usize {
-        self.bit_read.get_pos()
+    fn get_bit_pos(&self) -> usize {
+        self.bit_read.get_bit_pos()
     }
 }
 
@@ -367,7 +367,7 @@ impl<E: Endianness, BR: BitRead<E> + BitSeek, const PRINT: bool> BitSeek
 fn test_count() -> Result<()> {
     use crate::prelude::*;
     let mut buffer = <Vec<u64>>::new();
-    let bit_write = <BufferedBitStreamWrite<LE, _>>::new(MemWordWriteVec::new(&mut buffer));
+    let bit_write = <BufBitWriter<LE, _>>::new(MemWordWriterVec::new(&mut buffer));
     let mut count_bit_write = CountBitWrite::<_, _, true>::new(bit_write);
 
     count_bit_write.write_unary(5)?;
@@ -388,8 +388,7 @@ fn test_count() -> Result<()> {
     assert_eq!(count_bit_write.bits_written, 174);
     count_bit_write.flush()?;
 
-    let bit_read =
-        <BufferedBitStreamRead<LE, u64, _>>::new(MemWordReadInfinite::<u64, _>::new(&buffer));
+    let bit_read = <BufBitReader<LE, u64, _>>::new(MemWordReaderInf::<u64, _>::new(&buffer));
     let mut count_bit_read = CountBitRead::<_, _, true>::new(bit_read);
 
     assert_eq!(count_bit_read.peek_bits(5)?, 0);

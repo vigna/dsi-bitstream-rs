@@ -17,7 +17,7 @@ use anyhow::{bail, Result};
 /// An impementation of [`BitRead`] on a Seekable word stream [`WordRead`]
 /// + [`WordSeek`]
 #[derive(Debug, Clone)]
-pub struct UnbufferedBitStreamRead<BO: Endianness, WR> {
+pub struct BitReader<BO: Endianness, WR> {
     /// The stream which we will read words from
     data: WR,
     /// The index of the current bit we are ate
@@ -26,7 +26,7 @@ pub struct UnbufferedBitStreamRead<BO: Endianness, WR> {
     _marker: core::marker::PhantomData<BO>,
 }
 
-impl<BO: Endianness, WR> UnbufferedBitStreamRead<BO, WR> {
+impl<BO: Endianness, WR> BitReader<BO, WR> {
     /// Create a new BitStreamRead on a generig WordRead
     pub fn new(data: WR) -> Self {
         Self {
@@ -37,7 +37,7 @@ impl<BO: Endianness, WR> UnbufferedBitStreamRead<BO, WR> {
     }
 }
 
-impl<WR: WordRead<Word = u64> + WordSeek> BitRead<BE> for UnbufferedBitStreamRead<BE, WR> {
+impl<WR: WordRead<Word = u64> + WordSeek> BitRead<BE> for BitReader<BE, WR> {
     type PeekWord = u32;
 
     #[inline]
@@ -57,17 +57,17 @@ impl<WR: WordRead<Word = u64> + WordSeek> BitRead<BE> for UnbufferedBitStreamRea
         if n_bits == 0 {
             return Ok(0);
         }
-        self.data.set_pos(self.bit_idx / 64)?;
+        self.data.set_word_pos(self.bit_idx / 64)?;
         let in_word_offset = self.bit_idx % 64;
 
         let res = if (in_word_offset + n_bits) <= 64 {
             // single word access
-            let word = self.data.read()?.to_be();
+            let word = self.data.read_word()?.to_be();
             (word << in_word_offset) >> (64 - n_bits)
         } else {
             // double word access
-            let high_word = self.data.read()?.to_be();
-            let low_word = self.data.read()?.to_be();
+            let high_word = self.data.read_word()?.to_be();
+            let low_word = self.data.read_word()?.to_be();
             let shamt1 = 64 - n_bits;
             let shamt2 = 128 - in_word_offset - n_bits;
             ((high_word << in_word_offset) >> shamt1) | (low_word >> shamt2)
@@ -87,17 +87,17 @@ impl<WR: WordRead<Word = u64> + WordSeek> BitRead<BE> for UnbufferedBitStreamRea
         if n_bits == 0 {
             return Ok(0);
         }
-        self.data.set_pos(self.bit_idx / 64)?;
+        self.data.set_word_pos(self.bit_idx / 64)?;
         let in_word_offset = self.bit_idx % 64;
 
         let res = if (in_word_offset + n_bits) <= 64 {
             // single word access
-            let word = self.data.read()?.to_be();
+            let word = self.data.read_word()?.to_be();
             (word << in_word_offset) >> (64 - n_bits)
         } else {
             // double word access
-            let high_word = self.data.read()?.to_be();
-            let low_word = self.data.read()?.to_be();
+            let high_word = self.data.read_word()?.to_be();
+            let low_word = self.data.read_word()?.to_be();
             let shamt1 = 64 - n_bits;
             let shamt2 = 128 - in_word_offset - n_bits;
             ((high_word << in_word_offset) >> shamt1) | (low_word >> shamt2)
@@ -112,12 +112,12 @@ impl<WR: WordRead<Word = u64> + WordSeek> BitRead<BE> for UnbufferedBitStreamRea
                 return Ok(res);
             }
         }
-        self.data.set_pos(self.bit_idx / 64)?;
+        self.data.set_word_pos(self.bit_idx / 64)?;
         let in_word_offset = self.bit_idx % 64;
         let mut bits_in_word = 64 - in_word_offset;
         let mut total = 0;
 
-        let mut word = self.data.read()?.to_be();
+        let mut word = self.data.read_word()?.to_be();
         word <<= in_word_offset;
         loop {
             let zeros = word.leading_zeros() as usize;
@@ -128,34 +128,34 @@ impl<WR: WordRead<Word = u64> + WordSeek> BitRead<BE> for UnbufferedBitStreamRea
             }
             total += bits_in_word;
             bits_in_word = 64;
-            word = self.data.read()?.to_be();
+            word = self.data.read_word()?.to_be();
         }
     }
 }
 
-impl<WR: WordSeek> BitSeek for UnbufferedBitStreamRead<LE, WR> {
-    fn get_pos(&self) -> usize {
+impl<WR: WordSeek> BitSeek for BitReader<LE, WR> {
+    fn get_bit_pos(&self) -> usize {
         self.bit_idx
     }
 
-    fn set_pos(&mut self, bit_index: usize) -> Result<()> {
+    fn set_bit_pos(&mut self, bit_index: usize) -> Result<()> {
         self.bit_idx = bit_index;
         Ok(())
     }
 }
 
-impl<WR: WordSeek> BitSeek for UnbufferedBitStreamRead<BE, WR> {
-    fn get_pos(&self) -> usize {
+impl<WR: WordSeek> BitSeek for BitReader<BE, WR> {
+    fn get_bit_pos(&self) -> usize {
         self.bit_idx
     }
 
-    fn set_pos(&mut self, bit_index: usize) -> Result<()> {
+    fn set_bit_pos(&mut self, bit_index: usize) -> Result<()> {
         self.bit_idx = bit_index;
         Ok(())
     }
 }
 
-impl<WR: WordRead<Word = u64> + WordSeek> BitRead<LE> for UnbufferedBitStreamRead<LE, WR> {
+impl<WR: WordRead<Word = u64> + WordSeek> BitRead<LE> for BitReader<LE, WR> {
     type PeekWord = u32;
     #[inline]
     fn skip_bits(&mut self, n_bits: usize) -> Result<()> {
@@ -174,18 +174,18 @@ impl<WR: WordRead<Word = u64> + WordSeek> BitRead<LE> for UnbufferedBitStreamRea
         if n_bits == 0 {
             return Ok(0);
         }
-        self.data.set_pos(self.bit_idx / 64)?;
+        self.data.set_word_pos(self.bit_idx / 64)?;
         let in_word_offset = self.bit_idx % 64;
 
         let res = if (in_word_offset + n_bits) <= 64 {
             // single word access
-            let word = self.data.read()?.to_le();
+            let word = self.data.read_word()?.to_le();
             let shamt = 64 - n_bits;
             (word << (shamt - in_word_offset)) >> shamt
         } else {
             // double word access
-            let low_word = self.data.read()?.to_le();
-            let high_word = self.data.read()?.to_le();
+            let low_word = self.data.read_word()?.to_le();
+            let high_word = self.data.read_word()?.to_le();
             let shamt1 = 128 - in_word_offset - n_bits;
             let shamt2 = 64 - n_bits;
             ((high_word << shamt1) >> shamt2) | (low_word >> in_word_offset)
@@ -205,18 +205,18 @@ impl<WR: WordRead<Word = u64> + WordSeek> BitRead<LE> for UnbufferedBitStreamRea
         if n_bits == 0 {
             return Ok(0);
         }
-        self.data.set_pos(self.bit_idx / 64)?;
+        self.data.set_word_pos(self.bit_idx / 64)?;
         let in_word_offset = self.bit_idx % 64;
 
         let res = if (in_word_offset + n_bits) <= 64 {
             // single word access
-            let word = self.data.read()?.to_le();
+            let word = self.data.read_word()?.to_le();
             let shamt = 64 - n_bits;
             (word << (shamt - in_word_offset)) >> shamt
         } else {
             // double word access
-            let low_word = self.data.read()?.to_le();
-            let high_word = self.data.read()?.to_le();
+            let low_word = self.data.read_word()?.to_le();
+            let high_word = self.data.read_word()?.to_le();
             let shamt1 = 128 - in_word_offset - n_bits;
             let shamt2 = 64 - n_bits;
             ((high_word << shamt1) >> shamt2) | (low_word >> in_word_offset)
@@ -231,12 +231,12 @@ impl<WR: WordRead<Word = u64> + WordSeek> BitRead<LE> for UnbufferedBitStreamRea
                 return Ok(res);
             }
         }
-        self.data.set_pos(self.bit_idx / 64)?;
+        self.data.set_word_pos(self.bit_idx / 64)?;
         let in_word_offset = self.bit_idx % 64;
         let mut bits_in_word = 64 - in_word_offset;
         let mut total = 0;
 
-        let mut word = self.data.read()?.to_le();
+        let mut word = self.data.read_word()?.to_le();
         word >>= in_word_offset;
         loop {
             let zeros = word.trailing_zeros() as usize;
@@ -247,7 +247,7 @@ impl<WR: WordRead<Word = u64> + WordSeek> BitRead<LE> for UnbufferedBitStreamRea
             }
             total += bits_in_word;
             bits_in_word = 64;
-            word = self.data.read()?.to_le();
+            word = self.data.read_word()?.to_le();
         }
     }
 }

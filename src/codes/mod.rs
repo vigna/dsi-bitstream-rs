@@ -45,7 +45,7 @@
 //!     .collect::<Vec<_>>();
 //!
 //! let mut bitstream_be = <UnbufferedBitStreamRead<BE, _>>::new(
-//!     MemWordRead::new(&words_be)
+//!     MemWordReader::new(&words_be)
 //! );
 //! assert_eq!(bitstream_be.read_bits(8).unwrap(), 0b0111_0110);
 //! assert_eq!(bitstream_be.read_bits(4).unwrap(), 0b0110);
@@ -54,9 +54,9 @@
 //! assert_eq!(bitstream_be.read_bits(8).unwrap(), 0b00_1101_10);
 //! assert_eq!(bitstream_be.read_bits(38).unwrap(), 0b01_1111_1011_0101_0100_0011_0000_0000_1000_0110);
 //!
-//! bitstream_be.set_pos(0); // rewind the stream
+//! bitstream_be.set_bit_pos(0); // rewind the stream
 //! assert_eq!(bitstream_be.read_bits(8).unwrap(), 0b0111_0110);
-//! bitstream_be.set_pos(0); // rewind the stream
+//! bitstream_be.set_bit_pos(0); // rewind the stream
 //!
 //! assert_eq!(bitstream_be.read_unary().unwrap(), 1);
 //! assert_eq!(bitstream_be.read_unary().unwrap(), 0);

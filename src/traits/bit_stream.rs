@@ -101,7 +101,7 @@ pub trait BitWrite<E: Endianness> {
 /// Trait providing bit-based positional methods.
 pub trait BitSeek {
     #[must_use]
-    fn get_pos(&self) -> usize;
+    fn get_bit_pos(&self) -> usize;
 
-    fn set_pos(&mut self, bit_pos: usize) -> Result<()>;
+    fn set_bit_pos(&mut self, bit_pos: usize) -> Result<()>;
 }

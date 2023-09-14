@@ -4,7 +4,7 @@ use dsi_bitstream::prelude::*;
 macro_rules! test_code {
     ($call_be:expr, $expected_be:expr, $call_le:expr, $expected_le:expr,) => {
         let mut data = vec![0_u64];
-        let mut writer = <BufferedBitStreamWrite<BE, _>>::new(MemWordWriteVec::new(&mut data));
+        let mut writer = <BufferedBitStreamWrite<BE, _>>::new(MemWordWriterVec::new(&mut data));
         $call_be(&mut writer)?;
         drop(writer);
         assert_eq!(
@@ -16,7 +16,7 @@ macro_rules! test_code {
         );
 
         let mut data = vec![0_u64];
-        let mut writer = <BufferedBitStreamWrite<LE, _>>::new(MemWordWriteVec::new(&mut data));
+        let mut writer = <BufferedBitStreamWrite<LE, _>>::new(MemWordWriterVec::new(&mut data));
         $call_le(&mut writer)?;
         drop(writer);
         assert_eq!(
@@ -27,7 +27,7 @@ macro_rules! test_code {
     };
 }
 
-type Backend<'a, E> = BufferedBitStreamWrite<E, MemWordWriteVec<u64, &'a mut Vec<u64>>>;
+type Backend<'a, E> = BufBitWriter<E, MemWordWriterVec<u64, &'a mut Vec<u64>>>;
 
 #[test]
 fn test_unary() -> Result<()> {
