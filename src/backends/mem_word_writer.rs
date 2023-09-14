@@ -10,8 +10,8 @@ use crate::traits::*;
 use anyhow::{bail, Result};
 use common_traits::Word;
 
-/// An Implementation of [`WordSeek`], [`WordRead`], [`WordWrite`] for a
-/// mutable slice of memory `&mut [u64]`
+/// An Implementation of [`WordRead`], [`WordWrite`], and [`WordSeek`] for a
+/// mutable slice of memory.
 ///
 /// # Example
 /// ```

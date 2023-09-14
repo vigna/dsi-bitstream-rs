@@ -40,15 +40,15 @@ use crate::traits::*;
 use anyhow::Result;
 use common_traits::*;
 
-pub trait ReadCodesParams {}
+pub trait ReadParams {}
 
 #[derive(Debug, Clone)]
 pub struct DefaultReadParams;
-impl ReadCodesParams for DefaultReadParams {}
+impl ReadParams for DefaultReadParams {}
 
 macro_rules! impl_default_read_codes {
     ($($endianess:ident),*) => {$(
-        impl<BW: Word, WR: WordRead, DC: ReadCodesParams> GammaRead<$endianess>
+        impl<BW: Word, WR: WordRead, DC: ReadParams> GammaRead<$endianess>
             for BufBitReader<$endianess, BW, WR, DC>
         where
             BW: DowncastableInto<WR::Word> + CastableInto<u64>,
@@ -75,7 +75,7 @@ macro_rules! impl_default_read_codes {
             }
         }
 
-        impl<BW: Word, WR: WordRead, DC: ReadCodesParams> DeltaRead<$endianess>
+        impl<BW: Word, WR: WordRead, DC: ReadParams> DeltaRead<$endianess>
             for BufBitReader<$endianess, BW, WR, DC>
         where
             BW: DowncastableInto<WR::Word> + CastableInto<u64>,
@@ -102,7 +102,7 @@ macro_rules! impl_default_read_codes {
             }
         }
 
-        impl<BW: Word, WR: WordRead, DC: ReadCodesParams> ZetaRead<$endianess>
+        impl<BW: Word, WR: WordRead, DC: ReadParams> ZetaRead<$endianess>
             for BufBitReader<$endianess, BW, WR, DC>
         where
             BW: DowncastableInto<WR::Word> + CastableInto<u64>,
@@ -134,15 +134,15 @@ macro_rules! impl_default_read_codes {
 
 impl_default_read_codes! {LittleEndian, BigEndian}
 
-pub trait WriteCodesParams {}
+pub trait WriteParams {}
 
 #[derive(Debug, Clone)]
 pub struct DefaultWriteParams;
-impl WriteCodesParams for DefaultWriteParams {}
+impl WriteParams for DefaultWriteParams {}
 
 macro_rules! impl_default_write_codes {
     ($($endianess:ident),*) => {$(
-        impl<WR: WordWrite<Word = u64>, DC: WriteCodesParams> GammaWrite<$endianess>
+        impl<WR: WordWrite<Word = u64>, DC: WriteParams> GammaWrite<$endianess>
             for BufBitWriter<$endianess, WR, DC>
         {
             #[inline(always)]
@@ -151,7 +151,7 @@ macro_rules! impl_default_write_codes {
             }
         }
 
-        impl<WR: WordWrite<Word = u64>, DC: WriteCodesParams> DeltaWrite<$endianess>
+        impl<WR: WordWrite<Word = u64>, DC: WriteParams> DeltaWrite<$endianess>
             for BufBitWriter<$endianess, WR, DC>
         {
             #[inline(always)]
@@ -160,7 +160,7 @@ macro_rules! impl_default_write_codes {
             }
         }
 
-        impl<WR: WordWrite<Word = u64>, DC: WriteCodesParams> ZetaWrite<$endianess>
+        impl<WR: WordWrite<Word = u64>, DC: WriteParams> ZetaWrite<$endianess>
             for BufBitWriter<$endianess, WR, DC>
         {
             #[inline(always)]

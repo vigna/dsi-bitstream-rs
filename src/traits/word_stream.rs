@@ -19,7 +19,7 @@ use common_traits::*;
 
 /// Sequential, streaming word-by-word reads.
 pub trait WordRead {
-    /// The word type (the type of the result of [`WordRead::read`]).
+    /// The word type (the type of the result of [`WordRead::read_word`]).
     type Word: Word;
     /// Read a word and advance the current position.
     fn read_word(&mut self) -> Result<Self::Word>;
@@ -27,7 +27,7 @@ pub trait WordRead {
 
 /// Sequential, streaming word-by-word writes.
 pub trait WordWrite {
-    /// The word type (the type of the argument of [`WordWrite::write`]).
+    /// The word type (the type of the argument of [`WordWrite::write_word`]).
     type Word: Word;
     /// Write a word and advance the current position.
     fn write_word(&mut self, word: Self::Word) -> Result<()>;

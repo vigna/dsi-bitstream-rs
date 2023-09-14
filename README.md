@@ -122,8 +122,8 @@ There are three entry points for altering the behavior of the code:
   aware of.
 - Whether to use tables for all other codes can be configured by
   passing around a different implementations of 
-  [`ReadCodeParam`](crate::backends::codes::codes_param::ReadCodeParams)
-  and [`WriteCodeParam`](crate::backends::codes::codes_param::WriteCodeParams)
+  [`ReadParams`](crate::codes::codes_params::ReadParams)
+  and [`WriteParams`](crate::codes::codes_params::WriteParams)
   in place of the default 
-  [`DeafaultReadParams`](crate::backends::codes::codes_param::DeafaultReadParams) and
-  [`DeafaultWriteParams`](crate::backends::codes::codes_param::DeafaultWriteParams).
+  [`DefaultReadParams`](crate::codes::codes_params::DefaultReadParams) and
+  [`DefaultWriteParams`](crate::codes::codes_params::DefaultWriteParams).

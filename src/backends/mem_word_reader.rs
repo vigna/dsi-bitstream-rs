@@ -10,7 +10,7 @@ use crate::traits::*;
 use anyhow::{bail, Result};
 use common_traits::Word;
 
-/// An Implementation of [`WordRead`] for a slice.
+/// An Implementation of [`WordRead`] and [`WordSeek`] for a slice.
 ///
 /// # Example
 /// ```
@@ -77,7 +77,7 @@ pub struct MemWordReaderInf<W: Word, B: AsRef<[W]>> {
 }
 
 impl<W: Word, B: AsRef<[W]>> MemWordReaderInf<W, B> {
-    /// Create a new [`MemWordReaderInfinite`] from a slice of data
+    /// Create a new [`MemWordReaderInf`] from a slice of data
     #[must_use]
     pub fn new(data: B) -> Self {
         Self {

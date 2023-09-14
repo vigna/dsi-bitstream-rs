@@ -15,9 +15,9 @@ mod mem_word_writer;
 pub use mem_word_writer::*;
 
 #[cfg(feature = "std")]
-mod file_backend;
+mod word_adapter;
 #[cfg(feature = "std")]
-pub use file_backend::*;
+pub use word_adapter::*;
 
 mod bit_reader;
 pub use bit_reader::BitReader;

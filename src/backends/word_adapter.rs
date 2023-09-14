@@ -10,31 +10,22 @@ use crate::traits::*;
 use anyhow::Result;
 use common_traits::*;
 
-/// A word backend implementation of [`WordSeek`], [`WordRead`], [`WordWrite`]
-/// for a generic file, this could transparently handle [`std::fs::File`],
-/// [`std::io::BufReader`], [`std::io::BufWriter`], and sockets.
+/// An adapter from [`std::io::Read`], [`std::io::Write`], and [`std::io::Seek`],
+/// to [`WordRead`], [`WordWrite`], and [`WordSeek`], respectively.
 ///
-/// # Implementation details and decisions
-/// While we could write blanket implementations for any generic type that
-/// implements [`std::io::Read`], [`std::io::Write`], or [`std::io::Seek`],
-/// doing so would force us to set an unique word `W`, while this wrapper allows
-/// to choose the read and wite words at the cost of a more complicated type.
-/// The alternative is to modify the WordSteam to have a generic type instead of
-/// an associated one, but that would require the memory slices we read to
-/// always be aligned to 16 bytes (u128). For memory mapped regions it's ok,
-/// but we can't enforce it by types.
-///
-/// TODO!: maybe FileBackend is not the best name, as it's more generic than
-/// that
+/// Instances of this struct can be created using [`WordAdapter::new`]. They
+/// turn every standard (possibly seekable) source or destination of
+/// bytes (such as [`std::fs::File`], [`std::io::BufReader`], sockets, etc.)
+/// into a source or destination of words.
 #[derive(Clone)]
-pub struct FileBackend<W: Word, B> {
+pub struct WordAdapter<W: Word, B> {
     file: B,
     position: usize,
     _marker: core::marker::PhantomData<W>,
 }
 
-impl<W: Word, B> FileBackend<W, B> {
-    /// Create a new FileBackend
+impl<W: Word, B> WordAdapter<W, B> {
+    /// Create a new WordAdapter
     pub fn new(file: B) -> Self {
         Self {
             file,
@@ -44,9 +35,9 @@ impl<W: Word, B> FileBackend<W, B> {
     }
 }
 
-impl<W: Word, B> core::fmt::Debug for FileBackend<W, B> {
+impl<W: Word, B> core::fmt::Debug for WordAdapter<W, B> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        f.debug_struct("FileBackend")
+        f.debug_struct("WordAdapter")
             .field("file", &"CAN'T PRINT FILE")
             .field("position", &self.position)
             .finish()
@@ -54,7 +45,7 @@ impl<W: Word, B> core::fmt::Debug for FileBackend<W, B> {
 }
 
 /// Convert [`std::io::Read`] to [`WordRead`]
-impl<W: Word, B: std::io::Read> WordRead for FileBackend<W, B> {
+impl<W: Word, B: std::io::Read> WordRead for WordAdapter<W, B> {
     type Word = W;
 
     #[inline]
@@ -67,7 +58,7 @@ impl<W: Word, B: std::io::Read> WordRead for FileBackend<W, B> {
 }
 
 /// Convert [`std::io::Write`] to [`WordWrite`]
-impl<W: Word, B: std::io::Write> WordWrite for FileBackend<W, B> {
+impl<W: Word, B: std::io::Write> WordWrite for WordAdapter<W, B> {
     type Word = W;
 
     #[inline]
@@ -79,7 +70,7 @@ impl<W: Word, B: std::io::Write> WordWrite for FileBackend<W, B> {
 }
 
 /// Convert [`std::io::Seek`] to [`WordSeek`]
-impl<W: Word, B: std::io::Seek> WordSeek for FileBackend<W, B> {
+impl<W: Word, B: std::io::Seek> WordSeek for WordAdapter<W, B> {
     #[inline(always)]
     fn get_word_pos(&self) -> usize {
         self.position
@@ -106,13 +97,13 @@ mod test {
         ];
         let path = std::env::temp_dir().join("test_file_backend");
         {
-            let mut writer = <FileBackend<u32, _>>::new(std::fs::File::create(&path).unwrap());
+            let mut writer = <WordAdapter<u32, _>>::new(std::fs::File::create(&path).unwrap());
             for value in &data {
                 writer.write_word(*value).unwrap();
             }
         }
         {
-            let mut reader = <FileBackend<u32, _>>::new(std::fs::File::open(&path).unwrap());
+            let mut reader = <WordAdapter<u32, _>>::new(std::fs::File::open(&path).unwrap());
             for value in &data {
                 assert_eq!(*value, reader.read_word().unwrap());
             }
@@ -130,7 +121,7 @@ mod test {
         ];
         let path = std::env::temp_dir().join("test_file_backend_codes");
         {
-            let mut writer = <BufBitWriter<BE, _>>::new(<FileBackend<u64, _>>::new(
+            let mut writer = <BufBitWriter<BE, _>>::new(<WordAdapter<u64, _>>::new(
                 std::fs::File::create(&path).unwrap(),
             ));
             for value in &data {
@@ -138,7 +129,7 @@ mod test {
             }
         }
         {
-            let mut reader = <BufBitReader<BE, u64, _>>::new(<FileBackend<u32, _>>::new(
+            let mut reader = <BufBitReader<BE, u64, _>>::new(<WordAdapter<u32, _>>::new(
                 std::fs::File::open(&path).unwrap(),
             ));
             for value in &data {
@@ -146,7 +137,7 @@ mod test {
             }
         }
         {
-            let mut writer = <BufBitWriter<LE, _>>::new(<FileBackend<u64, _>>::new(
+            let mut writer = <BufBitWriter<LE, _>>::new(<WordAdapter<u64, _>>::new(
                 std::fs::File::create(&path).unwrap(),
             ));
             for value in &data {
@@ -154,7 +145,7 @@ mod test {
             }
         }
         {
-            let mut reader = <BufBitReader<LE, u64, _>>::new(<FileBackend<u32, _>>::new(
+            let mut reader = <BufBitReader<LE, u64, _>>::new(<WordAdapter<u32, _>>::new(
                 std::fs::File::open(&path).unwrap(),
             ));
             for value in &data {

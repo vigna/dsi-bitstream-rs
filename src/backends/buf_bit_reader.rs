@@ -6,7 +6,7 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
-use crate::codes::codes_params::{DefaultReadParams, ReadCodesParams};
+use crate::codes::codes_params::{DefaultReadParams, ReadParams};
 use crate::codes::unary_tables;
 use crate::traits::*;
 use anyhow::{bail, Context, Result};
@@ -15,12 +15,8 @@ use common_traits::*;
 /// A BitStream built uppon a generic [`WordRead`] that caches the read words
 /// in a buffer
 #[derive(Debug)]
-pub struct BufBitReader<
-    E: Endianness,
-    BW: Word,
-    WR: WordRead,
-    RCP: ReadCodesParams = DefaultReadParams,
-> {
+pub struct BufBitReader<E: Endianness, BW: Word, WR: WordRead, RCP: ReadParams = DefaultReadParams>
+{
     /// The backend that is used to read the words to fill the buffer.
     backend: WR,
     /// The bit buffer (at most 2 words) that is used to read the codes. It is never full.
@@ -33,7 +29,7 @@ pub struct BufBitReader<
     _marker_default_codes: core::marker::PhantomData<RCP>,
 }
 
-impl<E: Endianness, BW: Word, WR: WordRead + Clone, RCP: ReadCodesParams> core::clone::Clone
+impl<E: Endianness, BW: Word, WR: WordRead + Clone, RCP: ReadParams> core::clone::Clone
     for BufBitReader<E, BW, WR, RCP>
 {
     fn clone(&self) -> Self {
@@ -47,7 +43,7 @@ impl<E: Endianness, BW: Word, WR: WordRead + Clone, RCP: ReadCodesParams> core::
     }
 }
 
-impl<E: Endianness, BW: Word, WR: WordRead, RCP: ReadCodesParams> BufBitReader<E, BW, WR, RCP> {
+impl<E: Endianness, BW: Word, WR: WordRead, RCP: ReadParams> BufBitReader<E, BW, WR, RCP> {
     /// Create a new [`BufBitReader`] on a generic backend
     ///
     /// ### Example
@@ -69,7 +65,7 @@ impl<E: Endianness, BW: Word, WR: WordRead, RCP: ReadCodesParams> BufBitReader<E
     }
 }
 
-impl<BW: Word, WR: WordRead, RCP: ReadCodesParams> BufBitReader<BE, BW, WR, RCP>
+impl<BW: Word, WR: WordRead, RCP: ReadParams> BufBitReader<BE, BW, WR, RCP>
 where
     WR::Word: UpcastableInto<BW>,
 {
@@ -95,8 +91,7 @@ where
     }
 }
 
-impl<BW: Word, WR: WordRead + WordSeek, RCP: ReadCodesParams> BitSeek
-    for BufBitReader<BE, BW, WR, RCP>
+impl<BW: Word, WR: WordRead + WordSeek, RCP: ReadParams> BitSeek for BufBitReader<BE, BW, WR, RCP>
 where
     WR::Word: UpcastableInto<BW>,
 {
@@ -122,7 +117,7 @@ where
     }
 }
 
-impl<BW: Word, WR: WordRead, RCP: ReadCodesParams> BitRead<BE> for BufBitReader<BE, BW, WR, RCP>
+impl<BW: Word, WR: WordRead, RCP: ReadParams> BitRead<BE> for BufBitReader<BE, BW, WR, RCP>
 where
     BW: DowncastableInto<WR::Word> + CastableInto<u64>,
     WR::Word: UpcastableInto<BW> + UpcastableInto<u64>,
@@ -258,7 +253,7 @@ where
     }
 }
 
-impl<BW: Word, WR: WordRead, RCP: ReadCodesParams> BufBitReader<LE, BW, WR, RCP>
+impl<BW: Word, WR: WordRead, RCP: ReadParams> BufBitReader<LE, BW, WR, RCP>
 where
     WR::Word: UpcastableInto<BW>,
 {
@@ -284,8 +279,7 @@ where
     }
 }
 
-impl<BW: Word, WR: WordRead + WordSeek, RCP: ReadCodesParams> BitSeek
-    for BufBitReader<LE, BW, WR, RCP>
+impl<BW: Word, WR: WordRead + WordSeek, RCP: ReadParams> BitSeek for BufBitReader<LE, BW, WR, RCP>
 where
     WR::Word: UpcastableInto<BW>,
 {
@@ -311,7 +305,7 @@ where
     }
 }
 
-impl<BW: Word, WR: WordRead, RCP: ReadCodesParams> BitRead<LE> for BufBitReader<LE, BW, WR, RCP>
+impl<BW: Word, WR: WordRead, RCP: ReadParams> BitRead<LE> for BufBitReader<LE, BW, WR, RCP>
 where
     BW: DowncastableInto<WR::Word> + CastableInto<u64>,
     WR::Word: UpcastableInto<BW> + UpcastableInto<u64>,

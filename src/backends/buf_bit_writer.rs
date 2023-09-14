@@ -6,18 +6,15 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
-use crate::codes::codes_params::{DefaultWriteParams, WriteCodesParams};
+use crate::codes::codes_params::{DefaultWriteParams, WriteParams};
 use crate::codes::unary_tables;
 use crate::traits::*;
 use anyhow::{bail, Result};
 
 /// An implementation of [`BitWrite`] on a generic [`WordWrite`]
 #[derive(Debug)]
-pub struct BufBitWriter<
-    E: BBSWDrop<WR, WCP>,
-    WR: WordWrite,
-    WCP: WriteCodesParams = DefaultWriteParams,
-> {
+pub struct BufBitWriter<E: BBSWDrop<WR, WCP>, WR: WordWrite, WCP: WriteParams = DefaultWriteParams>
+{
     /// The backend used to write words to
     backend: WR,
     /// The buffer where we store code writes until we have a word worth of bits
@@ -31,7 +28,7 @@ pub struct BufBitWriter<
     _marker_default_codes: core::marker::PhantomData<WCP>,
 }
 
-impl<E: BBSWDrop<WR, WCP>, WR: WordWrite, WCP: WriteCodesParams> BufBitWriter<E, WR, WCP> {
+impl<E: BBSWDrop<WR, WCP>, WR: WordWrite, WCP: WriteParams> BufBitWriter<E, WR, WCP> {
     /// Create a new [`BufBitWriter`] from a backend word writer
     pub fn new(backend: WR) -> Self {
         Self {
@@ -50,7 +47,7 @@ impl<E: BBSWDrop<WR, WCP>, WR: WordWrite, WCP: WriteCodesParams> BufBitWriter<E,
     }
 }
 
-impl<E: BBSWDrop<WR, WCP>, WR: WordWrite, WCP: WriteCodesParams> core::ops::Drop
+impl<E: BBSWDrop<WR, WCP>, WR: WordWrite, WCP: WriteParams> core::ops::Drop
     for BufBitWriter<E, WR, WCP>
 {
     fn drop(&mut self) {
@@ -64,12 +61,12 @@ impl<E: BBSWDrop<WR, WCP>, WR: WordWrite, WCP: WriteCodesParams> core::ops::Drop
 /// private traits in public defs, an user should never need to implement this.
 ///
 /// I discussed this [here](https://users.rust-lang.org/t/on-generic-associated-enum-and-type-comparisons/92072).
-pub trait BBSWDrop<WR: WordWrite, WCP: WriteCodesParams>: Sized + Endianness {
+pub trait BBSWDrop<WR: WordWrite, WCP: WriteParams>: Sized + Endianness {
     /// handle the drop
     fn flush(data: &mut BufBitWriter<Self, WR, WCP>) -> Result<()>;
 }
 
-impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BBSWDrop<WR, WCP> for BE {
+impl<WR: WordWrite<Word = u64>, WCP: WriteParams> BBSWDrop<WR, WCP> for BE {
     #[inline]
     fn flush(data: &mut BufBitWriter<Self, WR, WCP>) -> Result<()> {
         data.partial_flush()?;
@@ -85,7 +82,7 @@ impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BBSWDrop<WR, WCP> for BE 
     }
 }
 
-impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BufBitWriter<BE, WR, WCP> {
+impl<WR: WordWrite<Word = u64>, WCP: WriteParams> BufBitWriter<BE, WR, WCP> {
     #[inline]
     fn partial_flush(&mut self) -> Result<()> {
         if self.bits_in_buffer < 64 {
@@ -98,7 +95,7 @@ impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BufBitWriter<BE, WR, WCP>
     }
 }
 
-impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BitWrite<BE> for BufBitWriter<BE, WR, WCP> {
+impl<WR: WordWrite<Word = u64>, WCP: WriteParams> BitWrite<BE> for BufBitWriter<BE, WR, WCP> {
     fn flush(mut self) -> Result<()> {
         BE::flush(&mut self)
     }
@@ -174,7 +171,7 @@ impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BitWrite<BE> for BufBitWr
     }
 }
 
-impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BBSWDrop<WR, WCP> for LE {
+impl<WR: WordWrite<Word = u64>, WCP: WriteParams> BBSWDrop<WR, WCP> for LE {
     #[inline]
     fn flush(data: &mut BufBitWriter<Self, WR, WCP>) -> Result<()> {
         data.partial_flush()?;
@@ -189,7 +186,7 @@ impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BBSWDrop<WR, WCP> for LE 
     }
 }
 
-impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BufBitWriter<LE, WR, WCP> {
+impl<WR: WordWrite<Word = u64>, WCP: WriteParams> BufBitWriter<LE, WR, WCP> {
     #[inline]
     fn partial_flush(&mut self) -> Result<()> {
         if self.bits_in_buffer < 64 {
@@ -202,7 +199,7 @@ impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BufBitWriter<LE, WR, WCP>
     }
 }
 
-impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BitWrite<LE> for BufBitWriter<LE, WR, WCP> {
+impl<WR: WordWrite<Word = u64>, WCP: WriteParams> BitWrite<LE> for BufBitWriter<LE, WR, WCP> {
     fn flush(mut self) -> Result<()> {
         LE::flush(&mut self)
     }
@@ -279,7 +276,7 @@ impl<WR: WordWrite<Word = u64>, WCP: WriteCodesParams> BitWrite<LE> for BufBitWr
     }
 }
 
-impl<WR: WordWrite<Word = u64> + WordSeek + WordRead<Word = u64>, WCP: WriteCodesParams>
+impl<WR: WordWrite<Word = u64> + WordSeek + WordRead<Word = u64>, WCP: WriteParams>
     BufBitWriter<LE, WR, WCP>
 {
     pub fn get_bit_pos(&self) -> usize {
@@ -301,7 +298,7 @@ impl<WR: WordWrite<Word = u64> + WordSeek + WordRead<Word = u64>, WCP: WriteCode
     }
 }
 
-impl<WR: WordWrite<Word = u64> + WordSeek + WordRead<Word = u64>, WCP: WriteCodesParams>
+impl<WR: WordWrite<Word = u64> + WordSeek + WordRead<Word = u64>, WCP: WriteParams>
     BufBitWriter<BE, WR, WCP>
 {
     pub fn get_bit_pos(&self) -> usize {
