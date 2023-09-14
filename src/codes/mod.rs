@@ -82,7 +82,7 @@ pub enum Code {
     Nibble,
 }
 
-pub mod codes_params;
+pub mod table_params;
 
 mod gamma;
 

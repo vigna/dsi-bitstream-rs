@@ -6,25 +6,31 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
-use crate::codes::codes_params::{DefaultWriteParams, WriteParams};
+use crate::codes::table_params::{DefaultWriteParams, WriteParams};
 use crate::codes::unary_tables;
 use crate::traits::*;
 use anyhow::{bail, Result};
 
-/// An implementation of [`BitWrite`] on a generic [`WordWrite`]
+/// An implementation of [`BitWrite`] for a
+/// [`WordWrite`] with word `u64` and of [`BitSeek`] for a [`WordSeek`].
+///
+/// Endianness can be selected using the parameter `E`.
+///
+/// This implementation uses a
+/// bit buffer to store bits that are not yet written. The type of the bit buffer
+/// is `u128`.
+
 #[derive(Debug)]
 pub struct BufBitWriter<E: BBSWDrop<WR, WCP>, WR: WordWrite, WCP: WriteParams = DefaultWriteParams>
 {
-    /// The backend used to write words to
+    /// The [`WordWrite`] to which we will write words.
     backend: WR,
-    /// The buffer where we store code writes until we have a word worth of bits
+    /// The buffer where we store code writes until we have a word worth of bits.
     buffer: u128,
     /// Counter of how many bits in buffer are to consider valid and should be
     /// written to be backend
     bits_in_buffer: usize,
-    /// Zero-sized marker as we do not store endianness.
     _marker_endianness: core::marker::PhantomData<E>,
-    /// Just needed to specify the code parameters.
     _marker_default_codes: core::marker::PhantomData<WCP>,
 }
 

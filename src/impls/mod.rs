@@ -24,10 +24,11 @@ match the type of the elements of the slice.
 
 Once you have a way to access words, you need can use [`BufBitReader`] and
 [`BufBitWriter`] to read or write bits from a word stream. Both have a statically
-selectable endianness and use an internal bit buffer to store bits that are not 
+selectable endianness and use an internal bit buffer to store bits that are not
 yet read or written: in the case of [`BufBitReader`] the type of the bit buffer
 is choosable, but it must at least twice as large as the word type; in the case
-of [`BufBitWriter`] the type of the bit buffer is fixed to `u32`.
+of [`BufBitWriter`] the type of the bit buffer is fixed to `u128`, and the
+[`BitWrite`](super::traits::BitWrite) trait is implemented only for `u64`.
 
 [`BitReader`] and reads memory directly, without using a bit buffer, but it is
 usually significantly slower than [`BufBitReader`]. It is however easy to benchmark
@@ -35,7 +36,6 @@ your application with both wrappers, and choose the fastest one.
 
 */
 
-*/
 mod mem_word_reader;
 pub use mem_word_reader::*;
 
