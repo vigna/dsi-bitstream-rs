@@ -18,6 +18,7 @@ libc = "0.2.141"
 [features]
 rtdsc = []
 reads = []
+delta_gamma = []
 
 [profile.release]
 opt-level = 3             # like --release

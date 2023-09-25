@@ -62,6 +62,23 @@ for bits in range(1, 18):
             cwd="benchmarks",
         ).decode()
 
+        gen_gamma(
+            read_bits=bits, 
+            write_max_val=9,
+            merged_table=merged_table,
+        )
+
+        # Run the benchmark with native cpu optimizations
+        stdout += subprocess.check_output(
+            "cargo run --release --features \"reads\",\"delta_gamma\"",
+            shell=True,
+            env={
+                **os.environ,
+                "RUSTFLAGS":"-C target-cpu=native",
+            },
+            cwd="benchmarks",
+        ).decode()
+
         # Dump the header only the first time
         if first_time:
             print("n_bits,tables_num," + stdout.split("\n")[0])

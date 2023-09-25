@@ -692,7 +692,7 @@ for i in range(256):
 
 
 def gen_zeta(read_bits, write_max_val, len_max_val=None, k=3, merged_table=False):
-    """Configuration of `gen_table` for delta"""
+    """Configuration of `gen_table` for zeta"""
     len_max_val = len_max_val or write_max_val
     gen_table(
         read_bits,
