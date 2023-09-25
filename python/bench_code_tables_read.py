@@ -7,6 +7,7 @@
 # SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
 #
 
+
 """Benchmark the code with different number of bits for the codes tables and
 create a `table.csv` file with all the results
 """
@@ -62,22 +63,24 @@ for bits in range(1, 18):
             cwd="benchmarks",
         ).decode()
 
-        gen_gamma(
-            read_bits=bits, 
-            write_max_val=9,
-            merged_table=merged_table,
-        )
+        for i in range(4, 5):
+            gamma_bits = 2**i + 1;
+            gen_gamma(
+                read_bits=bits, 
+                write_max_val=gamma_bits,
+                merged_table=merged_table,
+            )
 
-        # Run the benchmark with native cpu optimizations
-        stdout += subprocess.check_output(
-            "cargo run --release --features \"reads\",\"delta_gamma\"",
-            shell=True,
-            env={
-                **os.environ,
-                "RUSTFLAGS":"-C target-cpu=native",
-            },
-            cwd="benchmarks",
-        ).decode()
+            # Run the benchmark with native cpu optimizations
+            stdout += subprocess.check_output(
+                "cargo run --release --features \"reads\",\"delta_gamma\"",
+                shell=True,
+                env={
+                    **os.environ,
+                    "RUSTFLAGS":"-C target-cpu=native",
+                },
+                cwd="benchmarks",
+            ).decode()
 
         # Dump the header only the first time
         if first_time:

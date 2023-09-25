@@ -188,6 +188,7 @@ pub fn main() {
     // figure out how much overhead we add by measuring
     let calibration = calibrate_overhead();
     // print the header of the csv
+    #[cfg(not(feature = "delta_gamma"))]
     println!("pat,type,ratio,ns_avg,ns_std,ns_perc25,ns_median,ns_perc75");
 
     impl_code!(
