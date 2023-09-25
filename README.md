@@ -91,17 +91,12 @@ The implementation has several tunable parameters that can be used to improve pe
 on certain platforms. The default values are set to work well on most platforms, but you can
 customize them creating your own copy of the library.
 
-Benchmarks can be run as:
+You can run benchmarks and generate SVG plots with
 ```shell
-# Run the read benchmarks
-python3 ./python/bench_code_tables_read.py > read.csv
-# Make the plots
-cat read.csv | python3 ./python/plot_code_tables_read.py
-# Run the write benchmarks
-python3 ./python/bench_code_tables_write.py > write.csv
-# Make the plots
-cat write.csv | python3 ./python/plot_code_tables_write.py
+./python/gen_plots.sh
 ```
+which starts a few Python scripts (you can run selectively the scripts
+for a more fine-grained control).
 The cargo options in `benchmarks`select aggressive optimizations, and the 
 the python scripts run the benchmarks `--target-cpu=native`.
 
