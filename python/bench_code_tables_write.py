@@ -19,7 +19,6 @@ if not os.path.exists("benchmarks") or not os.path.exists("python"):
     sys.exit("You must run this script in the main project directory.")
 
 first_time = True
-
 for bits in range(1, 18):
     value_max = 2**bits - 1
     print("Table bits:", bits, file=sys.stderr)
@@ -32,22 +31,22 @@ for bits in range(1, 18):
         
         merged_table = tables_num == 1
         gen_unary(
-            read_bits=0, 
+            read_bits=0, # unused
             write_max_val=min(value_max, 64),
             merged_table=merged_table,
         )
         gen_gamma(
-            read_bits=11, 
+            read_bits=11, # unused
             write_max_val=value_max,
             merged_table=merged_table,
         )
         gen_delta(
-            read_bits=11, 
+            read_bits=11, # unused 
             write_max_val=value_max,
             merged_table=merged_table,
         )
         gen_zeta(
-            read_bits=12, 
+            read_bits=12, # unused 
             write_max_val=value_max,
             k=3,
             merged_table=merged_table,
@@ -63,6 +62,26 @@ for bits in range(1, 18):
             },
             cwd="benchmarks",
         ).decode()
+
+        for i in range(4, 5):
+            gamma_bits = 2**i + 1;
+	    value_max = 2**gamma_bits - 1
+            gen_gamma(
+                read_bits=gamma_bits, # unused
+                write_max_val=value_max,
+                merged_table=merged_table,
+            )
+
+            # Run the benchmark with native cpu optimizations
+            stdout += subprocess.check_output(
+                "cargo run --release --features \"delta_gamma\"",
+                shell=True,
+                env={
+                    **os.environ,
+                    "RUSTFLAGS":"-C target-cpu=native",
+                },
+                cwd="benchmarks",
+            ).decode()
 
         # Dump the header only the first time
         if first_time:

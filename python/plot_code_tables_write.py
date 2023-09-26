@@ -14,7 +14,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-nice = {"unary":"unary", "gamma":u"γ", "delta":u"δ (γ tables)", "delta_gamma":"δ (no γ tables)", "zeta3":u"ζ₃"}
+nice = {"unary":"unary", "gamma":u"γ", "delta":"δ (no γ tables)", "delta_gamma":u"δ (γ tables)", "zeta3":u"ζ₃"}
 
 df = pd.read_csv(sys.stdin, index_col=None, header=0)
 x_label = "max_log2"

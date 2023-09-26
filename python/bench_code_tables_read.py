@@ -7,7 +7,6 @@
 # SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
 #
 
-
 """Benchmark the code with different number of bits for the codes tables and
 create a `table.csv` file with all the results
 """
@@ -20,6 +19,7 @@ if not os.path.exists("benchmarks") or not os.path.exists("python"):
     sys.exit("You must run this script in the main project directory.")
 
 first_time = True
+
 for bits in range(1, 18):
     print("Table bits:", bits, file=sys.stderr)
     for tables_num in [1, 2]:
@@ -32,22 +32,22 @@ for bits in range(1, 18):
         merged_table = tables_num == 1
         gen_unary(
             read_bits=bits, 
-            write_max_val=64,
+            write_max_val=64, # unused
             merged_table=merged_table,
         )
         gen_gamma(
             read_bits=bits, 
-            write_max_val=255,
+            write_max_val=255, # unused
             merged_table=merged_table,
         )
         gen_delta(
             read_bits=bits, 
-            write_max_val=255,
+            write_max_val=255, # unused
             merged_table=merged_table,
         )
         gen_zeta(
             read_bits=bits, 
-            write_max_val=255,
+            write_max_val=255, # unused
             k=3,
             merged_table=merged_table,
         )
@@ -66,8 +66,8 @@ for bits in range(1, 18):
         for i in range(4, 5):
             gamma_bits = 2**i + 1;
             gen_gamma(
-                read_bits=bits, 
-                write_max_val=gamma_bits,
+                read_bits=gamma_bits, 
+                write_max_val=255, # unused
                 merged_table=merged_table,
             )
 
