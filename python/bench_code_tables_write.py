@@ -65,10 +65,10 @@ for bits in range(1, 18):
 
         for i in range(4, 5):
             gamma_bits = 2 * i + 1;
-            value_max = 2 ** gamma_bits - 1
+            gamma_value_max = 2 ** gamma_bits - 1
             gen_gamma(
                 read_bits=gamma_bits, # unused
-                write_max_val=value_max,
+                write_max_val=gamma_value_max,
                 merged_table=merged_table,
             )
 
