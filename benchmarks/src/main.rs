@@ -191,34 +191,33 @@ pub fn main() {
     #[cfg(not(feature = "delta_gamma"))]
     println!("pat,type,ratio,ns_avg,ns_std,ns_perc25,ns_median,ns_perc75");
 
-    impl_code!(
-        calibration,
-        "unary",
-        read_unary_param,
-        write_unary_param,
-        gen_unary_data
-    );
-    impl_code!(
-        calibration,
-        "gamma",
-        read_gamma_param,
-        write_gamma_param,
-        gen_gamma_data
-    );
-    impl_code!(
-        calibration,
-        "zeta3",
-        read_zeta3_param,
-        write_zeta3_param,
-        gen_zeta3_data
-    );
-
     // For delta we need to generate the data differently
     // because we have four cases, depending on whether
     // we use gamma tables or not.
 
     #[cfg(not(feature = "delta_gamma"))]
     {
+        impl_code!(
+            calibration,
+            "unary",
+            read_unary_param,
+            write_unary_param,
+            gen_unary_data
+        );
+        impl_code!(
+            calibration,
+            "gamma",
+            read_gamma_param,
+            write_gamma_param,
+            gen_gamma_data
+        );
+        impl_code!(
+            calibration,
+            "zeta3",
+            read_zeta3_param,
+            write_zeta3_param,
+            gen_zeta3_data
+        );
         // delta with gamma tables disabled
         bench!(
             calibration,

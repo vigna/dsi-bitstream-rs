@@ -5,7 +5,7 @@ use anyhow::Result;
 use crate::traits::{BitRead, BitWrite, BE, LE};
 use common_traits::*;
 /// How many bits are needed to read the tables in this
-pub const READ_BITS: usize = 2;
+pub const READ_BITS: usize = 1;
 /// The len we assign to a code that cannot be decoded through the table
 pub const MISSING_VALUE_LEN: u8 = 255;
 /// Maximum value writable using the table(s)
@@ -83,9 +83,9 @@ pub fn write_table_be<B: BitWrite<BE>>(backend: &mut B, value: u64) -> Result<Op
     })
 }
 ///Table used to speed up the reading of unary codes
-pub const READ_BE: &[(u8, u8)] = &[(0, 255), (1, 2), (0, 1), (0, 1), ];
+pub const READ_BE: &[(u8, u8)] = &[(0, 255), (0, 1), ];
 ///Table used to speed up the reading of unary codes
-pub const READ_LE: &[(u8, u8)] = &[(0, 255), (0, 1), (1, 2), (0, 1), ];
+pub const READ_LE: &[(u8, u8)] = &[(0, 255), (0, 1), ];
 ///Table used to speed up the writing of unary codes
 pub const WRITE_BE: &[(u128, u8)] = &[(1, 1),(1, 2),(1, 3),(1, 4),(1, 5),(1, 6),(1, 7),(1, 8),(1, 9),(1, 10),(1, 11),(1, 12),(1, 13),(1, 14),(1, 15),(1, 16),(1, 17),(1, 18),(1, 19),(1, 20),(1, 21),(1, 22),(1, 23),(1, 24),(1, 25),(1, 26),(1, 27),(1, 28),(1, 29),(1, 30),(1, 31),(1, 32),(1, 33),(1, 34),(1, 35),(1, 36),(1, 37),(1, 38),(1, 39),(1, 40),(1, 41),(1, 42),(1, 43),(1, 44),(1, 45),(1, 46),(1, 47),(1, 48),(1, 49),(1, 50),(1, 51),(1, 52),(1, 53),(1, 54),(1, 55),(1, 56),(1, 57),(1, 58),(1, 59),(1, 60),(1, 61),(1, 62),(1, 63),(1, 64),(1, 65),];
 ///Table used to speed up the writing of unary codes
