@@ -78,9 +78,9 @@ impl<W: Word, B: std::io::Seek> WordSeek for WordAdapter<W, B> {
 
     #[inline(always)]
     fn set_word_pos(&mut self, word_index: usize) -> Result<()> {
-        self.position = word_index;
         self.file
             .seek(std::io::SeekFrom::Start((word_index * W::BYTES) as u64))?;
+        self.position = word_index;
         Ok(())
     }
 }
