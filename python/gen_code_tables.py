@@ -712,27 +712,26 @@ def gen_zeta(read_bits, write_max_val, len_max_val=None, k=3, merged_table=False
 
 def generate_default_tables():
     # Generate the default tables
-    merged_table = True
     gen_unary(
-        read_bits=0, 
-        write_max_val=0,
-        merged_table=merged_table,
+        read_bits=0, # Never worth it
+        write_max_val=15, # Very useful
+        merged_table=False, # Never worth it
     )
     gen_gamma(
-        read_bits=9, 
+        read_bits=9, # No use on Xeon/ARM, useful on i7
         write_max_val=63,
-        merged_table=merged_table,
+        merged_table=False, # Irrelevant for speed, a bit smaller
     )
     gen_delta(
-        read_bits=0, 
-        write_max_val=1023,
-        merged_table=merged_table,
+        read_bits=0, # No use on any architecture if 9-bit gamma tables are available
+        write_max_val=1023, # Very useful, both tables (delta and gamma)
+        merged_table=False,
     )
     gen_zeta(
-        read_bits=12,
-        write_max_val=1023,
+        read_bits=12, # Necessary for all architectures
+        write_max_val=1023, # Very useful   
         k=3,
-        merged_table=merged_table,
+        merged_table=False, # A bit better on ARM, very slightly worse on i7, same on Xeon
     )
     subprocess.check_call(
         "cargo fmt", shell=True,
