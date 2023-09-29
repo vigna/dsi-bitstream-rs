@@ -173,7 +173,7 @@ impl<WR: WordWrite<Word = u64>, WCP: WriteParams> BitWrite<BE> for BufBitWriter<
     }
 
     fn write_unary(&mut self, value: u64) -> Result<usize> {
-        self.write_unary_param::<false>(value)
+        self.write_unary_param::<true>(value)
     }
 }
 
@@ -278,7 +278,7 @@ impl<WR: WordWrite<Word = u64>, WCP: WriteParams> BitWrite<LE> for BufBitWriter<
     }
 
     fn write_unary(&mut self, value: u64) -> Result<usize> {
-        self.write_unary_param::<false>(value)
+        self.write_unary_param::<true>(value)
     }
 }
 

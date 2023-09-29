@@ -718,7 +718,7 @@ def generate_default_tables():
         merged_table=False, # Never worth it
     )
     gen_gamma(
-        read_bits=9, # No use on Xeon/ARM, useful on i7
+        read_bits=9, # No use on Xeon/ARM, little useful on i7
         write_max_val=63,
         merged_table=False, # Irrelevant for speed, a bit smaller
     )
