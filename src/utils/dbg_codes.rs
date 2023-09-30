@@ -119,12 +119,12 @@ where
 }
 
 /// A wrapper over a code writer that prints on stdout all the codes written
-pub struct DbgBitWriter<E: Endianness, CW: CodeWrite<E>> {
+pub struct DbgCodeWriter<E: Endianness, CW: CodeWrite<E>> {
     writer: CW,
     _marker: core::marker::PhantomData<E>,
 }
 
-impl<E: Endianness, CW: CodeWrite<E>> DbgBitWriter<E, CW> {
+impl<E: Endianness, CW: CodeWrite<E>> DbgCodeWriter<E, CW> {
     pub fn new(cw: CW) -> Self {
         Self {
             writer: cw,
@@ -133,7 +133,7 @@ impl<E: Endianness, CW: CodeWrite<E>> DbgBitWriter<E, CW> {
     }
 }
 
-impl<E: Endianness, CW: CodeWrite<E>> BitWrite<E> for DbgBitWriter<E, CW> {
+impl<E: Endianness, CW: CodeWrite<E>> BitWrite<E> for DbgCodeWriter<E, CW> {
     fn write_bits(&mut self, value: u64, n_bits: usize) -> Result<usize> {
         println!("write_bits({}, {})", value, n_bits);
         self.writer.write_bits(value, n_bits)
@@ -151,21 +151,21 @@ impl<E: Endianness, CW: CodeWrite<E>> BitWrite<E> for DbgBitWriter<E, CW> {
     }
 }
 
-impl<E: Endianness, CW: CodeWrite<E>> GammaWrite<E> for DbgBitWriter<E, CW> {
+impl<E: Endianness, CW: CodeWrite<E>> GammaWrite<E> for DbgCodeWriter<E, CW> {
     fn write_gamma(&mut self, value: u64) -> Result<usize> {
         println!("{{g:{}}}", value);
         self.writer.write_gamma(value)
     }
 }
 
-impl<E: Endianness, CW: CodeWrite<E>> DeltaWrite<E> for DbgBitWriter<E, CW> {
+impl<E: Endianness, CW: CodeWrite<E>> DeltaWrite<E> for DbgCodeWriter<E, CW> {
     fn write_delta(&mut self, value: u64) -> Result<usize> {
         println!("{{d:{}}}", value);
         self.writer.write_delta(value)
     }
 }
 
-impl<E: Endianness, CW: CodeWrite<E>> ZetaWrite<E> for DbgBitWriter<E, CW> {
+impl<E: Endianness, CW: CodeWrite<E>> ZetaWrite<E> for DbgCodeWriter<E, CW> {
     fn write_zeta(&mut self, value: u64, k: u64) -> Result<usize> {
         println!("{{z{}:{}}}", value, k);
         self.writer.write_zeta(value, k)
