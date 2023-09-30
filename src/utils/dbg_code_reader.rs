@@ -9,12 +9,12 @@ use crate::traits::*;
 use anyhow::Result;
 
 /// A wrapper over a code reader that prints on stdout all the codes read
-pub struct DbgBitReader<E: Endianness, CR: ReadCodes<E>> {
+pub struct DbgCodeReader<E: Endianness, CR: CodeRead<E>> {
     reader: CR,
     _marker: core::marker::PhantomData<E>,
 }
 
-impl<E: Endianness, CR: ReadCodes<E>> DbgBitReader<E, CR> {
+impl<E: Endianness, CR: CodeRead<E>> DbgCodeReader<E, CR> {
     pub fn new(cr: CR) -> Self {
         Self {
             reader: cr,
@@ -23,7 +23,7 @@ impl<E: Endianness, CR: ReadCodes<E>> DbgBitReader<E, CR> {
     }
 }
 
-impl<E: Endianness, CR: ReadCodes<E>> BitRead<E> for DbgBitReader<E, CR>
+impl<E: Endianness, CR: CodeRead<E>> BitRead<E> for DbgCodeReader<E, CR>
 where
     CR::PeekWord: core::fmt::Display,
 {
@@ -55,7 +55,7 @@ where
     }
 }
 
-impl<E: Endianness, CR: ReadCodes<E>> GammaRead<E> for DbgBitReader<E, CR>
+impl<E: Endianness, CR: CodeRead<E>> GammaRead<E> for DbgCodeReader<E, CR>
 where
     CR::PeekWord: core::fmt::Display,
 {
@@ -72,7 +72,7 @@ where
     }
 }
 
-impl<E: Endianness, CR: ReadCodes<E>> DeltaRead<E> for DbgBitReader<E, CR>
+impl<E: Endianness, CR: CodeRead<E>> DeltaRead<E> for DbgCodeReader<E, CR>
 where
     CR::PeekWord: core::fmt::Display,
 {
@@ -89,7 +89,7 @@ where
     }
 }
 
-impl<E: Endianness, CR: ReadCodes<E>> ZetaRead<E> for DbgBitReader<E, CR>
+impl<E: Endianness, CR: CodeRead<E>> ZetaRead<E> for DbgCodeReader<E, CR>
 where
     CR::PeekWord: core::fmt::Display,
 {
@@ -119,12 +119,12 @@ where
 }
 
 /// A wrapper over a code writer that prints on stdout all the codes written
-pub struct DbgBitWriter<E: Endianness, CW: WriteCodes<E>> {
+pub struct DbgBitWriter<E: Endianness, CW: CodeWrite<E>> {
     writer: CW,
     _marker: core::marker::PhantomData<E>,
 }
 
-impl<E: Endianness, CW: WriteCodes<E>> DbgBitWriter<E, CW> {
+impl<E: Endianness, CW: CodeWrite<E>> DbgBitWriter<E, CW> {
     pub fn new(cw: CW) -> Self {
         Self {
             writer: cw,
@@ -133,7 +133,7 @@ impl<E: Endianness, CW: WriteCodes<E>> DbgBitWriter<E, CW> {
     }
 }
 
-impl<E: Endianness, CW: WriteCodes<E>> BitWrite<E> for DbgBitWriter<E, CW> {
+impl<E: Endianness, CW: CodeWrite<E>> BitWrite<E> for DbgBitWriter<E, CW> {
     fn write_bits(&mut self, value: u64, n_bits: usize) -> Result<usize> {
         println!("write_bits({}, {})", value, n_bits);
         self.writer.write_bits(value, n_bits)
@@ -151,21 +151,21 @@ impl<E: Endianness, CW: WriteCodes<E>> BitWrite<E> for DbgBitWriter<E, CW> {
     }
 }
 
-impl<E: Endianness, CW: WriteCodes<E>> GammaWrite<E> for DbgBitWriter<E, CW> {
+impl<E: Endianness, CW: CodeWrite<E>> GammaWrite<E> for DbgBitWriter<E, CW> {
     fn write_gamma(&mut self, value: u64) -> Result<usize> {
         println!("{{g:{}}}", value);
         self.writer.write_gamma(value)
     }
 }
 
-impl<E: Endianness, CW: WriteCodes<E>> DeltaWrite<E> for DbgBitWriter<E, CW> {
+impl<E: Endianness, CW: CodeWrite<E>> DeltaWrite<E> for DbgBitWriter<E, CW> {
     fn write_delta(&mut self, value: u64) -> Result<usize> {
         println!("{{d:{}}}", value);
         self.writer.write_delta(value)
     }
 }
 
-impl<E: Endianness, CW: WriteCodes<E>> ZetaWrite<E> for DbgBitWriter<E, CW> {
+impl<E: Endianness, CW: CodeWrite<E>> ZetaWrite<E> for DbgBitWriter<E, CW> {
     fn write_zeta(&mut self, value: u64, k: u64) -> Result<usize> {
         println!("{{z{}:{}}}", value, k);
         self.writer.write_zeta(value, k)
