@@ -11,5 +11,5 @@
 pub mod count;
 pub use count::*;
 
-pub mod dbg_code_reader;
-pub use dbg_code_reader::*;
+pub mod dbg_codes;
+pub use dbg_codes::*;
