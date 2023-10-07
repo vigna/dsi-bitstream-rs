@@ -121,7 +121,7 @@ mod test {
         ];
         let path = std::env::temp_dir().join("test_file_adapter_codes");
         {
-            let mut writer = <BufBitWriter<BE, u64, _>>::new(<WordAdapter<u64, _>>::new(
+            let mut writer = <BufBitWriter<BE, u128, _>>::new(<WordAdapter<u64, _>>::new(
                 std::fs::File::create(&path).unwrap(),
             ));
             for value in &data {
@@ -129,7 +129,7 @@ mod test {
             }
         }
         {
-            let mut reader = <BufBitReader<BE, u64, _>>::new(<WordAdapter<u32, _>>::new(
+            let mut reader = <BufBitReader<BE, u128, _>>::new(<WordAdapter<u32, _>>::new(
                 std::fs::File::open(&path).unwrap(),
             ));
             for value in &data {
@@ -137,7 +137,7 @@ mod test {
             }
         }
         {
-            let mut writer = <BufBitWriter<LE, u64, _>>::new(<WordAdapter<u64, _>>::new(
+            let mut writer = <BufBitWriter<LE, u128, _>>::new(<WordAdapter<u64, _>>::new(
                 std::fs::File::create(&path).unwrap(),
             ));
             for value in &data {
@@ -145,7 +145,7 @@ mod test {
             }
         }
         {
-            let mut reader = <BufBitReader<LE, u64, _>>::new(<WordAdapter<u32, _>>::new(
+            let mut reader = <BufBitReader<LE, u128, _>>::new(<WordAdapter<u32, _>>::new(
                 std::fs::File::open(&path).unwrap(),
             ));
             for value in &data {

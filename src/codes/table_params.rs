@@ -131,6 +131,7 @@ macro_rules! impl_default_write_codes {
         impl<BB: Word, WR: WordWrite<Word = u64>, DC: WriteParams> GammaWrite<$endianess>
             for BufBitWriter<$endianess, BB, WR, DC>
             where BB: DowncastableInto<WR::Word>,
+            u64: CastableInto<BB>,
         {
             #[inline(always)]
             fn write_gamma(&mut self, value: u64) -> Result<usize> {
@@ -141,6 +142,7 @@ macro_rules! impl_default_write_codes {
         impl<BB: Word, WR: WordWrite<Word = u64>, DC: WriteParams> DeltaWrite<$endianess>
             for BufBitWriter<$endianess, BB, WR, DC>
             where BB: DowncastableInto<WR::Word>,
+            u64: CastableInto<BB>,
         {
             #[inline(always)]
             fn write_delta(&mut self, value: u64) -> Result<usize> {
@@ -151,6 +153,7 @@ macro_rules! impl_default_write_codes {
         impl<BB: Word, WR: WordWrite<Word = u64>, DC: WriteParams> ZetaWrite<$endianess>
             for BufBitWriter<$endianess, BB, WR, DC>
             where BB: DowncastableInto<WR::Word>,
+            u64: CastableInto<BB>,
         {
             #[inline(always)]
             fn write_zeta(&mut self, value: u64, k: u64) -> Result<usize> {

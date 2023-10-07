@@ -59,7 +59,7 @@ for iter in 0..(WARMUP_ITERS + BENCH_ITERS) {
     // write the codes
     {
         // init the writer
-        let mut r = BufBitWriter::<$bo, _>::new(
+        let mut r = BufBitWriter::<$bo, u128, _>::new(
             MemWordWriterVec::new(&mut buffer)
         );
         // measure
