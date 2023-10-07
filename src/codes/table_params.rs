@@ -50,11 +50,11 @@ impl ReadParams for DefaultReadParams {}
 
 macro_rules! impl_default_read_codes {
     ($($endianess:ident),*) => {$(
-        impl<BW: Word, WR: WordRead, DC: ReadParams> GammaRead<$endianess>
-            for BufBitReader<$endianess, BW, WR, DC>
+        impl<BB: Word, WR: WordRead, DC: ReadParams> GammaRead<$endianess>
+            for BufBitReader<$endianess, BB, WR, DC>
         where
-            BW: DowncastableInto<WR::Word> + CastableInto<u64>,
-            WR::Word: UpcastableInto<BW> + UpcastableInto<u64>,
+            BB: DowncastableInto<WR::Word> + CastableInto<u64>,
+            WR::Word: UpcastableInto<BB> + UpcastableInto<u64>,
         {
             #[inline(always)]
             fn read_gamma(&mut self) -> Result<u64> {
@@ -71,11 +71,11 @@ macro_rules! impl_default_read_codes {
             }
         }
 
-        impl<BW: Word, WR: WordRead, DC: ReadParams> DeltaRead<$endianess>
-            for BufBitReader<$endianess, BW, WR, DC>
+        impl<BB: Word, WR: WordRead, DC: ReadParams> DeltaRead<$endianess>
+            for BufBitReader<$endianess, BB, WR, DC>
         where
-            BW: DowncastableInto<WR::Word> + CastableInto<u64>,
-            WR::Word: UpcastableInto<BW> + UpcastableInto<u64>,
+            BB: DowncastableInto<WR::Word> + CastableInto<u64>,
+            WR::Word: UpcastableInto<BB> + UpcastableInto<u64>,
         {
             #[inline(always)]
             fn read_delta(&mut self) -> Result<u64> {
@@ -88,11 +88,11 @@ macro_rules! impl_default_read_codes {
             }
         }
 
-        impl<BW: Word, WR: WordRead, DC: ReadParams> ZetaRead<$endianess>
-            for BufBitReader<$endianess, BW, WR, DC>
+        impl<BB: Word, WR: WordRead, DC: ReadParams> ZetaRead<$endianess>
+            for BufBitReader<$endianess, BB, WR, DC>
         where
-            BW: DowncastableInto<WR::Word> + CastableInto<u64>,
-            WR::Word: UpcastableInto<BW> + UpcastableInto<u64>,
+            BB: DowncastableInto<WR::Word> + CastableInto<u64>,
+            WR::Word: UpcastableInto<BB> + UpcastableInto<u64>,
         {
             #[inline(always)]
             fn read_zeta(&mut self, k: u64) -> Result<u64> {
@@ -128,7 +128,7 @@ impl WriteParams for DefaultWriteParams {}
 
 macro_rules! impl_default_write_codes {
     ($($endianess:ident),*) => {$(
-        impl<BB: Word, WR: WordWrite<Word = u64>, DC: WriteParams> GammaWrite<$endianess>
+        impl<BB: Word, WR: WordWrite, DC: WriteParams> GammaWrite<$endianess>
             for BufBitWriter<$endianess, BB, WR, DC>
             where BB: DowncastableInto<WR::Word>,
             u64: CastableInto<BB>,
@@ -139,7 +139,7 @@ macro_rules! impl_default_write_codes {
             }
         }
 
-        impl<BB: Word, WR: WordWrite<Word = u64>, DC: WriteParams> DeltaWrite<$endianess>
+        impl<BB: Word, WR: WordWrite, DC: WriteParams> DeltaWrite<$endianess>
             for BufBitWriter<$endianess, BB, WR, DC>
             where BB: DowncastableInto<WR::Word>,
             u64: CastableInto<BB>,
@@ -150,7 +150,7 @@ macro_rules! impl_default_write_codes {
             }
         }
 
-        impl<BB: Word, WR: WordWrite<Word = u64>, DC: WriteParams> ZetaWrite<$endianess>
+        impl<BB: Word, WR: WordWrite, DC: WriteParams> ZetaWrite<$endianess>
             for BufBitWriter<$endianess, BB, WR, DC>
             where BB: DowncastableInto<WR::Word>,
             u64: CastableInto<BB>,

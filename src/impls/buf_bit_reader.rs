@@ -245,7 +245,7 @@ where
             // if we encountered an 1 in the valid_bits we can return
             if zeros < self.valid_bits {
                 result += zeros as u64;
-                self.buffer <<= zeros + 1;
+                self.buffer = self.buffer << zeros << 1;
                 self.valid_bits -= zeros + 1;
                 return Ok(result);
             }
@@ -436,7 +436,7 @@ where
             // if we encountered an 1 in the valid_bits we can return
             if zeros < self.valid_bits {
                 result += zeros as u64;
-                self.buffer >>= zeros + 1;
+                self.buffer = self.buffer >> zeros >> 1;
                 self.valid_bits -= zeros + 1;
                 return Ok(result);
             }
