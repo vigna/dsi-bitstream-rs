@@ -85,6 +85,7 @@ where
         // if we have 64 valid bits, we don't have space for a new word
         // and by definition we can only read
         let free_bits = BB::BITS - self.valid_bits;
+        dbg!(free_bits, WR::Word::BITS);
         debug_assert!(free_bits >= WR::Word::BITS);
 
         let new_word: BB = self
@@ -145,6 +146,7 @@ where
             return Ok(Self::PeekWord::ZERO);
         }
         // a peek can do at most one refill, otherwise we might loose data
+        dbg!(n_bits, self.valid_bits);
         if n_bits > self.valid_bits {
             self.refill()?;
         }
@@ -194,7 +196,7 @@ where
         // most common path, we just read the buffer
         if n_bits <= self.valid_bits {
             // Valid right shift of BB::BITS - n_bits, even when n_bits is zero
-            let result: u64 = (self.buffer >> (BB::BITS - n_bits - 1) >> 1_u8).cast();
+            let result: u64 = (self.buffer >> (BB::BITS - n_bits - 1) >> 1_u32).cast();
             self.valid_bits -= n_bits;
             self.buffer <<= n_bits;
             return Ok(result);
@@ -222,7 +224,7 @@ where
         // compose the remaining bits
         let upcasted: u64 = new_word.upcast();
         let final_bits: u64 = (upcasted >> self.valid_bits).downcast();
-        result = (result << n_bits) | final_bits;
+        result = (result << n_bits - 1 << 1) | final_bits;
         // and put the rest in the buffer
         self.buffer = new_word.upcast();
         self.buffer = (self.buffer << (BB::BITS - self.valid_bits - 1)) << 1;
@@ -393,7 +395,8 @@ where
         result |= final_bits << bits_in_res;
         // and put the rest in the buffer
         self.buffer = new_word.upcast();
-        self.buffer >>= n_bits;
+        // TODO: n_bits might be equal to buffer size (?!?)
+        self.buffer = self.buffer >> n_bits - 1 >> 1;
 
         Ok(result)
     }
