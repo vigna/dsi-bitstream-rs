@@ -143,6 +143,7 @@ where
     #[inline]
     #[allow(clippy::collapsible_if)]
     fn write_unary_param<const USE_TABLE: bool>(&mut self, mut value: u64) -> Result<usize> {
+        debug_assert_ne!(value, u64::MAX);
         if USE_TABLE {
             if let Some(len) = unary_tables::write_table_be(self, value)? {
                 return Ok(len);
@@ -161,6 +162,7 @@ where
         }
 
         if space_left_in_buffer == WR::Word::BITS as _ {
+            // There's nothing in the buffer, and we need to write WR::Word::BITS zeros
             self.backend.write_word(WR::Word::ZERO)?;
         } else {
             self.buffer = self.buffer << space_left_in_buffer;
@@ -272,6 +274,7 @@ where
         }
 
         if space_left_in_buffer == WR::Word::BITS as _ {
+            // There's nothing in the buffer, and we need to write WR::Word::BITS zeros
             self.backend.write_word(WR::Word::ZERO)?;
         } else {
             self.buffer = self.buffer >> space_left_in_buffer;
