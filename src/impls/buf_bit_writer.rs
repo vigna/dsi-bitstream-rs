@@ -110,10 +110,6 @@ where
 
     #[inline]
     fn write_bits(&mut self, value: u64, n_bits: usize) -> Result<usize> {
-        if n_bits > 64 {
-            bail!("Too many bits: {} > 64", n_bits);
-        }
-
         #[cfg(test)]
         if (value & (1_u128 << n_bits).wrapping_sub(1) as u64) != value {
             bail!("Error value {} does not fit in {} bits", value, n_bits);
@@ -131,6 +127,10 @@ where
             self.buffer |= value.cast();
             self.bits_in_buffer += n_bits;
             return Ok(n_bits);
+        }
+
+        if n_bits > 64 {
+            bail!("Too many bits: {} > 64", n_bits);
         }
 
         // Load the bottom of the buffer, if necessary, and dump the whole buffer
@@ -222,10 +222,6 @@ where
 
     #[inline]
     fn write_bits(&mut self, mut value: u64, n_bits: usize) -> Result<usize> {
-        if n_bits > 64 {
-            bail!("Too many bits: {} > 64", n_bits);
-        }
-
         #[cfg(test)]
         if (value & (1_u128 << n_bits).wrapping_sub(1) as u64) != value {
             bail!("Error value {} does not fit in {} bits", value, n_bits);
@@ -243,6 +239,10 @@ where
             self.buffer |= value.cast() << (WW::Word::BITS - n_bits);
             self.bits_in_buffer += n_bits;
             return Ok(n_bits);
+        }
+
+        if n_bits > 64 {
+            bail!("Too many bits: {} > 64", n_bits);
         }
 
         // Load the top of the buffer, if necessary, and dump the whole buffer
