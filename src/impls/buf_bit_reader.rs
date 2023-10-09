@@ -257,27 +257,30 @@ where
                 return Ok(res);
             }
         }
-        let mut result: u64 = 0;
+
+        // count the zeros from the left
+        let zeros: usize = self.buffer.leading_zeros() as _;
+
+        // if we encountered an 1 in the bits_in_buffer we can return
+        if zeros < self.bits_in_buffer {
+            self.buffer = self.buffer << zeros << 1;
+            self.bits_in_buffer -= zeros + 1;
+            return Ok(zeros as u64);
+        }
+
+        let mut result: u64 = self.bits_in_buffer as _;
+
         loop {
-            // count the zeros from the left
-            let zeros: usize = self.buffer.leading_zeros() as usize;
+            let new_word = self.backend.read_word()?.to_be();
 
-            // if we encountered an 1 in the bits_in_buffer we can return
-            if zeros < self.bits_in_buffer {
-                result += zeros as u64;
-                self.buffer = self.buffer << zeros << 1;
-                self.bits_in_buffer -= zeros + 1;
-                return Ok(result);
+            if new_word != WR::Word::ZERO {
+                let zeros: usize = new_word.leading_zeros() as _;
+                self.buffer =
+                    UpcastableInto::<BB<WR>>::upcast(new_word) << WR::Word::BITS + zeros << 1;
+                self.bits_in_buffer = WR::Word::BITS - zeros - 1;
+                return Ok(result + zeros as u64);
             }
-
-            result += self.bits_in_buffer as u64;
-
-            // otherwise we didn't encounter the ending 1 yet so we need to
-            // refill and iter again
-            let new_word: BB<WR> =
-                UpcastableInto::<BB<WR>>::upcast(self.backend.read_word()?.to_be());
-            self.bits_in_buffer = WR::Word::BITS;
-            self.buffer = new_word << (BB::<WR>::BITS - WR::Word::BITS);
+            result += WR::Word::BITS as u64;
         }
     }
 }
@@ -450,27 +453,29 @@ where
                 return Ok(res);
             }
         }
-        let mut result: u64 = 0;
+
+        // count the zeros from the right
+        let zeros: usize = self.buffer.trailing_zeros() as usize;
+
+        // if we encountered an 1 in the bits_in_buffer we can return
+        if zeros < self.bits_in_buffer {
+            self.buffer = self.buffer >> zeros >> 1;
+            self.bits_in_buffer -= zeros + 1;
+            return Ok(zeros as u64);
+        }
+
+        let mut result: u64 = self.bits_in_buffer as _;
+
         loop {
-            // count the zeros from the left
-            let zeros: usize = self.buffer.trailing_zeros() as usize;
+            let new_word = self.backend.read_word()?.to_le();
 
-            // if we encountered an 1 in the bits_in_buffer we can return
-            if zeros < self.bits_in_buffer {
-                result += zeros as u64;
-                self.buffer = self.buffer >> zeros >> 1;
-                self.bits_in_buffer -= zeros + 1;
-                return Ok(result);
+            if new_word != WR::Word::ZERO {
+                let zeros: usize = new_word.trailing_zeros() as _;
+                self.buffer = UpcastableInto::<BB<WR>>::upcast(new_word) >> zeros >> 1;
+                self.bits_in_buffer = WR::Word::BITS - zeros - 1;
+                return Ok(result + zeros as u64);
             }
-
-            result += self.bits_in_buffer as u64;
-
-            // otherwise we didn't encounter the ending 1 yet so we need to
-            // refill and iter again
-            let new_word: BB<WR> =
-                UpcastableInto::<BB<WR>>::upcast(self.backend.read_word()?.to_le());
-            self.bits_in_buffer = WR::Word::BITS;
-            self.buffer = new_word;
+            result += WR::Word::BITS as u64;
         }
     }
 }
