@@ -50,7 +50,7 @@ impl ReadParams for DefaultReadParams {}
 
 macro_rules! impl_default_read_codes {
     ($($endianess:ident),*) => {$(
-        impl<BB: Word, WR: WordRead, DC: ReadParams> GammaRead<$endianess>
+        impl<BB: UnsignedInt, WR: WordRead, DC: ReadParams> GammaRead<$endianess>
             for BufBitReader<$endianess, BB, WR, DC>
         where
             BB: DowncastableInto<WR::Word> + CastableInto<u64>,
@@ -71,7 +71,7 @@ macro_rules! impl_default_read_codes {
             }
         }
 
-        impl<BB: Word, WR: WordRead, DC: ReadParams> DeltaRead<$endianess>
+        impl<BB: UnsignedInt, WR: WordRead, DC: ReadParams> DeltaRead<$endianess>
             for BufBitReader<$endianess, BB, WR, DC>
         where
             BB: DowncastableInto<WR::Word> + CastableInto<u64>,
@@ -88,7 +88,7 @@ macro_rules! impl_default_read_codes {
             }
         }
 
-        impl<BB: Word, WR: WordRead, DC: ReadParams> ZetaRead<$endianess>
+        impl<BB: UnsignedInt, WR: WordRead, DC: ReadParams> ZetaRead<$endianess>
             for BufBitReader<$endianess, BB, WR, DC>
         where
             BB: DowncastableInto<WR::Word> + CastableInto<u64>,

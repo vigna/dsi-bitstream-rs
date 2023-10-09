@@ -8,7 +8,7 @@
 
 use crate::traits::*;
 use anyhow::{bail, Result};
-use common_traits::Word;
+use common_traits::UnsignedInt;
 
 /// An Implementation of [`WordRead`] and [`WordSeek`] for a slice.
 ///
@@ -42,13 +42,13 @@ use common_traits::Word;
 /// assert_eq!(word_reader.get_word_pos(), 2);
 /// ```
 #[derive(Debug, Clone, PartialEq)]
-pub struct MemWordReader<W: Word, B: AsRef<[W]>> {
+pub struct MemWordReader<W: UnsignedInt, B: AsRef<[W]>> {
     data: B,
     word_index: usize,
     _marker: core::marker::PhantomData<W>,
 }
 
-impl<W: Word, B: AsRef<[W]>> MemWordReader<W, B> {
+impl<W: UnsignedInt, B: AsRef<[W]>> MemWordReader<W, B> {
     /// Create a new [`MemWordReader`] from a slice of data
     #[must_use]
     pub fn new(data: B) -> Self {
@@ -70,13 +70,13 @@ impl<W: Word, B: AsRef<[W]>> MemWordReader<W, B> {
 
 ///
 #[derive(Debug, Clone, PartialEq)]
-pub struct MemWordReaderInf<W: Word, B: AsRef<[W]>> {
+pub struct MemWordReaderInf<W: UnsignedInt, B: AsRef<[W]>> {
     data: B,
     word_index: usize,
     _marker: core::marker::PhantomData<W>,
 }
 
-impl<W: Word, B: AsRef<[W]>> MemWordReaderInf<W, B> {
+impl<W: UnsignedInt, B: AsRef<[W]>> MemWordReaderInf<W, B> {
     /// Create a new [`MemWordReaderInf`] from a slice of data
     #[must_use]
     pub fn new(data: B) -> Self {
@@ -87,7 +87,7 @@ impl<W: Word, B: AsRef<[W]>> MemWordReaderInf<W, B> {
         }
     }
 }
-impl<W: Word, B: AsRef<[W]>> WordRead for MemWordReaderInf<W, B> {
+impl<W: UnsignedInt, B: AsRef<[W]>> WordRead for MemWordReaderInf<W, B> {
     type Word = W;
 
     #[inline(always)]
@@ -103,7 +103,7 @@ impl<W: Word, B: AsRef<[W]>> WordRead for MemWordReaderInf<W, B> {
     }
 }
 
-impl<W: Word, B: AsRef<[W]>> WordSeek for MemWordReaderInf<W, B> {
+impl<W: UnsignedInt, B: AsRef<[W]>> WordSeek for MemWordReaderInf<W, B> {
     #[inline(always)]
     #[must_use]
     fn get_word_pos(&self) -> usize {
@@ -117,7 +117,7 @@ impl<W: Word, B: AsRef<[W]>> WordSeek for MemWordReaderInf<W, B> {
     }
 }
 
-impl<W: Word, B: AsRef<[W]>> WordRead for MemWordReader<W, B> {
+impl<W: UnsignedInt, B: AsRef<[W]>> WordRead for MemWordReader<W, B> {
     type Word = W;
 
     #[inline]
@@ -134,7 +134,7 @@ impl<W: Word, B: AsRef<[W]>> WordRead for MemWordReader<W, B> {
     }
 }
 
-impl<W: Word, B: AsRef<[W]>> WordSeek for MemWordReader<W, B> {
+impl<W: UnsignedInt, B: AsRef<[W]>> WordSeek for MemWordReader<W, B> {
     #[inline]
     #[must_use]
     fn get_word_pos(&self) -> usize {

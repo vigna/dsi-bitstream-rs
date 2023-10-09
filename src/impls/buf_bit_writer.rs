@@ -10,7 +10,7 @@ use crate::codes::table_params::{DefaultWriteParams, WriteParams};
 use crate::codes::unary_tables;
 use crate::traits::*;
 use anyhow::{bail, Result};
-use common_traits::{CastableInto, Integer, Number};
+use common_traits::{Bits, CastableInto, Integer, Number};
 
 /// An implementation of [`BitWrite`] for a
 /// [`WordWrite`] and of [`BitSeek`] for a [`WordSeek`].

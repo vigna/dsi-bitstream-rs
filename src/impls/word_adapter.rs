@@ -18,13 +18,13 @@ use common_traits::*;
 /// bytes (such as [`std::fs::File`], [`std::io::BufReader`], sockets, etc.)
 /// into a source or destination of words.
 #[derive(Clone)]
-pub struct WordAdapter<W: Word, B> {
+pub struct WordAdapter<W: UnsignedInt, B> {
     file: B,
     position: usize,
     _marker: core::marker::PhantomData<W>,
 }
 
-impl<W: Word, B> WordAdapter<W, B> {
+impl<W: UnsignedInt, B> WordAdapter<W, B> {
     /// Create a new WordAdapter
     pub fn new(file: B) -> Self {
         Self {
@@ -35,7 +35,7 @@ impl<W: Word, B> WordAdapter<W, B> {
     }
 }
 
-impl<W: Word, B> core::fmt::Debug for WordAdapter<W, B> {
+impl<W: UnsignedInt, B> core::fmt::Debug for WordAdapter<W, B> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("WordAdapter")
             .field("file", &"CAN'T PRINT FILE")
@@ -45,7 +45,7 @@ impl<W: Word, B> core::fmt::Debug for WordAdapter<W, B> {
 }
 
 /// Convert [`std::io::Read`] to [`WordRead`]
-impl<W: Word, B: std::io::Read> WordRead for WordAdapter<W, B> {
+impl<W: UnsignedInt, B: std::io::Read> WordRead for WordAdapter<W, B> {
     type Word = W;
 
     #[inline]
@@ -58,7 +58,7 @@ impl<W: Word, B: std::io::Read> WordRead for WordAdapter<W, B> {
 }
 
 /// Convert [`std::io::Write`] to [`WordWrite`]
-impl<W: Word, B: std::io::Write> WordWrite for WordAdapter<W, B> {
+impl<W: UnsignedInt, B: std::io::Write> WordWrite for WordAdapter<W, B> {
     type Word = W;
 
     #[inline]
@@ -70,7 +70,7 @@ impl<W: Word, B: std::io::Write> WordWrite for WordAdapter<W, B> {
 }
 
 /// Convert [`std::io::Seek`] to [`WordSeek`]
-impl<W: Word, B: std::io::Seek> WordSeek for WordAdapter<W, B> {
+impl<W: UnsignedInt, B: std::io::Seek> WordSeek for WordAdapter<W, B> {
     #[inline(always)]
     fn get_word_pos(&self) -> usize {
         self.position
