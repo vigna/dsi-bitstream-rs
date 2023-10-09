@@ -367,7 +367,7 @@ impl<E: Endianness, BR: BitRead<E> + BitSeek, const PRINT: bool> BitSeek
 fn test_count() -> Result<()> {
     use crate::prelude::*;
     let mut buffer = <Vec<u64>>::new();
-    let bit_write = <BufBitWriter<LE, u128, _>>::new(MemWordWriterVec::new(&mut buffer));
+    let bit_write = <BufBitWriter<LE, _>>::new(MemWordWriterVec::new(&mut buffer));
     let mut count_bit_write = CountBitWriter::<_, _, true>::new(bit_write);
 
     count_bit_write.write_unary(5)?;

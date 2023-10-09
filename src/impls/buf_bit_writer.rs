@@ -10,7 +10,7 @@ use crate::codes::table_params::{DefaultWriteParams, WriteParams};
 use crate::codes::unary_tables;
 use crate::traits::*;
 use anyhow::{bail, Result};
-use common_traits::{CastableInto, DowncastableInto, Integer, Number, UpcastableInto, Word};
+use common_traits::{CastableInto, Integer, Number};
 
 /// An implementation of [`BitWrite`] for a
 /// [`WordWrite`] with word `u64` and of [`BitSeek`] for a [`WordSeek`].
@@ -22,32 +22,26 @@ use common_traits::{CastableInto, DowncastableInto, Integer, Number, UpcastableI
 /// is `u128`.
 
 #[derive(Debug)]
-pub struct BufBitWriter<
-    E: BBSWDrop<BB, WR, WCP>,
-    BB: Word,
-    WR: WordWrite,
-    WCP: WriteParams = DefaultWriteParams,
-> {
+pub struct BufBitWriter<E: BBSWDrop<WR, WCP>, WR: WordWrite, WCP: WriteParams = DefaultWriteParams>
+{
     /// The [`WordWrite`] to which we will write words.
     backend: WR,
     /// The buffer where we store bits we have a word worth of them.
     /// Note that only `bits_in_buffer` bits are valid:
     /// the rest have undefined value.
-    buffer: BB,
+    buffer: WR::Word,
     /// How many bits in buffer are valid, from zero (included)
-    /// to `BB::BITS` (excluded).
+    /// to `WR::Word::BITS` (excluded).
     bits_in_buffer: usize,
     _marker_endianness: core::marker::PhantomData<(E, WCP)>,
 }
 
-impl<E: BBSWDrop<BB, WR, WCP>, BB: Word, WR: WordWrite, WCP: WriteParams>
-    BufBitWriter<E, BB, WR, WCP>
-{
+impl<E: BBSWDrop<WR, WCP>, WR: WordWrite, WCP: WriteParams> BufBitWriter<E, WR, WCP> {
     /// Create a new [`BufBitWriter`] from a backend word writer
     pub fn new(backend: WR) -> Self {
         Self {
             backend,
-            buffer: BB::ZERO,
+            buffer: WR::Word::ZERO,
             bits_in_buffer: 0,
             _marker_endianness: core::marker::PhantomData,
         }
@@ -56,12 +50,12 @@ impl<E: BBSWDrop<BB, WR, WCP>, BB: Word, WR: WordWrite, WCP: WriteParams>
     #[inline(always)]
     #[must_use]
     fn space_left_in_buffer(&self) -> usize {
-        BB::BITS - self.bits_in_buffer
+        WR::Word::BITS - self.bits_in_buffer
     }
 }
 
-impl<E: BBSWDrop<BB, WR, WCP>, BB: Word, WR: WordWrite, WCP: WriteParams> core::ops::Drop
-    for BufBitWriter<E, BB, WR, WCP>
+impl<E: BBSWDrop<WR, WCP>, WR: WordWrite, WCP: WriteParams> core::ops::Drop
+    for BufBitWriter<E, WR, WCP>
 {
     fn drop(&mut self) {
         // During a drop we can't save anything if it goes bad :/
@@ -74,59 +68,26 @@ impl<E: BBSWDrop<BB, WR, WCP>, BB: Word, WR: WordWrite, WCP: WriteParams> core::
 /// private traits in public defs, an user should never need to implement this.
 ///
 /// I discussed this [here](https://users.rust-lang.org/t/on-generic-associated-enum-and-type-comparisons/92072).
-pub trait BBSWDrop<BB: Word, WR: WordWrite, WCP: WriteParams>: Sized + Endianness {
+pub trait BBSWDrop<WR: WordWrite, WCP: WriteParams>: Sized + Endianness {
     /// handle the drop
-    fn flush(data: &mut BufBitWriter<Self, BB, WR, WCP>) -> Result<()>;
+    fn flush(data: &mut BufBitWriter<Self, WR, WCP>) -> Result<()>;
 }
 
-impl<BB: Word, WR: WordWrite, WCP: WriteParams> BBSWDrop<BB, WR, WCP> for BE
-where
-    BB: DowncastableInto<WR::Word>,
-{
+impl<WR: WordWrite, WCP: WriteParams> BBSWDrop<WR, WCP> for BE {
     #[inline]
-    fn flush(data: &mut BufBitWriter<Self, BB, WR, WCP>) -> Result<()> {
-        data.partial_flush()?;
+    fn flush(data: &mut BufBitWriter<Self, WR, WCP>) -> Result<()> {
         if data.bits_in_buffer > 0 {
-            let mut word = data.buffer.downcast();
-            let shamt = WR::Word::BITS as usize - data.bits_in_buffer;
-            word <<= shamt;
-            data.backend.write_word(word.to_be())?;
-
+            data.buffer <<= WR::Word::BITS as usize - data.bits_in_buffer;
+            data.backend.write_word(data.buffer.to_be())?;
             data.bits_in_buffer = 0;
         }
         Ok(())
     }
 }
 
-impl<BB: Word, WR: WordWrite, WCP: WriteParams> BufBitWriter<BE, BB, WR, WCP>
+impl<WR: WordWrite, WCP: WriteParams> BitWrite<BE> for BufBitWriter<BE, WR, WCP>
 where
-    BB: DowncastableInto<WR::Word>,
-{
-    #[inline]
-    fn partial_flush(&mut self) -> Result<()> {
-        if self.bits_in_buffer < WR::Word::BITS as usize {
-            return Ok(());
-        }
-        self.bits_in_buffer -= WR::Word::BITS as usize;
-        let word = (self.buffer >> self.bits_in_buffer).downcast();
-        self.backend.write_word(word.to_be())?;
-        Ok(())
-    }
-
-    #[inline(always)]
-    fn dump_full_buffer(&mut self) -> Result<()> {
-        let high_word = (self.buffer >> WR::Word::BITS).downcast();
-        let low_word = self.buffer.downcast();
-        self.backend.write_word(high_word.to_be())?;
-        self.backend.write_word(low_word.to_be())
-    }
-}
-
-impl<BB: Word, WR: WordWrite, WCP: WriteParams> BitWrite<BE> for BufBitWriter<BE, BB, WR, WCP>
-where
-    BB: DowncastableInto<WR::Word>,
-    u64: CastableInto<BB>,
-    u64: DowncastableInto<WR::Word>,
+    u64: CastableInto<WR::Word>,
 {
     fn flush(mut self) -> Result<()> {
         BE::flush(&mut self)
@@ -154,27 +115,28 @@ where
             self.buffer = self.buffer << n_bits - 1 << 1;
             self.buffer |= value.cast();
             self.bits_in_buffer += n_bits;
-            self.partial_flush()?;
             return Ok(n_bits);
         }
 
         // Load the bottom of the buffer and dump the whole buffer
         self.buffer <<= space_left_in_buffer;
-        self.buffer |= (value >> n_bits - space_left_in_buffer).cast();
-        self.dump_full_buffer()?;
+        if n_bits - space_left_in_buffer != u64::BITS as _ {
+            self.buffer |= (value >> n_bits - space_left_in_buffer).cast();
+        }
+        self.backend.write_word(self.buffer.to_be())?;
 
         let mut to_write = n_bits - space_left_in_buffer;
 
         for _ in 0..to_write / WR::Word::BITS as usize {
             self.backend
-                .write_word((value >> to_write - WR::Word::BITS).downcast().to_be())?;
+                .write_word((value >> to_write - WR::Word::BITS).cast().to_be())?;
             // Note that since the buffer cannot be full, this instruction
             // cannot be executed when WR::Word == u64.
             to_write -= WR::Word::BITS;
         }
 
         self.bits_in_buffer = to_write;
-        self.buffer = value.cast() & (BB::ONE << to_write) - BB::ONE;
+        self.buffer = value.cast() & (WR::Word::ONE << to_write) - WR::Word::ONE;
         Ok(n_bits)
     }
 
@@ -192,14 +154,15 @@ where
 
         if code_length <= space_left {
             self.bits_in_buffer += code_length as usize;
-            self.buffer = self.buffer << value << 1; // Might be code_length == BB::BITS
-            self.buffer |= BB::ONE;
-            self.partial_flush()?;
+            self.buffer = self.buffer << value << 1; // Might be code_length == WR::Word::BITS
+            self.buffer |= WR::Word::ONE;
             return Ok(code_length as usize);
         }
 
-        self.buffer = self.buffer << space_left - 1 << 1;
-        self.dump_full_buffer()?;
+        if space_left != 0 {
+            self.buffer = self.buffer << space_left - 1 << 1;
+        }
+        self.backend.write_word(self.buffer.to_be())?;
 
         value -= space_left;
 
@@ -209,7 +172,7 @@ where
 
         value %= WR::Word::BITS as u64;
 
-        self.buffer = BB::ONE;
+        self.buffer = WR::Word::ONE;
         self.bits_in_buffer = value as usize + 1;
         Ok(code_length as usize)
     }
@@ -219,53 +182,21 @@ where
     }
 }
 
-impl<BB: Word, WR: WordWrite, WCP: WriteParams> BBSWDrop<BB, WR, WCP> for LE
-where
-    BB: DowncastableInto<WR::Word>,
-{
+impl<WR: WordWrite, WCP: WriteParams> BBSWDrop<WR, WCP> for LE {
     #[inline]
-    fn flush(data: &mut BufBitWriter<Self, BB, WR, WCP>) -> Result<()> {
-        data.partial_flush()?;
+    fn flush(data: &mut BufBitWriter<Self, WR, WCP>) -> Result<()> {
         if data.bits_in_buffer > 0 {
-            let mut word = (data.buffer >> WR::Word::BITS).downcast();
-            let shamt = WR::Word::BITS as usize - data.bits_in_buffer;
-            word >>= shamt;
-            data.backend.write_word(word.to_le())?;
+            data.buffer >>= WR::Word::BITS as usize - data.bits_in_buffer;
+            data.backend.write_word(data.buffer.to_le())?;
             data.bits_in_buffer = 0;
         }
         Ok(())
     }
 }
 
-impl<BB: Word, WR: WordWrite, WCP: WriteParams> BufBitWriter<LE, BB, WR, WCP>
+impl<WR: WordWrite, WCP: WriteParams> BitWrite<LE> for BufBitWriter<LE, WR, WCP>
 where
-    BB: DowncastableInto<WR::Word>,
-{
-    #[inline]
-    fn partial_flush(&mut self) -> Result<()> {
-        if self.bits_in_buffer < WR::Word::BITS as usize {
-            return Ok(());
-        }
-        let word = (self.buffer >> (BB::BITS - self.bits_in_buffer)).downcast();
-        self.bits_in_buffer -= WR::Word::BITS as usize;
-        self.backend.write_word(word.to_le())?;
-        Ok(())
-    }
-
-    #[inline(always)]
-    fn dump_full_buffer(&mut self) -> Result<()> {
-        let high_word = (self.buffer >> WR::Word::BITS).downcast();
-        let low_word = self.buffer.downcast();
-        self.backend.write_word(low_word.to_le())?;
-        self.backend.write_word(high_word.to_le())
-    }
-}
-
-impl<BB: Word, WR: WordWrite, WCP: WriteParams> BitWrite<LE> for BufBitWriter<LE, BB, WR, WCP>
-where
-    BB: DowncastableInto<WR::Word>,
-    u64: CastableInto<BB>,
-    u64: DowncastableInto<WR::Word>,
+    u64: CastableInto<WR::Word>,
 {
     fn flush(mut self) -> Result<()> {
         LE::flush(&mut self)
@@ -291,25 +222,26 @@ where
             }
             // to_write might be 64 and the buffer might be empty
             self.buffer = self.buffer >> n_bits - 1 >> 1;
-            self.buffer |= value.cast() << (BB::BITS - n_bits);
+            self.buffer |= value.cast() << (WR::Word::BITS - n_bits);
             self.bits_in_buffer += n_bits;
-            self.partial_flush()?;
             return Ok(n_bits);
         }
 
         // Load the top of the buffer and dump the whole buffer
         self.buffer >>= space_left_in_buffer;
-        self.buffer |= value.cast() << self.bits_in_buffer;
-        self.dump_full_buffer()?;
+        if self.bits_in_buffer != WR::Word::BITS {
+            self.buffer |= value.cast() << self.bits_in_buffer;
+        }
+        self.backend.write_word(self.buffer.to_le())?;
 
         let to_write = n_bits - space_left_in_buffer;
         value >>= space_left_in_buffer;
 
         for _ in 0..to_write / WR::Word::BITS as usize {
-            self.backend.write_word(value.downcast())?;
-            // Note that since the buffer cannot be full, this instruction
-            // cannot be executed when WR::Word == u64.
-            value >>= WR::Word::BITS;
+            self.backend.write_word(value.cast().to_le())?;
+            // This might be executed with WR::Word == u64,
+            // but it cannot be executed with WR::Word == u128
+            value = value >> WR::Word::BITS - 1 >> 1;
         }
 
         self.bits_in_buffer = to_write % WR::Word::BITS;
@@ -333,13 +265,14 @@ where
         if code_length <= space_left {
             self.bits_in_buffer += code_length as usize;
             self.buffer = self.buffer >> value >> 1;
-            self.buffer |= BB::ONE << BB::BITS - 1;
-            self.partial_flush()?;
+            self.buffer |= WR::Word::ONE << WR::Word::BITS - 1;
             return Ok(code_length as usize);
         }
 
-        self.buffer = self.buffer >> space_left - 1 >> 1;
-        self.dump_full_buffer()?;
+        if space_left != 0 {
+            self.buffer = self.buffer >> space_left - 1 >> 1;
+        }
+        self.backend.write_word(self.buffer.to_le())?;
 
         value -= space_left;
 
@@ -349,9 +282,8 @@ where
 
         value %= WR::Word::BITS as u64;
 
-        self.buffer = BB::ONE << BB::BITS - 1;
+        self.buffer = WR::Word::ONE << WR::Word::BITS - 1;
         self.bits_in_buffer = value as usize + 1;
-        debug_assert!(self.space_left_in_buffer() > 0);
         Ok(code_length as usize)
     }
 
@@ -361,7 +293,7 @@ where
 }
 
 macro_rules! test_buf_bit_writer {
-    ($f: ident, $bb:ty, $word:ty) => {
+    ($f: ident, $bb: ty, $word:ty) => {
         #[test]
         fn $f() -> Result<(), anyhow::Error> {
             use super::MemWordWriterVec;
@@ -377,8 +309,8 @@ macro_rules! test_buf_bit_writer {
 
             let mut buffer_be: Vec<$word> = vec![];
             let mut buffer_le: Vec<$word> = vec![];
-            let mut big = BufBitWriter::<BE, $bb, _>::new(MemWordWriterVec::new(&mut buffer_be));
-            let mut little = BufBitWriter::<LE, $bb, _>::new(MemWordWriterVec::new(&mut buffer_le));
+            let mut big = BufBitWriter::<BE, _>::new(MemWordWriterVec::new(&mut buffer_be));
+            let mut little = BufBitWriter::<LE, _>::new(MemWordWriterVec::new(&mut buffer_le));
 
             let mut r = SmallRng::seed_from_u64(0);
             const ITER: usize = 1_000_000;

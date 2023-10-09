@@ -121,7 +121,7 @@ mod test {
         ];
         let path = std::env::temp_dir().join("test_file_adapter_codes");
         {
-            let mut writer = <BufBitWriter<BE, u128, _>>::new(<WordAdapter<u64, _>>::new(
+            let mut writer = <BufBitWriter<BE, _>>::new(<WordAdapter<u64, _>>::new(
                 std::fs::File::create(&path).unwrap(),
             ));
             for value in &data {
@@ -137,7 +137,7 @@ mod test {
             }
         }
         {
-            let mut writer = <BufBitWriter<LE, u128, _>>::new(<WordAdapter<u64, _>>::new(
+            let mut writer = <BufBitWriter<LE, _>>::new(<WordAdapter<u64, _>>::new(
                 std::fs::File::create(&path).unwrap(),
             ));
             for value in &data {
