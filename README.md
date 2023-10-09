@@ -117,8 +117,8 @@ There are three entry points for altering the behavior of the code:
   aware of.
 - Whether to use tables for all other codes can be configured by
   passing around a different implementations of 
-  [`ReadParams`](crate::codes::codes_params::ReadParams)
-  and [`WriteParams`](crate::codes::codes_params::WriteParams)
+  [`ReadParams`](crate::codes::table_params::ReadParams)
+  and [`WriteParams`](crate::codes::table_params::WriteParams)
   in place of the default 
-  [`DefaultReadParams`](crate::codes::codes_params::DefaultReadParams) and
-  [`DefaultWriteParams`](crate::codes::codes_params::DefaultWriteParams).
+  [`DefaultReadParams`](crate::codes::table_params::DefaultReadParams) and
+  [`DefaultWriteParams`](crate::codes::table_params::DefaultWriteParams).

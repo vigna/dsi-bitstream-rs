@@ -15,18 +15,24 @@ use common_traits::{CastableInto, Integer, Number};
 /// An implementation of [`BitWrite`] for a
 /// [`WordWrite`] and of [`BitSeek`] for a [`WordSeek`].
 ///
-/// Endianness can be selected using the parameter `E`.
+/// Endianness can be selected using the parameter `E`. Its possible values are
+/// the standard [`BE`] and [`LE`] types: the `DropHelper` trait is internal
+/// and should be ignored.
 ///
 /// This implementation uses a bit buffer to store bits that are not yet written.
-/// The size of the bit buffer is the size of the word used by the [`WordWrite`].
+/// The size of the bit buffer is the size of the word used by the [`WordWrite`],
+/// which on most platform should be `usize`.
 ///
 /// The additional type parameter `WCP` is used to select the parameters for the
 /// instantanous codes, but the casual user should be happy with the default value.
 /// See [`WriteParams`] for more details.
 
 #[derive(Debug)]
-pub struct BufBitWriter<E: BBSWDrop<WR, WCP>, WR: WordWrite, WCP: WriteParams = DefaultWriteParams>
-{
+pub struct BufBitWriter<
+    E: DropHelper<WR, WCP>,
+    WR: WordWrite,
+    WCP: WriteParams = DefaultWriteParams,
+> {
     /// The [`WordWrite`] to which we will write words.
     backend: WR,
     /// The buffer where we store bits until we have a word worth of them.
@@ -38,7 +44,7 @@ pub struct BufBitWriter<E: BBSWDrop<WR, WCP>, WR: WordWrite, WCP: WriteParams = 
     _marker_endianness: core::marker::PhantomData<(E, WCP)>,
 }
 
-impl<E: BBSWDrop<WR, WCP>, WR: WordWrite, WCP: WriteParams> BufBitWriter<E, WR, WCP> {
+impl<E: DropHelper<WR, WCP>, WR: WordWrite, WCP: WriteParams> BufBitWriter<E, WR, WCP> {
     /// Create a new [`BufBitWriter`] around a [`WordWrite`].
     pub fn new(backend: WR) -> Self {
         Self {
@@ -56,7 +62,7 @@ impl<E: BBSWDrop<WR, WCP>, WR: WordWrite, WCP: WriteParams> BufBitWriter<E, WR, 
     }
 }
 
-impl<E: BBSWDrop<WR, WCP>, WR: WordWrite, WCP: WriteParams> core::ops::Drop
+impl<E: DropHelper<WR, WCP>, WR: WordWrite, WCP: WriteParams> core::ops::Drop
     for BufBitWriter<E, WR, WCP>
 {
     fn drop(&mut self) {
@@ -70,12 +76,12 @@ impl<E: BBSWDrop<WR, WCP>, WR: WordWrite, WCP: WriteParams> core::ops::Drop
 /// private traits in public defs, an user should never need to implement this.
 ///
 /// I discussed this [here](https://users.rust-lang.org/t/on-generic-associated-enum-and-type-comparisons/92072).
-pub trait BBSWDrop<WR: WordWrite, WCP: WriteParams>: Sized + Endianness {
+pub trait DropHelper<WR: WordWrite, WCP: WriteParams>: Sized + Endianness {
     /// handle the drop
     fn flush(data: &mut BufBitWriter<Self, WR, WCP>) -> Result<()>;
 }
 
-impl<WR: WordWrite, WCP: WriteParams> BBSWDrop<WR, WCP> for BE {
+impl<WR: WordWrite, WCP: WriteParams> DropHelper<WR, WCP> for BE {
     #[inline]
     fn flush(data: &mut BufBitWriter<Self, WR, WCP>) -> Result<()> {
         if data.bits_in_buffer > 0 {
@@ -185,7 +191,7 @@ where
     }
 }
 
-impl<WR: WordWrite, WCP: WriteParams> BBSWDrop<WR, WCP> for LE {
+impl<WR: WordWrite, WCP: WriteParams> DropHelper<WR, WCP> for LE {
     #[inline]
     fn flush(data: &mut BufBitWriter<Self, WR, WCP>) -> Result<()> {
         if data.bits_in_buffer > 0 {
