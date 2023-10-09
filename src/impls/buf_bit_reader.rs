@@ -153,23 +153,16 @@ where
 
     #[inline]
     fn peek_bits(&mut self, n_bits: usize) -> Result<Self::PeekWord> {
-        if n_bits > Self::PeekWord::BITS {
-            bail!(
-                "The n of bits to peek has to be in [0, {}] and {} is not.",
-                Self::PeekWord::BITS,
-                n_bits
-            );
-        }
-        if n_bits == 0 {
-            return Ok(Self::PeekWord::ZERO);
-        }
-        // a peek can do at most one refill, otherwise we might loose data
+        debug_assert!(n_bits > 0);
+        debug_assert!(n_bits <= Self::PeekWord::BITS);
+
+        // A peek can do at most one refill, otherwise we might lose data
         if n_bits > self.bits_in_buffer {
             self.refill()?;
         }
 
-        // read the `n_bits` highest bits of the buffer and shift them to
-        // be the lowest
+        // Read the `n_bits` highest bits of the buffer and shift them to
+        // be the lowest.
         Ok((self.buffer >> (BB::<WR>::BITS - n_bits)).downcast())
     }
 
@@ -220,10 +213,7 @@ where
         }
 
         if n_bits > 64 {
-            bail!(
-                "The n of bits to peek has to be in [0, 64] and {} is not.",
-                n_bits
-            );
+            bail!("Too many bits: {} > 64", n_bits);
         }
 
         let mut result: u64 =
@@ -390,10 +380,7 @@ where
         }
 
         if n_bits > 64 {
-            bail!(
-                "The n of bits to peek has to be in [0, 64] and {} is not.",
-                n_bits
-            );
+            bail!("Too many bits: {} > 64", n_bits);
         }
 
         let mut result: u64 = self.buffer.cast();
@@ -425,23 +412,16 @@ where
 
     #[inline]
     fn peek_bits(&mut self, n_bits: usize) -> Result<Self::PeekWord> {
-        if n_bits > Self::PeekWord::BITS {
-            bail!(
-                "The n of bits to peek has to be in [0, {}] and {} is not.",
-                Self::PeekWord::BITS,
-                n_bits
-            );
-        }
-        if n_bits == 0 {
-            return Ok(Self::PeekWord::ZERO);
-        }
-        // a peek can do at most one refill, otherwise we might loose data
+        debug_assert!(n_bits > 0);
+        debug_assert!(n_bits <= Self::PeekWord::BITS);
+
+        // A peek can do at most one refill, otherwise we might lose data
         if n_bits > self.bits_in_buffer {
             self.refill()?;
         }
 
-        // read the `n_bits` highest bits of the buffer and shift them to
-        // be the lowest
+        // Read the `n_bits` highest bits of the buffer and shift them to
+        // be the lowest.
         let shamt = BB::<WR>::BITS - n_bits;
         Ok(((self.buffer << shamt) >> shamt).downcast())
     }

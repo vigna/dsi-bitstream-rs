@@ -5,7 +5,7 @@ use crate::traits::{BitRead, BitWrite, BE, LE};
 use anyhow::Result;
 use common_traits::*;
 /// How many bits are needed to read the tables in this
-pub const READ_BITS: usize = 0;
+pub const READ_BITS: usize = 1;
 /// The len we assign to a code that cannot be decoded through the table
 pub const MISSING_VALUE_LEN: u8 = 255;
 /// Maximum value writable using the table(s)
@@ -119,13 +119,13 @@ pub fn write_table_be<B: BitWrite<BE>>(backend: &mut B, value: u64) -> Result<Op
     })
 }
 ///Table containing the values used to speed up the reading of delta codes
-pub const READ_BE: &[u8] = &[0];
+pub const READ_BE: &[u8] = &[0, 0];
 ///Table contaings the lens used to speed up the reading of delta codes
-pub const READ_LEN_BE: &[u8] = &[255];
+pub const READ_LEN_BE: &[u8] = &[255, 1];
 ///Table containing the values used to speed up the reading of delta codes
-pub const READ_LE: &[u8] = &[0];
+pub const READ_LE: &[u8] = &[0, 0];
 ///Table contaings the lens used to speed up the reading of delta codes
-pub const READ_LEN_LE: &[u8] = &[255];
+pub const READ_LEN_LE: &[u8] = &[255, 1];
 ///Table used to speed up the writing of delta codes
 pub const WRITE_BE: &[u32] = &[
     1, 4, 5, 12, 13, 14, 15, 32, 33, 34, 35, 36, 37, 38, 39, 80, 81, 82, 83, 84, 85, 86, 87, 88,

@@ -458,6 +458,7 @@ for i in range(256):
 
 def gen_gamma(read_bits, write_max_val, len_max_val=None, merged_table=False):
     """Configuration of `gen_table` for gamma"""
+    assert read_bits > 0
     len_max_val = len_max_val or write_max_val
     return gen_table(
         read_bits,
@@ -531,6 +532,7 @@ for i in range(256):
 
 def gen_delta(read_bits, write_max_val, len_max_val=None, merged_table=False):
     """Configuration of `gen_table` for delta"""
+    assert read_bits > 0
     len_max_val = len_max_val or write_max_val
     return gen_table(
         read_bits,
@@ -693,6 +695,7 @@ for i in range(256):
 
 def gen_zeta(read_bits, write_max_val, len_max_val=None, k=3, merged_table=False):
     """Configuration of `gen_table` for zeta"""
+    assert read_bits > 0
     len_max_val = len_max_val or write_max_val
     gen_table(
         read_bits,
@@ -713,7 +716,7 @@ def gen_zeta(read_bits, write_max_val, len_max_val=None, k=3, merged_table=False
 def generate_default_tables():
     # Generate the default tables
     gen_unary(
-        read_bits=0, # Never worth it
+        read_bits=1, # Never worth it
         write_max_val=15, # Very useful
         merged_table=False, # Never worth it
     )
@@ -723,7 +726,7 @@ def generate_default_tables():
         merged_table=False, # Irrelevant for speed, a bit smaller
     )
     gen_delta(
-        read_bits=0, # No use on any architecture if 9-bit gamma tables are available
+        read_bits=1, # No use on any architecture if 9-bit gamma tables are available
         write_max_val=1023, # Very useful, both tables (delta and gamma)
         merged_table=False,
     )

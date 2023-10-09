@@ -35,7 +35,8 @@ pub trait BitRead<E: Endianness> {
     /// Read `n` bits and return them in the lowest bits.
     fn read_bits(&mut self, n: usize) -> Result<u64>;
 
-    /// Reads `n` bits without advancing the stream position.
+    /// Peeks at `n` bits without advancing the stream position.
+    /// 'n' must be nonzero, and at most `PeekWord::BITS`.
     fn peek_bits(&mut self, n: usize) -> Result<Self::PeekWord>;
 
     /// Skip `n` n from the stream.
