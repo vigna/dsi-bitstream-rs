@@ -85,7 +85,6 @@ where
         // if we have 64 valid bits, we don't have space for a new word
         // and by definition we can only read
         let free_bits = BB::BITS - self.valid_bits;
-        dbg!(free_bits, WR::Word::BITS);
         debug_assert!(free_bits >= WR::Word::BITS);
 
         let new_word: BB = self
@@ -146,7 +145,6 @@ where
             return Ok(Self::PeekWord::ZERO);
         }
         // a peek can do at most one refill, otherwise we might loose data
-        dbg!(n_bits, self.valid_bits);
         if n_bits > self.valid_bits {
             self.refill()?;
         }
