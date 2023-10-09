@@ -50,11 +50,11 @@ impl ReadParams for DefaultReadParams {}
 
 macro_rules! impl_default_read_codes {
     ($($endianess:ident),*) => {$(
-        impl<BB: UnsignedInt, WR: WordRead, DC: ReadParams> GammaRead<$endianess>
-            for BufBitReader<$endianess, BB, WR, DC>
+        impl<WR: WordRead, DC: ReadParams> GammaRead<$endianess>
+            for BufBitReader<$endianess, WR, DC>
         where
-            BB: DowncastableInto<WR::Word> + CastableInto<u64>,
-            WR::Word: UpcastableInto<BB> + UpcastableInto<u64>,
+            WR:: Word: DoubleType + UpcastableInto<u64>,
+            <WR::Word as DoubleType>::DoubleType: CastableInto<u64>,
         {
             #[inline(always)]
             fn read_gamma(&mut self) -> Result<u64> {
@@ -71,11 +71,11 @@ macro_rules! impl_default_read_codes {
             }
         }
 
-        impl<BB: UnsignedInt, WR: WordRead, DC: ReadParams> DeltaRead<$endianess>
-            for BufBitReader<$endianess, BB, WR, DC>
+        impl<WR: WordRead, DC: ReadParams> DeltaRead<$endianess>
+            for BufBitReader<$endianess, WR, DC>
         where
-            BB: DowncastableInto<WR::Word> + CastableInto<u64>,
-            WR::Word: UpcastableInto<BB> + UpcastableInto<u64>,
+            WR:: Word: DoubleType + UpcastableInto<u64>,
+            <WR::Word as DoubleType>::DoubleType: CastableInto<u64>,
         {
             #[inline(always)]
             fn read_delta(&mut self) -> Result<u64> {
@@ -88,11 +88,11 @@ macro_rules! impl_default_read_codes {
             }
         }
 
-        impl<BB: UnsignedInt, WR: WordRead, DC: ReadParams> ZetaRead<$endianess>
-            for BufBitReader<$endianess, BB, WR, DC>
+        impl<WR: WordRead, DC: ReadParams> ZetaRead<$endianess>
+            for BufBitReader<$endianess, WR, DC>
         where
-            BB: DowncastableInto<WR::Word> + CastableInto<u64>,
-            WR::Word: UpcastableInto<BB> + UpcastableInto<u64>,
+            WR:: Word: DoubleType + UpcastableInto<u64>,
+            <WR::Word as DoubleType>::DoubleType: CastableInto<u64>,
         {
             #[inline(always)]
             fn read_zeta(&mut self, k: u64) -> Result<u64> {

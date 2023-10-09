@@ -388,7 +388,7 @@ fn test_count() -> Result<()> {
     assert_eq!(count_bit_write.bits_written, 174);
     count_bit_write.flush()?;
 
-    let bit_read = <BufBitReader<LE, u64, _>>::new(MemWordReaderInf::<u64, _>::new(&buffer));
+    let bit_read = <BufBitReader<LE, _>>::new(MemWordReaderInf::<u64, _>::new(&buffer));
     let mut count_bit_read = CountBitReader::<_, _, true>::new(bit_read);
 
     assert_eq!(count_bit_read.peek_bits(5)?, 0);

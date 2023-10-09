@@ -62,8 +62,7 @@ macro_rules! test_stream {
             drop(write);
 
             let buffer_32: &[u32] = unsafe { &buffer.align_to::<u32>().1 };
-            let mut read =
-                BufBitReader::<$endianness, u64, _>::new(MemWordReaderInf::new(buffer_32));
+            let mut read = BufBitReader::<$endianness, _>::new(MemWordReaderInf::new(buffer_32));
 
             let mut r = SmallRng::seed_from_u64(0);
             let mut v = SmallRng::seed_from_u64(1);

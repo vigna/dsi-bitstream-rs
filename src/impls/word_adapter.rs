@@ -129,7 +129,7 @@ mod test {
             }
         }
         {
-            let mut reader = <BufBitReader<BE, u128, _>>::new(<WordAdapter<u32, _>>::new(
+            let mut reader = <BufBitReader<BE, _>>::new(<WordAdapter<u32, _>>::new(
                 std::fs::File::open(&path).unwrap(),
             ));
             for value in &data {
@@ -145,7 +145,7 @@ mod test {
             }
         }
         {
-            let mut reader = <BufBitReader<LE, u128, _>>::new(<WordAdapter<u32, _>>::new(
+            let mut reader = <BufBitReader<LE, _>>::new(<WordAdapter<u32, _>>::new(
                 std::fs::File::open(&path).unwrap(),
             ));
             for value in &data {
