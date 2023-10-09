@@ -12,6 +12,8 @@ use crate::traits::*;
 use anyhow::{bail, Context, Result};
 use common_traits::*;
 
+/// An internal shortcut to the double type of the word of a
+/// [`WordRead`].
 type BB<WR> = <<WR as WordRead>::Word as DoubleType>::DoubleType;
 
 /// An implementation of [`BitRead`] and [`BitSeek`] for a
@@ -20,13 +22,21 @@ type BB<WR> = <<WR as WordRead>::Word as DoubleType>::DoubleType;
 /// Endianness can be selected using the parameter `E`.
 ///
 /// This implementation uses a
-/// bit buffer to store bits that are not yet read. The type of the bit buffer
-/// is choosable using the type parameter `BB`, but it must at least twice
-/// as large as the word type.
+/// bit buffer to store bits that are not yet read. The buffer is sized
+/// as twice the word size of the underlying [`WordRead`]. Typically, the
+/// best choice is to have a buffer that is sized as `usize`, which means
+/// that the word of the underlying [`WordRead`] should be half of that
+/// (i.e., `u32` for a 64-bit architecture). However, results will vary
+/// depending on the CPU.
 ///
 /// This implementation is usually faster than [`BitReader`](crate::impls::BitReader).
+///
+/// The additional type parameter `RP` is used to select the parameters for the
+/// instantanous codes, but the casual user should be happy with the default value.
+/// See [`ReadParams`] for more details.
+
 #[derive(Debug)]
-pub struct BufBitReader<E: Endianness, WR: WordRead, RCP: ReadParams = DefaultReadParams>
+pub struct BufBitReader<E: Endianness, WR: WordRead, RP: ReadParams = DefaultReadParams>
 where
     WR::Word: DoubleType,
 {
@@ -35,14 +45,14 @@ where
     /// The 2-word bit buffer that is used to read the codes. It is never full,
     /// but it may be empty.
     buffer: BB<WR>,
-    /// Number of bits valid left in the buffer. It is always smaller than `BB::<WR>::BITS`.
+    /// Number of valid bits in the buffer. It is always smaller than `BB::<WR>::BITS`.
     bits_in_buffer: usize,
     _marker_endianness: core::marker::PhantomData<E>,
-    _marker_default_codes: core::marker::PhantomData<RCP>,
+    _marker_default_codes: core::marker::PhantomData<RP>,
 }
 
-impl<E: Endianness, WR: WordRead + Clone, RCP: ReadParams> core::clone::Clone
-    for BufBitReader<E, WR, RCP>
+impl<E: Endianness, WR: WordRead + Clone, RP: ReadParams> core::clone::Clone
+    for BufBitReader<E, WR, RP>
 where
     WR::Word: DoubleType,
 {
@@ -57,18 +67,18 @@ where
     }
 }
 
-impl<E: Endianness, WR: WordRead, RCP: ReadParams> BufBitReader<E, WR, RCP>
+impl<E: Endianness, WR: WordRead, RP: ReadParams> BufBitReader<E, WR, RP>
 where
     WR::Word: DoubleType,
 {
-    /// Create a new [`BufBitReader`] on a generic backend
+    /// Create a new [`BufBitReader`] around a [`WordRead`].
     ///
     /// ### Example
     /// ```
     /// use dsi_bitstream::prelude::*;
-    /// let words: [u64; 1] = [0x0043b59fccf16077];
+    /// let words: [u32; 2] = [0x0043b59f, 0xccf16077];
     /// let word_reader = MemWordReader::new(&words);
-    /// let mut bitstream = <BufBitReader<BE, _>>::new(word_reader);
+    /// let mut buf_bit_reader = <BufBitReader<BE, _>>::new(word_reader);
     /// ```
     #[must_use]
     pub fn new(backend: WR) -> Self {
@@ -82,12 +92,12 @@ where
     }
 }
 
-impl<WR: WordRead, RCP: ReadParams> BufBitReader<BE, WR, RCP>
+impl<WR: WordRead, RP: ReadParams> BufBitReader<BE, WR, RP>
 where
     WR::Word: DoubleType,
 {
-    /// Ensure that in the buffer there are at least `WR::Word::BITS` bits to read
-    /// The user has the responsability of guaranteeing that there are at least
+    /// Ensure that in the buffer there are at least `WR::Word::BITS` bits to read.
+    /// This method can be called only if there are at least
     /// `WR::Word::BITS` free bits in the buffer.
     #[inline(always)]
     fn refill(&mut self) -> Result<()> {
@@ -108,7 +118,7 @@ where
     }
 }
 
-impl<WR: WordRead + WordSeek, RCP: ReadParams> BitSeek for BufBitReader<BE, WR, RCP>
+impl<WR: WordRead + WordSeek, RP: ReadParams> BitSeek for BufBitReader<BE, WR, RP>
 where
     WR::Word: DoubleType,
 {
@@ -134,7 +144,7 @@ where
     }
 }
 
-impl<WR: WordRead, RCP: ReadParams> BitRead<BE> for BufBitReader<BE, WR, RCP>
+impl<WR: WordRead, RP: ReadParams> BitRead<BE> for BufBitReader<BE, WR, RP>
 where
     WR::Word: DoubleType + UpcastableInto<u64>,
     BB<WR>: CastableInto<u64>,
@@ -272,12 +282,12 @@ where
     }
 }
 
-impl<WR: WordRead, RCP: ReadParams> BufBitReader<LE, WR, RCP>
+impl<WR: WordRead, RP: ReadParams> BufBitReader<LE, WR, RP>
 where
     WR::Word: DoubleType,
 {
-    /// Ensure that in the buffer there are at least `WR::Word::BITS` bits to read
-    /// The user has the responsability of guaranteeing that there are at least
+    /// Ensure that in the buffer there are at least `WR::Word::BITS` bits to read.
+    /// This method can be called only if there are at least
     /// `WR::Word::BITS` free bits in the buffer.
     #[inline(always)]
     fn refill(&mut self) -> Result<()> {
@@ -298,7 +308,7 @@ where
     }
 }
 
-impl<WR: WordRead + WordSeek, RCP: ReadParams> BitSeek for BufBitReader<LE, WR, RCP>
+impl<WR: WordRead + WordSeek, RP: ReadParams> BitSeek for BufBitReader<LE, WR, RP>
 where
     WR::Word: DoubleType,
 {
@@ -324,7 +334,7 @@ where
     }
 }
 
-impl<WR: WordRead, RCP: ReadParams> BitRead<LE> for BufBitReader<LE, WR, RCP>
+impl<WR: WordRead, RP: ReadParams> BitRead<LE> for BufBitReader<LE, WR, RP>
 where
     WR::Word: DoubleType + UpcastableInto<u64>,
     BB<WR>: CastableInto<u64>,

@@ -33,9 +33,10 @@ pub struct BufBitWriter<E: DropHelper<WW, WP>, WW: WordWrite, WP: WriteParams = 
     /// The [`WordWrite`] to which we will write words.
     backend: WW,
     /// The buffer where we store bits until we have a word worth of them.
+    /// It might be empty, partial full or full.
     /// Note that only `bits_in_buffer` bits are valid: the rest have undefined value.
     buffer: WW::Word,
-    /// How many bits in buffer are valid, from zero
+    /// Number of valid bits in the buffer, from zero
     /// to `WW::Word::BITS`, both included.
     bits_in_buffer: usize,
     _marker_endianness: core::marker::PhantomData<(E, WP)>,
@@ -43,6 +44,13 @@ pub struct BufBitWriter<E: DropHelper<WW, WP>, WW: WordWrite, WP: WriteParams = 
 
 impl<E: DropHelper<WW, WP>, WW: WordWrite, WP: WriteParams> BufBitWriter<E, WW, WP> {
     /// Create a new [`BufBitWriter`] around a [`WordWrite`].
+    ///
+    /// ### Example
+    /// ```
+    /// use dsi_bitstream::prelude::*;
+    /// let buffer = Vec::<usize>::new();
+    /// let word_writer = MemWordWriterVec::new(buffer);
+    /// let mut buf_bit_writer = <BufBitWriter<BE, _>>::new(word_writer);
     pub fn new(backend: WW) -> Self {
         Self {
             backend,
