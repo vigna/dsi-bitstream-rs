@@ -115,6 +115,12 @@ where
             bail!("Error value {} does not fit in {} bits", value, n_bits);
         }
 
+        #[cfg(test)]
+        if n_bits < 64 {
+            // We put garbage in the higher bits for testing
+            value |= u64::MAX << n_bits;
+        }
+
         let space_left_in_buffer = self.space_left_in_buffer();
         // Easy way out: we fit the buffer
         if n_bits <= space_left_in_buffer {
@@ -229,6 +235,12 @@ where
         #[cfg(test)]
         if (value & (1_u128 << n_bits).wrapping_sub(1) as u64) != value {
             bail!("Error value {} does not fit in {} bits", value, n_bits);
+        }
+
+        #[cfg(test)]
+        if n_bits < 64 {
+            // We put garbage in the higher bits for testing
+            value |= u64::MAX << n_bits;
         }
 
         let space_left_in_buffer = self.space_left_in_buffer();
@@ -361,13 +373,13 @@ macro_rules! test_buf_bit_writer {
                 if n_bits == 0 {
                     big.write_bits(0, 0)?;
                 } else {
-                    big.write_bits(1, n_bits)?;
+                    big.write_bits(r.gen::<u64>() & u64::MAX >> 64 - n_bits, n_bits)?;
                 }
                 let n_bits = r.gen_range(0..=64);
                 if n_bits == 0 {
                     little.write_bits(0, 0)?;
                 } else {
-                    little.write_bits(1, n_bits)?;
+                    little.write_bits(r.gen::<u64>() & u64::MAX >> 64 - n_bits, n_bits)?;
                 }
                 let value = r.gen_range(0..128);
                 assert_eq!(big.write_unary_param::<false>(value)?, value as usize + 1);
@@ -419,13 +431,19 @@ macro_rules! test_buf_bit_writer {
                 if n_bits == 0 {
                     assert_eq!(big_buff.read_bits(0)?, 0);
                 } else {
-                    assert_eq!(big_buff.read_bits(n_bits)?, 1);
+                    assert_eq!(
+                        big_buff.read_bits(n_bits)?,
+                        r.gen::<u64>() & u64::MAX >> 64 - n_bits
+                    );
                 }
                 let n_bits = r.gen_range(0..=64);
                 if n_bits == 0 {
                     assert_eq!(little_buff.read_bits(0)?, 0);
                 } else {
-                    assert_eq!(little_buff.read_bits(n_bits)?, 1);
+                    assert_eq!(
+                        little_buff.read_bits(n_bits)?,
+                        r.gen::<u64>() & u64::MAX >> 64 - n_bits
+                    );
                 }
 
                 assert_eq!(big_buff.read_unary()?, r.gen_range(0..128));
