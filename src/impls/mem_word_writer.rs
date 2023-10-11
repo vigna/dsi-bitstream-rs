@@ -27,7 +27,7 @@ use common_traits::UnsignedInt;
 ///     0x702863e6f9739b86,
 /// ];
 ///
-/// let mut word_writer = MemWordWriterStrict::new(&mut words);
+/// let mut word_writer = MemWordWriterSlice::new(&mut words);
 ///
 /// // the stream is read sequentially
 /// assert_eq!(word_writer.get_word_pos(), 0);
@@ -56,14 +56,14 @@ use common_traits::UnsignedInt;
 /// assert_eq!(word_writer.get_word_pos(), 1);
 /// ```
 #[derive(Debug, PartialEq)]
-pub struct MemWordWriterStrict<W: UnsignedInt, B: AsMut<[W]>> {
+pub struct MemWordWriterSlice<W: UnsignedInt, B: AsMut<[W]>> {
     data: B,
     word_index: usize,
     _marker: core::marker::PhantomData<W>,
 }
 
-impl<W: UnsignedInt, B: AsMut<[W]> + AsRef<[W]>> MemWordWriterStrict<W, B> {
-    /// Create a new [`MemWordWriterStrict`] from a slice of **ZERO INITIALIZED** data
+impl<W: UnsignedInt, B: AsMut<[W]> + AsRef<[W]>> MemWordWriterSlice<W, B> {
+    /// Create a new [`MemWordWriterSlice`] from a slice of **ZERO INITIALIZED** data
     #[must_use]
     pub fn new(data: B) -> Self {
         Self {
@@ -113,7 +113,7 @@ pub struct MemWordWriter<W: UnsignedInt, B: AsMut<alloc::vec::Vec<W>>> {
 
 #[cfg(feature = "alloc")]
 impl<W: UnsignedInt, B: AsMut<alloc::vec::Vec<W>> + AsRef<alloc::vec::Vec<W>>> MemWordWriter<W, B> {
-    /// Create a new [`MemWordWriterStrict`] from a slice of **ZERO INITIALIZED** data
+    /// Create a new [`MemWordWriterSlice`] from a slice of **ZERO INITIALIZED** data
     #[must_use]
     pub fn new(data: B) -> Self {
         Self {
@@ -132,7 +132,7 @@ impl<W: UnsignedInt, B: AsMut<alloc::vec::Vec<W>> + AsRef<alloc::vec::Vec<W>>> M
     }
 }
 
-impl<W: UnsignedInt, B: AsMut<[W]>> WordRead for MemWordWriterStrict<W, B> {
+impl<W: UnsignedInt, B: AsMut<[W]>> WordRead for MemWordWriterSlice<W, B> {
     type Word = W;
 
     #[inline]
@@ -149,7 +149,7 @@ impl<W: UnsignedInt, B: AsMut<[W]>> WordRead for MemWordWriterStrict<W, B> {
     }
 }
 
-impl<W: UnsignedInt, B: AsRef<[W]> + AsMut<[W]>> WordSeek for MemWordWriterStrict<W, B> {
+impl<W: UnsignedInt, B: AsRef<[W]> + AsMut<[W]>> WordSeek for MemWordWriterSlice<W, B> {
     #[inline]
     #[must_use]
     fn get_word_pos(&self) -> usize {
@@ -170,7 +170,7 @@ impl<W: UnsignedInt, B: AsRef<[W]> + AsMut<[W]>> WordSeek for MemWordWriterStric
     }
 }
 
-impl<W: UnsignedInt, B: AsMut<[W]>> WordWrite for MemWordWriterStrict<W, B> {
+impl<W: UnsignedInt, B: AsMut<[W]>> WordWrite for MemWordWriterSlice<W, B> {
     type Word = W;
 
     #[inline]

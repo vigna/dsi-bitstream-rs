@@ -75,7 +75,7 @@ fn test_eof_table_read() {
     use crate::codes::{DeltaReadParam, DeltaWrite};
     let mut words: [u64; 1] = [0];
     let mut writer = crate::prelude::BufBitWriter::<crate::prelude::LE, _>::new(
-        MemWordWriterStrict::new(&mut words),
+        MemWordWriterSlice::new(&mut words),
     );
     for _ in 0..16 {
         writer.write_delta(1).unwrap();
