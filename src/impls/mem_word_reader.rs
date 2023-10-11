@@ -6,19 +6,12 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
-use anyhow::Result;
+use anyhow::{bail, Result};
 use common_traits::UnsignedInt;
 
 use crate::prelude::*;
 
-/// A zero-extended implementation of [`WordRead`] and [`WordSeek`] for a slice.
-///
-/// Trying to read beyond the end of the slice will return zeros.
-/// Use [`MemWordReaderStrict`] if you wanna obtain an error instead.
-///
-/// Note that zero extension is usually what you want, as memory written with
-/// a certain word size will cause end-of-stream errors when read with a larger
-/// word size.
+/// An implementation of [`WordRead`] and [`WordSeek`] for a slice.
 #[derive(Debug, Clone, PartialEq)]
 pub struct MemWordReader<W: UnsignedInt, B: AsRef<[W]>> {
     data: B,
@@ -64,6 +57,16 @@ impl<W: UnsignedInt, B: AsRef<[W]>> WordSeek for MemWordReader<W, B> {
 
     #[inline(always)]
     fn set_word_pos(&mut self, word_index: usize) -> Result<()> {
+        if word_index > self.data.as_ref().len() {
+            bail!(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                format!(
+                    "Position beyond end of slice: {} > {}",
+                    word_index,
+                    self.data.as_ref().len()
+                )
+            ));
+        }
         self.word_index = word_index;
         Ok(())
     }
