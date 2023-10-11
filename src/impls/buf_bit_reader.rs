@@ -77,7 +77,7 @@ where
     /// ```
     /// use dsi_bitstream::prelude::*;
     /// let words: [u32; 2] = [0x0043b59f, 0xccf16077];
-    /// let word_reader = MemWordReader::new(&words);
+    /// let word_reader = MemWordReaderStrict::new(&words);
     /// let mut buf_bit_reader = <BufBitReader<BE, _>>::new(word_reader);
     /// ```
     #[must_use]
@@ -464,12 +464,11 @@ macro_rules! test_buf_bit_reader {
     ($f: ident, $word:ty) => {
         #[test]
         fn $f() -> Result<(), anyhow::Error> {
-            use super::MemWordWriterVec;
+            use super::MemWordWriter;
             use crate::{
                 codes::{GammaRead, GammaWrite},
                 prelude::{
-                    len_delta, len_gamma, len_unary, BufBitWriter, DeltaRead, DeltaWrite,
-                    MemWordReader,
+                    len_delta, len_gamma, BufBitWriter, DeltaRead, DeltaWrite, MemWordReaderStrict,
                 },
             };
             use rand::Rng;
@@ -477,8 +476,8 @@ macro_rules! test_buf_bit_reader {
 
             let mut buffer_be: Vec<$word> = vec![];
             let mut buffer_le: Vec<$word> = vec![];
-            let mut big = super::BufBitWriter::<BE, _>::new(MemWordWriterVec::new(&mut buffer_be));
-            let mut little = BufBitWriter::<LE, _>::new(MemWordWriterVec::new(&mut buffer_le));
+            let mut big = super::BufBitWriter::<BE, _>::new(MemWordWriter::new(&mut buffer_be));
+            let mut little = BufBitWriter::<LE, _>::new(MemWordWriter::new(&mut buffer_le));
 
             let mut r = SmallRng::seed_from_u64(0);
             const ITER: usize = 1_000_000;
@@ -513,13 +512,16 @@ macro_rules! test_buf_bit_reader {
                     little.write_bits(1, n_bits)?;
                 }
                 let value = r.gen_range(0..128);
-                assert_eq!(big.write_unary_param::<false>(value)?, len_unary(value));
+                assert_eq!(big.write_unary_param::<false>(value)?, value as usize + 1);
                 let value = r.gen_range(0..128);
-                assert_eq!(little.write_unary_param::<false>(value)?, len_unary(value));
+                assert_eq!(
+                    little.write_unary_param::<false>(value)?,
+                    value as usize + 1
+                );
                 let value = r.gen_range(0..128);
-                assert_eq!(big.write_unary_param::<true>(value)?, len_unary(value));
+                assert_eq!(big.write_unary_param::<true>(value)?, value as usize + 1);
                 let value = r.gen_range(0..128);
-                assert_eq!(little.write_unary_param::<true>(value)?, len_unary(value));
+                assert_eq!(little.write_unary_param::<true>(value)?, value as usize + 1);
             }
 
             drop(big);
@@ -541,8 +543,8 @@ macro_rules! test_buf_bit_reader {
                 )
             };
 
-            let mut big_buff = BufBitReader::<BE, _>::new(MemWordReader::new(be_trans));
-            let mut little_buff = BufBitReader::<LE, _>::new(MemWordReader::new(le_trans));
+            let mut big_buff = BufBitReader::<BE, _>::new(MemWordReaderStrict::new(be_trans));
+            let mut little_buff = BufBitReader::<LE, _>::new(MemWordReaderStrict::new(le_trans));
 
             let mut r = SmallRng::seed_from_u64(0);
 

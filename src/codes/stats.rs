@@ -8,7 +8,7 @@ use super::*;
 use core::sync::atomic::{AtomicUsize, Ordering};
 
 pub fn len_golomb(value: u64, b: u64) -> usize {
-    len_unary(value / b) + len_minimal_binary(value % b, b)
+    (value / b) as usize + 1 + len_minimal_binary(value % b, b)
 }
 
 #[derive(Default, Debug)]
@@ -32,7 +32,7 @@ impl CodesStats {
     /// Update the stats with the length of the code for `value` and return back
     /// `value` for convienience
     pub fn update(&self, value: u64) -> u64 {
-        self.unary.fetch_add(len_unary(value), Ordering::Relaxed);
+        self.unary.fetch_add(value as usize + 1, Ordering::Relaxed);
         self.gamma.fetch_add(len_gamma(value), Ordering::Relaxed);
         self.delta.fetch_add(len_delta(value), Ordering::Relaxed);
 

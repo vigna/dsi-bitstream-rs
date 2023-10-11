@@ -1,8 +1,19 @@
 # dsi-bistream
 
 A Rust implementation of read/write bit streams supporting several types
-of instantaneous codes. It mimics the behavior of the analogous classes in
-the [DSI Utilities](https://dsiutils.di.unimi.it/).
+of instantaneous codes. 
+
+This library mimics the behavior of the analogous classes in the 
+[DSI Utilities](https://dsiutils.di.unimi.it/), but it aims at being much more
+flexible and (hopefully) efficient.
+
+The two main traits are [`BitWrite`](crate::traits::bit_write::BitWrite)
+and [`BitRead`](crate::traits::bit_read::BitRead), to which are associated
+two main implementations [`BufBitWriter`](crate::impls::buf_bit_writer::BufBitWriter)
+and [`BufBitReader`](crate::impls::buf_bit_reader::BufBitReader).
+
+Please read the documentation of the [`traits`](crate::traits) module
+and of the [`impls`](crate::impls) module for more details.
 
 ```rust
 use dsi_bitstream::prelude::*;
@@ -11,7 +22,7 @@ let mut data = Vec::<u64>::new();
 // write some data
 {
     // create a codes writer
-    let mut writer = BufBitWriter::<BigEndian, _>::new(MemWordWriterVec::new(&mut data));
+    let mut writer = BufBitWriter::<BE, _>::new(MemWordWriter::new(&mut data));
     // write 0 using 10 bits
     writer.write_bits(0, 10).unwrap();
     // write 1 in unary
@@ -26,7 +37,7 @@ let mut data = Vec::<u64>::new();
 // read them back
 {
     // create a codes reader
-    let mut reader = BufBitReader::<BigEndian, _>::new(MemWordReader::new(&data));
+    let mut reader = BufBitReader::<BigEndian, _>::new(MemWordReaderStrict::new(&data));
     // read back the data
     assert_eq!(reader.read_bits(10).unwrap(), 0);
     assert_eq!(reader.read_unary().unwrap(), 1);
@@ -105,8 +116,10 @@ on all codes, in both little-ending and big-endiang format. The code may
 use or not decoding tables, and in the first case results are reported
 for different sizes of the decoding tables.
 
-There are three entry points for altering the behavior of the code:
+There are a few entry points for altering the behavior of the code:
 
+- The size of the word of the underlying [`WordRead`] or [`WordWrite`]
+  can be chosen programmatically.
 - The size of the tables can be set in the source of the script
   `gen_code_tables.py`. Running the script will generate new tables
    with the provided parameters.

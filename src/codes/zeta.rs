@@ -11,7 +11,7 @@
 
 use anyhow::Result;
 
-use super::{len_minimal_binary, len_unary, zeta_tables, MinimalBinaryRead, MinimalBinaryWrite};
+use super::{len_minimal_binary, zeta_tables, MinimalBinaryRead, MinimalBinaryWrite};
 use crate::traits::*;
 
 /// Returns how long the zeta code for `value` will be
@@ -33,7 +33,7 @@ pub fn len_zeta_param<const USE_TABLE: bool>(mut value: u64, k: u64) -> usize {
     let h = value.ilog2() as u64 / k;
     let u = 1 << ((h + 1) * k);
     let l = 1 << (h * k);
-    len_unary(h) + len_minimal_binary(value - l, u - l)
+    h as usize + 1 + len_minimal_binary(value - l, u - l)
 }
 
 #[inline(always)]

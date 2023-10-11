@@ -60,7 +60,7 @@ for iter in 0..(WARMUP_ITERS + BENCH_ITERS) {
     {
         // init the writer
         let mut r = BufBitWriter::<$bo, _>::new(
-            MemWordWriterVec::new(&mut buffer)
+            MemWordWriter::new(&mut buffer)
         );
         // measure
         #[cfg(not(feature="reads"))]
@@ -86,7 +86,7 @@ for iter in 0..(WARMUP_ITERS + BENCH_ITERS) {
     {
         // init the reader
         let mut r = BufBitReader::<$bo, BufferWord, _>::new(
-            MemWordReaderInf::new(&transmuted_buff)
+            MemWordReader::new(&transmuted_buff)
         );
         // measure
         let r_start = Instant::now();
@@ -103,7 +103,7 @@ for iter in 0..(WARMUP_ITERS + BENCH_ITERS) {
     {
         // init the reader
         let mut r = BitReader::<$bo, _>::new(
-            MemWordReaderInf::new(&buffer)
+            MemWordReader::new(&buffer)
         );
         // measure
         let r_start = Instant::now();

@@ -59,14 +59,14 @@ macro_rules! impl_default_read_codes {
             #[inline(always)]
             fn read_gamma(&mut self) -> Result<u64> {
                 // From our tests, the ARM architecture is faster
-                // without tables ɣ codes.
+                // without tables for ɣ codes.
                 return self.read_gamma_param::<false>();
             }
 
             #[inline(always)]
             fn skip_gamma(&mut self) -> Result<()> {
                 // From our tests, the ARM architecture is faster
-                // without tables ɣ codes.
+                // without tables for ɣ codes.
                 return self.skip_gamma_param::<false>();
             }
         }

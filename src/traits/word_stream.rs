@@ -5,15 +5,6 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
-/*!
-
-Traits for word-by-word I/O.
-
-The traits in this module are used by all bit-based backends to access the underlying
-source of data (e.g., memory or file) word-by-word with a programmable word size.
-
- */
-
 use anyhow::Result;
 use common_traits::*;
 
@@ -32,6 +23,7 @@ pub trait WordWrite {
     /// Write a word and advance the current position.
     fn write_word(&mut self, word: Self::Word) -> Result<()>;
 }
+
 /// Seekability for [`WordRead`] and [`WordWrite`] streams.
 pub trait WordSeek {
     #[must_use]

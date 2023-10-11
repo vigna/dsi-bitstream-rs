@@ -1,7 +1,7 @@
 use anyhow::Result;
 use dsi_bitstream::prelude::{
     BitRead, BufBitReader, BufBitWriter, DeltaRead, DeltaWrite, GammaRead, GammaWrite,
-    MemWordReaderInf, MemWordWriterVec, MinimalBinaryRead, MinimalBinaryWrite, ZetaRead, ZetaWrite,
+    MemWordReader, MemWordWriter, MinimalBinaryRead, MinimalBinaryWrite, ZetaRead, ZetaWrite,
 };
 use dsi_bitstream::traits::{BitSeek, BitWrite, BE, LE};
 use rand::rngs::SmallRng;
@@ -15,7 +15,7 @@ macro_rules! test_stream {
             let mut r = SmallRng::seed_from_u64(0);
             let mut v = SmallRng::seed_from_u64(1);
             let mut buffer = Vec::<u64>::new();
-            let mut write = BufBitWriter::<$endianness, _>::new(MemWordWriterVec::new(&mut buffer));
+            let mut write = BufBitWriter::<$endianness, _>::new(MemWordWriter::new(&mut buffer));
 
             let mut pos = vec![];
 
@@ -62,7 +62,7 @@ macro_rules! test_stream {
             drop(write);
 
             let buffer_32: &[u32] = unsafe { &buffer.align_to::<u32>().1 };
-            let mut read = BufBitReader::<$endianness, _>::new(MemWordReaderInf::new(buffer_32));
+            let mut read = BufBitReader::<$endianness, _>::new(MemWordReader::new(buffer_32));
 
             let mut r = SmallRng::seed_from_u64(0);
             let mut v = SmallRng::seed_from_u64(1);

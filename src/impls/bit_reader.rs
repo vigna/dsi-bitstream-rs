@@ -15,9 +15,9 @@ use anyhow::{bail, Result};
 ///
 /// Endianness can be selected using the parameter `E`.
 ///
-/// This implementation is usually slower than
-/// [`BufBitReader`](crate::impls::BufBitReader). It accesses
-/// randomly the underlying [`WordRead`] and it is not buffered.
+/// This implementation accesses randomly the underlying [`WordRead`]
+/// without any buffering. It is usually slower than
+/// [`BufBitReader`](crate::impls::BufBitReader).
 
 #[derive(Debug, Clone)]
 pub struct BitReader<E: Endianness, WR> {

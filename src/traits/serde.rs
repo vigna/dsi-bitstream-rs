@@ -17,7 +17,7 @@ pub trait BitSerializable {
 }
 
 pub trait BitDeserializable {
-    /// The type returned by the deserialization.
+    /// The type returned upon deserialization.
     type DeserType;
     /// Read a value of type [`BitDeserializable::DeserType`] from a bit stream that provides code implementations.
     fn deserialize<E: Endianness, B: CodeRead<E>>(bitstream: &mut B) -> Result<Self::DeserType>;

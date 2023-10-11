@@ -10,8 +10,13 @@ use crate::traits::*;
 use anyhow::{bail, Result};
 use common_traits::UnsignedInt;
 
+// TODO: panic in methods returning an error?!?
+
 /// An Implementation of [`WordRead`], [`WordWrite`], and [`WordSeek`] for a
 /// mutable slice of memory.
+///
+/// Writing beyond the end of the slice will cause an error. Use [`MemWordWriter`]
+/// for an extensible memory writer.
 ///
 /// # Example
 /// ```
@@ -22,7 +27,7 @@ use common_traits::UnsignedInt;
 ///     0x702863e6f9739b86,
 /// ];
 ///
-/// let mut word_writer = MemWordWriter::new(&mut words);
+/// let mut word_writer = MemWordWriterStrict::new(&mut words);
 ///
 /// // the stream is read sequentially
 /// assert_eq!(word_writer.get_word_pos(), 0);
@@ -51,14 +56,14 @@ use common_traits::UnsignedInt;
 /// assert_eq!(word_writer.get_word_pos(), 1);
 /// ```
 #[derive(Debug, PartialEq)]
-pub struct MemWordWriter<W: UnsignedInt, B: AsMut<[W]>> {
+pub struct MemWordWriterStrict<W: UnsignedInt, B: AsMut<[W]>> {
     data: B,
     word_index: usize,
     _marker: core::marker::PhantomData<W>,
 }
 
-impl<W: UnsignedInt, B: AsMut<[W]> + AsRef<[W]>> MemWordWriter<W, B> {
-    /// Create a new [`MemWordWriter`] from a slice of **ZERO INITIALIZED** data
+impl<W: UnsignedInt, B: AsMut<[W]> + AsRef<[W]>> MemWordWriterStrict<W, B> {
+    /// Create a new [`MemWordWriterStrict`] from a slice of **ZERO INITIALIZED** data
     #[must_use]
     pub fn new(data: B) -> Self {
         Self {
@@ -78,9 +83,8 @@ impl<W: UnsignedInt, B: AsMut<[W]> + AsRef<[W]>> MemWordWriter<W, B> {
 }
 
 /// An Implementation of [`WordSeek`], [`WordRead`], [`WordWrite`]
-/// for a mutable [`Vec<u64>`]. The core difference between [`MemWordWriter`]
-/// and [`MemWordWriterVec`] is that the former allocates new memory
-/// if the stream writes out of bound by 1.
+/// for a mutable [`Vec`]. The vector will be extended as new data
+/// is written.
 ///
 /// # Example
 /// ```
@@ -90,7 +94,7 @@ impl<W: UnsignedInt, B: AsMut<[W]> + AsRef<[W]>> MemWordWriter<W, B> {
 ///     0x0043b59fcdf16077,
 /// ];
 ///
-/// let mut word_writer = MemWordWriterVec::new(&mut words);
+/// let mut word_writer = MemWordWriter::new(&mut words);
 ///
 /// // the stream is read sequentially
 /// assert_eq!(word_writer.get_word_pos(), 0);
@@ -101,17 +105,15 @@ impl<W: UnsignedInt, B: AsMut<[W]> + AsRef<[W]>> MemWordWriter<W, B> {
 /// ```
 #[derive(Debug, PartialEq)]
 #[cfg(feature = "alloc")]
-pub struct MemWordWriterVec<W: UnsignedInt, B: AsMut<alloc::vec::Vec<W>>> {
+pub struct MemWordWriter<W: UnsignedInt, B: AsMut<alloc::vec::Vec<W>>> {
     data: B,
     word_index: usize,
     _marker: core::marker::PhantomData<W>,
 }
 
 #[cfg(feature = "alloc")]
-impl<W: UnsignedInt, B: AsMut<alloc::vec::Vec<W>> + AsRef<alloc::vec::Vec<W>>>
-    MemWordWriterVec<W, B>
-{
-    /// Create a new [`MemWordWriter`] from a slice of **ZERO INITIALIZED** data
+impl<W: UnsignedInt, B: AsMut<alloc::vec::Vec<W>> + AsRef<alloc::vec::Vec<W>>> MemWordWriter<W, B> {
+    /// Create a new [`MemWordWriterStrict`] from a slice of **ZERO INITIALIZED** data
     #[must_use]
     pub fn new(data: B) -> Self {
         Self {
@@ -130,7 +132,7 @@ impl<W: UnsignedInt, B: AsMut<alloc::vec::Vec<W>> + AsRef<alloc::vec::Vec<W>>>
     }
 }
 
-impl<W: UnsignedInt, B: AsMut<[W]>> WordRead for MemWordWriter<W, B> {
+impl<W: UnsignedInt, B: AsMut<[W]>> WordRead for MemWordWriterStrict<W, B> {
     type Word = W;
 
     #[inline]
@@ -147,7 +149,7 @@ impl<W: UnsignedInt, B: AsMut<[W]>> WordRead for MemWordWriter<W, B> {
     }
 }
 
-impl<W: UnsignedInt, B: AsRef<[W]> + AsMut<[W]>> WordSeek for MemWordWriter<W, B> {
+impl<W: UnsignedInt, B: AsRef<[W]> + AsMut<[W]>> WordSeek for MemWordWriterStrict<W, B> {
     #[inline]
     #[must_use]
     fn get_word_pos(&self) -> usize {
@@ -158,7 +160,7 @@ impl<W: UnsignedInt, B: AsRef<[W]> + AsMut<[W]>> WordSeek for MemWordWriter<W, B
     fn set_word_pos(&mut self, word_index: usize) -> Result<()> {
         if word_index >= self.data.as_ref().len() {
             bail!(
-                "Index {} is out of bound on a MemWordReader of length {}",
+                "Index {} is out of bound on a MemWordReaderStrict of length {}",
                 word_index,
                 self.data.as_ref().len()
             );
@@ -168,7 +170,7 @@ impl<W: UnsignedInt, B: AsRef<[W]> + AsMut<[W]>> WordSeek for MemWordWriter<W, B
     }
 }
 
-impl<W: UnsignedInt, B: AsMut<[W]>> WordWrite for MemWordWriter<W, B> {
+impl<W: UnsignedInt, B: AsMut<[W]>> WordWrite for MemWordWriterStrict<W, B> {
     type Word = W;
 
     #[inline]
@@ -187,7 +189,7 @@ impl<W: UnsignedInt, B: AsMut<[W]>> WordWrite for MemWordWriter<W, B> {
 }
 
 #[cfg(feature = "alloc")]
-impl<W: UnsignedInt, B: AsMut<alloc::vec::Vec<W>>> WordWrite for MemWordWriterVec<W, B> {
+impl<W: UnsignedInt, B: AsMut<alloc::vec::Vec<W>>> WordWrite for MemWordWriter<W, B> {
     type Word = W;
 
     #[inline]
@@ -202,7 +204,7 @@ impl<W: UnsignedInt, B: AsMut<alloc::vec::Vec<W>>> WordWrite for MemWordWriterVe
 }
 
 #[cfg(feature = "alloc")]
-impl<W: UnsignedInt, B: AsMut<alloc::vec::Vec<W>>> WordRead for MemWordWriterVec<W, B> {
+impl<W: UnsignedInt, B: AsMut<alloc::vec::Vec<W>>> WordRead for MemWordWriter<W, B> {
     type Word = W;
 
     #[inline]
@@ -221,7 +223,7 @@ impl<W: UnsignedInt, B: AsMut<alloc::vec::Vec<W>>> WordRead for MemWordWriterVec
 
 #[cfg(feature = "alloc")]
 impl<W: UnsignedInt, B: AsMut<alloc::vec::Vec<W>> + AsRef<alloc::vec::Vec<W>>> WordSeek
-    for MemWordWriterVec<W, B>
+    for MemWordWriter<W, B>
 {
     #[inline]
     #[must_use]
@@ -233,7 +235,7 @@ impl<W: UnsignedInt, B: AsMut<alloc::vec::Vec<W>> + AsRef<alloc::vec::Vec<W>>> W
     fn set_word_pos(&mut self, word_index: usize) -> Result<()> {
         if word_index >= self.data.as_ref().len() {
             bail!(
-                "Index {} is out of bound on a MemWordReader of length {}",
+                "Index {} is out of bound on a MemWordReaderStrict of length {}",
                 word_index,
                 self.data.as_ref().len()
             );

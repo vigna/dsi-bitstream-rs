@@ -26,7 +26,7 @@ pub fn harness(data: FuzzCase) {
     let mut buffer = vec![];
     let mut buffer2 = vec![];
 
-    let mut writer = MemWordWriterVec::new(&mut buffer2);
+    let mut writer = MemWordWriter::new(&mut buffer2);
     for command in data.commands {
         match command {
             RandomCommand::Len => {

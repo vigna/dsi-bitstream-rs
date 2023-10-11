@@ -13,8 +13,8 @@ use crate::{
 };
 use anyhow::Result;
 
-/// Wrapping struct that keep tracks of written bits. Optionally,
-/// prints to standard error information about methods called.
+/// A wrapper around a [`BitWrite`] that keeps track of the number of
+/// bits written and optionally prints on standard error the operations performed on the stream.
 #[derive(Debug, Clone)]
 pub struct CountBitWriter<E: Endianness, BW: BitWrite<E>, const PRINT: bool = false> {
     bit_write: BW,
@@ -158,8 +158,8 @@ impl<E: Endianness, BR: BitWrite<E> + BitSeek, const PRINT: bool> BitSeek
     }
 }
 
-/// Wrapping struct that keep tracks of read bits. Optionally,
-/// prints to standard error information about methods called.
+/// A wrapper around a [`BitRead`] that keeps track of the number of
+/// bits read and optionally prints on standard error the operations performed on the stream.
 #[derive(Debug, Clone)]
 pub struct CountBitReader<E: Endianness, BR: BitRead<E>, const PRINT: bool = false> {
     bit_read: BR,
@@ -367,7 +367,7 @@ impl<E: Endianness, BR: BitRead<E> + BitSeek, const PRINT: bool> BitSeek
 fn test_count() -> Result<()> {
     use crate::prelude::*;
     let mut buffer = <Vec<u64>>::new();
-    let bit_write = <BufBitWriter<LE, _>>::new(MemWordWriterVec::new(&mut buffer));
+    let bit_write = <BufBitWriter<LE, _>>::new(MemWordWriter::new(&mut buffer));
     let mut count_bit_write = CountBitWriter::<_, _, true>::new(bit_write);
 
     count_bit_write.write_unary(5)?;
@@ -388,7 +388,7 @@ fn test_count() -> Result<()> {
     assert_eq!(count_bit_write.bits_written, 174);
     count_bit_write.flush()?;
 
-    let bit_read = <BufBitReader<LE, _>>::new(MemWordReaderInf::<u64, _>::new(&buffer));
+    let bit_read = <BufBitReader<LE, _>>::new(MemWordReader::<u64, _>::new(&buffer));
     let mut count_bit_read = CountBitReader::<_, _, true>::new(bit_read);
 
     assert_eq!(count_bit_read.peek_bits(5)?, 0);

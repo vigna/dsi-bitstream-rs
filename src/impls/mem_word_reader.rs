@@ -10,7 +10,66 @@ use crate::traits::*;
 use anyhow::{bail, Result};
 use common_traits::UnsignedInt;
 
-/// An Implementation of [`WordRead`] and [`WordSeek`] for a slice.
+/// A zero-extended implementation of [`WordRead`] and [`WordSeek`] for a slice.
+///
+/// Trying to read beyond the end of the slice will return zeros.
+/// Use [`MemWordReaderStrict`] if you wanna obtain an error instead.
+///
+/// Note that zero extension is usually what you want, as memory written with
+/// a certain word size will cause end-of-stream errors when read with a larger
+/// word size.
+#[derive(Debug, Clone, PartialEq)]
+pub struct MemWordReader<W: UnsignedInt, B: AsRef<[W]>> {
+    data: B,
+    word_index: usize,
+    _marker: core::marker::PhantomData<W>,
+}
+
+impl<W: UnsignedInt, B: AsRef<[W]>> MemWordReader<W, B> {
+    /// Create a new [`MemWordReader`] from a slice of data
+    #[must_use]
+    pub fn new(data: B) -> Self {
+        Self {
+            data,
+            word_index: 0,
+            _marker: Default::default(),
+        }
+    }
+}
+impl<W: UnsignedInt, B: AsRef<[W]>> WordRead for MemWordReader<W, B> {
+    type Word = W;
+
+    #[inline(always)]
+    fn read_word(&mut self) -> Result<W> {
+        let res = self
+            .data
+            .as_ref()
+            .get(self.word_index)
+            .copied()
+            .unwrap_or(W::ZERO);
+        self.word_index += 1;
+        Ok(res)
+    }
+}
+
+impl<W: UnsignedInt, B: AsRef<[W]>> WordSeek for MemWordReader<W, B> {
+    #[inline(always)]
+    #[must_use]
+    fn get_word_pos(&self) -> usize {
+        self.word_index
+    }
+
+    #[inline(always)]
+    fn set_word_pos(&mut self, word_index: usize) -> Result<()> {
+        self.word_index = word_index;
+        Ok(())
+    }
+}
+
+/// A strict implementation of [`WordRead`] and [`WordSeek`] for a slice.
+///
+/// Trying to read beyond the end of the slice will return an error.
+/// Use [`MemWordReader`] if you wanna extend the slice with infinite zeros.
 ///
 /// # Example
 /// ```
@@ -21,7 +80,7 @@ use common_traits::UnsignedInt;
 ///     0x702863e6f9739b86,
 /// ];
 ///
-/// let mut word_reader = MemWordReader::new(&words);
+/// let mut word_reader = MemWordReaderStrict::new(&words);
 ///
 /// // the stream is read sequentially
 /// assert_eq!(word_reader.get_word_pos(), 0);
@@ -35,21 +94,20 @@ use common_traits::UnsignedInt;
 /// assert!(word_reader.set_word_pos(1).is_ok());
 /// assert_eq!(word_reader.get_word_pos(), 1);
 /// assert_eq!(word_reader.read_word().unwrap(), 0x702863e6f9739b86);
-///
 /// // errored set position doesn't change the current position
 /// assert_eq!(word_reader.get_word_pos(), 2);
 /// assert!(word_reader.set_word_pos(100).is_err());
 /// assert_eq!(word_reader.get_word_pos(), 2);
 /// ```
 #[derive(Debug, Clone, PartialEq)]
-pub struct MemWordReader<W: UnsignedInt, B: AsRef<[W]>> {
+pub struct MemWordReaderStrict<W: UnsignedInt, B: AsRef<[W]>> {
     data: B,
     word_index: usize,
     _marker: core::marker::PhantomData<W>,
 }
 
-impl<W: UnsignedInt, B: AsRef<[W]>> MemWordReader<W, B> {
-    /// Create a new [`MemWordReader`] from a slice of data
+impl<W: UnsignedInt, B: AsRef<[W]>> MemWordReaderStrict<W, B> {
+    /// Create a new [`MemWordReaderStrict`] from a slice of data
     #[must_use]
     pub fn new(data: B) -> Self {
         Self {
@@ -68,56 +126,7 @@ impl<W: UnsignedInt, B: AsRef<[W]>> MemWordReader<W, B> {
     }
 }
 
-///
-#[derive(Debug, Clone, PartialEq)]
-pub struct MemWordReaderInf<W: UnsignedInt, B: AsRef<[W]>> {
-    data: B,
-    word_index: usize,
-    _marker: core::marker::PhantomData<W>,
-}
-
-impl<W: UnsignedInt, B: AsRef<[W]>> MemWordReaderInf<W, B> {
-    /// Create a new [`MemWordReaderInf`] from a slice of data
-    #[must_use]
-    pub fn new(data: B) -> Self {
-        Self {
-            data,
-            word_index: 0,
-            _marker: Default::default(),
-        }
-    }
-}
-impl<W: UnsignedInt, B: AsRef<[W]>> WordRead for MemWordReaderInf<W, B> {
-    type Word = W;
-
-    #[inline(always)]
-    fn read_word(&mut self) -> Result<W> {
-        let res = self
-            .data
-            .as_ref()
-            .get(self.word_index)
-            .copied()
-            .unwrap_or(W::ZERO);
-        self.word_index += 1;
-        Ok(res)
-    }
-}
-
-impl<W: UnsignedInt, B: AsRef<[W]>> WordSeek for MemWordReaderInf<W, B> {
-    #[inline(always)]
-    #[must_use]
-    fn get_word_pos(&self) -> usize {
-        self.word_index
-    }
-
-    #[inline(always)]
-    fn set_word_pos(&mut self, word_index: usize) -> Result<()> {
-        self.word_index = word_index;
-        Ok(())
-    }
-}
-
-impl<W: UnsignedInt, B: AsRef<[W]>> WordRead for MemWordReader<W, B> {
+impl<W: UnsignedInt, B: AsRef<[W]>> WordRead for MemWordReaderStrict<W, B> {
     type Word = W;
 
     #[inline]
@@ -134,7 +143,7 @@ impl<W: UnsignedInt, B: AsRef<[W]>> WordRead for MemWordReader<W, B> {
     }
 }
 
-impl<W: UnsignedInt, B: AsRef<[W]>> WordSeek for MemWordReader<W, B> {
+impl<W: UnsignedInt, B: AsRef<[W]>> WordSeek for MemWordReaderStrict<W, B> {
     #[inline]
     #[must_use]
     fn get_word_pos(&self) -> usize {
@@ -145,7 +154,7 @@ impl<W: UnsignedInt, B: AsRef<[W]>> WordSeek for MemWordReader<W, B> {
     fn set_word_pos(&mut self, word_index: usize) -> Result<()> {
         if word_index >= self.data.as_ref().len() {
             bail!(
-                "Index {} is out of bound on a MemWordReader of length {}",
+                "Index {} is out of bound on a MemWordReaderStrict of length {}",
                 word_index,
                 self.data.as_ref().len()
             );

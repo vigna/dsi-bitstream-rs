@@ -7,7 +7,14 @@
 
 /*!
 
-Traits
+Traits to describe bit operations.
+
+- The [`Endianness`] trait is used by implementations to specify the endianness of a bit stream.
+- The traits [`BitRead`], [`BitWrite`], and [`BitSeek`] provide bit-based traits analogous to
+  [`std::io::Read`], [`std::io::Write`], and [`std::io::Seek`].
+- The traits [`WordRead`], [`WordWrite`], and [`WordSeek`] provide word-based traits analogous to
+  [`std::io::Read`], [`std::io::Write`], and [`std::io::Seek`]. They provide the backend for
+  the bit-based buffered implementations [`crate::impls::BufBitReader`] and [`crate::impls::BufBitWriter`].
 
 */
 

@@ -8,7 +8,7 @@ use crate::prelude::*;
 use crate::traits::*;
 use anyhow::Result;
 
-/// A wrapper over a code reader that prints on stdout all the codes read
+/// A wrapper over a [`CodeRead`] that report on standard error all codes read.
 pub struct DbgCodeReader<E: Endianness, CR: CodeRead<E>> {
     reader: CR,
     _marker: core::marker::PhantomData<E>,
@@ -31,26 +31,26 @@ where
 
     fn peek_bits(&mut self, n_bits: usize) -> Result<Self::PeekWord> {
         let value = self.reader.peek_bits(n_bits)?;
-        println!("peek_bits({}): {}", n_bits, value);
+        eprintln!("peek_bits({}): {}", n_bits, value);
         Ok(value)
     }
     fn skip_bits(&mut self, n_bits: usize) -> Result<()> {
-        println!("skip_bits({})", n_bits);
+        eprintln!("skip_bits({})", n_bits);
         self.reader.skip_bits(n_bits)
     }
     fn read_bits(&mut self, n_bits: usize) -> Result<u64> {
         let value = self.reader.read_bits(n_bits)?;
-        println!("read_bits({}): {}", n_bits, value);
+        eprintln!("read_bits({}): {}", n_bits, value);
         Ok(value)
     }
     fn read_unary_param<const USE_TABLE: bool>(&mut self) -> Result<u64> {
         let value = self.reader.read_unary_param::<USE_TABLE>()?;
-        println!("{{U<{}>:{}}}", USE_TABLE, value);
+        eprintln!("{{U<{}>:{}}}", USE_TABLE, value);
         Ok(value)
     }
     fn read_unary(&mut self) -> Result<u64> {
         let value = self.reader.read_unary()?;
-        println!("{{U:{}}}", value);
+        eprintln!("{{U:{}}}", value);
         Ok(value)
     }
 }
@@ -61,13 +61,13 @@ where
 {
     fn read_gamma(&mut self) -> Result<u64> {
         let value = self.reader.read_gamma()?;
-        println!("{{g:{}}}", value);
+        eprintln!("{{g:{}}}", value);
         Ok(value)
     }
 
     fn skip_gamma(&mut self) -> Result<()> {
         self.reader.skip_gamma()?;
-        println!("{{skip g}}");
+        eprintln!("{{skip g}}");
         Ok(())
     }
 }
@@ -78,13 +78,13 @@ where
 {
     fn read_delta(&mut self) -> Result<u64> {
         let value = self.reader.read_delta()?;
-        println!("{{d:{}}}", value);
+        eprintln!("{{d:{}}}", value);
         Ok(value)
     }
 
     fn skip_delta(&mut self) -> Result<()> {
         self.reader.skip_delta()?;
-        println!("{{skip d}}");
+        eprintln!("{{skip d}}");
         Ok(())
     }
 }
@@ -95,30 +95,30 @@ where
 {
     fn read_zeta3(&mut self) -> Result<u64> {
         let value = self.reader.read_zeta3()?;
-        println!("{{z3:{}}}", value);
+        eprintln!("{{z3:{}}}", value);
         Ok(value)
     }
 
     fn skip_zeta3(&mut self) -> Result<()> {
         self.reader.skip_zeta3()?;
-        println!("{{skip z3}}");
+        eprintln!("{{skip z3}}");
         Ok(())
     }
 
     fn read_zeta(&mut self, k: u64) -> Result<u64> {
         let value = self.reader.read_zeta(k)?;
-        println!("{{z{}:{}}}", k, value);
+        eprintln!("{{z{}:{}}}", k, value);
         Ok(value)
     }
 
     fn skip_zeta(&mut self, k: u64) -> Result<()> {
         self.reader.skip_zeta(k)?;
-        println!("{{skip z {}}}", k);
+        eprintln!("{{skip z {}}}", k);
         Ok(())
     }
 }
 
-/// A wrapper over a code writer that prints on stdout all the codes written
+/// A wrapper over a [`CodeWrite`] that report on standard error all codes written.
 pub struct DbgCodeWriter<E: Endianness, CW: CodeWrite<E>> {
     writer: CW,
     _marker: core::marker::PhantomData<E>,
@@ -135,15 +135,15 @@ impl<E: Endianness, CW: CodeWrite<E>> DbgCodeWriter<E, CW> {
 
 impl<E: Endianness, CW: CodeWrite<E>> BitWrite<E> for DbgCodeWriter<E, CW> {
     fn write_bits(&mut self, value: u64, n_bits: usize) -> Result<usize> {
-        println!("write_bits({}, {})", value, n_bits);
+        eprintln!("write_bits({}, {})", value, n_bits);
         self.writer.write_bits(value, n_bits)
     }
     fn write_unary_param<const USE_TABLE: bool>(&mut self, value: u64) -> Result<usize> {
-        println!("{{U<{}>:{}}}", USE_TABLE, value);
+        eprintln!("{{U<{}>:{}}}", USE_TABLE, value);
         self.writer.write_unary(value)
     }
     fn write_unary(&mut self, value: u64) -> Result<usize> {
-        println!("{{U:{}}}", value);
+        eprintln!("{{U:{}}}", value);
         self.writer.write_unary(value)
     }
     fn flush(self) -> Result<()> {
@@ -153,25 +153,25 @@ impl<E: Endianness, CW: CodeWrite<E>> BitWrite<E> for DbgCodeWriter<E, CW> {
 
 impl<E: Endianness, CW: CodeWrite<E>> GammaWrite<E> for DbgCodeWriter<E, CW> {
     fn write_gamma(&mut self, value: u64) -> Result<usize> {
-        println!("{{g:{}}}", value);
+        eprintln!("{{g:{}}}", value);
         self.writer.write_gamma(value)
     }
 }
 
 impl<E: Endianness, CW: CodeWrite<E>> DeltaWrite<E> for DbgCodeWriter<E, CW> {
     fn write_delta(&mut self, value: u64) -> Result<usize> {
-        println!("{{d:{}}}", value);
+        eprintln!("{{d:{}}}", value);
         self.writer.write_delta(value)
     }
 }
 
 impl<E: Endianness, CW: CodeWrite<E>> ZetaWrite<E> for DbgCodeWriter<E, CW> {
     fn write_zeta(&mut self, value: u64, k: u64) -> Result<usize> {
-        println!("{{z{}:{}}}", value, k);
+        eprintln!("{{z{}:{}}}", value, k);
         self.writer.write_zeta(value, k)
     }
     fn write_zeta3(&mut self, value: u64) -> Result<usize> {
-        println!("{{z3:{}}}", value);
+        eprintln!("{{z3:{}}}", value);
         self.writer.write_zeta3(value)
     }
 }
