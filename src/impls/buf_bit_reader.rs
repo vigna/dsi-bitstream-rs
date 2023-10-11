@@ -77,7 +77,7 @@ where
     /// ```
     /// use dsi_bitstream::prelude::*;
     /// let words: [u32; 2] = [0x0043b59f, 0xccf16077];
-    /// let word_reader = MemWordReaderStrict::new(&words);
+    /// let word_reader = MemWordReader::new(&words);
     /// let mut buf_bit_reader = <BufBitReader<BE, _>>::new(word_reader);
     /// ```
     #[must_use]
@@ -468,7 +468,7 @@ macro_rules! test_buf_bit_reader {
             use crate::{
                 codes::{GammaRead, GammaWrite},
                 prelude::{
-                    len_delta, len_gamma, BufBitWriter, DeltaRead, DeltaWrite, MemWordReaderStrict,
+                    len_delta, len_gamma, BufBitWriter, DeltaRead, DeltaWrite, MemWordReader,
                 },
             };
             use rand::Rng;
@@ -543,8 +543,8 @@ macro_rules! test_buf_bit_reader {
                 )
             };
 
-            let mut big_buff = BufBitReader::<BE, _>::new(MemWordReaderStrict::new(be_trans));
-            let mut little_buff = BufBitReader::<LE, _>::new(MemWordReaderStrict::new(le_trans));
+            let mut big_buff = BufBitReader::<BE, _>::new(MemWordReader::new(be_trans));
+            let mut little_buff = BufBitReader::<LE, _>::new(MemWordReader::new(le_trans));
 
             let mut r = SmallRng::seed_from_u64(0);
 

@@ -338,7 +338,7 @@ macro_rules! test_buf_bit_writer {
             use crate::{
                 codes::{GammaRead, GammaWrite},
                 prelude::{
-                    len_delta, len_gamma, BufBitReader, DeltaRead, DeltaWrite, MemWordReaderStrict,
+                    len_delta, len_gamma, BufBitReader, DeltaRead, DeltaWrite, MemWordReader,
                 },
             };
             use rand::Rng;
@@ -413,8 +413,8 @@ macro_rules! test_buf_bit_writer {
                 )
             };
 
-            let mut big_buff = BufBitReader::<BE, _>::new(MemWordReaderStrict::new(be_trans));
-            let mut little_buff = BufBitReader::<LE, _>::new(MemWordReaderStrict::new(le_trans));
+            let mut big_buff = BufBitReader::<BE, _>::new(MemWordReader::new(be_trans));
+            let mut little_buff = BufBitReader::<LE, _>::new(MemWordReader::new(le_trans));
 
             let mut r = SmallRng::seed_from_u64(0);
 
