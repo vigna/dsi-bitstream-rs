@@ -91,6 +91,9 @@ pub trait BitRead<E: Endianness> {
 pub trait BitWrite<E: Endianness> {
     /// Write the lowest `n` bits of value to the stream and return the number of
     /// bits written, that is, `n`.
+    ///
+    /// The other bits should be ignored, but it is allow to check them
+    /// and panic in test mode if they are not zero.
     fn write_bits(&mut self, value: u64, n: usize) -> Result<usize>;
 
     /// Write `value` as an unary code to the stream and return the number of
