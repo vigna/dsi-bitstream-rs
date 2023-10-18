@@ -1,9 +1,10 @@
 use anyhow::Result;
 use dsi_bitstream::prelude::{
-    BitRead, BufBitReader, BufBitWriter, DeltaRead, DeltaWrite, GammaRead, GammaWrite,
-    MemWordReader, MemWordWriter, MinimalBinaryRead, MinimalBinaryWrite, ZetaRead, ZetaWrite,
+    BitRead, BitSeek, BitWrite, BufBitReader, BufBitWriter, DeltaRead, DeltaWrite, GammaRead,
+    GammaWrite, MemWordReader, MemWordWriterVec, MinimalBinaryRead, MinimalBinaryWrite, ZetaRead,
+    ZetaWrite,
 };
-use dsi_bitstream::traits::{BitSeek, BitWrite, BE, LE};
+use dsi_bitstream::traits::{BE, LE};
 use rand::rngs::SmallRng;
 use rand::{Rng, SeedableRng};
 
@@ -15,7 +16,7 @@ macro_rules! test_stream {
             let mut r = SmallRng::seed_from_u64(0);
             let mut v = SmallRng::seed_from_u64(1);
             let mut buffer = Vec::<u64>::new();
-            let mut write = BufBitWriter::<$endianness, _>::new(MemWordWriter::new(&mut buffer));
+            let mut write = BufBitWriter::<$endianness, _>::new(MemWordWriterVec::new(&mut buffer));
 
             let mut pos = vec![];
 

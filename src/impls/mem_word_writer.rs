@@ -94,7 +94,7 @@ impl<W: UnsignedInt, B: AsMut<[W]> + AsRef<[W]>> MemWordWriterSlice<W, B> {
 ///     0x0043b59fcdf16077,
 /// ];
 ///
-/// let mut word_writer = MemWordWriter::new(&mut words);
+/// let mut word_writer = MemWordWriterVec::new(&mut words);
 ///
 /// // the stream is read sequentially
 /// assert_eq!(word_writer.get_word_pos(), 0);
@@ -105,14 +105,16 @@ impl<W: UnsignedInt, B: AsMut<[W]> + AsRef<[W]>> MemWordWriterSlice<W, B> {
 /// ```
 #[derive(Debug, PartialEq)]
 #[cfg(feature = "alloc")]
-pub struct MemWordWriter<W: UnsignedInt, B: AsMut<alloc::vec::Vec<W>>> {
+pub struct MemWordWriterVec<W: UnsignedInt, B: AsMut<alloc::vec::Vec<W>>> {
     data: B,
     word_index: usize,
     _marker: core::marker::PhantomData<W>,
 }
 
 #[cfg(feature = "alloc")]
-impl<W: UnsignedInt, B: AsMut<alloc::vec::Vec<W>> + AsRef<alloc::vec::Vec<W>>> MemWordWriter<W, B> {
+impl<W: UnsignedInt, B: AsMut<alloc::vec::Vec<W>> + AsRef<alloc::vec::Vec<W>>>
+    MemWordWriterVec<W, B>
+{
     /// Create a new [`MemWordWriterSlice`] from a slice of **ZERO INITIALIZED** data
     #[must_use]
     pub fn new(data: B) -> Self {
@@ -189,7 +191,7 @@ impl<W: UnsignedInt, B: AsMut<[W]>> WordWrite for MemWordWriterSlice<W, B> {
 }
 
 #[cfg(feature = "alloc")]
-impl<W: UnsignedInt, B: AsMut<alloc::vec::Vec<W>>> WordWrite for MemWordWriter<W, B> {
+impl<W: UnsignedInt, B: AsMut<alloc::vec::Vec<W>>> WordWrite for MemWordWriterVec<W, B> {
     type Word = W;
 
     #[inline]
@@ -204,7 +206,7 @@ impl<W: UnsignedInt, B: AsMut<alloc::vec::Vec<W>>> WordWrite for MemWordWriter<W
 }
 
 #[cfg(feature = "alloc")]
-impl<W: UnsignedInt, B: AsMut<alloc::vec::Vec<W>>> WordRead for MemWordWriter<W, B> {
+impl<W: UnsignedInt, B: AsMut<alloc::vec::Vec<W>>> WordRead for MemWordWriterVec<W, B> {
     type Word = W;
 
     #[inline]
@@ -223,7 +225,7 @@ impl<W: UnsignedInt, B: AsMut<alloc::vec::Vec<W>>> WordRead for MemWordWriter<W,
 
 #[cfg(feature = "alloc")]
 impl<W: UnsignedInt, B: AsMut<alloc::vec::Vec<W>> + AsRef<alloc::vec::Vec<W>>> WordSeek
-    for MemWordWriter<W, B>
+    for MemWordWriterVec<W, B>
 {
     #[inline]
     #[must_use]

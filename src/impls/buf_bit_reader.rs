@@ -464,7 +464,7 @@ macro_rules! test_buf_bit_reader {
     ($f: ident, $word:ty) => {
         #[test]
         fn $f() -> Result<(), anyhow::Error> {
-            use super::MemWordWriter;
+            use super::MemWordWriterVec;
             use crate::{
                 codes::{GammaRead, GammaWrite},
                 prelude::{
@@ -476,8 +476,8 @@ macro_rules! test_buf_bit_reader {
 
             let mut buffer_be: Vec<$word> = vec![];
             let mut buffer_le: Vec<$word> = vec![];
-            let mut big = super::BufBitWriter::<BE, _>::new(MemWordWriter::new(&mut buffer_be));
-            let mut little = BufBitWriter::<LE, _>::new(MemWordWriter::new(&mut buffer_le));
+            let mut big = super::BufBitWriter::<BE, _>::new(MemWordWriterVec::new(&mut buffer_be));
+            let mut little = BufBitWriter::<LE, _>::new(MemWordWriterVec::new(&mut buffer_le));
 
             let mut r = SmallRng::seed_from_u64(0);
             const ITER: usize = 1_000_000;

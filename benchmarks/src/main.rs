@@ -60,7 +60,7 @@ for iter in 0..(WARMUP_ITERS + BENCH_ITERS) {
     {
         // init the writer
         let mut r = BufBitWriter::<$bo, _>::new(
-            MemWordWriter::new(&mut buffer)
+            MemWordWriterVec::new(&mut buffer)
         );
         // measure
         #[cfg(not(feature="reads"))]

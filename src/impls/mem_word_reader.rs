@@ -29,6 +29,10 @@ impl<W: UnsignedInt, B: AsRef<[W]>> MemWordReader<W, B> {
             _marker: Default::default(),
         }
     }
+
+    pub fn into_inner(self) -> B {
+        self.data
+    }
 }
 impl<W: UnsignedInt, B: AsRef<[W]>> WordRead for MemWordReader<W, B> {
     type Word = W;

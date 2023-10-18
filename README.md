@@ -22,7 +22,7 @@ let mut data = Vec::<u64>::new();
 // write some data
 {
     // create a codes writer
-    let mut writer = BufBitWriter::<BE, _>::new(MemWordWriter::new(&mut data));
+    let mut writer = BufBitWriter::<BE, _>::new(MemWordWriterVec::new(&mut data));
     // write 0 using 10 bits
     writer.write_bits(0, 10).unwrap();
     // write 1 in unary

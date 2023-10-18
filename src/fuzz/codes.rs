@@ -8,7 +8,6 @@ use crate::prelude::*;
 use arbitrary::Arbitrary;
 
 type ReadWord = u32;
-type ReadBuffer = u64;
 
 const DEBUG: bool = false;
 
@@ -78,11 +77,10 @@ pub fn harness(data: FuzzCase) {
     let mut writes = vec![];
     // write
     {
-        let mut big = BufBitWriter::<BE, _>::new(MemWordWriter::new(&mut buffer_be));
-        let mut little = BufBitWriter::<LE, _>::new(MemWordWriter::new(&mut buffer_le));
+        let mut big = BufBitWriter::<BE, _>::new(MemWordWriterVec::new(&mut buffer_be));
+        let mut little = BufBitWriter::<LE, _>::new(MemWordWriterVec::new(&mut buffer_le));
 
         for command in data.commands.iter() {
-            assert_eq!(big.get_bit_pos(), little.get_bit_pos());
             match command {
                 RandomCommand::Bits(value, n_bits) => {
                     let big_success = big.write_bits(*value, *n_bits).is_ok();
@@ -183,17 +181,17 @@ pub fn harness(data: FuzzCase) {
         )
     };
     {
-        let mut big = BitReader::<BE, _>::new(MemWordReaderStrict::new(&buffer_be));
+        let mut big = BitReader::<BE, _>::new(MemWordReader::new(&buffer_be));
         let mut big_buff =
-            BufBitReader::<BE, ReadBuffer, _>::new(MemWordReaderStrict::new(be_trans));
+            BufBitReader::<BE, _>::new(MemWordReader::new(be_trans));
         let mut big_buff_skip =
-            BufBitReader::<BE, ReadBuffer, _>::new(MemWordReaderStrict::new(be_trans));
+            BufBitReader::<BE, _>::new(MemWordReader::new(be_trans));
 
-        let mut little = BitReader::<LE, _>::new(MemWordReaderStrict::new(&buffer_le));
+        let mut little = BitReader::<LE, _>::new(MemWordReader::new(&buffer_le));
         let mut little_buff =
-            BufBitReader::<LE, ReadBuffer, _>::new(MemWordReaderStrict::new(le_trans));
+            BufBitReader::<LE, _>::new(MemWordReader::new(le_trans));
         let mut little_buff_skip =
-            BufBitReader::<LE, ReadBuffer, _>::new(MemWordReaderStrict::new(le_trans));
+            BufBitReader::<LE, _>::new(MemWordReader::new(le_trans));
 
         for (succ, command) in writes.into_iter().zip(data.commands.into_iter()) {
             let pos = big.get_bit_pos();
@@ -351,52 +349,52 @@ pub fn harness(data: FuzzCase) {
                         assert_eq!(bb.unwrap(), value as u64);
                         assert_eq!(lb.unwrap(), value as u64);
                         assert_eq!(
-                            pos + len_unary_param::<true>(value as u64),
+                            pos + value as usize + 1,
                             big.get_bit_pos()
                         );
                         assert_eq!(
-                            pos + len_unary_param::<true>(value as u64),
+                            pos + value as usize + 1,
                             little.get_bit_pos()
                         );
                         assert_eq!(
-                            pos + len_unary_param::<true>(value as u64),
+                            pos + value as usize + 1,
                             big_buff.get_bit_pos()
                         );
                         assert_eq!(
-                            pos + len_unary_param::<true>(value as u64),
+                            pos + value as usize + 1,
                             little_buff.get_bit_pos()
                         );
                         assert_eq!(
-                            pos + len_unary_param::<true>(value as u64),
+                            pos + value as usize + 1,
                             big_buff_skip.get_bit_pos()
                         );
                         assert_eq!(
-                            pos + len_unary_param::<true>(value as u64),
+                            pos + value as usize + 1,
                             little_buff_skip.get_bit_pos()
                         );
 
                         assert_eq!(
-                            pos + len_unary_param::<false>(value as u64),
+                            pos + value as usize + 1,
                             big.get_bit_pos()
                         );
                         assert_eq!(
-                            pos + len_unary_param::<false>(value as u64),
+                            pos + value as usize + 1,
                             little.get_bit_pos()
                         );
                         assert_eq!(
-                            pos + len_unary_param::<false>(value as u64),
+                            pos + value as usize + 1,
                             big_buff.get_bit_pos()
                         );
                         assert_eq!(
-                            pos + len_unary_param::<false>(value as u64),
+                            pos + value as usize + 1,
                             little_buff.get_bit_pos()
                         );
                         assert_eq!(
-                            pos + len_unary_param::<false>(value as u64),
+                            pos + value as usize + 1,
                             big_buff_skip.get_bit_pos()
                         );
                         assert_eq!(
-                            pos + len_unary_param::<false>(value as u64),
+                            pos + value as usize + 1,
                             little_buff_skip.get_bit_pos()
                         );
                     } else {
@@ -615,19 +613,28 @@ pub fn harness(data: FuzzCase) {
                 }
 
                 RandomCommand::Zeta(value, k, read_tab, _) => {
-                    let (b, l, bb, lb) = if read_tab {
-                        (
-                            big.read_zeta_param::<true>(k),
-                            little.read_zeta_param::<true>(k),
-                            big_buff.read_zeta_param::<true>(k),
-                            little_buff.read_zeta_param::<true>(k),
-                        )
+                    let (b, l, bb, lb) = if k == 3 {
+                         if read_tab {
+                            (
+                                big.read_zeta3_param::<true>(),
+                                little.read_zeta3_param::<true>(),
+                                big_buff.read_zeta3_param::<true>(),
+                                little_buff.read_zeta3_param::<true>(),
+                            )
+                        } else {
+                            (
+                                big.read_zeta3_param::<false>(),
+                                little.read_zeta3_param::<false>(),
+                                big_buff.read_zeta3_param::<false>(),
+                                little_buff.read_zeta3_param::<false>(),
+                            )
+                        } 
                     } else {
                         (
-                            big.read_zeta_param::<false>(k),
-                            little.read_zeta_param::<false>(k),
-                            big_buff.read_zeta_param::<false>(k),
-                            little_buff.read_zeta_param::<false>(k),
+                            big.read_zeta_param(k),
+                            little.read_zeta_param(k),
+                            big_buff.read_zeta_param(k),
+                            little_buff.read_zeta_param(k),
                         )
                     };
                     if succ {
