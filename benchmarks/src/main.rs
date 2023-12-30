@@ -1,3 +1,4 @@
+use dsi_bitstream::prelude::table_params::DefaultReadParams;
 use dsi_bitstream::prelude::*;
 use rand::Rng;
 use std::hint::black_box;
@@ -85,7 +86,7 @@ for iter in 0..(WARMUP_ITERS + BENCH_ITERS) {
     // read the codes
     {
         // init the reader
-        let mut r = BufBitReader::<$bo, _, _>::new(
+        let mut r = BufBitReader::<$bo, _, DefaultReadParams>::new(
             MemWordReader::<ReadWord, _>::new(&transmuted_buff)
         );
         // measure
