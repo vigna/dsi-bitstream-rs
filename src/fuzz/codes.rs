@@ -182,16 +182,12 @@ pub fn harness(data: FuzzCase) {
     };
     {
         let mut big = BitReader::<BE, _>::new(MemWordReader::new(&buffer_be));
-        let mut big_buff =
-            BufBitReader::<BE, _>::new(MemWordReader::new(be_trans));
-        let mut big_buff_skip =
-            BufBitReader::<BE, _>::new(MemWordReader::new(be_trans));
+        let mut big_buff = BufBitReader::<BE, _>::new(MemWordReader::new(be_trans));
+        let mut big_buff_skip = BufBitReader::<BE, _>::new(MemWordReader::new(be_trans));
 
         let mut little = BitReader::<LE, _>::new(MemWordReader::new(&buffer_le));
-        let mut little_buff =
-            BufBitReader::<LE, _>::new(MemWordReader::new(le_trans));
-        let mut little_buff_skip =
-            BufBitReader::<LE, _>::new(MemWordReader::new(le_trans));
+        let mut little_buff = BufBitReader::<LE, _>::new(MemWordReader::new(le_trans));
+        let mut little_buff_skip = BufBitReader::<LE, _>::new(MemWordReader::new(le_trans));
 
         for (succ, command) in writes.into_iter().zip(data.commands.into_iter()) {
             let pos = big.get_bit_pos();
@@ -348,55 +344,19 @@ pub fn harness(data: FuzzCase) {
                         assert_eq!(l.unwrap(), value as u64);
                         assert_eq!(bb.unwrap(), value as u64);
                         assert_eq!(lb.unwrap(), value as u64);
-                        assert_eq!(
-                            pos + value as usize + 1,
-                            big.get_bit_pos()
-                        );
-                        assert_eq!(
-                            pos + value as usize + 1,
-                            little.get_bit_pos()
-                        );
-                        assert_eq!(
-                            pos + value as usize + 1,
-                            big_buff.get_bit_pos()
-                        );
-                        assert_eq!(
-                            pos + value as usize + 1,
-                            little_buff.get_bit_pos()
-                        );
-                        assert_eq!(
-                            pos + value as usize + 1,
-                            big_buff_skip.get_bit_pos()
-                        );
-                        assert_eq!(
-                            pos + value as usize + 1,
-                            little_buff_skip.get_bit_pos()
-                        );
+                        assert_eq!(pos + value as usize + 1, big.get_bit_pos());
+                        assert_eq!(pos + value as usize + 1, little.get_bit_pos());
+                        assert_eq!(pos + value as usize + 1, big_buff.get_bit_pos());
+                        assert_eq!(pos + value as usize + 1, little_buff.get_bit_pos());
+                        assert_eq!(pos + value as usize + 1, big_buff_skip.get_bit_pos());
+                        assert_eq!(pos + value as usize + 1, little_buff_skip.get_bit_pos());
 
-                        assert_eq!(
-                            pos + value as usize + 1,
-                            big.get_bit_pos()
-                        );
-                        assert_eq!(
-                            pos + value as usize + 1,
-                            little.get_bit_pos()
-                        );
-                        assert_eq!(
-                            pos + value as usize + 1,
-                            big_buff.get_bit_pos()
-                        );
-                        assert_eq!(
-                            pos + value as usize + 1,
-                            little_buff.get_bit_pos()
-                        );
-                        assert_eq!(
-                            pos + value as usize + 1,
-                            big_buff_skip.get_bit_pos()
-                        );
-                        assert_eq!(
-                            pos + value as usize + 1,
-                            little_buff_skip.get_bit_pos()
-                        );
+                        assert_eq!(pos + value as usize + 1, big.get_bit_pos());
+                        assert_eq!(pos + value as usize + 1, little.get_bit_pos());
+                        assert_eq!(pos + value as usize + 1, big_buff.get_bit_pos());
+                        assert_eq!(pos + value as usize + 1, little_buff.get_bit_pos());
+                        assert_eq!(pos + value as usize + 1, big_buff_skip.get_bit_pos());
+                        assert_eq!(pos + value as usize + 1, little_buff_skip.get_bit_pos());
                     } else {
                         assert!(b.is_err());
                         assert!(l.is_err());
@@ -614,7 +574,7 @@ pub fn harness(data: FuzzCase) {
 
                 RandomCommand::Zeta(value, k, read_tab, _) => {
                     let (b, l, bb, lb) = if k == 3 {
-                         if read_tab {
+                        if read_tab {
                             (
                                 big.read_zeta3_param::<true>(),
                                 little.read_zeta3_param::<true>(),
@@ -628,7 +588,7 @@ pub fn harness(data: FuzzCase) {
                                 big_buff.read_zeta3_param::<false>(),
                                 little_buff.read_zeta3_param::<false>(),
                             )
-                        } 
+                        }
                     } else {
                         (
                             big.read_zeta_param(k),

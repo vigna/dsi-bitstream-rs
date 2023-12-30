@@ -18,9 +18,9 @@ const CALIBRATION_ITERS: usize = 100_000;
 const DELTA_DISTR_SIZE: usize = 1_000_000;
 
 #[cfg(feature = "reads")]
-type ReadWord = u32;
-#[cfg(feature = "reads")]
-type BufferWord = u64;
+type ReadWord = u64;
+
+type WriteWord = u64;
 
 #[cfg(feature = "rtdsc")]
 mod rdtsc;
@@ -60,7 +60,7 @@ for iter in 0..(WARMUP_ITERS + BENCH_ITERS) {
     {
         // init the writer
         let mut r = BufBitWriter::<$bo, _>::new(
-            MemWordWriterVec::new(&mut buffer)
+            MemWordWriterVec::<WriteWord, _>::new(&mut buffer)
         );
         // measure
         #[cfg(not(feature="reads"))]
@@ -85,8 +85,8 @@ for iter in 0..(WARMUP_ITERS + BENCH_ITERS) {
     // read the codes
     {
         // init the reader
-        let mut r = BufBitReader::<$bo, BufferWord, _>::new(
-            MemWordReader::new(&transmuted_buff)
+        let mut r = BufBitReader::<$bo, _, _>::new(
+            MemWordReader::<ReadWord, _>::new(&transmuted_buff)
         );
         // measure
         let r_start = Instant::now();

@@ -42,6 +42,8 @@ pub fn gen_unary_data() -> (f64, Vec<u64>) {
         })
         .collect::<Vec<_>>();
 
+    #[allow(unused_variables)]
+    let len_unary = |x: u64| x as usize + 1;
     let ratio = compute_ratio!(unary_data, unary_tables, len_unary);
 
     (ratio, unary_data)
