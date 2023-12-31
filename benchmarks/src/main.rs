@@ -19,7 +19,7 @@ const CALIBRATION_ITERS: usize = 100_000;
 const DELTA_DISTR_SIZE: usize = 1_000_000;
 
 #[cfg(feature = "reads")]
-type ReadWord = u64;
+type ReadWord = u32;
 
 type WriteWord = u64;
 
