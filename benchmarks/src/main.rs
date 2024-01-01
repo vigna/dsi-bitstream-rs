@@ -43,7 +43,7 @@ use data::*;
 macro_rules! bench {
     ($cal:expr, $code:literal, $read:ident, $write:ident, $gen_data:ident, $bo:ident, $($table:expr),*) => {{
 // the memory where we will write values
-let mut buffer: Vec<u64> = Vec::with_capacity(VALUES);
+let mut buffer: Vec<WriteWord> = Vec::with_capacity(VALUES);
 // counters for the total read time and total write time
 #[cfg(feature="reads")]
 let mut read_buff = MetricsStream::with_capacity(VALUES);
@@ -79,7 +79,7 @@ for iter in 0..(WARMUP_ITERS + BENCH_ITERS) {
     #[cfg(feature="reads")]
     let transmuted_buff: &[ReadWord] = unsafe{core::slice::from_raw_parts(
         buffer.as_ptr() as *const ReadWord,
-        buffer.len() * (core::mem::size_of::<u64>() / core::mem::size_of::<ReadWord>()),
+        buffer.len() * (core::mem::size_of::<WriteWord>() / core::mem::size_of::<ReadWord>()),
     )};
 
     #[cfg(feature="reads")]
