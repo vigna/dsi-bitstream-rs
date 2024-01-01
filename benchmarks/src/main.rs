@@ -77,14 +77,13 @@ for iter in 0..(WARMUP_ITERS + BENCH_ITERS) {
     }
 
     #[cfg(feature="reads")]
-    let transmuted_buff: &[ReadWord] = unsafe{core::slice::from_raw_parts(
-        buffer.as_ptr() as *const ReadWord,
-        buffer.len() * (core::mem::size_of::<WriteWord>() / core::mem::size_of::<ReadWord>()),
-    )};
-
-    #[cfg(feature="reads")]
     // read the codes
     {
+        let transmuted_buff: &[ReadWord] = unsafe{core::slice::from_raw_parts(
+            buffer.as_ptr() as *const ReadWord,
+            buffer.len() * (core::mem::size_of::<u64>() / core::mem::size_of::<ReadWord>()),
+        )};
+
         // init the reader
         let mut r = BufBitReader::<$bo, _, DefaultReadParams>::new(
             MemWordReader::<ReadWord, _>::new(&transmuted_buff)
@@ -100,6 +99,7 @@ for iter in 0..(WARMUP_ITERS + BENCH_ITERS) {
             read_buff.update((nanos - $cal) as f64);
         }
     }
+
     #[cfg(feature="reads")]
     {
         // init the reader
