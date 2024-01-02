@@ -1,3 +1,5 @@
+#![allow(unused_macros)]
+
 use dsi_bitstream::prelude::*;
 use rand::Rng;
 use std::hint::black_box;

@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use super::*;
 
 lazy_static::lazy_static! {

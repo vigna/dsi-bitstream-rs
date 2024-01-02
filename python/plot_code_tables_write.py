@@ -126,7 +126,7 @@ for code in ["unary", "gamma", "delta", "delta_gamma", "zeta3"]:
             "Shaded areas are the 25%% and 75%% percentiles and the plots "
             "are medians"
         )
-        % (nice[code], write_word)
+        % (write_word, nice[code])
     )
     plt.xlabel("Table Bits")
     plt.ylabel("ns")

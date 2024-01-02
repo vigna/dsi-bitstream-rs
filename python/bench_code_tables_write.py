@@ -27,7 +27,7 @@ first_time = True
 
 for bits in range(1, 18):
     value_max = 2**bits - 1
-    print("Table bits:", bits, file=sys.stderr)
+    print("\nBenchmarking with write word = %s, table bits = %d\n" % (write_word, bits), file=sys.stderr)
     for tables_num in [1, 2]:
         # Clean the target to force the recreation of the tables
         subprocess.check_call(
@@ -60,7 +60,7 @@ for bits in range(1, 18):
 
         # Run the benchmark with native cpu optimizations
         stdout = subprocess.check_output(
-            "cargo run --release --features=\"%s\"" % write_word,
+            "cargo run --release --features %s" % write_word,
             shell=True,
             env={
                 **os.environ,
@@ -80,7 +80,7 @@ for bits in range(1, 18):
 
             # Run the benchmark with native cpu optimizations
             stdout += subprocess.check_output(
-                "cargo run --release --features \"delta_gamma\"",
+                "cargo run --release --features delta_gamma,%s" % write_word,
                 shell=True,
                 env={
                     **os.environ,
