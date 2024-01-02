@@ -1,4 +1,3 @@
-use dsi_bitstream::prelude::table_params::DefaultReadParams;
 use dsi_bitstream::prelude::*;
 use rand::Rng;
 use std::hint::black_box;
@@ -18,9 +17,25 @@ const CALIBRATION_ITERS: usize = 100_000;
 /// extract
 const DELTA_DISTR_SIZE: usize = 1_000_000;
 
-#[cfg(feature = "reads")]
-type ReadWord = u32;
+// Conditional compilation requires to set a feature for the word size
+// ("u16", "u32", or "u64") and the feature "reads" to test reads
+// instead of writes.
 
+#[cfg(all(feature = "reads", feature = "u16"))]
+type ReadWord = u16;
+#[cfg(all(feature = "reads", feature = "u32"))]
+type ReadWord = u32;
+#[cfg(all(feature = "reads", feature = "u64"))]
+type ReadWord = u64;
+
+#[cfg(feature = "reads")]
+type WriteWord = u64;
+
+#[cfg(all(not(feature = "reads"), feature = "u16"))]
+type WriteWord = u16;
+#[cfg(all(not(feature = "reads"), feature = "u32"))]
+type WriteWord = u32;
+#[cfg(all(not(feature = "reads"), feature = "u64"))]
 type WriteWord = u64;
 
 #[cfg(feature = "rtdsc")]
@@ -85,7 +100,7 @@ for iter in 0..(WARMUP_ITERS + BENCH_ITERS) {
         )};
 
         // init the reader
-        let mut r = BufBitReader::<$bo, _, DefaultReadParams>::new(
+        let mut r = BufBitReader::<$bo, _, dsi_bitstream::prelude::table_params::DefaultReadParams>::new(
             MemWordReader::<ReadWord, _>::new(&transmuted_buff)
         );
         // measure

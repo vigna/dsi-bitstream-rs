@@ -18,6 +18,9 @@ libc = "0.2.141"
 [features]
 rtdsc = []
 reads = []
+u16 = []
+u32 = []
+u64 = []
 delta_gamma = []
 
 [profile.release]

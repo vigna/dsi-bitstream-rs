@@ -19,7 +19,12 @@ from gen_code_tables import *
 if not os.path.exists("benchmarks") or not os.path.exists("python"):
     sys.exit("You must run this script in the main project directory.")
 
+if len(sys.argv) != 2 or not sys.argv[1] in { "u16", "u32", "u64" }:
+    sys.exit("Usage: %s [u16 | u32 | u64]" % sys.argv[0])
+
+write_word = sys.argv[1]
 first_time = True
+
 for bits in range(1, 18):
     value_max = 2**bits - 1
     print("Table bits:", bits, file=sys.stderr)
@@ -55,7 +60,7 @@ for bits in range(1, 18):
 
         # Run the benchmark with native cpu optimizations
         stdout = subprocess.check_output(
-            "cargo run --release",
+            "cargo run --release --features=\"%s\"" % write_word,
             shell=True,
             env={
                 **os.environ,

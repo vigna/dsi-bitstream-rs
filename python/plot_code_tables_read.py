@@ -14,6 +14,11 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+if len(sys.argv) != 2 or not sys.argv[1] in { "u16", "u32", "u64" }:
+    sys.exit("Usage: %s [u16 | u32 | u64]" % sys.argv[0])
+
+read_word = sys.argv[1]
+
 nice = {"unary":"unary", "gamma":u"γ", "delta":"δ (no γ tables)", "delta_gamma":u"δ (γ tables)", "zeta3":u"ζ₃"}
 
 df = pd.read_csv(sys.stdin, index_col=None, header=0)
@@ -120,11 +125,11 @@ for code in ["unary", "gamma", "delta", "delta_gamma", "zeta3"]:
     plt.xticks(ratios.index)
     plt.title(
         (
-            "Performance of reads in %s code as a function of the table size\n"
+            "Performance of reads (buff: %s) in %s code as a function of the table size\n"
             "Shaded areas are the 25%% and 75%% percentiles and the plots "
             "are medians"
         )
-        % nice[code]
+        % (read_word, nice[code])
     )
     plt.xlabel("Table Bits")
     plt.ylabel("ns")
