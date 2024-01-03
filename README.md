@@ -100,7 +100,8 @@ rm -rfd tmp
 
 The implementation has several tunable parameters that can be used to improve performance 
 on certain platforms. The default values are set to work well on most platforms, but you can
-customize them creating your own copy of the library.
+customize them by creating a suitable `ReadParams` and `WriteParams` and passing them to the
+`BufBitReader` and `BufBitWriter` constructors.
 
 You can run benchmarks and generate SVG plots with
 ```shell
