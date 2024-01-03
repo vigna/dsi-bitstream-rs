@@ -1,4 +1,4 @@
-# dsi-bistream
+# dsi-bitstream
 
 A Rust implementation of read/write bit streams supporting several types
 of instantaneous codes. 
