@@ -14,7 +14,7 @@
 //! the classical binary encoding.
 
 use crate::traits::*;
-use anyhow::{bail, Result};
+use anyhow::{ensure, Result};
 
 /// Returns how long the minimal binary code for `value` will be for a given
 /// `max`
@@ -42,9 +42,7 @@ pub trait MinimalBinaryRead<BO: Endianness>: BitRead<BO> {
     /// bits, as when the stream ends unexpectedly
     #[inline(always)]
     fn read_minimal_binary(&mut self, max: u64) -> Result<u64> {
-        if max == 0 {
-            bail!("The max of a minimal binary value can't be zero.");
-        }
+        ensure!(max > 0);
         let l = max.ilog2();
         let mut value = self.read_bits(l as _)?;
         let limit = (1 << (l + 1)) - max;
@@ -65,9 +63,7 @@ pub trait MinimalBinaryRead<BO: Endianness>: BitRead<BO> {
     /// bits, as when the stream ends unexpectedly
     #[inline(always)]
     fn skip_minimal_binary(&mut self, max: u64) -> Result<()> {
-        if max == 0 {
-            bail!("The max of a minimal binary value can't be zero.");
-        }
+        ensure!(max > 0);
         let l = max.ilog2();
         let limit = (1 << (l + 1)) - max;
 
@@ -89,9 +85,7 @@ pub trait MinimalBinaryWrite<BO: Endianness>: BitWrite<BO> {
     /// bits, as when the stream ends unexpectedly
     #[inline]
     fn write_minimal_binary(&mut self, value: u64, max: u64) -> Result<usize> {
-        if max == 0 {
-            bail!("The max of a minimal binary value can't be zero.");
-        }
+        ensure!(max > 0);
         let l = max.ilog2();
         let limit = (1 << (l + 1)) - max;
 

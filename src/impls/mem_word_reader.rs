@@ -6,7 +6,7 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
-use anyhow::{bail, Result};
+use anyhow::{ensure, Result};
 use common_traits::UnsignedInt;
 
 use crate::prelude::*;
@@ -61,16 +61,12 @@ impl<W: UnsignedInt, B: AsRef<[W]>> WordSeek for MemWordReader<W, B> {
 
     #[inline(always)]
     fn set_word_pos(&mut self, word_index: usize) -> Result<()> {
-        if word_index > self.data.as_ref().len() {
-            bail!(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                format!(
-                    "Position beyond end of slice: {} > {}",
-                    word_index,
-                    self.data.as_ref().len()
-                )
-            ));
-        }
+        ensure!(
+            word_index <= self.data.as_ref().len(),
+            "Position beyond end of slice: {} > {}",
+            word_index,
+            self.data.as_ref().len()
+        );
         self.word_index = word_index;
         Ok(())
     }

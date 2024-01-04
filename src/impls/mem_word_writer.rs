@@ -7,16 +7,13 @@
  */
 
 use crate::traits::*;
-use anyhow::{bail, Result};
+use anyhow::{bail, ensure, Result};
 use common_traits::UnsignedInt;
 
-// TODO: panic in methods returning an error?!?
-
-/// An Implementation of [`WordRead`], [`WordWrite`], and [`WordSeek`] for a
-/// mutable slice of memory.
+/// An implementation of [`WordRead`], [`WordWrite`], and [`WordSeek`] for a
+/// mutable slice.
 ///
-/// Writing beyond the end of the slice will cause an error. Use [`MemWordWriter`]
-/// for an extensible memory writer.
+/// Writing beyond the end of the slice will return an error.
 ///
 /// # Example
 /// ```
@@ -35,7 +32,7 @@ use common_traits::UnsignedInt;
 /// assert_eq!(word_writer.get_word_pos(), 1);
 /// assert_eq!(word_writer.read_word().unwrap(), 0x702863e6f9739b86);
 /// assert_eq!(word_writer.get_word_pos(), 2);
-/// assert!(word_writer.read_word().is_err());
+/// assert!(word_writer.read_word().is_er      r());
 ///
 /// // you can change position
 /// assert!(word_writer.set_word_pos(1).is_ok());
@@ -82,9 +79,10 @@ impl<W: UnsignedInt, B: AsMut<[W]> + AsRef<[W]>> MemWordWriterSlice<W, B> {
     }
 }
 
-/// An Implementation of [`WordSeek`], [`WordRead`], [`WordWrite`]
-/// for a mutable [`Vec`]. The vector will be extended as new data
-/// is written.
+/// An implementation of [`WordRead`], [`WordWrite`], and [`WordSeek`]
+/// for a mutable vector.
+///
+/// The vector will be extended as new data is written.
 ///
 /// # Example
 /// ```
@@ -160,13 +158,12 @@ impl<W: UnsignedInt, B: AsRef<[W]> + AsMut<[W]>> WordSeek for MemWordWriterSlice
 
     #[inline]
     fn set_word_pos(&mut self, word_index: usize) -> Result<()> {
-        if word_index >= self.data.as_ref().len() {
-            bail!(
-                "Index {} is out of bound on a MemWordReaderStrict of length {}",
-                word_index,
-                self.data.as_ref().len()
-            );
-        }
+        ensure!(
+            word_index <= self.data.as_ref().len(),
+            "Position beyond end of slice: {} > {}",
+            word_index,
+            self.data.as_ref().len()
+        );
         self.word_index = word_index;
         Ok(())
     }
@@ -235,13 +232,12 @@ impl<W: UnsignedInt, B: AsMut<alloc::vec::Vec<W>> + AsRef<alloc::vec::Vec<W>>> W
 
     #[inline]
     fn set_word_pos(&mut self, word_index: usize) -> Result<()> {
-        if word_index >= self.data.as_ref().len() {
-            bail!(
-                "Index {} is out of bound on a MemWordReaderStrict of length {}",
-                word_index,
-                self.data.as_ref().len()
-            );
-        }
+        ensure!(
+            word_index <= self.data.as_ref().len(),
+            "Position beyond end of vector: {} > {}",
+            word_index,
+            self.data.as_ref().len()
+        );
         self.word_index = word_index;
         Ok(())
     }

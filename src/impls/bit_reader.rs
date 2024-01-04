@@ -9,7 +9,7 @@
 use crate::codes::table_params::{DefaultReadParams, ReadParams};
 use crate::codes::unary_tables;
 use crate::traits::*;
-use anyhow::{bail, Result};
+use anyhow::{ensure, Result};
 
 /// An implementation of [`BitRead`] with peek word `u32` for a
 /// [`WordRead`] with word `u64` and of [`BitSeek`] for a [`WordSeek`].
@@ -50,15 +50,12 @@ impl<WR: WordRead<Word = u64> + WordSeek, RP: ReadParams> BitRead<BE> for BitRea
 
     #[inline]
     fn read_bits(&mut self, n_bits: usize) -> Result<u64> {
-        if n_bits > 64 {
-            bail!(
-                "The n of bits to read has to be in [0, 64] and {} is not.",
-                n_bits
-            );
-        }
         if n_bits == 0 {
             return Ok(0);
         }
+
+        ensure!(n_bits <= 64);
+
         self.data.set_word_pos(self.bit_index / 64)?;
         let in_word_offset = self.bit_index % 64;
 
@@ -80,15 +77,12 @@ impl<WR: WordRead<Word = u64> + WordSeek, RP: ReadParams> BitRead<BE> for BitRea
 
     #[inline]
     fn peek_bits(&mut self, n_bits: usize) -> Result<u32> {
-        if n_bits > 32 {
-            bail!(
-                "The n of bits to peek has to be in [0, 32] and {} is not.",
-                n_bits
-            );
-        }
         if n_bits == 0 {
             return Ok(0);
         }
+
+        ensure!(n_bits <= 32);
+
         self.data.set_word_pos(self.bit_index / 64)?;
         let in_word_offset = self.bit_index % 64;
 
@@ -167,15 +161,12 @@ impl<WR: WordRead<Word = u64> + WordSeek, RP: ReadParams> BitRead<LE> for BitRea
 
     #[inline]
     fn read_bits(&mut self, n_bits: usize) -> Result<u64> {
-        if n_bits > 64 {
-            bail!(
-                "The n of bits to read has to be in [0, 64] and {} is not.",
-                n_bits
-            );
-        }
         if n_bits == 0 {
             return Ok(0);
         }
+
+        ensure!(n_bits <= 64);
+
         self.data.set_word_pos(self.bit_index / 64)?;
         let in_word_offset = self.bit_index % 64;
 
@@ -198,15 +189,12 @@ impl<WR: WordRead<Word = u64> + WordSeek, RP: ReadParams> BitRead<LE> for BitRea
 
     #[inline]
     fn peek_bits(&mut self, n_bits: usize) -> Result<u32> {
-        if n_bits > 32 {
-            bail!(
-                "The n of bits to peek has to be in [0, 32] and {} is not.",
-                n_bits
-            );
-        }
         if n_bits == 0 {
             return Ok(0);
         }
+
+        ensure!(n_bits <= 32);
+
         self.data.set_word_pos(self.bit_index / 64)?;
         let in_word_offset = self.bit_index % 64;
 

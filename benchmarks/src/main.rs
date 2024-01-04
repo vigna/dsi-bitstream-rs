@@ -123,6 +123,7 @@ for iter in 0..(WARMUP_ITERS + BENCH_ITERS) {
         for _ in &data {
             black_box(r.$read::<$($table),*>().unwrap());
         }
+
         let nanos =  r_start.elapsed().as_nanos();
 
         if iter >= WARMUP_ITERS {

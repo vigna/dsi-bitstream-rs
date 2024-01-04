@@ -9,7 +9,7 @@ Each code is tested in all possible combinations of the following parameters:
 - Big endian / little endian
 - Buffered/unbuffered
 - Word: `u16`, `u32`, `u64`
-- Table size: 2⁰, 2¹, 2², ..., 2¹⁸, or no table.
+- Table size: 2⁰, 2¹, 2², . . . , 2¹⁷, or no table.
 
 Abscissas show table size and ordinates the timing in nanoseconds, so in 
 the no-table case you will see a straight horizontal line.

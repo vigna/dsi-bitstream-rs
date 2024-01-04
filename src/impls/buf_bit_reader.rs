@@ -9,7 +9,7 @@
 use crate::codes::table_params::{DefaultReadParams, ReadParams};
 use crate::codes::unary_tables;
 use crate::traits::*;
-use anyhow::{bail, Context, Result};
+use anyhow::{ensure, Context, Result};
 use common_traits::*;
 
 /// An internal shortcut to the double type of the word of a
@@ -209,9 +209,7 @@ where
             return Ok(result);
         }
 
-        if n_bits > 64 {
-            bail!("Too many bits: {} > 64", n_bits);
-        }
+        ensure!(n_bits <= 64);
 
         let mut result: u64 =
             (self.buffer >> (BB::<WR>::BITS - 1 - self.bits_in_buffer) >> 1_u8).cast();
@@ -376,9 +374,7 @@ where
             return Ok(result);
         }
 
-        if n_bits > 64 {
-            bail!("Too many bits: {} > 64", n_bits);
-        }
+        ensure!(n_bits <= 64);
 
         let mut result: u64 = self.buffer.cast();
         let mut bits_in_res = self.bits_in_buffer;

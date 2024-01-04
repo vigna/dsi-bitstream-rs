@@ -91,7 +91,7 @@ pub static DELTA_CUM_DISTR: Lazy<Vec<f64>> = Lazy::new(|| {
     for x in &mut delta_distr {
         *x /= last;
     }
-    dbg!(&delta_distr);
+
     delta_distr
 });
 

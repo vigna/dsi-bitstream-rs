@@ -9,7 +9,7 @@
 use crate::codes::table_params::{DefaultWriteParams, WriteParams};
 use crate::codes::unary_tables;
 use crate::traits::*;
-use anyhow::{bail, Result};
+use anyhow::{ensure, Result};
 use common_traits::{CastableInto, Integer, Number, Scalar};
 
 /// An implementation of [`BitWrite`] for a
@@ -111,9 +111,12 @@ where
     #[inline]
     fn write_bits(&mut self, mut value: u64, n_bits: usize) -> Result<usize> {
         #[cfg(test)]
-        if (value & (1_u128 << n_bits).wrapping_sub(1) as u64) != value {
-            bail!("Error value {} does not fit in {} bits", value, n_bits);
-        }
+        ensure!(
+            value & (1_u128 << n_bits).wrapping_sub(1) as u64 == value,
+            "Value {} does not fit in {} bits",
+            value,
+            n_bits
+        );
 
         #[cfg(test)]
         if n_bits < 64 {
@@ -137,9 +140,7 @@ where
             return Ok(n_bits);
         }
 
-        if n_bits > 64 {
-            bail!("Too many bits: {} > 64", n_bits);
-        }
+        ensure!(n_bits <= 64);
 
         // Load the bottom of the buffer, if necessary, and dump the whole buffer
         if space_left_in_buffer != 0 {
@@ -233,9 +234,12 @@ where
     #[inline]
     fn write_bits(&mut self, mut value: u64, n_bits: usize) -> Result<usize> {
         #[cfg(test)]
-        if (value & (1_u128 << n_bits).wrapping_sub(1) as u64) != value {
-            bail!("Error value {} does not fit in {} bits", value, n_bits);
-        }
+        ensure!(
+            value & (1_u128 << n_bits).wrapping_sub(1) as u64 != value,
+            "Error value {} does not fit in {} bits",
+            value,
+            n_bits
+        );
 
         #[cfg(test)]
         if n_bits < 64 {
@@ -257,9 +261,7 @@ where
             return Ok(n_bits);
         }
 
-        if n_bits > 64 {
-            bail!("Too many bits: {} > 64", n_bits);
-        }
+        ensure!(n_bits <= 64);
 
         // Load the top of the buffer, if necessary, and dump the whole buffer
         if space_left_in_buffer != 0 {
