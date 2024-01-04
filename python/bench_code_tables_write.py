@@ -64,7 +64,6 @@ for bits in range(1, 18):
             shell=True,
             env={
                 **os.environ,
-                "RUSTFLAGS":"-C target-cpu=native",
             },
             cwd="benchmarks",
         ).decode()

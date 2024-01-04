@@ -52,7 +52,7 @@ for bits in range(1, 18):
                 "DELTA_CODE_TABLE_BITS":str(bits),
                 "ZETA_CODE_TABLE_BITS":str(bits),
                 "MERGED_TABLES":str(2 - tables_num),
-                "RUSTFLAGS":"-Ctarget-cpu=native -Cprofile-generate={}".format(pgo_folder),
+                "RUSTFLAGS":"-Cprofile-generate={}".format(pgo_folder),
             },
             cwd="../benchmarks",
         ).decode()
@@ -75,7 +75,7 @@ for bits in range(1, 18):
                 "DELTA_CODE_TABLE_BITS":str(bits),
                 "ZETA_CODE_TABLE_BITS":str(bits),
                 "MERGED_TABLES":str(2 - tables_num),
-                "RUSTFLAGS":"-Ctarget-cpu=native -Cprofile-use={}".format(pgo_merged),
+                "RUSTFLAGS":"-Cprofile-use={}".format(pgo_merged),
             },
             cwd="../benchmarks",
         ).decode()

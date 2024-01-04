@@ -9,19 +9,18 @@
 #![allow(dead_code)]
 
 use super::*;
+use once_cell::sync::Lazy;
 
-lazy_static::lazy_static! {
-    pub static ref DELTA_DISTR: Vec<f64> = {
-        let mut delta_distr = vec![0.];
-        let mut s = 0.;
-        for n in 1..DELTA_DISTR_SIZE {
-            let x = n as f64;
-            s += 1. / (2. * (x + 3.) * (x.log2() + 2.)*(x.log2() + 2.));
-            delta_distr.push(s)
-        }
-        delta_distr
-    };
-}
+pub static DELTA_DISTR: Lazy<Vec<f64>> = Lazy::new(|| {
+    let mut delta_distr = vec![0.];
+    let mut s = 0.;
+    for n in 1..DELTA_DISTR_SIZE {
+        let x = n as f64;
+        s += 1. / (2. * (x + 3.) * (x.log2() + 2.) * (x.log2() + 2.));
+        delta_distr.push(s)
+    }
+    delta_distr
+});
 
 macro_rules! compute_ratio {
     ($data:expr, $table:ident, $len_func:ident) => {{
