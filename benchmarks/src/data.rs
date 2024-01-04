@@ -8,21 +8,23 @@
 
 #![allow(dead_code)]
 
+/*!
+
+Generation functions for data used in benchmarks.
+
+For each code, this module provides a function to generate data with
+a distribution similar to the intended distribution of the code, that is,
+p(w) = 2<sup>–|w|</sup>. Moreover, the function returns the
+hit ratio, that is, the ratio of values that is decodable using tables.
+
+*/
 use super::*;
 use once_cell::sync::Lazy;
 
-pub static DELTA_DISTR: Lazy<Vec<f64>> = Lazy::new(|| {
-    let mut delta_distr = vec![0.];
-    let mut s = 0.;
-    for n in 1..DELTA_DISTR_SIZE {
-        let x = n as f64;
-        s += 1. / (2. * (x + 3.) * (x.log2() + 2.) * (x.log2() + 2.));
-        delta_distr.push(s)
-    }
-    delta_distr
-});
-
-macro_rules! compute_ratio {
+// Given data to benchmark a code, tables for that code, and a length
+// function for the code, this macro computes the hit ratio, that is,
+// the ratio of values that is decodable using the given tables.
+macro_rules! compute_hit_ratio {
     ($data:expr, $table:ident, $len_func:ident) => {{
         let mut total = 0.0;
         for value in &$data {
@@ -39,12 +41,11 @@ macro_rules! compute_ratio {
     }};
 }
 
-/// Generate the data needed to benchmark the unary code and return them and the
-/// ratio of values that will hit the tables
+/// Generate data to benchmark unary code.
 pub fn gen_unary_data() -> (f64, Vec<u64>) {
     let mut rng = rand::thread_rng();
 
-    let unary_data = (0..VALUES)
+    let unary_data = (0..N)
         .map(|_| {
             let v: u64 = rng.gen();
             v.trailing_zeros() as u64
@@ -53,36 +54,52 @@ pub fn gen_unary_data() -> (f64, Vec<u64>) {
 
     #[allow(unused_variables)]
     let len_unary = |x: u64| x as usize + 1;
-    let ratio = compute_ratio!(unary_data, unary_tables, len_unary);
+    let ratio = compute_hit_ratio!(unary_data, unary_tables, len_unary);
 
     (ratio, unary_data)
 }
 
-/// Generate the data needed to benchmark the gamma code and return them and the
-/// ratio of values that will hit the tables
+/// Generate data to benchmark γ code.
 pub fn gen_gamma_data() -> (f64, Vec<u64>) {
     let mut rng = rand::thread_rng();
 
     let distr = rand_distr::Zeta::new(2.0).unwrap();
-    let gamma_data = (0..VALUES)
+    let gamma_data = (0..N)
         .map(|_| rng.sample(distr) as u64 - 1)
         .collect::<Vec<_>>();
 
-    let ratio = compute_ratio!(gamma_data, gamma_tables, len_gamma);
+    let ratio = compute_hit_ratio!(gamma_data, gamma_tables, len_gamma);
 
     (ratio, gamma_data)
 }
 
-/// Generate the data needed to benchmark the delta code and return them and the
-/// ratio of values that will hit the tables
+// A slightly tweaked finite cumulative distribution similar to the intended
+// cumulative distribution of δ code.
+pub static CUM_DELTA_DISTR: Lazy<Vec<f64>> = Lazy::new(|| {
+    let mut delta_distr = vec![0.];
+    let mut s = 0.;
+    for n in 1..DELTA_DISTR_SIZE {
+        let x = n as f64;
+        s += 1. / (2. * (x + 3.) * (x.log2() + 2.) * (x.log2() + 2.));
+        delta_distr.push(s)
+    }
+    let last = *delta_distr.last().unwrap();
+
+    for x in &mut delta_distr {
+        *x /= last;
+    }
+    delta_distr
+});
+
+/// Generate data to benchmark δ code.
 pub fn gen_delta_data() -> (f64, Vec<u64>) {
     let mut rng = rand::thread_rng();
 
-    let distr = rand_distr::Uniform::new(0., DELTA_DISTR[DELTA_DISTR.len() - 1]);
-    let delta_data = (0..VALUES)
+    let distr = rand_distr::Uniform::new(0., CUM_DELTA_DISTR[CUM_DELTA_DISTR.len() - 1]);
+    let delta_data = (0..N)
         .map(|_| {
             let p = rng.sample(distr);
-            let s = DELTA_DISTR.binary_search_by(|v| v.partial_cmp(&p).unwrap());
+            let s = CUM_DELTA_DISTR.binary_search_by(|v| v.partial_cmp(&p).unwrap());
             match s {
                 Ok(x) => x as u64,
                 Err(x) => x as u64 - 1,
@@ -90,18 +107,17 @@ pub fn gen_delta_data() -> (f64, Vec<u64>) {
         })
         .collect::<Vec<_>>();
 
-    let ratio = compute_ratio!(delta_data, delta_tables, len_delta);
+    let ratio = compute_hit_ratio!(delta_data, delta_tables, len_delta);
 
     (ratio, delta_data)
 }
 
-/// Generate the data needed to benchmark the zeta3 code and return them and the
-/// ratio of values that will hit the tables
+/// Generate data to benchmark ζ₃ code.
 pub fn gen_zeta3_data() -> (f64, Vec<u64>) {
     let mut rng = rand::thread_rng();
 
     let distr = rand_distr::Zeta::new(1.2).unwrap();
-    let zeta3_data = (0..VALUES)
+    let zeta3_data = (0..N)
         .map(|_| rng.sample(distr) as u64 - 1)
         .collect::<Vec<_>>();
 
@@ -122,7 +138,7 @@ pub fn gen_zeta3_data() -> (f64, Vec<u64>) {
             }
         })
         .sum::<usize>() as f64
-        / VALUES as f64;
+        / N as f64;
 
     (ratio, zeta3_data)
 }

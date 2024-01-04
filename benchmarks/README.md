@@ -5,9 +5,9 @@ This crate provides performance benchmarks for several variants of
 speed of reading and writing instantaneous codes, and in particular
 unary, γ, δ and ζ₃.
 
-Each code is tested in all possible combination of the following parameters:
+Each code is tested in all possible combinations of the following parameters:
 - Big endian / little endian
-- Buffered / unbuffered
+- Buffered/unbuffered
 - Word: `u16`, `u32`, `u64`
 - Table size: 2⁰, 2¹, 2², ..., 2¹⁸, or no table.
 

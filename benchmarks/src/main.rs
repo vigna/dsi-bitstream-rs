@@ -13,20 +13,19 @@ use dsi_bitstream::prelude::*;
 use rand::Rng;
 use std::hint::black_box;
 
-/// How many random codes we will write and read in the benchmark
-const VALUES: usize = 1_000_000;
-/// How many iterations to do before starting measuring, this is done to warmup
-/// the caches and the branch predictor
-const WARMUP_ITERS: usize = 100;
+/// Number of read/write operations tested for each combination of parameters.
+pub const N: usize = 1_000_000;
+/// Number of warmup read/write operations.
+pub const WARMUP_ITERS: usize = 3;
 /// How many iterations of measurement we will execute
-const BENCH_ITERS: usize = 11;
+pub const BENCH_ITERS: usize = 11;
 /// For how many times we will measure the measurement overhead
-const CALIBRATION_ITERS: usize = 100_000;
+pub const CALIBRATION_ITERS: usize = 100_000;
 /// To proprly test delta we compute a discrete version of the indended
 /// distribution. The original distribution is infinite but we need to cut it
 /// down to a finite set. This value represent the maximum value we are going to
 /// extract
-const DELTA_DISTR_SIZE: usize = 1_000_000;
+pub const DELTA_DISTR_SIZE: usize = 1_000_000;
 
 // Conditional compilation requires to set a feature for the word size
 // ("u16", "u32", or "u64") and the feature "reads" to test reads
@@ -52,26 +51,26 @@ type WriteWord = u64;
 #[cfg(not(feature = "rtdsc"))]
 use std::time::Instant;
 
-mod metrics;
+pub mod metrics;
 use metrics::*;
 
-mod utils;
+pub mod utils;
 use utils::*;
 
-mod data;
+pub mod data;
 use data::*;
 
 macro_rules! bench {
     ($cal:expr, $code:literal, $read:ident, $write:ident, $gen_data:ident, $bo:ident, $($table:expr),*) => {{
 // the memory where we will write values
-let mut buffer: Vec<WriteWord> = Vec::with_capacity(VALUES);
+let mut buffer: Vec<WriteWord> = Vec::with_capacity(N);
 // counters for the total read time and total write time
 #[cfg(feature="reads")]
-let mut read_buff = MetricsStream::with_capacity(VALUES);
+let mut read_buff = MetricsStream::with_capacity(N);
 #[cfg(feature="reads")]
-let mut read_unbuff = MetricsStream::with_capacity(VALUES);
+let mut read_unbuff = MetricsStream::with_capacity(N);
 #[cfg(not(feature="reads"))]
-let mut write = MetricsStream::with_capacity(VALUES);
+let mut write = MetricsStream::with_capacity(N);
 
 // measure
 let (ratio, data) = $gen_data();
@@ -159,33 +158,33 @@ println!("{}::{}::{},{},{},{},{},{},{},{}",
     $code, stringify!($bo), table, // the informations about what we are benchmarking
     "write",
     ratio,
-    write.avg / VALUES as f64,
-    write.std / VALUES as f64,
-    write.percentile_25 / VALUES as f64,
-    write.median / VALUES as f64,
-    write.percentile_75 / VALUES as f64,
+    write.avg / N as f64,
+    write.std / N as f64,
+    write.percentile_25 / N as f64,
+    write.median / N as f64,
+    write.percentile_75 / N as f64,
 );
 #[cfg(feature="reads")]
 println!("{}::{}::{},{},{},{},{},{},{},{}",
     $code, stringify!($bo), table, // the informations about what we are benchmarking
     "read_buff",
     ratio,
-    read_buff.avg / VALUES as f64,
-    read_buff.std / VALUES as f64,
-    read_buff.percentile_25 / VALUES as f64,
-    read_buff.median / VALUES as f64,
-    read_buff.percentile_75 / VALUES as f64,
+    read_buff.avg / N as f64,
+    read_buff.std / N as f64,
+    read_buff.percentile_25 / N as f64,
+    read_buff.median / N as f64,
+    read_buff.percentile_75 / N as f64,
 );
 #[cfg(feature="reads")]
 println!("{}::{}::{},{},{},{},{},{},{},{}",
     $code, stringify!($bo), table, // the informations about what we are benchmarking
     "read_unbuff",
     ratio,
-    read_unbuff.avg / VALUES as f64,
-    read_unbuff.std / VALUES as f64,
-    read_unbuff.percentile_25 / VALUES as f64,
-    read_unbuff.median / VALUES as f64,
-    read_unbuff.percentile_75 / VALUES as f64,
+    read_unbuff.avg / N as f64,
+    read_unbuff.std / N as f64,
+    read_unbuff.percentile_25 / N as f64,
+    read_unbuff.median / N as f64,
+    read_unbuff.percentile_75 / N as f64,
 );
 
 }};
@@ -205,7 +204,6 @@ pub fn main() {
     // tricks to reduce the noise
     #[cfg(target_os = "linux")]
     pin_to_core(5);
-    //unsafe{assert_ne!(libc::nice(-20-libc::nice(0)), -1);}
 
     // figure out how much overhead we add by measuring
     let calibration = calibrate_overhead();
