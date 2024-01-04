@@ -47,8 +47,7 @@ where
     buffer: BB<WR>,
     /// Number of valid bits in the buffer. It is always smaller than `BB::<WR>::BITS`.
     bits_in_buffer: usize,
-    _marker_endianness: core::marker::PhantomData<E>,
-    _marker_default_codes: core::marker::PhantomData<RP>,
+    _marker: core::marker::PhantomData<(E, RP)>,
 }
 
 impl<E: Endianness, WR: WordRead + Clone, RP: ReadParams> core::clone::Clone
@@ -61,8 +60,7 @@ where
             backend: self.backend.clone(),
             buffer: self.buffer,
             bits_in_buffer: self.bits_in_buffer,
-            _marker_endianness: core::marker::PhantomData,
-            _marker_default_codes: core::marker::PhantomData,
+            _marker: core::marker::PhantomData,
         }
     }
 }
@@ -86,8 +84,7 @@ where
             backend,
             buffer: BB::<WR>::ZERO,
             bits_in_buffer: 0,
-            _marker_endianness: core::marker::PhantomData,
-            _marker_default_codes: core::marker::PhantomData,
+            _marker: core::marker::PhantomData,
         }
     }
 }

@@ -6,6 +6,7 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
+use crate::codes::table_params::{DefaultReadParams, ReadParams};
 use crate::codes::unary_tables;
 use crate::traits::*;
 use anyhow::{bail, Result};
@@ -18,17 +19,16 @@ use anyhow::{bail, Result};
 /// This implementation accesses randomly the underlying [`WordRead`]
 /// without any buffering. It is usually slower than
 /// [`BufBitReader`](crate::impls::BufBitReader).
-
 #[derive(Debug, Clone)]
-pub struct BitReader<E: Endianness, WR> {
+pub struct BitReader<E: Endianness, WR, RP: ReadParams = DefaultReadParams> {
     /// The stream which we will read words from.
     data: WR,
     /// The index of the current bit.
     bit_index: usize,
-    _marker: core::marker::PhantomData<E>,
+    _marker: core::marker::PhantomData<(E, RP)>,
 }
 
-impl<E: Endianness, WR> BitReader<E, WR> {
+impl<E: Endianness, WR, RP: ReadParams> BitReader<E, WR, RP> {
     /// Create a new BitStreamRead on a generig WordRead
     pub fn new(data: WR) -> Self {
         Self {
@@ -39,7 +39,7 @@ impl<E: Endianness, WR> BitReader<E, WR> {
     }
 }
 
-impl<WR: WordRead<Word = u64> + WordSeek> BitRead<BE> for BitReader<BE, WR> {
+impl<WR: WordRead<Word = u64> + WordSeek, RP: ReadParams> BitRead<BE> for BitReader<BE, WR, RP> {
     type PeekWord = u32;
 
     #[inline]
@@ -135,7 +135,7 @@ impl<WR: WordRead<Word = u64> + WordSeek> BitRead<BE> for BitReader<BE, WR> {
     }
 }
 
-impl<WR: WordSeek> BitSeek for BitReader<LE, WR> {
+impl<WR: WordSeek, RP: ReadParams> BitSeek for BitReader<LE, WR, RP> {
     fn get_bit_pos(&self) -> usize {
         self.bit_index
     }
@@ -146,7 +146,7 @@ impl<WR: WordSeek> BitSeek for BitReader<LE, WR> {
     }
 }
 
-impl<WR: WordSeek> BitSeek for BitReader<BE, WR> {
+impl<WR: WordSeek, RP: ReadParams> BitSeek for BitReader<BE, WR, RP> {
     fn get_bit_pos(&self) -> usize {
         self.bit_index
     }
@@ -157,7 +157,7 @@ impl<WR: WordSeek> BitSeek for BitReader<BE, WR> {
     }
 }
 
-impl<WR: WordRead<Word = u64> + WordSeek> BitRead<LE> for BitReader<LE, WR> {
+impl<WR: WordRead<Word = u64> + WordSeek, RP: ReadParams> BitRead<LE> for BitReader<LE, WR, RP> {
     type PeekWord = u32;
     #[inline]
     fn skip_bits(&mut self, n_bits: usize) -> Result<()> {

@@ -50,8 +50,8 @@ impl ReadParams for DefaultReadParams {}
 
 macro_rules! impl_default_read_codes {
     ($($endianess:ident),*) => {$(
-        impl<WR: WordRead, DC: ReadParams> GammaRead<$endianess>
-            for BufBitReader<$endianess, WR, DC>
+        impl<WR: WordRead> GammaRead<$endianess>
+            for BufBitReader<$endianess, WR, DefaultReadParams>
         where
             WR:: Word: DoubleType + UpcastableInto<u64>,
             <WR::Word as DoubleType>::DoubleType: CastableInto<u64>,
@@ -71,8 +71,8 @@ macro_rules! impl_default_read_codes {
             }
         }
 
-        impl<WR: WordRead, DC: ReadParams> DeltaRead<$endianess>
-            for BufBitReader<$endianess, WR, DC>
+        impl<WR: WordRead> DeltaRead<$endianess>
+            for BufBitReader<$endianess, WR, DefaultReadParams>
         where
             WR:: Word: DoubleType + UpcastableInto<u64>,
             <WR::Word as DoubleType>::DoubleType: CastableInto<u64>,
@@ -88,8 +88,8 @@ macro_rules! impl_default_read_codes {
             }
         }
 
-        impl<WR: WordRead, DC: ReadParams> ZetaRead<$endianess>
-            for BufBitReader<$endianess, WR, DC>
+        impl<WR: WordRead> ZetaRead<$endianess>
+            for BufBitReader<$endianess, WR, DefaultReadParams>
         where
             WR:: Word: DoubleType + UpcastableInto<u64>,
             <WR::Word as DoubleType>::DoubleType: CastableInto<u64>,
@@ -115,6 +115,70 @@ macro_rules! impl_default_read_codes {
             }
         }
 
+        impl<WR: WordRead<Word = u64> + WordSeek> GammaRead<$endianess>
+            for BitReader<$endianess, WR, DefaultReadParams>
+        where
+            WR:: Word: DoubleType + UpcastableInto<u64>,
+            <WR::Word as DoubleType>::DoubleType: CastableInto<u64>,
+        {
+            #[inline(always)]
+            fn read_gamma(&mut self) -> Result<u64> {
+                // From our tests, the ARM architecture is faster
+                // without tables for ɣ codes.
+                return self.read_gamma_param::<false>();
+            }
+
+            #[inline(always)]
+            fn skip_gamma(&mut self) -> Result<()> {
+                // From our tests, the ARM architecture is faster
+                // without tables for ɣ codes.
+                return self.skip_gamma_param::<false>();
+            }
+        }
+
+        impl<WR: WordRead<Word = u64> + WordSeek> DeltaRead<$endianess>
+            for BitReader<$endianess, WR, DefaultReadParams>
+        where
+            WR:: Word: DoubleType + UpcastableInto<u64>,
+            <WR::Word as DoubleType>::DoubleType: CastableInto<u64>,
+        {
+            #[inline(always)]
+            fn read_delta(&mut self) -> Result<u64> {
+                return self.read_delta_param::<false, true>();
+            }
+
+            #[inline(always)]
+            fn skip_delta(&mut self) -> Result<()> {
+                return self.skip_delta_param::<false, true>();
+            }
+        }
+
+        impl<WR: WordRead<Word = u64> + WordSeek> ZetaRead<$endianess>
+            for BitReader<$endianess, WR, DefaultReadParams>
+        where
+            WR:: Word: DoubleType + UpcastableInto<u64>,
+            <WR::Word as DoubleType>::DoubleType: CastableInto<u64>,
+        {
+            #[inline(always)]
+            fn read_zeta(&mut self, k: u64) -> Result<u64> {
+                self.read_zeta_param(k)
+            }
+
+            #[inline(always)]
+            fn skip_zeta(&mut self, k: u64) -> Result<()> {
+                self.skip_zeta_param(k)
+            }
+
+            #[inline(always)]
+            fn read_zeta3(&mut self) -> Result<u64> {
+                self.read_zeta3_param::<true>()
+            }
+
+            #[inline(always)]
+            fn skip_zeta3(&mut self) -> Result<()> {
+                self.skip_zeta3_param::<true>()
+            }
+        }
     )*};
 }
 
