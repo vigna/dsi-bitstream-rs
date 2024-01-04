@@ -49,11 +49,6 @@ type WriteWord = u32;
 #[cfg(all(not(feature = "reads"), feature = "u64"))]
 type WriteWord = u64;
 
-#[cfg(feature = "rtdsc")]
-mod rdtsc;
-#[cfg(feature = "rtdsc")]
-use rdtsc::*;
-
 #[cfg(not(feature = "rtdsc"))]
 use std::time::Instant;
 
