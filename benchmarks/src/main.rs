@@ -17,19 +17,10 @@ use std::hint::black_box;
 pub const N: usize = 1_000_000;
 /// Number of warmup read/write operations.
 pub const WARMUP_ITERS: usize = 3;
-/// How many iterations of measurement we will execute
+/// How many iterations of measurement we will execute.
 pub const BENCH_ITERS: usize = 11;
-/// For how many times we will measure the measurement overhead
+/// For how many times we will measure the measurement overhead.
 pub const CALIBRATION_ITERS: usize = 100_000;
-/// To proprly test delta we compute a discrete version of the indended
-/// distribution. The original distribution is infinite but we need to cut it
-/// down to a finite set. This value represent the maximum value we are going to
-/// extract
-pub const DELTA_DISTR_SIZE: usize = 1_000_000;
-
-// Conditional compilation requires to set a feature for the word size
-// ("u16", "u32", or "u64") and the feature "reads" to test reads
-// instead of writes.
 
 #[cfg(all(feature = "reads", feature = "u16"))]
 type ReadWord = u16;
@@ -60,11 +51,12 @@ use utils::*;
 pub mod data;
 use data::*;
 
+#[doc(hidden)]
 macro_rules! bench {
     ($cal:expr, $code:literal, $read:ident, $write:ident, $gen_data:ident, $bo:ident, $($table:expr),*) => {{
-// the memory where we will write values
+
 let mut buffer: Vec<WriteWord> = Vec::with_capacity(N);
-// counters for the total read time and total write time
+
 #[cfg(feature="reads")]
 let mut read_buff = MetricsStream::with_capacity(N);
 #[cfg(feature="reads")]
@@ -72,74 +64,73 @@ let mut read_unbuff = MetricsStream::with_capacity(N);
 #[cfg(not(feature="reads"))]
 let mut write = MetricsStream::with_capacity(N);
 
-// measure
 let (ratio, data) = $gen_data();
 
 for iter in 0..(WARMUP_ITERS + BENCH_ITERS) {
     buffer.clear();
-    // write the codes
+
+    // Writes (we need to do this also in the case of reads)
     {
-        // init the writer
         let mut r = BufBitWriter::<$bo, _>::new(
             MemWordWriterVec::<WriteWord, _>::new(&mut buffer)
         );
-        // measure
+
         #[cfg(not(feature="reads"))]
         let w_start = Instant::now();
+
         for value in &data {
             black_box(r.$write::<$($table),*>(*value).unwrap());
         }
-        // add the measurement if we are not in the warmup
+
         #[cfg(not(feature="reads"))]
         if iter >= WARMUP_ITERS {
             write.update((w_start.elapsed().as_nanos() - $cal) as f64);
         }
     }
 
+    // Buffered reads
     #[cfg(feature="reads")]
-    // read the codes
     {
         let transmuted_buff: &[ReadWord] = unsafe{core::slice::from_raw_parts(
             buffer.as_ptr() as *const ReadWord,
             buffer.len() * (core::mem::size_of::<u64>() / core::mem::size_of::<ReadWord>()),
         )};
 
-        // init the reader
         let mut r = BufBitReader::<$bo, _, dsi_bitstream::prelude::table_params::DefaultReadParams>::new(
             MemWordReader::<ReadWord, _>::new(&transmuted_buff)
         );
-        // measure
+
         let r_start = Instant::now();
         for _ in &data {
             black_box(r.$read::<$($table),*>().unwrap());
         }
+
         let nanos =  r_start.elapsed().as_nanos();
-        // add the measurement if we are not in the warmup
+
         if iter >= WARMUP_ITERS {
             read_buff.update((nanos - $cal) as f64);
         }
     }
 
+    // Unbuffered reads
     #[cfg(feature="reads")]
     {
-        // init the reader
         let mut r = BitReader::<$bo, _>::new(
             MemWordReader::new(&buffer)
         );
-        // measure
+
         let r_start = Instant::now();
         for _ in &data {
             black_box(r.$read::<$($table),*>().unwrap());
         }
         let nanos =  r_start.elapsed().as_nanos();
-        // add the measurement if we are not in the warmup
+
         if iter >= WARMUP_ITERS {
             read_unbuff.update((nanos - $cal) as f64);
         }
     }
 }
 
-// convert from cycles to nano seconds
 #[cfg(feature="reads")]
 let read_buff = read_buff.finalize();
 #[cfg(feature="reads")]
@@ -190,7 +181,7 @@ println!("{}::{}::{},{},{},{},{},{},{},{}",
 }};
 }
 
-/// macro to implement all combinations of bit order and table use
+#[doc(hidden)]
 macro_rules! impl_code {
     ($cal:expr, $code:literal, $read:ident, $write:ident, $gen_data:ident) => {
         bench!($cal, $code, $read, $write, $gen_data, BE, false);
@@ -207,7 +198,7 @@ pub fn main() {
 
     // figure out how much overhead we add by measuring
     let calibration = calibrate_overhead();
-    // print the header of the csv
+    // print the header of the csv, unless we're running the delta_gamma test
     #[cfg(not(feature = "delta_gamma"))]
     println!("pat,type,ratio,ns_avg,ns_std,ns_perc25,ns_median,ns_perc75");
 
@@ -246,8 +237,8 @@ pub fn main() {
             write_delta_param,
             gen_delta_data,
             BE,
-            true,
-            false
+            true,  // use δ tables
+            false  // use γ tables
         );
         bench!(
             calibration,
@@ -256,8 +247,8 @@ pub fn main() {
             write_delta_param,
             gen_delta_data,
             BE,
-            false,
-            false
+            false, // use δ tables
+            false  // use γ tables
         );
         bench!(
             calibration,
@@ -266,8 +257,8 @@ pub fn main() {
             write_delta_param,
             gen_delta_data,
             LE,
-            true,
-            false
+            true,  // use δ tables
+            false  // use γ tables
         );
         bench!(
             calibration,
@@ -276,8 +267,8 @@ pub fn main() {
             write_delta_param,
             gen_delta_data,
             LE,
-            false,
-            false
+            false, // use δ tables
+            false  // use γ tables
         );
     }
 
@@ -291,8 +282,8 @@ pub fn main() {
             write_delta_param,
             gen_delta_data,
             BE,
-            true,
-            true
+            true, // use δ tables
+            true  // use γ tables
         );
         bench!(
             calibration,
@@ -301,8 +292,8 @@ pub fn main() {
             write_delta_param,
             gen_delta_data,
             BE,
-            false,
-            true
+            false, // use δ tables
+            true   // use γ tables
         );
         bench!(
             calibration,
@@ -311,8 +302,8 @@ pub fn main() {
             write_delta_param,
             gen_delta_data,
             LE,
-            true,
-            true
+            true, // use δ tables
+            true  // use γ tables
         );
         bench!(
             calibration,
@@ -321,8 +312,8 @@ pub fn main() {
             write_delta_param,
             gen_delta_data,
             LE,
-            false,
-            true
+            false, // use δ tables
+            true   // use γ tables
         );
     }
 }

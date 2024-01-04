@@ -6,15 +6,21 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
-/// Structure to compute statistics from a stream
+/*!
+
+Simple statistics module providing average, empirical standard deviation and quartiles.
+
+*/
+
+/// Structure to compute statistics from a stream.
 pub struct MetricsStream {
     pub values: Vec<f64>,
     pub avg: f64,
     pub m2: f64,
 }
 
+/// The result of [`MetricsStream::finalize`].
 #[derive(Debug)]
-/// The result of [`MetricStream`]
 pub struct Metrics {
     pub percentile_75: f64,
     pub median: f64,
@@ -47,6 +53,19 @@ impl MetricsStream {
 
     /// Consume this builder to get the statistics
     pub fn finalize(mut self) -> Metrics {
+        let avg = if self.values.is_empty() {
+            f64::NAN
+        } else {
+            self.avg
+        };
+
+        let std = if self.values.len() < 2 {
+            f64::NAN
+        } else {
+            // Empirical standard deviation
+            (self.m2 / (self.values.len() - 1) as f64).sqrt()
+        };
+
         if self.values.len() < 2 {
             panic!(
                 "Got {} values which is not enough for an std",
@@ -54,15 +73,14 @@ impl MetricsStream {
             );
         }
         self.values.sort_unstable_by(|a, b| a.total_cmp(b));
-        let var = self.m2 / (self.values.len() - 1) as f64;
 
         let side = (self.values.len() - 1) / 2;
         Metrics {
             median: self.values[side],
             percentile_25: self.values[side / 2],
             percentile_75: self.values[side * 3 / 2],
-            avg: self.avg,
-            std: var.sqrt(),
+            avg,
+            std,
         }
     }
 }

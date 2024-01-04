@@ -18,3 +18,5 @@ for u in u16 u32 u64; do
 	mkdir $u
 	mv *.csv *.svg $u
 done
+
+echo "Please restore the source code for decoding tables in ../src/codes" 1>&2

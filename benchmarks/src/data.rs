@@ -73,9 +73,12 @@ pub fn gen_gamma_data() -> (f64, Vec<u64>) {
     (ratio, gamma_data)
 }
 
-// A slightly tweaked finite cumulative distribution similar to the intended
-// cumulative distribution of δ code.
-pub static CUM_DELTA_DISTR: Lazy<Vec<f64>> = Lazy::new(|| {
+/// The size of [`DELTA_CUM_DISTR`].
+pub const DELTA_DISTR_SIZE: usize = 1_000_000;
+
+/// A slightly tweaked finite cumulative distribution similar to the intended
+/// cumulative distribution of δ code.
+pub static DELTA_CUM_DISTR: Lazy<Vec<f64>> = Lazy::new(|| {
     let mut delta_distr = vec![0.];
     let mut s = 0.;
     for n in 1..DELTA_DISTR_SIZE {
@@ -88,6 +91,7 @@ pub static CUM_DELTA_DISTR: Lazy<Vec<f64>> = Lazy::new(|| {
     for x in &mut delta_distr {
         *x /= last;
     }
+    dbg!(&delta_distr);
     delta_distr
 });
 
@@ -95,11 +99,11 @@ pub static CUM_DELTA_DISTR: Lazy<Vec<f64>> = Lazy::new(|| {
 pub fn gen_delta_data() -> (f64, Vec<u64>) {
     let mut rng = rand::thread_rng();
 
-    let distr = rand_distr::Uniform::new(0., CUM_DELTA_DISTR[CUM_DELTA_DISTR.len() - 1]);
+    let distr = rand_distr::Uniform::new(0.0, 1.0);
     let delta_data = (0..N)
         .map(|_| {
             let p = rng.sample(distr);
-            let s = CUM_DELTA_DISTR.binary_search_by(|v| v.partial_cmp(&p).unwrap());
+            let s = DELTA_CUM_DISTR.binary_search_by(|v| v.partial_cmp(&p).unwrap());
             match s {
                 Ok(x) => x as u64,
                 Err(x) => x as u64 - 1,
@@ -125,7 +129,7 @@ pub fn gen_zeta3_data() -> (f64, Vec<u64>) {
         .iter()
         .map(|value| {
             #[cfg(feature = "reads")]
-            if len_zeta(*value, 3) <= zeta_tables::READ_BITS as usize {
+            if len_zeta(*value, 3) <= zeta_tables::READ_BITS {
                 1
             } else {
                 0
