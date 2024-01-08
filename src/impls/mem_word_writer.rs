@@ -32,7 +32,7 @@ use common_traits::UnsignedInt;
 /// assert_eq!(word_writer.get_word_pos(), 1);
 /// assert_eq!(word_writer.read_word().unwrap(), 0x702863e6f9739b86);
 /// assert_eq!(word_writer.get_word_pos(), 2);
-/// assert!(word_writer.read_word().is_er      r());
+/// assert!(word_writer.read_word().is_err());
 ///
 /// // you can change position
 /// assert!(word_writer.set_word_pos(1).is_ok());

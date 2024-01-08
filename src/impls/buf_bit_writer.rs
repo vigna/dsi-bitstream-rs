@@ -235,7 +235,7 @@ where
     fn write_bits(&mut self, mut value: u64, n_bits: usize) -> Result<usize> {
         #[cfg(test)]
         ensure!(
-            value & (1_u128 << n_bits).wrapping_sub(1) as u64 != value,
+            value & (1_u128 << n_bits).wrapping_sub(1) as u64 == value,
             "Error value {} does not fit in {} bits",
             value,
             n_bits
