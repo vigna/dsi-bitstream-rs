@@ -105,7 +105,7 @@ for iter in 0..(WARMUP_ITERS + BENCH_ITERS) {
             black_box(r.$read::<$($table),*>().unwrap());
         }
 
-        let nanos =  r_start.elapsed().as_nanos();
+        let nanos = r_start.elapsed().as_nanos();
 
         if iter >= WARMUP_ITERS {
             read_buff.update((nanos - $cal) as f64);
@@ -124,7 +124,7 @@ for iter in 0..(WARMUP_ITERS + BENCH_ITERS) {
             black_box(r.$read::<$($table),*>().unwrap());
         }
 
-        let nanos =  r_start.elapsed().as_nanos();
+        let nanos = r_start.elapsed().as_nanos();
 
         if iter >= WARMUP_ITERS {
             read_unbuff.update((nanos - $cal) as f64);
