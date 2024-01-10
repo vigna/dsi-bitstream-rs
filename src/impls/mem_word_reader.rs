@@ -11,9 +11,41 @@ use common_traits::UnsignedInt;
 
 use crate::prelude::*;
 
-/// An implementation of [`WordRead`] and [`WordSeek`] for a slice.
+/**
+
+An implementation of [`WordRead`] and [`WordSeek`] for a slice.
+
+The implementation depends on the `INF` parameter: if true, the reader will
+behave as if the slice is infinitely extended with zeros.
+If false, the reader will return an error when reading
+beyond the end of the slice. You can create a zero-extended
+reader with [`MemWordReader::new`] and a strict reader with
+[`MemWordReader::new_strict`].
+
+The zero-extended reader is usually much faster than the strict reader, but
+it might loop infinitely when reading beyond the end of the slice.
+
+# Examples
+
+```rust
+use dsi_bitstream::prelude::*;
+
+let words: [u32; 2] = [1, 2];
+
+let mut word_reader = MemWordReader::new(&words);
+assert_eq!(1, word_reader.read_word().unwrap());
+assert_eq!(2, word_reader.read_word().unwrap());
+assert_eq!(0, word_reader.read_word().unwrap());
+assert_eq!(0, word_reader.read_word().unwrap());
+
+let mut word_reader = MemWordReader::new_strict(&words);
+assert_eq!(1, word_reader.read_word().unwrap());
+assert_eq!(2, word_reader.read_word().unwrap());
+assert!(word_reader.read_word().is_err());
+```
+*/
 #[derive(Debug, Clone, PartialEq)]
-pub struct MemWordReader<W: UnsignedInt, B: AsRef<[W]>> {
+pub struct MemWordReader<W: UnsignedInt, B: AsRef<[W]>, const INF: bool = true> {
     data: B,
     word_index: usize,
     _marker: core::marker::PhantomData<W>,
@@ -34,25 +66,51 @@ impl<W: UnsignedInt, B: AsRef<[W]>> MemWordReader<W, B> {
         self.data
     }
 }
-impl<W: UnsignedInt, B: AsRef<[W]>> WordRead for MemWordReader<W, B> {
+
+impl<W: UnsignedInt, B: AsRef<[W]>> MemWordReader<W, B, false> {
+    /// Create a new [`MemWordReader`] from a slice of data
+    #[must_use]
+    pub fn new_strict(data: B) -> Self {
+        Self {
+            data,
+            word_index: 0,
+            _marker: Default::default(),
+        }
+    }
+}
+
+impl<W: UnsignedInt, B: AsRef<[W]>, const INF: bool> WordRead for MemWordReader<W, B, INF> {
     type Word = W;
 
     #[inline(always)]
     fn read_word(&mut self) -> Result<W> {
-        let res = self
-            .data
-            .as_ref()
-            .get(self.word_index)
-            .ok_or(std::io::Error::new(
-                std::io::ErrorKind::UnexpectedEof,
-                "Unexpected end of slice",
-            ))?;
-        self.word_index += 1;
-        Ok(*res)
+        if INF {
+            let res = self
+                .data
+                .as_ref()
+                .get(self.word_index)
+                .copied()
+                .unwrap_or(Self::Word::ZERO);
+
+            self.word_index += 1;
+            Ok(res)
+        } else {
+            let res = self
+                .data
+                .as_ref()
+                .get(self.word_index)
+                .ok_or(std::io::Error::new(
+                    std::io::ErrorKind::UnexpectedEof,
+                    "Unexpected end of slice",
+                ))?;
+
+            self.word_index += 1;
+            Ok(*res)
+        }
     }
 }
 
-impl<W: UnsignedInt, B: AsRef<[W]>> WordSeek for MemWordReader<W, B> {
+impl<W: UnsignedInt, B: AsRef<[W]>, const INF: bool> WordSeek for MemWordReader<W, B, INF> {
     #[inline(always)]
     #[must_use]
     fn get_word_pos(&self) -> usize {
@@ -61,12 +119,14 @@ impl<W: UnsignedInt, B: AsRef<[W]>> WordSeek for MemWordReader<W, B> {
 
     #[inline(always)]
     fn set_word_pos(&mut self, word_index: usize) -> Result<()> {
-        ensure!(
-            word_index <= self.data.as_ref().len(),
-            "Position beyond end of slice: {} > {}",
-            word_index,
-            self.data.as_ref().len()
-        );
+        if INF {
+            ensure!(
+                word_index <= self.data.as_ref().len(),
+                "Position beyond end of slice: {} > {}",
+                word_index,
+                self.data.as_ref().len()
+            );
+        }
         self.word_index = word_index;
         Ok(())
     }
