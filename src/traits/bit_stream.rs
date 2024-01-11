@@ -117,7 +117,7 @@ pub trait BitSeek {
     type Error: Error + Send + Sync;
 
     #[must_use]
-    fn get_bit_pos(&self) -> Result<u64, Self::Error>;
+    fn get_bit_pos(&mut self) -> Result<u64, Self::Error>;
 
     fn set_bit_pos(&mut self, bit_pos: u64) -> Result<(), Self::Error>;
 }

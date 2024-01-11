@@ -12,7 +12,6 @@ use std::error::Error;
 use crate::codes::table_params::{DefaultReadParams, ReadParams};
 use crate::codes::unary_tables;
 use crate::traits::*;
-use anyhow::{ensure, Result};
 
 /// An implementation of [`BitRead`] with peek word `u32` for a
 /// [`WordRead`] with word `u64` and of [`BitSeek`] for a [`WordSeek`].
@@ -141,7 +140,7 @@ impl<
 impl<WR: WordSeek, RP: ReadParams> BitSeek for BitReader<LE, WR, RP> {
     type Error = Infallible;
 
-    fn get_bit_pos(&self) -> Result<u64, Self::Error> {
+    fn get_bit_pos(&mut self) -> Result<u64, Self::Error> {
         Ok(self.bit_index)
     }
 
@@ -154,7 +153,7 @@ impl<WR: WordSeek, RP: ReadParams> BitSeek for BitReader<LE, WR, RP> {
 impl<WR: WordSeek, RP: ReadParams> BitSeek for BitReader<BE, WR, RP> {
     type Error = Infallible;
 
-    fn get_bit_pos(&self) -> Result<u64, Self::Error> {
+    fn get_bit_pos(&mut self) -> Result<u64, Self::Error> {
         Ok(self.bit_index)
     }
 
@@ -164,13 +163,18 @@ impl<WR: WordSeek, RP: ReadParams> BitSeek for BitReader<BE, WR, RP> {
     }
 }
 
-impl<WR: WordRead<Word = u64> + WordSeek, RP: ReadParams> BitRead<LE> for BitReader<LE, WR, RP> {
+impl<
+        E: Error + Send + Sync,
+        WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>,
+        RP: ReadParams,
+    > BitRead<LE> for BitReader<LE, WR, RP>
+{
     type Error = <WR as WordRead>::Error;
     type PeekWord = u32;
 
     #[inline]
     fn skip_bits(&mut self, n_bits: usize) -> Result<(), Self::Error> {
-        self.bit_index += n_bits;
+        self.bit_index += n_bits as u64;
         Ok(())
     }
 
@@ -183,7 +187,7 @@ impl<WR: WordRead<Word = u64> + WordSeek, RP: ReadParams> BitRead<LE> for BitRea
         assert!(n_bits <= 64);
 
         self.data.set_word_pos(self.bit_index / 64)?;
-        let in_word_offset = self.bit_index % 64;
+        let in_word_offset = (self.bit_index % 64) as usize;
 
         let res = if (in_word_offset + n_bits) <= 64 {
             // single word access
@@ -198,7 +202,7 @@ impl<WR: WordRead<Word = u64> + WordSeek, RP: ReadParams> BitRead<LE> for BitRea
             let shamt2 = 64 - n_bits;
             ((high_word << shamt1) >> shamt2) | (low_word >> in_word_offset)
         };
-        self.bit_index += n_bits;
+        self.bit_index += n_bits as u64;
         Ok(res)
     }
 
@@ -211,7 +215,7 @@ impl<WR: WordRead<Word = u64> + WordSeek, RP: ReadParams> BitRead<LE> for BitRea
         assert!(n_bits <= 32);
 
         self.data.set_word_pos(self.bit_index / 64)?;
-        let in_word_offset = self.bit_index % 64;
+        let in_word_offset = (self.bit_index % 64) as usize;
 
         let res = if (in_word_offset + n_bits) <= 64 {
             // single word access
@@ -244,7 +248,7 @@ impl<WR: WordRead<Word = u64> + WordSeek, RP: ReadParams> BitRead<LE> for BitRea
         let mut word = self.data.read_word()?.to_le();
         word >>= in_word_offset;
         loop {
-            let zeros = word.trailing_zeros() as usize;
+            let zeros = word.trailing_zeros() as u64;
             // the unary code fits in the word
             if zeros < bits_in_word {
                 self.bit_index += total + zeros + 1;

@@ -34,7 +34,7 @@ pub fn harness(data: FuzzCase) {
                 assert_eq!(writer.len(), buffer.len());
             }
             RandomCommand::GetPosition => {
-                assert_eq!(writer.get_word_pos(), idx);
+                assert_eq!(writer.get_word_pos().unwrap(), idx);
             }
             RandomCommand::SetPosition(word_index) => {
                 let _ = writer.set_word_pos(word_index);

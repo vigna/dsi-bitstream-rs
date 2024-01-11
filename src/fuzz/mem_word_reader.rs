@@ -26,7 +26,7 @@ pub fn harness(data: FuzzCase) {
     for command in data.commands {
         match command {
             RandomCommand::GetPosition => {
-                assert_eq!(reader.get_word_pos(), idx);
+                assert_eq!(reader.get_word_pos().unwrap(), idx);
             }
             RandomCommand::SetPosition(word_index) => {
                 let _ = reader.set_word_pos(word_index);

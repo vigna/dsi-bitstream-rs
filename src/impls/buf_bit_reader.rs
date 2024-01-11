@@ -6,11 +6,12 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
+use common_traits::*;
+
 use crate::codes::table_params::{DefaultReadParams, ReadParams};
 use crate::codes::unary_tables;
 use crate::traits::*;
-use anyhow::{ensure, Context};
-use common_traits::*;
+use std::error::Error;
 
 /// An internal shortcut to the double type of the word of a
 /// [`WordRead`].
@@ -110,14 +111,15 @@ where
     }
 }
 
-impl<WR: WordRead + WordSeek, RP: ReadParams> BitSeek for BufBitReader<BE, WR, RP>
+impl<E: Error + Send + Sync, WR: WordRead<Error = E> + WordSeek<Error = E>, RP: ReadParams> BitSeek
+    for BufBitReader<BE, WR, RP>
 where
     WR::Word: DoubleType,
 {
     type Error = <WR as WordSeek>::Error;
 
     #[inline]
-    fn get_bit_pos(&self) -> Result<u64, Self::Error> {
+    fn get_bit_pos(&mut self) -> Result<u64, Self::Error> {
         Ok(self.backend.get_word_pos()? * WR::Word::BITS as u64 - self.bits_in_buffer as u64)
     }
 
@@ -206,7 +208,7 @@ where
             return Ok(result);
         }
 
-        ensure!(n_bits <= 64);
+        assert!(n_bits <= 64);
 
         let mut result: u64 =
             (self.buffer >> (BB::<WR>::BITS - 1 - self.bits_in_buffer) >> 1_u8).cast();
@@ -281,34 +283,30 @@ where
         let free_bits = BB::<WR>::BITS - self.bits_in_buffer;
         debug_assert!(free_bits >= WR::Word::BITS);
 
-        let new_word: BB<WR> = self
-            .backend
-            .read_word()
-            .with_context(|| "Error while reflling BufBitReader")?
-            .to_le()
-            .upcast();
+        let new_word: BB<WR> = self.backend.read_word()?.to_le().upcast();
         self.buffer |= new_word << self.bits_in_buffer;
         self.bits_in_buffer += WR::Word::BITS;
         Ok(())
     }
 }
 
-impl<WR: WordRead + WordSeek, RP: ReadParams> BitSeek for BufBitReader<LE, WR, RP>
+impl<E: Error + Send + Sync, WR: WordRead<Error = E> + WordSeek<Error = E>, RP: ReadParams> BitSeek
+    for BufBitReader<LE, WR, RP>
 where
     WR::Word: DoubleType,
 {
     type Error = <WR as WordSeek>::Error;
 
     #[inline]
-    fn get_bit_pos(&self) -> Result<u64, Self::Error> {
+    fn get_bit_pos(&mut self) -> Result<u64, Self::Error> {
         Ok(self.backend.get_word_pos()? * WR::Word::BITS as u64 - self.bits_in_buffer as u64)
     }
 
     #[inline]
     fn set_bit_pos(&mut self, bit_index: u64) -> Result<(), Self::Error> {
         self.backend
-            .set_word_pos(bit_index / WR::Word::BITS as u64)
-            .with_context(|| "BufBitReader was seeking_bit")?;
+            .set_word_pos(bit_index / WR::Word::BITS as u64)?;
+
         let bit_offset = (bit_index % WR::Word::BITS as u64) as usize;
         self.buffer = BB::<WR>::ZERO;
         self.bits_in_buffer = 0;
@@ -374,7 +372,7 @@ where
             return Ok(result);
         }
 
-        ensure!(n_bits <= 64);
+        assert!(n_bits <= 64);
 
         let mut result: u64 = self.buffer.cast();
         let mut bits_in_res = self.bits_in_buffer;

@@ -9,7 +9,6 @@
 use crate::codes::table_params::{DefaultWriteParams, WriteParams};
 use crate::codes::unary_tables;
 use crate::traits::*;
-use anyhow::{ensure, Result};
 use common_traits::{CastableInto, Integer, Number, Scalar};
 
 /// An implementation of [`BitWrite`] for a
@@ -83,12 +82,12 @@ impl<E: DropHelper<WW, WP>, WW: WordWrite, WP: WriteParams> core::ops::Drop
 /// I discussed this [here](https://users.rust-lang.org/t/on-generic-associated-enum-and-type-comparisons/92072).
 pub trait DropHelper<WW: WordWrite, WP: WriteParams>: Sized + Endianness {
     /// handle the drop
-    fn flush(buf_bit_writer: &mut BufBitWriter<Self, WW, WP>) -> Result<()>;
+    fn flush(buf_bit_writer: &mut BufBitWriter<Self, WW, WP>) -> Result<(), WW::Error>;
 }
 
 impl<WW: WordWrite, WP: WriteParams> DropHelper<WW, WP> for BE {
     #[inline]
-    fn flush(buf_bit_writer: &mut BufBitWriter<Self, WW, WP>) -> Result<()> {
+    fn flush(buf_bit_writer: &mut BufBitWriter<Self, WW, WP>) -> Result<(), WW::Error> {
         if buf_bit_writer.bits_in_buffer > 0 {
             buf_bit_writer.buffer <<= WW::Word::BITS - buf_bit_writer.bits_in_buffer;
             buf_bit_writer
@@ -113,7 +112,7 @@ where
     #[inline]
     fn write_bits(&mut self, mut value: u64, n_bits: usize) -> Result<usize, Self::Error> {
         #[cfg(test)]
-        ensure!(
+        assert!(
             value & (1_u128 << n_bits).wrapping_sub(1) as u64 == value,
             "Value {} does not fit in {} bits",
             value,
@@ -142,7 +141,7 @@ where
             return Ok(n_bits);
         }
 
-        ensure!(n_bits <= 64);
+        assert!(n_bits <= 64);
 
         // Load the bottom of the buffer, if necessary, and dump the whole buffer
         if space_left_in_buffer != 0 {
@@ -216,7 +215,7 @@ where
 
 impl<WW: WordWrite, WP: WriteParams> DropHelper<WW, WP> for LE {
     #[inline]
-    fn flush(buf_bit_writer: &mut BufBitWriter<Self, WW, WP>) -> Result<()> {
+    fn flush(buf_bit_writer: &mut BufBitWriter<Self, WW, WP>) -> Result<(), WW::Error> {
         if buf_bit_writer.bits_in_buffer > 0 {
             buf_bit_writer.buffer >>= WW::Word::BITS - buf_bit_writer.bits_in_buffer;
             buf_bit_writer
@@ -241,7 +240,7 @@ where
     #[inline]
     fn write_bits(&mut self, mut value: u64, n_bits: usize) -> Result<usize, Self::Error> {
         #[cfg(test)]
-        ensure!(
+        assert!(
             value & (1_u128 << n_bits).wrapping_sub(1) as u64 == value,
             "Error value {} does not fit in {} bits",
             value,
@@ -268,7 +267,7 @@ where
             return Ok(n_bits);
         }
 
-        ensure!(n_bits <= 64);
+        assert!(n_bits <= 64);
 
         // Load the top of the buffer, if necessary, and dump the whole buffer
         if space_left_in_buffer != 0 {

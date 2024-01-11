@@ -45,7 +45,7 @@ read_func_merged_table = """
 ///
 /// # Errors
 /// This function errors if it wasn't able to skip_bits
-pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> Result<Option<(u64, usize)>> {
+pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> Result<Option<(u64, usize)>, B::Error> {
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
         let idx: u64 = idx.upcast();
         let (value, len) = READ_%(BO)s[idx as usize];
@@ -66,7 +66,7 @@ read_func_two_table = """
 ///
 /// # Errors
 /// This function errors if it wasn't able to skip_bits
-pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> Result<Option<(u64, usize)>> {
+pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> Result<Option<(u64, usize)>, B::Error> {
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
         let idx: u64 = idx.upcast();
         let len = READ_LEN_%(BO)s[idx as usize];
@@ -84,7 +84,7 @@ pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> Result<Option<(
 ///
 /// # Errors
 /// This function errors if it wasn't able to skip_bits
-pub fn len_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> Result<Option<usize>> {
+pub fn len_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> Result<Option<usize>, B::Error> {
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
         let idx: u64 = idx.upcast();
         let len = READ_LEN_%(BO)s[idx as usize];
@@ -106,7 +106,7 @@ write_func_merged_table = """
 ///
 /// # Errors
 /// This function errors if it wasn't able to skip_bits
-pub fn write_table_%(bo)s<B: BitWrite<%(BO)s>>(backend: &mut B, value: u64) -> Result<Option<usize>> {
+pub fn write_table_%(bo)s<B: BitWrite<%(BO)s>>(backend: &mut B, value: u64) -> Result<Option<usize>, B::Error> {
     Ok(if let Some((bits, len)) = WRITE_%(BO)s.get(value as usize) {
         backend.write_bits(*bits as u64, *len as usize)?;
         Some(*len as usize)        
@@ -124,7 +124,7 @@ write_func_two_table = """
 ///
 /// # Errors
 /// This function errors if it wasn't able to skip_bits
-pub fn write_table_%(bo)s<B: BitWrite<%(BO)s>>(backend: &mut B, value: u64) -> Result<Option<usize>> {
+pub fn write_table_%(bo)s<B: BitWrite<%(BO)s>>(backend: &mut B, value: u64) -> Result<Option<usize>, B::Error> {
     Ok(if let Some(bits) = WRITE_%(BO)s.get(value as usize) {
         let len = WRITE_LEN_%(BO)s[value as usize] as usize;
         backend.write_bits(*bits as u64, len)?;
@@ -159,7 +159,6 @@ def gen_table(
                 code_name
             )
         )
-        f.write("use anyhow::Result;\n")
         f.write("use crate::traits::{BitRead, BitWrite, BE, LE};\n")
         f.write("use common_traits::*;\n")
 
