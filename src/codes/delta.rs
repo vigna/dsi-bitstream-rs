@@ -12,7 +12,6 @@
 
 use super::{delta_tables, gamma_tables, len_gamma_param, GammaReadParam, GammaWriteParam};
 use crate::traits::*;
-use anyhow::{Ok, Result};
 
 #[must_use]
 #[inline]
@@ -45,8 +44,8 @@ pub fn len_delta(value: u64) -> usize {
 }
 
 pub trait DeltaRead<E: Endianness>: BitRead<E> {
-    fn read_delta(&mut self) -> Result<u64>;
-    fn skip_delta(&mut self) -> Result<()>;
+    fn read_delta(&mut self) -> Result<u64, Self::Error>;
+    fn skip_delta(&mut self) -> Result<(), Self::Error>;
 }
 
 /// Trait for objects that can read Delta codes
@@ -63,7 +62,7 @@ pub trait DeltaReadParam<E: Endianness>: GammaReadParam<E> {
     /// bits, as when the stream ends unexpectedly
     fn read_delta_param<const USE_DELTA_TABLE: bool, const USE_GAMMA_TABLE: bool>(
         &mut self,
-    ) -> Result<u64>;
+    ) -> Result<u64, Self::Error>;
 
     /// Skip a number of dleta codes from the stream.
     ///
@@ -77,7 +76,7 @@ pub trait DeltaReadParam<E: Endianness>: GammaReadParam<E> {
     /// bits, as when the stream ends unexpectedly
     fn skip_delta_param<const USE_DELTA_TABLE: bool, const USE_GAMMA_TABLE: bool>(
         &mut self,
-    ) -> Result<()>;
+    ) -> Result<(), Self::Error>;
 }
 
 /// Common part of the BE and LE impl
@@ -87,7 +86,7 @@ pub trait DeltaReadParam<E: Endianness>: GammaReadParam<E> {
 #[inline(always)]
 fn default_read_delta<E: Endianness, B: GammaReadParam<E>, const USE_GAMMA_TABLE: bool>(
     backend: &mut B,
-) -> Result<u64> {
+) -> Result<u64, B::Error> {
     let len = backend.read_gamma_param::<USE_GAMMA_TABLE>()?;
     debug_assert!(len <= 64);
     Ok(backend.read_bits(len as usize)? + (1 << len) - 1)
@@ -98,7 +97,7 @@ macro_rules! default_skip_delta_impl {
         #[inline(always)]
         fn $default_skip_delta<B: GammaReadParam<$endianness>, const USE_GAMMA_TABLE: bool>(
             backend: &mut B,
-        ) -> Result<()> {
+        ) -> Result<(), B::Error> {
             // slower but correct implementation
             //let value = backend.read_gamma_param::<USE_GAMMA_TABLE>()?;
             //backend.skip_bits(value as usize)?;
@@ -127,7 +126,7 @@ impl<B: GammaReadParam<BE>> DeltaReadParam<BE> for B {
     #[inline]
     fn read_delta_param<const USE_DELTA_TABLE: bool, const USE_GAMMA_TABLE: bool>(
         &mut self,
-    ) -> Result<u64> {
+    ) -> Result<u64, B::Error> {
         if USE_DELTA_TABLE {
             if let Some((res, _)) = delta_tables::read_table_be(self)? {
                 return Ok(res);
@@ -139,7 +138,7 @@ impl<B: GammaReadParam<BE>> DeltaReadParam<BE> for B {
     #[inline]
     fn skip_delta_param<const USE_DELTA_TABLE: bool, const USE_GAMMA_TABLE: bool>(
         &mut self,
-    ) -> Result<()> {
+    ) -> Result<(), B::Error> {
         if USE_DELTA_TABLE {
             if let Some((_, _)) = delta_tables::read_table_be(self)? {
                 return Ok(());
@@ -152,7 +151,7 @@ impl<B: GammaReadParam<LE>> DeltaReadParam<LE> for B {
     #[inline]
     fn read_delta_param<const USE_DELTA_TABLE: bool, const USE_GAMMA_TABLE: bool>(
         &mut self,
-    ) -> Result<u64> {
+    ) -> Result<u64, B::Error> {
         if USE_DELTA_TABLE {
             if let Some((res, _)) = delta_tables::read_table_le(self)? {
                 return Ok(res);
@@ -164,7 +163,7 @@ impl<B: GammaReadParam<LE>> DeltaReadParam<LE> for B {
     #[inline]
     fn skip_delta_param<const USE_DELTA_TABLE: bool, const USE_GAMMA_TABLE: bool>(
         &mut self,
-    ) -> Result<()> {
+    ) -> Result<(), B::Error> {
         if USE_DELTA_TABLE {
             if let Some((_, _)) = delta_tables::read_table_le(self)? {
                 return Ok(());
@@ -175,7 +174,7 @@ impl<B: GammaReadParam<LE>> DeltaReadParam<LE> for B {
 }
 
 pub trait DeltaWrite<E: Endianness>: BitWrite<E> {
-    fn write_delta(&mut self, value: u64) -> Result<usize>;
+    fn write_delta(&mut self, value: u64) -> Result<usize, Self::Error>;
 }
 
 /// Trait for objects that can write Delta codes
@@ -191,7 +190,7 @@ pub trait DeltaWriteParam<E: Endianness>: GammaWriteParam<E> {
     fn write_delta_param<const USE_DELTA_TABLE: bool, const USE_GAMMA_TABLE: bool>(
         &mut self,
         value: u64,
-    ) -> Result<usize>;
+    ) -> Result<usize, Self::Error>;
 }
 
 impl<B: GammaWriteParam<BE>> DeltaWriteParam<BE> for B {
@@ -200,7 +199,7 @@ impl<B: GammaWriteParam<BE>> DeltaWriteParam<BE> for B {
     fn write_delta_param<const USE_DELTA_TABLE: bool, const USE_GAMMA_TABLE: bool>(
         &mut self,
         value: u64,
-    ) -> Result<usize> {
+    ) -> Result<usize, Self::Error> {
         if USE_DELTA_TABLE {
             if let Some(len) = delta_tables::write_table_be(self, value)? {
                 return Ok(len);
@@ -216,7 +215,7 @@ impl<B: GammaWriteParam<LE>> DeltaWriteParam<LE> for B {
     fn write_delta_param<const USE_DELTA_TABLE: bool, const USE_GAMMA_TABLE: bool>(
         &mut self,
         value: u64,
-    ) -> Result<usize> {
+    ) -> Result<usize, Self::Error> {
         if USE_DELTA_TABLE {
             if let Some(len) = delta_tables::write_table_le(self, value)? {
                 return Ok(len);
@@ -234,7 +233,7 @@ impl<B: GammaWriteParam<LE>> DeltaWriteParam<LE> for B {
 fn default_write_delta<E: Endianness, B: GammaWriteParam<E>, const USE_GAMMA_TABLE: bool>(
     backend: &mut B,
     mut value: u64,
-) -> Result<usize> {
+) -> Result<usize, B::Error> {
     value += 1;
     let number_of_bits_to_write = value.ilog2();
     debug_assert!(number_of_bits_to_write <= u8::MAX as _);

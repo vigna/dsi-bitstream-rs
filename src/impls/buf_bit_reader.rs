@@ -9,7 +9,7 @@
 use crate::codes::table_params::{DefaultReadParams, ReadParams};
 use crate::codes::unary_tables;
 use crate::traits::*;
-use anyhow::{ensure, Context, Result};
+use anyhow::{ensure, Context};
 use common_traits::*;
 
 /// An internal shortcut to the double type of the word of a
@@ -71,7 +71,7 @@ where
 {
     /// Create a new [`BufBitReader`] around a [`WordRead`].
     ///
-    /// ### Example
+    /// # Example
     /// ```
     /// use dsi_bitstream::prelude::*;
     /// let words: [u32; 2] = [0x0043b59f, 0xccf16077];
@@ -97,18 +97,13 @@ where
     /// This method can be called only if there are at least
     /// `WR::Word::BITS` free bits in the buffer.
     #[inline(always)]
-    fn refill(&mut self) -> Result<()> {
+    fn refill(&mut self) -> Result<(), <WR as WordRead>::Error> {
         // if we have 64 valid bits, we don't have space for a new word
         // and by definition we can only read
         let free_bits = BB::<WR>::BITS - self.bits_in_buffer;
         debug_assert!(free_bits >= WR::Word::BITS);
 
-        let new_word: BB<WR> = self
-            .backend
-            .read_word()
-            .with_context(|| "Error while reflling BufBitReader")?
-            .to_be()
-            .upcast();
+        let new_word: BB<WR> = self.backend.read_word()?.to_be().upcast();
         self.bits_in_buffer += WR::Word::BITS;
         self.buffer |= (new_word << (BB::<WR>::BITS - self.bits_in_buffer - 1)) << 1;
         Ok(())
@@ -119,17 +114,18 @@ impl<WR: WordRead + WordSeek, RP: ReadParams> BitSeek for BufBitReader<BE, WR, R
 where
     WR::Word: DoubleType,
 {
+    type Error = <WR as WordSeek>::Error;
+
     #[inline]
-    fn get_bit_pos(&self) -> usize {
-        self.backend.get_word_pos() * WR::Word::BITS - self.bits_in_buffer
+    fn get_bit_pos(&self) -> Result<u64, Self::Error> {
+        Ok(self.backend.get_word_pos()? * WR::Word::BITS as u64 - self.bits_in_buffer as u64)
     }
 
     #[inline]
-    fn set_bit_pos(&mut self, bit_index: usize) -> Result<()> {
+    fn set_bit_pos(&mut self, bit_index: u64) -> Result<(), Self::Error> {
         self.backend
-            .set_word_pos(bit_index / WR::Word::BITS)
-            .with_context(|| "BufBitReader was seeking_bit")?;
-        let bit_offset = bit_index % WR::Word::BITS;
+            .set_word_pos(bit_index / WR::Word::BITS as u64)?;
+        let bit_offset = (bit_index % WR::Word::BITS as u64) as usize;
         self.buffer = BB::<WR>::ZERO;
         self.bits_in_buffer = 0;
         if bit_offset != 0 {
@@ -146,14 +142,15 @@ where
     WR::Word: DoubleType + UpcastableInto<u64>,
     BB<WR>: CastableInto<u64>,
 {
+    type Error = <WR as WordRead>::Error;
     type PeekWord = WR::Word;
 
     #[inline]
-    fn peek_bits(&mut self, n_bits: usize) -> Result<Self::PeekWord> {
+    fn peek_bits(&mut self, n_bits: usize) -> Result<Self::PeekWord, Self::Error> {
         debug_assert!(n_bits > 0);
         debug_assert!(n_bits <= Self::PeekWord::BITS);
 
-        // A peek can do at most one refill, otherwise we might lose data
+        // A peek can do at most one refill, otherwise we might lose 9888data
         if n_bits > self.bits_in_buffer {
             self.refill()?;
         }
@@ -164,7 +161,7 @@ where
     }
 
     #[inline]
-    fn skip_bits(&mut self, mut n_bits: usize) -> Result<()> {
+    fn skip_bits(&mut self, mut n_bits: usize) -> Result<(), Self::Error> {
         // happy case, just shift the buffer
         if n_bits <= self.bits_in_buffer {
             self.bits_in_buffer -= n_bits;
@@ -190,14 +187,14 @@ where
     }
 
     #[inline(always)]
-    fn skip_bits_after_table_lookup(&mut self, n_bits: usize) -> Result<()> {
+    fn skip_bits_after_table_lookup(&mut self, n_bits: usize) -> Result<(), Self::Error> {
         self.bits_in_buffer -= n_bits;
         self.buffer <<= n_bits;
         Ok(())
     }
 
     #[inline]
-    fn read_bits(&mut self, mut n_bits: usize) -> Result<u64> {
+    fn read_bits(&mut self, mut n_bits: usize) -> Result<u64, Self::Error> {
         debug_assert!(self.bits_in_buffer < BB::<WR>::BITS);
 
         // most common path, we just read the buffer
@@ -236,7 +233,7 @@ where
     }
 
     #[inline]
-    fn read_unary_param<const USE_TABLE: bool>(&mut self) -> Result<u64> {
+    fn read_unary_param<const USE_TABLE: bool>(&mut self) -> Result<u64, Self::Error> {
         if USE_TABLE {
             if let Some((res, _)) = unary_tables::read_table_be(self)? {
                 return Ok(res);
@@ -278,7 +275,7 @@ where
     /// This method can be called only if there are at least
     /// `WR::Word::BITS` free bits in the buffer.
     #[inline(always)]
-    fn refill(&mut self) -> Result<()> {
+    fn refill(&mut self) -> Result<(), <WR as WordRead>::Error> {
         // if we have 64 valid bits, we don't have space for a new word
         // and by definition we can only read
         let free_bits = BB::<WR>::BITS - self.bits_in_buffer;
@@ -300,17 +297,19 @@ impl<WR: WordRead + WordSeek, RP: ReadParams> BitSeek for BufBitReader<LE, WR, R
 where
     WR::Word: DoubleType,
 {
+    type Error = <WR as WordSeek>::Error;
+
     #[inline]
-    fn get_bit_pos(&self) -> usize {
-        self.backend.get_word_pos() * WR::Word::BITS - self.bits_in_buffer
+    fn get_bit_pos(&self) -> Result<u64, Self::Error> {
+        Ok(self.backend.get_word_pos()? * WR::Word::BITS as u64 - self.bits_in_buffer as u64)
     }
 
     #[inline]
-    fn set_bit_pos(&mut self, bit_index: usize) -> Result<()> {
+    fn set_bit_pos(&mut self, bit_index: u64) -> Result<(), Self::Error> {
         self.backend
-            .set_word_pos(bit_index / WR::Word::BITS)
+            .set_word_pos(bit_index / WR::Word::BITS as u64)
             .with_context(|| "BufBitReader was seeking_bit")?;
-        let bit_offset = bit_index % WR::Word::BITS;
+        let bit_offset = (bit_index % WR::Word::BITS as u64) as usize;
         self.buffer = BB::<WR>::ZERO;
         self.bits_in_buffer = 0;
         if bit_offset != 0 {
@@ -327,10 +326,11 @@ where
     WR::Word: DoubleType + UpcastableInto<u64>,
     BB<WR>: CastableInto<u64>,
 {
+    type Error = <WR as WordRead>::Error;
     type PeekWord = WR::Word;
 
     #[inline]
-    fn skip_bits(&mut self, mut n_bits: usize) -> Result<()> {
+    fn skip_bits(&mut self, mut n_bits: usize) -> Result<(), Self::Error> {
         // happy case, just shift the buffer
         if n_bits <= self.bits_in_buffer {
             self.bits_in_buffer -= n_bits;
@@ -356,14 +356,14 @@ where
     }
 
     #[inline(always)]
-    fn skip_bits_after_table_lookup(&mut self, n_bits: usize) -> Result<()> {
+    fn skip_bits_after_table_lookup(&mut self, n_bits: usize) -> Result<(), Self::Error> {
         self.bits_in_buffer -= n_bits;
         self.buffer >>= n_bits;
         Ok(())
     }
 
     #[inline]
-    fn read_bits(&mut self, mut n_bits: usize) -> Result<u64> {
+    fn read_bits(&mut self, mut n_bits: usize) -> Result<u64, Self::Error> {
         debug_assert!(self.bits_in_buffer < BB::<WR>::BITS);
 
         // most common path, we just read the buffer
@@ -404,7 +404,7 @@ where
     }
 
     #[inline]
-    fn peek_bits(&mut self, n_bits: usize) -> Result<Self::PeekWord> {
+    fn peek_bits(&mut self, n_bits: usize) -> Result<Self::PeekWord, Self::Error> {
         debug_assert!(n_bits > 0);
         debug_assert!(n_bits <= Self::PeekWord::BITS);
 
@@ -420,7 +420,7 @@ where
     }
 
     #[inline]
-    fn read_unary_param<const USE_TABLE: bool>(&mut self) -> Result<u64> {
+    fn read_unary_param<const USE_TABLE: bool>(&mut self) -> Result<u64, Self::Error> {
         if USE_TABLE {
             if let Some((res, _)) = unary_tables::read_table_le(self)? {
                 return Ok(res);

@@ -27,8 +27,8 @@ bit streams under a variety of parameters.
 use crate::codes::*;
 use crate::impls::*;
 use crate::traits::*;
-use anyhow::Result;
 use common_traits::*;
+use std::error::Error;
 
 pub trait ReadParams {}
 
@@ -45,14 +45,14 @@ macro_rules! impl_default_read_codes {
             <WR::Word as DoubleType>::DoubleType: CastableInto<u64>,
         {
             #[inline(always)]
-            fn read_gamma(&mut self) -> Result<u64> {
+            fn read_gamma(&mut self) -> Result<u64, Self::Error> {
                 // From our tests, the ARM architecture is faster
                 // without tables for ɣ codes.
                 return self.read_gamma_param::<false>();
             }
 
             #[inline(always)]
-            fn skip_gamma(&mut self) -> Result<()> {
+            fn skip_gamma(&mut self) -> Result<(), Self::Error> {
                 // From our tests, the ARM architecture is faster
                 // without tables for ɣ codes.
                 return self.skip_gamma_param::<false>();
@@ -66,12 +66,12 @@ macro_rules! impl_default_read_codes {
             <WR::Word as DoubleType>::DoubleType: CastableInto<u64>,
         {
             #[inline(always)]
-            fn read_delta(&mut self) -> Result<u64> {
+            fn read_delta(&mut self) -> Result<u64, Self::Error> {
                 return self.read_delta_param::<false, true>();
             }
 
             #[inline(always)]
-            fn skip_delta(&mut self) -> Result<()> {
+            fn skip_delta(&mut self) -> Result<(), Self::Error> {
                 return self.skip_delta_param::<false, true>();
             }
         }
@@ -83,87 +83,87 @@ macro_rules! impl_default_read_codes {
             <WR::Word as DoubleType>::DoubleType: CastableInto<u64>,
         {
             #[inline(always)]
-            fn read_zeta(&mut self, k: u64) -> Result<u64> {
+            fn read_zeta(&mut self, k: u64) -> Result<u64, Self::Error> {
                 self.read_zeta_param(k)
             }
 
             #[inline(always)]
-            fn skip_zeta(&mut self, k: u64) -> Result<()> {
+            fn skip_zeta(&mut self, k: u64) -> Result<(), Self::Error> {
                 self.skip_zeta_param(k)
             }
 
             #[inline(always)]
-            fn read_zeta3(&mut self) -> Result<u64> {
+            fn read_zeta3(&mut self) -> Result<u64, Self::Error> {
                 self.read_zeta3_param::<true>()
             }
 
             #[inline(always)]
-            fn skip_zeta3(&mut self) -> Result<()> {
+            fn skip_zeta3(&mut self) -> Result<(), Self::Error> {
                 self.skip_zeta3_param::<true>()
             }
         }
 
-        impl<WR: WordRead<Word = u64> + WordSeek> GammaRead<$endianess>
+        impl<E: Error + Send + Sync, WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>> GammaRead<$endianess>
             for BitReader<$endianess, WR, DefaultReadParams>
         where
             WR:: Word: DoubleType + UpcastableInto<u64>,
             <WR::Word as DoubleType>::DoubleType: CastableInto<u64>,
         {
             #[inline(always)]
-            fn read_gamma(&mut self) -> Result<u64> {
+            fn read_gamma(&mut self) -> Result<u64, Self::Error> {
                 // From our tests, the ARM architecture is faster
                 // without tables for ɣ codes.
                 return self.read_gamma_param::<false>();
             }
 
             #[inline(always)]
-            fn skip_gamma(&mut self) -> Result<()> {
+            fn skip_gamma(&mut self) -> Result<(), Self::Error> {
                 // From our tests, the ARM architecture is faster
                 // without tables for ɣ codes.
                 return self.skip_gamma_param::<false>();
             }
         }
 
-        impl<WR: WordRead<Word = u64> + WordSeek> DeltaRead<$endianess>
+        impl<E: Error + Send + Sync, WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>> DeltaRead<$endianess>
             for BitReader<$endianess, WR, DefaultReadParams>
         where
             WR:: Word: DoubleType + UpcastableInto<u64>,
             <WR::Word as DoubleType>::DoubleType: CastableInto<u64>,
         {
             #[inline(always)]
-            fn read_delta(&mut self) -> Result<u64> {
+            fn read_delta(&mut self) -> Result<u64, Self::Error> {
                 return self.read_delta_param::<false, true>();
             }
 
             #[inline(always)]
-            fn skip_delta(&mut self) -> Result<()> {
+            fn skip_delta(&mut self) -> Result<(), Self::Error> {
                 return self.skip_delta_param::<false, true>();
             }
         }
 
-        impl<WR: WordRead<Word = u64> + WordSeek> ZetaRead<$endianess>
+        impl<E: Error + Send + Sync, WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>> ZetaRead<$endianess>
             for BitReader<$endianess, WR, DefaultReadParams>
         where
             WR:: Word: DoubleType + UpcastableInto<u64>,
             <WR::Word as DoubleType>::DoubleType: CastableInto<u64>,
         {
             #[inline(always)]
-            fn read_zeta(&mut self, k: u64) -> Result<u64> {
+            fn read_zeta(&mut self, k: u64) -> Result<u64, Self::Error> {
                 self.read_zeta_param(k)
             }
 
             #[inline(always)]
-            fn skip_zeta(&mut self, k: u64) -> Result<()> {
+            fn skip_zeta(&mut self, k: u64) -> Result<(), Self::Error> {
                 self.skip_zeta_param(k)
             }
 
             #[inline(always)]
-            fn read_zeta3(&mut self) -> Result<u64> {
+            fn read_zeta3(&mut self) -> Result<u64, Self::Error> {
                 self.read_zeta3_param::<true>()
             }
 
             #[inline(always)]
-            fn skip_zeta3(&mut self) -> Result<()> {
+            fn skip_zeta3(&mut self) -> Result<(), Self::Error> {
                 self.skip_zeta3_param::<true>()
             }
         }
@@ -185,7 +185,7 @@ macro_rules! impl_default_write_codes {
             where u64: CastableInto<WR::Word>,
         {
             #[inline(always)]
-            fn write_gamma(&mut self, value: u64) -> Result<usize> {
+            fn write_gamma(&mut self, value: u64) -> Result<usize, Self::Error> {
                 self.write_gamma_param::<true>(value)
             }
         }
@@ -195,7 +195,7 @@ macro_rules! impl_default_write_codes {
             where u64: CastableInto<WR::Word>,
         {
             #[inline(always)]
-            fn write_delta(&mut self, value: u64) -> Result<usize> {
+            fn write_delta(&mut self, value: u64) -> Result<usize, Self::Error> {
                 self.write_delta_param::<true, true>(value)
             }
         }
@@ -205,12 +205,12 @@ macro_rules! impl_default_write_codes {
             where u64: CastableInto<WR::Word>,
         {
             #[inline(always)]
-            fn write_zeta(&mut self, value: u64, k: u64) -> Result<usize> {
+            fn write_zeta(&mut self, value: u64, k: u64) -> Result<usize, Self::Error> {
                 self.write_zeta_param::<true>(value, k)
             }
 
             #[inline(always)]
-            fn write_zeta3(&mut self, value: u64) -> Result<usize> {
+            fn write_zeta3(&mut self, value: u64) -> Result<usize, Self::Error> {
                 self.write_zeta3_param::<true>(value)
             }
         }

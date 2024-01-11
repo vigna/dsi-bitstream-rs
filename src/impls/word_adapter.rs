@@ -7,10 +7,10 @@
  */
 
 use crate::traits::*;
-use anyhow::Result;
 use common_traits::*;
+use std::io::{Read, Seek, SeekFrom, Write};
 
-/// An adapter from [`std::io::Read`], [`std::io::Write`], and [`std::io::Seek`],
+/// An adapter from [`Read`], [`Write`], and [`Seek`],
 /// to [`WordRead`], [`WordWrite`], and [`WordSeek`], respectively.
 ///
 /// Instances of this struct can be created using [`WordAdapter::new`]. They
@@ -20,7 +20,6 @@ use common_traits::*;
 #[derive(Clone)]
 pub struct WordAdapter<W: UnsignedInt, B> {
     file: B,
-    position: usize,
     _marker: core::marker::PhantomData<W>,
 }
 
@@ -29,58 +28,53 @@ impl<W: UnsignedInt, B> WordAdapter<W, B> {
     pub fn new(file: B) -> Self {
         Self {
             file,
-            position: 0,
             _marker: core::marker::PhantomData,
         }
     }
 }
 
-impl<W: UnsignedInt, B> core::fmt::Debug for WordAdapter<W, B> {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        f.debug_struct("WordAdapter")
-            .field("file", &"CAN'T PRINT FILE")
-            .field("position", &self.position)
-            .finish()
-    }
-}
-
-/// Convert [`std::io::Read`] to [`WordRead`]
-impl<W: UnsignedInt, B: std::io::Read> WordRead for WordAdapter<W, B> {
+impl<W: UnsignedInt, B: Read> WordRead for WordAdapter<W, B> {
+    type Error = std::io::Error;
     type Word = W;
 
     #[inline]
-    fn read_word(&mut self) -> Result<W> {
+    fn read_word(&mut self) -> Result<W, std::io::Error> {
         let mut res: W::Bytes = Default::default();
         let _ = self.file.read(res.as_mut())?;
-        self.position += 1;
         Ok(W::from_ne_bytes(res))
     }
 }
 
-/// Convert [`std::io::Write`] to [`WordWrite`]
-impl<W: UnsignedInt, B: std::io::Write> WordWrite for WordAdapter<W, B> {
+impl<W: UnsignedInt, B: Write> WordWrite for WordAdapter<W, B> {
+    type Error = std::io::Error;
     type Word = W;
 
     #[inline]
-    fn write_word(&mut self, word: W) -> Result<()> {
+    fn write_word(&mut self, word: W) -> Result<(), std::io::Error> {
         let _ = self.file.write(word.to_ne_bytes().as_ref())?;
-        self.position += 1;
         Ok(())
     }
 }
 
-/// Convert [`std::io::Seek`] to [`WordSeek`]
-impl<W: UnsignedInt, B: std::io::Seek> WordSeek for WordAdapter<W, B> {
+impl<W: UnsignedInt, B: Seek> WordSeek for WordAdapter<W, B> {
+    type Error = std::io::Error;
     #[inline(always)]
-    fn get_word_pos(&self) -> usize {
-        self.position
+    fn get_word_pos(&mut self) -> Result<u64, std::io::Error> {
+        let byte_pos = self.file.stream_position()?;
+        return if byte_pos % W::BYTES as u64 != 0 {
+            Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                "The current position is not a multiple of the word size",
+            ))
+        } else {
+            Ok(byte_pos / W::BYTES as u64)
+        };
     }
 
     #[inline(always)]
-    fn set_word_pos(&mut self, word_index: usize) -> Result<()> {
+    fn set_word_pos(&mut self, word_index: u64) -> Result<(), std::io::Error> {
         self.file
-            .seek(std::io::SeekFrom::Start((word_index * W::BYTES) as u64))?;
-        self.position = word_index;
+            .seek(SeekFrom::Start(word_index * W::BYTES as u64))?;
         Ok(())
     }
 }

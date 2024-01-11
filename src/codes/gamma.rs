@@ -16,7 +16,6 @@
 
 use super::gamma_tables;
 use crate::traits::*;
-use anyhow::Result;
 
 /// Returns how long the gamma code for `value` will be
 ///
@@ -43,8 +42,8 @@ pub fn len_gamma(value: u64) -> usize {
 }
 
 pub trait GammaRead<E: Endianness>: BitRead<E> {
-    fn read_gamma(&mut self) -> Result<u64>;
-    fn skip_gamma(&mut self) -> Result<()>;
+    fn read_gamma(&mut self) -> Result<u64, Self::Error>;
+    fn skip_gamma(&mut self) -> Result<(), Self::Error>;
 }
 
 /// Trait for objects that can read Gamma codes
@@ -57,7 +56,7 @@ pub trait GammaReadParam<E: Endianness>: BitRead<E> {
     /// # Errors
     /// This function fails only if the BitRead backend has problems reading
     /// bits, as when the stream ends unexpectedly
-    fn read_gamma_param<const USE_TABLE: bool>(&mut self) -> Result<u64>;
+    fn read_gamma_param<const USE_TABLE: bool>(&mut self) -> Result<u64, Self::Error>;
 
     /// Skip a number of gamma codes from the stream.
     ///
@@ -67,7 +66,7 @@ pub trait GammaReadParam<E: Endianness>: BitRead<E> {
     /// # Errors
     /// This function fails only if the BitRead backend has problems reading
     /// bits, as when the stream ends unexpectedly
-    fn skip_gamma_param<const USE_TABLE: bool>(&mut self) -> Result<()>;
+    fn skip_gamma_param<const USE_TABLE: bool>(&mut self) -> Result<(), Self::Error>;
 }
 
 /// Common part of the BE and LE impl
@@ -75,14 +74,14 @@ pub trait GammaReadParam<E: Endianness>: BitRead<E> {
 /// # Errors
 /// Forward `read_unary` and `read_bits` errors.
 #[inline(always)]
-fn default_read_gamma<E: Endianness, B: BitRead<E>>(backend: &mut B) -> Result<u64> {
+fn default_read_gamma<E: Endianness, B: BitRead<E>>(backend: &mut B) -> Result<u64, B::Error> {
     let len = backend.read_unary_param::<false>()?;
     debug_assert!(len <= 64);
     Ok(backend.read_bits(len as usize)? + (1 << len) - 1)
 }
 
 #[inline(always)]
-fn default_skip_gamma<E: Endianness, B: BitRead<E>>(backend: &mut B) -> Result<()> {
+fn default_skip_gamma<E: Endianness, B: BitRead<E>>(backend: &mut B) -> Result<(), B::Error> {
     let len = backend.read_unary_param::<false>()?;
     debug_assert!(len <= 64);
     backend.skip_bits(len as usize)
@@ -90,7 +89,7 @@ fn default_skip_gamma<E: Endianness, B: BitRead<E>>(backend: &mut B) -> Result<(
 
 impl<B: BitRead<BE>> GammaReadParam<BE> for B {
     #[inline]
-    fn read_gamma_param<const USE_TABLE: bool>(&mut self) -> Result<u64> {
+    fn read_gamma_param<const USE_TABLE: bool>(&mut self) -> Result<u64, Self::Error> {
         if USE_TABLE {
             if let Some((res, _)) = gamma_tables::read_table_be(self)? {
                 return Ok(res);
@@ -100,7 +99,7 @@ impl<B: BitRead<BE>> GammaReadParam<BE> for B {
     }
 
     #[inline]
-    fn skip_gamma_param<const USE_TABLE: bool>(&mut self) -> Result<()> {
+    fn skip_gamma_param<const USE_TABLE: bool>(&mut self) -> Result<(), Self::Error> {
         if USE_TABLE {
             if let Some((_, _)) = gamma_tables::read_table_be(self)? {
                 return Ok(());
@@ -111,7 +110,7 @@ impl<B: BitRead<BE>> GammaReadParam<BE> for B {
 }
 impl<B: BitRead<LE>> GammaReadParam<LE> for B {
     #[inline]
-    fn read_gamma_param<const USE_TABLE: bool>(&mut self) -> Result<u64> {
+    fn read_gamma_param<const USE_TABLE: bool>(&mut self) -> Result<u64, Self::Error> {
         if USE_TABLE {
             if let Some((res, _)) = gamma_tables::read_table_le(self)? {
                 return Ok(res);
@@ -121,7 +120,7 @@ impl<B: BitRead<LE>> GammaReadParam<LE> for B {
     }
 
     #[inline]
-    fn skip_gamma_param<const USE_TABLE: bool>(&mut self) -> Result<()> {
+    fn skip_gamma_param<const USE_TABLE: bool>(&mut self) -> Result<(), Self::Error> {
         if USE_TABLE {
             if let Some((_, _)) = gamma_tables::read_table_le(self)? {
                 return Ok(());
@@ -132,7 +131,7 @@ impl<B: BitRead<LE>> GammaReadParam<LE> for B {
 }
 
 pub trait GammaWrite<E: Endianness>: BitWrite<E> {
-    fn write_gamma(&mut self, value: u64) -> Result<usize>;
+    fn write_gamma(&mut self, value: u64) -> Result<usize, Self::Error>;
 }
 
 /// Trait for objects that can write Gamma codes
@@ -145,13 +144,19 @@ pub trait GammaWriteParam<E: Endianness>: BitWrite<E> {
     /// # Errors
     /// This function fails only if the BitWrite backend has problems writing
     /// bits, as when the stream ends unexpectedly
-    fn write_gamma_param<const USE_TABLE: bool>(&mut self, value: u64) -> Result<usize>;
+    fn write_gamma_param<const USE_TABLE: bool>(
+        &mut self,
+        value: u64,
+    ) -> Result<usize, Self::Error>;
 }
 
 impl<B: BitWrite<BE>> GammaWriteParam<BE> for B {
     #[inline]
     #[allow(clippy::collapsible_if)]
-    fn write_gamma_param<const USE_TABLE: bool>(&mut self, value: u64) -> Result<usize> {
+    fn write_gamma_param<const USE_TABLE: bool>(
+        &mut self,
+        value: u64,
+    ) -> Result<usize, Self::Error> {
         if USE_TABLE {
             if let Some(len) = gamma_tables::write_table_be(self, value)? {
                 return Ok(len);
@@ -164,7 +169,10 @@ impl<B: BitWrite<BE>> GammaWriteParam<BE> for B {
 impl<B: BitWrite<LE>> GammaWriteParam<LE> for B {
     #[inline]
     #[allow(clippy::collapsible_if)]
-    fn write_gamma_param<const USE_TABLE: bool>(&mut self, value: u64) -> Result<usize> {
+    fn write_gamma_param<const USE_TABLE: bool>(
+        &mut self,
+        value: u64,
+    ) -> Result<usize, Self::Error> {
         if USE_TABLE {
             if let Some(len) = gamma_tables::write_table_le(self, value)? {
                 return Ok(len);
@@ -182,7 +190,7 @@ impl<B: BitWrite<LE>> GammaWriteParam<LE> for B {
 fn default_write_gamma<E: Endianness, B: BitWrite<E>>(
     backend: &mut B,
     mut value: u64,
-) -> Result<usize> {
+) -> Result<usize, B::Error> {
     value += 1;
     let number_of_bits_to_write = value.ilog2();
     debug_assert!(number_of_bits_to_write <= u8::MAX as _);

@@ -104,12 +104,14 @@ impl<WW: WordWrite, WP: WriteParams> BitWrite<BE> for BufBitWriter<BE, WW, WP>
 where
     u64: CastableInto<WW::Word>,
 {
-    fn flush(mut self) -> Result<()> {
+    type Error = <WW as WordWrite>::Error;
+
+    fn flush(mut self) -> Result<(), Self::Error> {
         BE::flush(&mut self)
     }
 
     #[inline]
-    fn write_bits(&mut self, mut value: u64, n_bits: usize) -> Result<usize> {
+    fn write_bits(&mut self, mut value: u64, n_bits: usize) -> Result<usize, Self::Error> {
         #[cfg(test)]
         ensure!(
             value & (1_u128 << n_bits).wrapping_sub(1) as u64 == value,
@@ -166,7 +168,10 @@ where
 
     #[inline]
     #[allow(clippy::collapsible_if)]
-    fn write_unary_param<const USE_TABLE: bool>(&mut self, mut value: u64) -> Result<usize> {
+    fn write_unary_param<const USE_TABLE: bool>(
+        &mut self,
+        mut value: u64,
+    ) -> Result<usize, Self::Error> {
         debug_assert_ne!(value, u64::MAX);
         if USE_TABLE {
             if let Some(len) = unary_tables::write_table_be(self, value)? {
@@ -204,7 +209,7 @@ where
         Ok(code_length as usize)
     }
 
-    fn write_unary(&mut self, value: u64) -> Result<usize> {
+    fn write_unary(&mut self, value: u64) -> Result<usize, Self::Error> {
         self.write_unary_param::<true>(value)
     }
 }
@@ -227,12 +232,14 @@ impl<WW: WordWrite, WP: WriteParams> BitWrite<LE> for BufBitWriter<LE, WW, WP>
 where
     u64: CastableInto<WW::Word>,
 {
-    fn flush(mut self) -> Result<()> {
+    type Error = <WW as WordWrite>::Error;
+
+    fn flush(mut self) -> Result<(), Self::Error> {
         LE::flush(&mut self)
     }
 
     #[inline]
-    fn write_bits(&mut self, mut value: u64, n_bits: usize) -> Result<usize> {
+    fn write_bits(&mut self, mut value: u64, n_bits: usize) -> Result<usize, Self::Error> {
         #[cfg(test)]
         ensure!(
             value & (1_u128 << n_bits).wrapping_sub(1) as u64 == value,
@@ -287,7 +294,10 @@ where
 
     #[inline]
     #[allow(clippy::collapsible_if)]
-    fn write_unary_param<const USE_TABLE: bool>(&mut self, mut value: u64) -> Result<usize> {
+    fn write_unary_param<const USE_TABLE: bool>(
+        &mut self,
+        mut value: u64,
+    ) -> Result<usize, Self::Error> {
         debug_assert_ne!(value, u64::MAX);
         if USE_TABLE {
             if let Some(len) = unary_tables::write_table_le(self, value)? {
@@ -327,7 +337,7 @@ where
         Ok(code_length as usize)
     }
 
-    fn write_unary(&mut self, value: u64) -> Result<usize> {
+    fn write_unary(&mut self, value: u64) -> Result<usize, Self::Error> {
         self.write_unary_param::<true>(value)
     }
 }

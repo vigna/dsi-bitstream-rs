@@ -19,8 +19,8 @@ or [`CodeWrite`](crate::codes::CodeWrite).
 
 */
 
-pub mod count;
+mod count;
 pub use count::*;
 
-pub mod dbg_codes;
+mod dbg_codes;
 pub use dbg_codes::*;

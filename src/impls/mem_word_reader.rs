@@ -6,7 +6,8 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
-use anyhow::{ensure, Result};
+use core::convert::Infallible;
+
 use common_traits::UnsignedInt;
 
 use crate::prelude::*;
@@ -79,56 +80,85 @@ impl<W: UnsignedInt, B: AsRef<[W]>> MemWordReader<W, B, false> {
     }
 }
 
-impl<W: UnsignedInt, B: AsRef<[W]>, const INF: bool> WordRead for MemWordReader<W, B, INF> {
+impl<W: UnsignedInt, B: AsRef<[W]>> WordRead for MemWordReader<W, B, true> {
+    type Error = Infallible;
     type Word = W;
 
     #[inline(always)]
-    fn read_word(&mut self) -> Result<W> {
-        if INF {
-            let res = self
-                .data
-                .as_ref()
-                .get(self.word_index)
-                .copied()
-                .unwrap_or(Self::Word::ZERO);
+    fn read_word(&mut self) -> Result<W, Infallible> {
+        let res = self
+            .data
+            .as_ref()
+            .get(self.word_index)
+            .copied()
+            .unwrap_or(Self::Word::ZERO);
 
-            self.word_index += 1;
-            Ok(res)
-        } else {
-            let res = self
-                .data
-                .as_ref()
-                .get(self.word_index)
-                .ok_or(std::io::Error::new(
-                    std::io::ErrorKind::UnexpectedEof,
-                    "Unexpected end of slice",
-                ))?;
-
-            self.word_index += 1;
-            Ok(*res)
-        }
+        self.word_index += 1;
+        Ok(res)
     }
 }
 
-impl<W: UnsignedInt, B: AsRef<[W]>, const INF: bool> WordSeek for MemWordReader<W, B, INF> {
+impl<W: UnsignedInt, B: AsRef<[W]>> WordRead for MemWordReader<W, B, false> {
+    type Error = std::io::Error;
+    type Word = W;
+
+    #[inline(always)]
+    fn read_word(&mut self) -> Result<W, std::io::Error> {
+        let res = self
+            .data
+            .as_ref()
+            .get(self.word_index)
+            .ok_or(std::io::Error::new(
+                std::io::ErrorKind::UnexpectedEof,
+                "Unexpected end of slice",
+            ))?;
+
+        self.word_index += 1;
+        Ok(*res)
+    }
+}
+
+impl<W: UnsignedInt, B: AsRef<[W]>> WordSeek for MemWordReader<W, B, true> {
+    type Error = Infallible;
+
     #[inline(always)]
     #[must_use]
-    fn get_word_pos(&self) -> usize {
-        self.word_index
+    fn get_word_pos(&mut self) -> Result<u64, Infallible> {
+        Ok(self.word_index as u64)
     }
 
     #[inline(always)]
-    fn set_word_pos(&mut self, word_index: usize) -> Result<()> {
-        if INF {
-            ensure!(
-                word_index <= self.data.as_ref().len(),
-                "Position beyond end of slice: {} > {}",
-                word_index,
-                self.data.as_ref().len()
-            );
-        }
-        self.word_index = word_index;
+    fn set_word_pos(&mut self, word_index: u64) -> Result<(), Infallible> {
+        // This is dirty but it's infallible
+        self.word_index = word_index.min(usize::MAX as u64) as usize;
         Ok(())
+    }
+}
+
+impl<W: UnsignedInt, B: AsRef<[W]>> WordSeek for MemWordReader<W, B, false> {
+    type Error = std::io::Error;
+
+    #[inline(always)]
+    #[must_use]
+    fn get_word_pos(&mut self) -> Result<u64, std::io::Error> {
+        Ok(self.word_index as u64)
+    }
+    #[inline(always)]
+    fn set_word_pos(&mut self, word_index: u64) -> Result<(), std::io::Error> {
+        return if word_index > self.data.as_ref().len() as u64 {
+            Err(std::io::Error::new(
+                std::io::ErrorKind::UnexpectedEof,
+                format_args!(
+                    "Position beyond end of slice: {} > {}",
+                    word_index,
+                    self.data.as_ref().len()
+                )
+                .to_string(),
+            ))
+        } else {
+            self.word_index = word_index as usize;
+            Ok(())
+        };
     }
 }
 

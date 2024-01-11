@@ -14,7 +14,6 @@
 //! the classical binary encoding.
 
 use crate::traits::*;
-use anyhow::{ensure, Result};
 
 /// Returns how long the minimal binary code for `value` will be for a given
 /// `max`
@@ -33,6 +32,11 @@ pub fn len_minimal_binary(value: u64, max: u64) -> usize {
     result
 }
 
+#[inline(always)]
+fn ensure_max(max: u64) {
+    assert!(max > 0, "max = {}", max);
+}
+
 /// Trait for objects that can read Minimal Binary codes
 pub trait MinimalBinaryRead<BO: Endianness>: BitRead<BO> {
     /// Read a minimal binary code from the stream.
@@ -41,8 +45,8 @@ pub trait MinimalBinaryRead<BO: Endianness>: BitRead<BO> {
     /// This function fails only if the BitRead backend has problems reading
     /// bits, as when the stream ends unexpectedly
     #[inline(always)]
-    fn read_minimal_binary(&mut self, max: u64) -> Result<u64> {
-        ensure!(max > 0);
+    fn read_minimal_binary(&mut self, max: u64) -> Result<u64, Self::Error> {
+        ensure_max(max);
         let l = max.ilog2();
         let mut value = self.read_bits(l as _)?;
         let limit = (1 << (l + 1)) - max;
@@ -62,8 +66,8 @@ pub trait MinimalBinaryRead<BO: Endianness>: BitRead<BO> {
     /// This function fails only if the BitRead backend has problems reading
     /// bits, as when the stream ends unexpectedly
     #[inline(always)]
-    fn skip_minimal_binary(&mut self, max: u64) -> Result<()> {
-        ensure!(max > 0);
+    fn skip_minimal_binary(&mut self, max: u64) -> Result<(), Self::Error> {
+        ensure_max(max);
         let l = max.ilog2();
         let limit = (1 << (l + 1)) - max;
 
@@ -84,8 +88,8 @@ pub trait MinimalBinaryWrite<BO: Endianness>: BitWrite<BO> {
     /// This function fails only if the BitRead backend has problems writing
     /// bits, as when the stream ends unexpectedly
     #[inline]
-    fn write_minimal_binary(&mut self, value: u64, max: u64) -> Result<usize> {
-        ensure!(max > 0);
+    fn write_minimal_binary(&mut self, value: u64, max: u64) -> Result<usize, Self::Error> {
+        ensure_max(max);
         let l = max.ilog2();
         let limit = (1 << (l + 1)) - max;
 
