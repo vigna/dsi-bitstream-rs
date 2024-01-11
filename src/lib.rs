@@ -19,7 +19,6 @@ pub mod utils;
 #[cfg(feature = "fuzz")]
 pub mod fuzz;
 
-/// Prelude module to import everything from this crate
 pub mod prelude {
     pub use crate::codes::*;
     pub use crate::impls::*;

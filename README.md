@@ -1,143 +1,113 @@
 # dsi-bitstream
 
-A Rust implementation of read/write bit streams supporting several types
-of instantaneous codes. 
+A Rust implementation of bit streams supporting several types of instantaneous codes. 
 
 This library mimics the behavior of the analogous classes in the 
 [DSI Utilities](https://dsiutils.di.unimi.it/), but it aims at being much more
 flexible and (hopefully) efficient.
 
-The two main traits are [`BitWrite`](crate::traits::bit_write::BitWrite)
-and [`BitRead`](crate::traits::bit_read::BitRead), to which are associated
-two main implementations [`BufBitWriter`](crate::impls::buf_bit_writer::BufBitWriter)
-and [`BufBitReader`](crate::impls::buf_bit_reader::BufBitReader).
-
-Please read the documentation of the [`traits`](crate::traits) module
-and of the [`impls`](crate::impls) module for more details.
+The two main traits are [`BitWrite`] and [`BitRead`], with which are associated
+two main implementations [`BufBitWriter`] and [`BufBitReader`].
 
 ```rust
 use dsi_bitstream::prelude::*;
-// where the codes will be written to, this can also be a file, or a memory slice
+// The output backend. It could be a file, etc. Output backends are word-based for efficiency.
 let mut data = Vec::<u64>::new();
-// write some data
-{
-    // create a codes writer
-    let mut writer = BufBitWriter::<BE, _>::new(MemWordWriterVec::new(&mut data));
-    // write 0 using 10 bits
-    writer.write_bits(0, 10).unwrap();
-    // write 1 in unary
-    writer.write_unary(1).unwrap();
-    // write 2 in gamma
-    writer.write_gamma(2).unwrap();
-    // write 3 in delta
-    writer.write_delta(3).unwrap();
-    // write 4 in zeta 3
-    writer.write_zeta(4, 3).unwrap();
-}
-// read them back
-{
-    // create a codes reader
-    let mut reader = BufBitReader::<BigEndian, _>::new(MemWordReader::new(&data));
-    // read back the data
-    assert_eq!(reader.read_bits(10).unwrap(), 0);
-    assert_eq!(reader.read_unary().unwrap(), 1);
-    assert_eq!(reader.read_gamma().unwrap(), 2);
-    assert_eq!(reader.read_delta().unwrap(), 3);
-    assert_eq!(reader.read_zeta(3).unwrap(), 4);
-}
+// To write a bit stream, we need first a WordWrite.
+let mut word_write = MemWordWriterVec::new(&mut data);
+// Let us create a little-endian bit writer. The write word size will be inferred.
+let mut writer = BufBitWriter::<LE, _>::new(word_write);
+// Write 0 using 10 bits
+writer.write_bits(0, 10).unwrap();
+// Write 1 in unary code
+writer.write_unary(0).unwrap();
+// Write 2 in γ code
+writer.write_gamma(1).unwrap();
+// Write 3 in δ code
+writer.write_delta(2).unwrap();
+writer.flush();
+
+// Reading back the data is similar, but since a reader has a bit buffer
+// twice as large as the read word size, it is more efficient to use a 
+// u32 as read word, so we need to transmure the data.
+
+let data = unsafe { std::mem::transmute::<_, Vec<u32>>(data) };
+let mut reader = BufBitReader::<LE, _>::new(MemWordReader::new(&data));
+assert_eq!(reader.read_bits(10).unwrap(), 0);
+assert_eq!(reader.read_unary().unwrap(), 0);
+assert_eq!(reader.read_gamma().unwrap(), 1);
+assert_eq!(reader.read_delta().unwrap(), 2);
 ```
 
-## Coverage
+In this case, the backend is already word-based, but if you have a byte-based
+backend such as a file [`WordAdapter`]
+can be used to adapt it to a word-based backend.
+
+Please read the documentation of the [`traits`] module
+and the [`impls`] module for more details.
+
+# Options
+
+There are a few options to modify the behavior of the bit read/write traits:
+- Endianness can be selected using the [`BE`] or [`LE`] types as the first parameter.
+  The native endianness is usually the best choice, albeit sometimes the lack of
+  some low-level instructions (first bit set, last bit etc, etc.) 
+  may make the non-native endianness more efficient.
+- Data is read from or written to the backend one word at a time, and the size of the word can be
+  selected using the second parameter, but it must match the word size of
+  the backend, so it is usually inferred. Currently, we suggest `u64` for writing
+  and `u32` for reading.
+
+More in-depth (and much more complicated) tuning can be obtained 
+by modifying the default values for the
+parameters of instantaneous codes. Methods reading or writing instantaneous codes 
+are defined in supporting traits and usually have const type parameters, 
+in particular, whether to use decoding tables or not (e.g., [`GammaReadParam::read_gamma_param]`).
+Such traits are implemented for [`BitRead`]/[`BitWrite`].
+
+However, there are traits with non-parametric methods (e.g., [`GammaRead::read_gamma`]) that are
+the standard entry points for the user. These traits are implemented for [`BufBitReader`]/[`BufBitWriter`]
+depending on a third type parameter of [`BufBitReader`]/[`BufBitWriter`], a parameter of 
+type [`ReadParams`]/[`WriteParams`], respectively. The default value for the parameter 
+is [`DefaultReadParams`]/[`DefaultWriteParams`], which uses choices we tested on 
+several platforms and that we believe are good defaults, but by passing a different
+implementation of [`ReadParams`]/[`WriteParams`] you can change the default behavior.
+
+One exception to this rule is the unary code, as it is embedded in the 
+read/write trait, and we could not find a single case in which using a table
+is better than not using it when reading, so the default is to not use a table, 
+and it is hardwired in the trait.
+
+Finally, if you choose to use tables, the size of the tables is hardwired in the
+source code (in particular, in the files `*_tables.rs` in the `codes` source directory)
+and can be changed only by regenerating the tables using the script
+`gen_code_tables.py` in the `python` directory. You will need to modify the values
+hardwired at the end of the script.
+
+Note that while using a custom [`ReadParams`]/[`WriteParams`] to _not_ use a table
+does not require changing the source of the library, using a custom [`ReadParams`]/[`WriteParams`]
+to use a table will require, in general, to generate the table and add it
+to the library sources.
+
+## Benchmarks
+
+To understand the behavior of the traits on your hardware, you can run the benchmarks
+in the `benchmarks` directory, which test the speed of read/write operations 
+under several combinations of parameters. Please refer to the crate documentation therein.
+
+## Testing
+
+Besides unit tests, we provide zipped precomputed corpora generated by
+fuzzing. You can run the tests on the zipped precomputed corpora by
+enabling the `fuzz` feature:
 ```shell
-cargo tarpaulin --engine llvm
-```
-If you also want to run the fuzzing test cases use:
-```shell
-cargo tarpaulin --engine llvm --features="fuzz"
-```
-This will reproduce our selected corpus zip files at `tests/corpus/` and
-run your local data corpus in `fuzz/corpus/`.
-
-## Fuzzing
-The fuzzing harnesses can be found in `dsi-bitstream::fuzz`, so you can use 
-any fuzzing framework you want. The simplest is `cargo-fuzz`, which
-can be installed as:
-```shell
-cargo install cargo-fuzz
-```
-To find the current targets:
-```shell
-cargo fuzz list
-```
-To start the fuzzing
-```shell
-cargo fuzz run codes
-```
-### Coverage
-
-To compute the coverage in `lcov` format:
-```shell
-cargo tarpaulin --engine llvm --features="fuzz" -o lcov
-```
-### Corpus.zip
-
-To update one of the selected corpus zip files:
-```shell
-TARGET="codes"
-# temp dir
-mkdir tmp
-# Extract the files
-unzip "tests/corpus/${TARGET}.zip" -d tmp
-# Merge and deduplicate the current corpus 
-cargo fuzz run ${TARGET} -- -merge=1 tmp fuzz/corpus/${TARGET}
-# Recompress
-zip tests/corpus/${TARGET}.zip tmp/*
-# Delete tmp folder
-rm -rfd tmp
+cargo test --features fuzz
 ```
 
-## Benchmarking
+When the feature is enabled, tests will be also run on 
+local corpora found in the top-level `fuzz` directory, if any are present.
 
-The implementation has several tunable parameters that can be used to improve performance 
-on certain platforms. The default values are set to work well on most platforms, but you can
-customize them by creating a suitable `ReadParams` and `WriteParams` and passing them to the
-`BufBitReader` and `BufBitWriter` constructors.
-
-You can run benchmarks and generate SVG plots with
-```shell
-./python/gen_plots.sh
-```
-which starts a few Python scripts (you can run selectively the scripts
-for a more fine-grained control).
-The cargo options in `benchmarks`select aggressive optimizations, and the 
-the python scripts run the benchmarks `--target-cpu=native`.
-
-The resulting figures report the performance of read and write operation
-on all codes, in both little-ending and big-endiang format. The code may
-use or not decoding tables, and in the first case results are reported
-for different sizes of the decoding tables.
-
-There are a few entry points for altering the behavior of the code:
-
-- The size of the word of the underlying [`WordRead`] or [`WordWrite`]
-  can be chosen programmatically.
-- The size of the tables can be set in the source of the script
-  `gen_code_tables.py`. Running the script will generate new tables
-   with the provided parameters.
-- Whether to use tables for unary code can only be configured in the source
-  of the [`BitRead::read_unary`](crate::traits::BitRead::read_unary) and 
-  [`BitWrite::write_unary`](crate::traits::BitWrite::write_unary) functions, but the
-  default (no table) is the best choice on all architetures we are
-  aware of.
-- Whether to use tables for all other codes can be configured by
-  passing around a different implementations of 
-  [`ReadParams`](crate::codes::table_params::ReadParams)
-  and [`WriteParams`](crate::codes::table_params::WriteParams)
-  in place of the default 
-  [`DefaultReadParams`](crate::codes::table_params::DefaultReadParams) and
-  [`DefaultWriteParams`](crate::codes::table_params::DefaultWriteParams).
-
-# Acknowledgments
+## Acknowledgments
 
 This software has been partially supported by project SERICS (PE00000014) under the NRRP MUR program funded by the EU - NGEU,
 and by project ANR COREGRAPHIE, grant ANR-20-CE23-0002 of the French Agence Nationale de la Recherche.

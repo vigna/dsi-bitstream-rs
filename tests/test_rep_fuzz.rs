@@ -67,6 +67,7 @@ macro_rules! impl_fuzz_repr {
 }
 
 impl_fuzz_repr!(fuzz_codes, fuzz_codes_zip, codes);
+
 impl_fuzz_repr!(
     fuzz_mem_word_reader,
     fuzz_mem_word_reader_zip,

@@ -17,22 +17,10 @@ functions like [`GammaRead::read_gamma`] and [`GammaWrite::write_gamma`].,
 as opposed to the more general [`GammaReadParam::read_gamma_param`] and
 [`GammaWriteParam::write_gamma_param`].
 
-These choices work well across several architectures:
-if you thing they are not good for yours, we suggest to run
-``
-./python/bench_code_tables_read.py | ./python/plot_code_tables_read.py
-./python/bench_code_tables_write.py | ./python/plot_code_tables_write.py
-``
-These scripts will generate graph displaying the speed of reads and
-write under different table sizes (or absence of tables) and layout
-of tables (two separated arrays, or merged in a single array).
-
-By writing another implementation similar to the one in this file
-you can only choose whether to use tables or not,
-and in particular for δ codes you can choose also whether to use
-table to decode the initial γ code. To change the other choices
-you need to run `./python/gen_code_tables.py` after changing
-the values in the function `generate_default_tables()`.
+These choices work well across several architectures. If you
+would like to perform further tuning,  the `benchmark` directory contains
+scripts to test the speed of reading from and writing to
+bit streams under a variety of parameters.
 
 */
 
