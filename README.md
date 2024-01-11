@@ -1,9 +1,10 @@
 # dsi-bitstream
 
-A Rust implementation of bit streams supporting several types of instantaneous codes. 
+A Rust implementation of bit streams supporting several types of instantaneous
+codes.
 
-This library mimics the behavior of the analogous classes in the 
-[DSI Utilities](https://dsiutils.di.unimi.it/), but it aims at being much more
+This library mimics the behavior of the analogous classes in the [DSI
+Utilities](https://dsiutils.di.unimi.it/), but it aims at being much more
 flexible and (hopefully) efficient.
 
 The two main traits are [`BitWrite`] and [`BitRead`], with which are associated
@@ -11,7 +12,8 @@ two main implementations [`BufBitWriter`] and [`BufBitReader`].
 
 ```rust
 use dsi_bitstream::prelude::*;
-// The output backend. It could be a file, etc. Output backends are word-based for efficiency.
+// The output backend. It could be a file, etc. 
+// Output backends are word-based for efficiency.
 let mut data = Vec::<u64>::new();
 // To write a bit stream, we need first a WordWrite.
 let mut word_write = MemWordWriterVec::new(&mut data);
@@ -29,7 +31,7 @@ writer.flush();
 
 // Reading back the data is similar, but since a reader has a bit buffer
 // twice as large as the read word size, it is more efficient to use a 
-// u32 as read word, so we need to transmure the data.
+// u32 as read word, so we need to transmute the data.
 
 let data = unsafe { std::mem::transmute::<_, Vec<u32>>(data) };
 let mut reader = BufBitReader::<LE, _>::new(MemWordReader::new(&data));
@@ -40,74 +42,80 @@ assert_eq!(reader.read_delta().unwrap(), 2);
 ```
 
 In this case, the backend is already word-based, but if you have a byte-based
-backend such as a file [`WordAdapter`]
-can be used to adapt it to a word-based backend.
+backend such as a file [`WordAdapter`] can be used to adapt it to a word-based
+backend.
 
-Please read the documentation of the [`traits`] module
-and the [`impls`] module for more details.
+Please read the documentation of the [`traits`] module and the [`impls`] module
+for more details.
 
-# Options
+## Options
 
 There are a few options to modify the behavior of the bit read/write traits:
-- Endianness can be selected using the [`BE`] or [`LE`] types as the first parameter.
-  The native endianness is usually the best choice, albeit sometimes the lack of
-  some low-level instructions (first bit set, last bit etc, etc.) 
+
+- Endianness can be selected using the [`BE`] or [`LE`] types as the first
+  parameter. The native endianness is usually the best choice, albeit sometimes
+  the lack of some low-level instructions (first bit set, last bit etc, etc.)
   may make the non-native endianness more efficient.
-- Data is read from or written to the backend one word at a time, and the size of the word can be
-  selected using the second parameter, but it must match the word size of
-  the backend, so it is usually inferred. Currently, we suggest `u64` for writing
-  and `u32` for reading.
+- Data is read from or written to the backend one word at a time, and the size
+  of the word can be selected using the second parameter, but it must match the
+  word size of the backend, so it is usually inferred. Currently, we suggest
+  `u64` for writing and `u32` for reading.
 
-More in-depth (and much more complicated) tuning can be obtained 
-by modifying the default values for the
-parameters of instantaneous codes. Methods reading or writing instantaneous codes 
-are defined in supporting traits and usually have const type parameters, 
-in particular, whether to use decoding tables or not (e.g., [`GammaReadParam::read_gamma_param]`).
-Such traits are implemented for [`BitRead`]/[`BitWrite`].
+More in-depth (and much more complicated) tuning can be obtained by modifying
+the default values for the parameters of instantaneous codes. Methods reading or
+writing instantaneous codes are defined in supporting traits and usually have
+const type parameters, in particular, whether to use decoding tables or not
+(e.g., [`GammaReadParam::read_gamma_param]`). Such traits are implemented for
+[`BitRead`]/[`BitWrite`].
 
-However, there are traits with non-parametric methods (e.g., [`GammaRead::read_gamma`]) that are
-the standard entry points for the user. These traits are implemented for [`BufBitReader`]/[`BufBitWriter`]
-depending on a third type parameter of [`BufBitReader`]/[`BufBitWriter`], a parameter of 
-type [`ReadParams`]/[`WriteParams`], respectively. The default value for the parameter 
-is [`DefaultReadParams`]/[`DefaultWriteParams`], which uses choices we tested on 
-several platforms and that we believe are good defaults, but by passing a different
-implementation of [`ReadParams`]/[`WriteParams`] you can change the default behavior.
+However, there are traits with non-parametric methods (e.g.,
+[`GammaRead::read_gamma`]) that are the standard entry points for the user.
+These traits are implemented for [`BufBitReader`]/[`BufBitWriter`] depending on
+a third type parameter≤ of type [`ReadParams`]/[`WriteParams`], respectively.
+The default value for the parameter is
+[`DefaultReadParams`]/[`DefaultWriteParams`], which uses choices we tested on
+several platforms and that we believe are good defaults, but by passing a
+different implementation of [`ReadParams`]/[`WriteParams`] you can change the
+default behavior.
 
-One exception to this rule is the unary code, as it is embedded in the 
-read/write trait, and we could not find a single case in which using a table
-is better than not using it when reading, so the default is to not use a table, 
-and it is hardwired in the trait.
+One exception to this rule is the unary code, as it is embedded in the
+read/write trait, and we could not find a single case in which using a table is
+better than not using it when reading, so the default is to not use a table, and
+it is hardwired in the trait.
 
 Finally, if you choose to use tables, the size of the tables is hardwired in the
-source code (in particular, in the files `*_tables.rs` in the `codes` source directory)
-and can be changed only by regenerating the tables using the script
-`gen_code_tables.py` in the `python` directory. You will need to modify the values
-hardwired at the end of the script.
+source code (in particular, in the files `*_tables.rs` in the `codes` source
+directory) and can be changed only by regenerating the tables using the script
+`gen_code_tables.py` in the `python` directory. You will need to modify the
+values hardwired at the end of the script.
 
-Note that while using a custom [`ReadParams`]/[`WriteParams`] to _not_ use a table
-does not require changing the source of the library, using a custom [`ReadParams`]/[`WriteParams`]
-to use a table will require, in general, to generate the table and add it
-to the library sources.
+Note that while using a custom [`ReadParams`]/[`WriteParams`] to _not_ use a
+table does not require changing the source of the library, using a custom
+[`ReadParams`]/[`WriteParams`] to use a table will require, in general, to
+generate the table and add it to the library sources.
 
 ## Benchmarks
 
-To understand the behavior of the traits on your hardware, you can run the benchmarks
-in the `benchmarks` directory, which test the speed of read/write operations 
-under several combinations of parameters. Please refer to the crate documentation therein.
+To understand the behavior of the traits on your hardware, you can run the
+benchmarks in the `benchmarks` directory, which test the speed of read/write
+operations under several combinations of parameters. Please refer to the crate
+documentation therein.
 
 ## Testing
 
-Besides unit tests, we provide zipped precomputed corpora generated by
-fuzzing. You can run the tests on the zipped precomputed corpora by
-enabling the `fuzz` feature:
+Besides unit tests, we provide zipped precomputed corpora generated by fuzzing.
+You can run the tests on the zipped precomputed corpora by enabling the `fuzz`
+feature:
+
 ```shell
 cargo test --features fuzz
 ```
 
-When the feature is enabled, tests will be also run on 
-local corpora found in the top-level `fuzz` directory, if any are present.
+When the feature is enabled, tests will be also run on local corpora found in
+the top-level `fuzz` directory, if any are present.
 
 ## Acknowledgments
 
-This software has been partially supported by project SERICS (PE00000014) under the NRRP MUR program funded by the EU - NGEU,
-and by project ANR COREGRAPHIE, grant ANR-20-CE23-0002 of the French Agence Nationale de la Recherche.
+This software has been partially supported by project SERICS (PE00000014) under
+the NRRP MUR program funded by the EU - NGEU, and by project ANR COREGRAPHIE,
+grant ANR-20-CE23-0002 of the French Agence Nationale de la Recherche.
