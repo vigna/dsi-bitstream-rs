@@ -40,7 +40,7 @@ def get_best_fitting_type(n_bits):
 
 read_func_merged_table = """
 #[inline(always)]
-/// Reads a value using a decoding table.
+/// Read a value using a decoding table.
 ///
 /// If the result is `Some` the decoding was successful, and
 /// the decoded value and the length of the code are returned.
@@ -59,7 +59,7 @@ pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> Option<(u64, us
 
 read_func_two_table = """
 #[inline(always)]
-/// Reads a value using a decoding table.
+/// Read a value using a decoding table.
 ///
 /// If the result is `Some` the decoding was successful, and
 /// the decoded value and the length of the code are returned.
@@ -75,7 +75,7 @@ pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> Option<(u64, us
     None
 }
 #[inline(always)]
-/// Computes the length of the code representing a value using a decoding table.
+/// Compute the length of the code representing a value using a decoding table.
 ///
 /// If the result is `Some` the lookup was successful, and
 /// the length of the code is returned.
@@ -95,9 +95,9 @@ pub fn len_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> Option<usize> {
 write_func_merged_table = """
 #[inline(always)]
 #[allow(clippy::unnecessary_cast)]  // rationale: "*bits as u64" is flaky redundant
-/// Writes a value using an encoding table.
+/// Write a value using an encoding table.
 ///
-/// If the result is `Some` the endecoding was successful, and
+/// If the result is `Some` the encoding was successful, and
 /// length of the code is returned.
 pub fn write_table_%(bo)s<B: BitWrite<%(BO)s>>(backend: &mut B, value: u64) -> Result<Option<usize>, B::Error> {
     Ok(if let Some((bits, len)) = WRITE_%(BO)s.get(value as usize) {
@@ -111,9 +111,9 @@ pub fn write_table_%(bo)s<B: BitWrite<%(BO)s>>(backend: &mut B, value: u64) -> R
 
 write_func_two_table = """
 #[inline(always)]
-/// Writes a value using an encoding table.
+/// Write a value using an encoding table.
 ///
-/// If the result is `Some` the endecoding was successful, and
+/// If the result is `Some` the encoding was successful, and
 /// length of the code is returned.
 pub fn write_table_%(bo)s<B: BitWrite<%(BO)s>>(backend: &mut B, value: u64) -> Result<Option<usize>, B::Error> {
     Ok(if let Some(bits) = WRITE_%(BO)s.get(value as usize) {
