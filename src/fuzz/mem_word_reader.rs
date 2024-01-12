@@ -29,14 +29,14 @@ pub fn harness(data: FuzzCase) {
                 assert_eq!(reader.get_word_pos().unwrap(), idx);
             }
             RandomCommand::SetPosition(word_index) => {
-                let _ = reader.set_word_pos(word_index);
+                let _ = reader.set_word_pos(word_index as u64);
                 if data.init.get(word_index).is_some() {
-                    idx = word_index;
+                    idx = word_index as u64;
                 }
             }
             RandomCommand::ReadNextWord => {
-                assert_eq!(reader.read_word().ok(), data.init.get(idx).copied());
-                if data.init.get(idx).is_some() {
+                assert_eq!(reader.read_word().ok(), data.init.get(idx as usize).copied());
+                if data.init.get(idx as usize).is_some() {
                     idx += 1;
                 }
             }

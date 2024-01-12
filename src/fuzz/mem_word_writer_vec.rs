@@ -36,23 +36,23 @@ pub fn harness(data: FuzzCase) {
                 assert_eq!(writer.get_word_pos().unwrap(), idx);
             }
             RandomCommand::SetPosition(word_index) => {
-                let _ = writer.set_word_pos(word_index);
+                let _ = writer.set_word_pos(word_index as u64);
                 if buffer.get(word_index).is_some() {
-                    idx = word_index;
+                    idx = word_index as u64;
                 }
             }
             RandomCommand::ReadWord => {
-                assert_eq!(writer.read_word().ok(), buffer.get(idx).copied());
-                if buffer.get(idx).is_some() {
+                assert_eq!(writer.read_word().ok(), buffer.get(idx as usize).copied());
+                if buffer.get(idx as usize).is_some() {
                     idx += 1;
                 }
             }
             RandomCommand::WriteWord(word) => {
-                if idx >= buffer.len() {
-                    buffer.resize(idx + 1, 0);
+                if idx >= buffer.len() as u64 {
+                    buffer.resize(idx as usize + 1, 0);
                 }
                 assert!(writer.write_word(word).is_ok());
-                buffer[idx] = word;
+                buffer[idx as usize] = word;
                 idx += 1;
             }
         };
