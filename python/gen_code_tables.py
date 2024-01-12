@@ -387,7 +387,7 @@ def gen_unary(read_bits, write_max_val, len_max_val=None, merged_table=False):
     len_max_val = len_max_val or write_max_val
     return gen_table(
         read_bits,
-        write_max_val,
+        min(write_max_val, 63),
         len_max_val,
         "unary",
         len_unary,
