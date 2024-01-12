@@ -34,6 +34,10 @@ error of the underlying backend. However, in some cases (e.g., [`MemWordRead`](c
 with infinite zero extension) the error type is [`Infallible`](core::convert::Infallible),
 in which case the compiler is able to perform several further optimizations.
 
+Note that methods returning a [`Result`] will return a [`Result::Err`] variant
+only if there is an error in the underlying backend: errors in the parameters to the
+methods will generally result in panics.
+
 ## Bit and byte order
 
 The endianness parameter specifies at the same byte the endianness of the byte

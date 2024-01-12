@@ -8,7 +8,7 @@
 
 /*!
 
-Reading and writing instantaneous codes.
+Traits for reading and writing instantaneous codes.
 
 This modules contains code for reading and writing instantaneous codes. Each
 code is implemented as a pair of traits for reading and writing (e.g., [`GammaRead`]
@@ -67,5 +67,4 @@ pub mod unary_tables;
 pub mod zeta_tables;
 
 mod stats;
-use crate::traits::Endianness;
 pub use stats::*;
