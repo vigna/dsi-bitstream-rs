@@ -14,12 +14,10 @@ use common_traits::UpcastableInto;
 /// Sequential, streaming bit-by-bit reads.
 ///
 /// This trait specify basic operation over which codes can be implemented by
-/// traits such as [`crate::codes::GammaRead`].
-///
-/// Note that the endianness parameter `E` is used only to specify the
-/// endianness of the bit stream, and not that of the returned values.
+/// traits such as [`crate::codes::GammaReadParam`].
 pub trait BitRead<E: Endianness> {
-    type Error: Error + Send + Sync;
+    type Error: Error;
+
     /// The type we can read from the stream without advancing.
     /// On buffered readers this is usually half the buffer size,
     /// which is equal to the word size of the underlying [`WordRead`].
@@ -79,7 +77,7 @@ pub trait BitRead<E: Endianness> {
 /// Note that the endianness parameter `E` is used only to specify the
 /// endianness of the bit stream, and not that of the method arguments.
 pub trait BitWrite<E: Endianness> {
-    type Error: Error + Send + Sync;
+    type Error: Error;
 
     /// Write the lowest `n` bits of value to the stream and return the number of
     /// bits written, that is, `n`.
@@ -114,9 +112,8 @@ pub trait BitWrite<E: Endianness> {
 
 /// Seekability for [`BitRead`] and [`BitWrite`] streams.
 pub trait BitSeek {
-    type Error: Error + Send + Sync;
+    type Error: Error;
 
-    #[must_use]
     fn get_bit_pos(&mut self) -> Result<u64, Self::Error>;
 
     fn set_bit_pos(&mut self, bit_pos: u64) -> Result<(), Self::Error>;

@@ -111,7 +111,7 @@ where
     }
 }
 
-impl<E: Error + Send + Sync, WR: WordRead<Error = E> + WordSeek<Error = E>, RP: ReadParams> BitSeek
+impl<E: Error, WR: WordRead<Error = E> + WordSeek<Error = E>, RP: ReadParams> BitSeek
     for BufBitReader<BE, WR, RP>
 where
     WR::Word: DoubleType,
@@ -260,7 +260,7 @@ where
             if new_word != WR::Word::ZERO {
                 let zeros: usize = new_word.leading_zeros() as _;
                 self.buffer =
-                    UpcastableInto::<BB<WR>>::upcast(new_word) << WR::Word::BITS + zeros << 1;
+                    UpcastableInto::<BB<WR>>::upcast(new_word) << (WR::Word::BITS + zeros) << 1;
                 self.bits_in_buffer = WR::Word::BITS - zeros - 1;
                 return Ok(result + zeros as u64);
             }
@@ -290,7 +290,7 @@ where
     }
 }
 
-impl<E: Error + Send + Sync, WR: WordRead<Error = E> + WordSeek<Error = E>, RP: ReadParams> BitSeek
+impl<E: Error, WR: WordRead<Error = E> + WordSeek<Error = E>, RP: ReadParams> BitSeek
     for BufBitReader<LE, WR, RP>
 where
     WR::Word: DoubleType,

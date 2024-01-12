@@ -154,13 +154,13 @@ impl<W: UnsignedInt, B: AsMut<[W]>> WordRead for MemWordWriterSlice<W, B> {
 
 impl<W: UnsignedInt, B: AsRef<[W]> + AsMut<[W]>> WordSeek for MemWordWriterSlice<W, B> {
     type Error = std::io::Error;
-    #[inline]
-    #[must_use]
+
+    #[inline(always)]
     fn get_word_pos(&mut self) -> Result<u64, std::io::Error> {
         Ok(self.word_index as u64)
     }
 
-    #[inline]
+    #[inline(always)]
     fn set_word_pos(&mut self, word_index: u64) -> Result<(), std::io::Error> {
         return if word_index > self.data.as_ref().len() as u64 {
             Err(std::io::Error::new(
@@ -241,13 +241,12 @@ impl<W: UnsignedInt, B: AsMut<alloc::vec::Vec<W>> + AsRef<alloc::vec::Vec<W>>> W
 {
     type Error = std::io::Error;
 
-    #[inline]
-    #[must_use]
+    #[inline(always)]
     fn get_word_pos(&mut self) -> Result<u64, std::io::Error> {
         Ok(self.word_index as u64)
     }
 
-    #[inline]
+    #[inline(always)]
     fn set_word_pos(&mut self, word_index: u64) -> Result<(), std::io::Error> {
         return if word_index > self.data.as_ref().len() as u64 {
             Err(std::io::Error::new(

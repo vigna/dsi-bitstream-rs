@@ -135,7 +135,7 @@ where
             // n_bits might be 64 and the buffer might be empty
             self.buffer = self.buffer << (n_bits - 1) << 1;
             // Clean up bits higher than n_bits
-            value = value << 64 - n_bits >> 64 - n_bits;
+            value = value << (64 - n_bits) >> (64 - n_bits);
             self.buffer |= value.cast();
             self.bits_in_buffer += n_bits;
             return Ok(n_bits);
@@ -147,7 +147,7 @@ where
         if space_left_in_buffer != 0 {
             self.buffer <<= space_left_in_buffer;
             // The first shift discards bits higher than n_bits
-            self.buffer |= (value << 64 - n_bits >> 64 - space_left_in_buffer).cast();
+            self.buffer |= (value << (64 - n_bits) >> (64 - space_left_in_buffer)).cast();
         }
         self.backend.write_word(self.buffer.to_be())?;
 

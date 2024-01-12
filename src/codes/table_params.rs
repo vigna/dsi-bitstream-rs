@@ -103,7 +103,7 @@ macro_rules! impl_default_read_codes {
             }
         }
 
-        impl<E: Error + Send + Sync, WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>> GammaRead<$endianess>
+        impl<E: Error, WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>> GammaRead<$endianess>
             for BitReader<$endianess, WR, DefaultReadParams>
         where
             WR:: Word: DoubleType + UpcastableInto<u64>,
@@ -124,7 +124,7 @@ macro_rules! impl_default_read_codes {
             }
         }
 
-        impl<E: Error + Send + Sync, WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>> DeltaRead<$endianess>
+        impl<E: Error, WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>> DeltaRead<$endianess>
             for BitReader<$endianess, WR, DefaultReadParams>
         where
             WR:: Word: DoubleType + UpcastableInto<u64>,
@@ -141,7 +141,7 @@ macro_rules! impl_default_read_codes {
             }
         }
 
-        impl<E: Error + Send + Sync, WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>> ZetaRead<$endianess>
+        impl<E: Error, WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>> ZetaRead<$endianess>
             for BitReader<$endianess, WR, DefaultReadParams>
         where
             WR:: Word: DoubleType + UpcastableInto<u64>,

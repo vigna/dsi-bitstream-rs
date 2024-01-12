@@ -58,17 +58,18 @@ impl<W: UnsignedInt, B: Write> WordWrite for WordAdapter<W, B> {
 
 impl<W: UnsignedInt, B: Seek> WordSeek for WordAdapter<W, B> {
     type Error = std::io::Error;
+
     #[inline(always)]
     fn get_word_pos(&mut self) -> Result<u64, std::io::Error> {
         let byte_pos = self.file.stream_position()?;
-        return if byte_pos % W::BYTES as u64 != 0 {
+        if byte_pos % W::BYTES as u64 != 0 {
             Err(std::io::Error::new(
                 std::io::ErrorKind::InvalidData,
                 "The current position is not a multiple of the word size",
             ))
         } else {
             Ok(byte_pos / W::BYTES as u64)
-        };
+        }
     }
 
     #[inline(always)]
