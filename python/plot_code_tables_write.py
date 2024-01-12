@@ -25,8 +25,9 @@ df = pd.read_csv(sys.stdin, index_col=None, header=0)
 x_label = "max_log2"
 df[x_label] = np.log2(df["max"])
 
+plots = []
 for code in ["unary", "gamma", "delta", "delta_gamma", "zeta3"]:
-    plt.figure(figsize=(10, 8), dpi=200, facecolor="white")
+    fig, ax = plt.subplots(1, 1, figsize=(10, 8), dpi=200, facecolor="white")
     for tables_n in [1, 2]:
         if tables_n == 1:
             table_txt = "merged"
@@ -42,7 +43,7 @@ for code in ["unary", "gamma", "delta", "delta_gamma", "zeta3"]:
             values = df[(df.pat == pat) & (df.tables_num == tables_n)]
             m = min(values.ns_median)
             i = np.argmin(values.ns_median)
-            plt.errorbar(
+            ax.errorbar(
                 values[x_label],
                 values.ns_median,  # values.ns_std,
                 label="{}::{} (min: {:.3f}ns @ {} {})".format(
@@ -54,7 +55,7 @@ for code in ["unary", "gamma", "delta", "delta_gamma", "zeta3"]:
                 ),
                 marker=marker,
             )
-            plt.fill_between(
+            ax.fill_between(
                 values[x_label],
                 values.ns_perc25,
                 values.ns_perc75,
@@ -67,13 +68,13 @@ for code in ["unary", "gamma", "delta", "delta_gamma", "zeta3"]:
     ]:
         values = df[df.pat == pat].groupby(x_label).mean(numeric_only=True)
         m = min(values.ns_median)
-        plt.errorbar(
+        ax.errorbar(
             values.index,
             values.ns_median,  # values.ns_std,
             label="{} (min: {:.3f}ns)".format("::".join(pat.split("::")[1:]), m),
             marker="^",
         )
-        plt.fill_between(
+        ax.fill_between(
             values.index,
             values.ns_perc25,
             values.ns_perc75,
@@ -85,7 +86,7 @@ for code in ["unary", "gamma", "delta", "delta_gamma", "zeta3"]:
         .groupby(x_label)
         .mean(numeric_only=True)
     )
-    bars = plt.bar(
+    bars = ax.bar(
         ratios.index,
         ratios.ratio,
         label="table hit ratio",
@@ -95,7 +96,7 @@ for code in ["unary", "gamma", "delta", "delta_gamma", "zeta3"]:
     )
     for ratio, rect in zip(ratios.ratio, bars):
         height = rect.get_height()
-        plt.text(
+        ax.text(
             rect.get_x() + rect.get_width() / 2.0,
             1.2,
             "{:.2f}%".format(ratio * 100),
@@ -107,7 +108,7 @@ for code in ["unary", "gamma", "delta", "delta_gamma", "zeta3"]:
     left = min(ratios.index) - 1
     right = max(ratios.index) + 1
 
-    plt.plot(
+    ax.plot(
         [left - 1, right + 1],
         [1, 1],
         "--",
@@ -116,11 +117,11 @@ for code in ["unary", "gamma", "delta", "delta_gamma", "zeta3"]:
         label="table hit ratio 100% line",
     )
 
-    plt.legend(loc="center left", bbox_to_anchor=(1, 0.5))
-    plt.ylim(bottom=0)  # ymin is your value
-    plt.xlim([left, right])  # ymin is your value
-    plt.xticks(ratios.index)
-    plt.title(
+    ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+    ax.ylim(bottom=0)  # ymin is your value
+    ax.xlim([left, right])  # ymin is your value
+    ax.xticks(ratios.index)
+    ax.title(
         (
             "Performance of writes (%s) in %s code in function of the table size\n"
             "Shaded areas are the 25%% and 75%% percentiles and the plots "
@@ -128,6 +129,24 @@ for code in ["unary", "gamma", "delta", "delta_gamma", "zeta3"]:
         )
         % (write_word, nice[code])
     )
-    plt.xlabel("Table Bits")
-    plt.ylabel("ns")
-    plt.savefig("%s_write_tables.svg" % code, bbox_inches="tight")
+    ax.xlabel(r"\log_2 \left ( \text{Table Bits} \right )")
+    ax.ylabel("ns")
+    plots.append((
+        fig,
+        ax,
+        "%s_write_tables.svg" % code
+    ))
+
+min_x,max_x = np.inf, -np.inf
+min_y,max_y = np.inf, -np.inf
+
+for fig, ax, name in plots:
+    min_x = min(min_x, ax.get_xlim()[0])
+    max_x = max(max_x, ax.get_xlim()[1])
+    min_y = min(min_y, ax.get_ylim()[0])
+    max_y = max(max_y, ax.get_ylim()[1])
+
+for fig, ax, name in plots:
+    ax.set_xlim([min_x, max_x])
+    ax.set_ylim([min_y, max_y])
+    fig.savefig(name, bbox_inches="tight")
