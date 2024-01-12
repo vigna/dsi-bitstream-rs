@@ -18,9 +18,11 @@ impl<T: private::Endianness> Endianness for T {}
 /// Marker trait satisfied only by [`LittleEndian`] or [`BigEndian`]
 pub trait Endianness: private::Endianness {}
 
+/// Marker struct for little-endian streams.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LittleEndian;
 
+/// Marker struct for big-endian streams.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct BigEndian;
 

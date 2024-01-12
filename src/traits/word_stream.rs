@@ -9,14 +9,13 @@
 use std::error::Error;
 
 use common_traits::*;
-
 /// Sequential, streaming word-by-word reads.
-
 pub trait WordRead {
     type Error: Error;
 
     /// The word type (the type of the result of [`WordRead::read_word`]).
     type Word: UnsignedInt;
+
     /// Read a word and advance the current position.
     fn read_word(&mut self) -> Result<Self::Word, Self::Error>;
 }
@@ -24,8 +23,10 @@ pub trait WordRead {
 /// Sequential, streaming word-by-word writes.
 pub trait WordWrite {
     type Error: Error;
+
     /// The word type (the type of the argument of [`WordWrite::write_word`]).
     type Word: UnsignedInt;
+
     /// Write a word and advance the current position.
     fn write_word(&mut self, word: Self::Word) -> Result<(), Self::Error>;
 }
@@ -33,8 +34,9 @@ pub trait WordWrite {
 /// Seekability for [`WordRead`] and [`WordWrite`] streams.
 pub trait WordSeek {
     type Error: Error;
-
+    /// Get the current position in words from the start of the file.
     fn get_word_pos(&mut self) -> Result<u64, Self::Error>;
 
-    fn set_word_pos(&mut self, word_index: u64) -> Result<(), Self::Error>;
+    /// Set the current position in words from the start of the file to `word_pos`.
+    fn set_word_pos(&mut self, word_pos: u64) -> Result<(), Self::Error>;
 }

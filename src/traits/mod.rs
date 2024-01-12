@@ -34,6 +34,28 @@ error of the underlying backend. However, in some cases (e.g., [`MemWordRead`](c
 with infinite zero extension) the error type is [`Infallible`](core::convert::Infallible),
 in which case the compiler is able to perform several further optimizations.
 
+## Bit and byte order
+
+The endianness parameter specifies at the same byte the endianness of the byte
+stream and of the bits in each byte: in the little-endian case, the first bit
+of the stream is the least significant bit of the first byte, while in the
+big-endian case it is the most significant bit of the first byte. Albeit in principle
+one can mix independently the two orders, having the same order for both bytes
+and bits is usually more convenient and makes for more efficient implementations.
+
+Byte-level endianness is used to read memory word-by-word, greatly reducing the number
+of memory accesses when reading from slices. However, it is important to note that
+values have thair least significant bit always stored at the lowest bit position,
+independently of endianness, as current CPUs always use big-endian bit order.
+In particular, reversing the order of the bits of each byte of a file will not
+in general give a file with complementary endianness.
+
+For example, if we write just the value 6 to a big-endian bit stream, we will
+get as first byte `110xxxxx`, while if we write it to a little-endian bit stream
+we will obtain the byte `xxxxx110`. Clearly, reversing the order of the bits
+of each byte will not give the other byte. (There are however a few exceptions
+for which reversing works, such as palindromic bit writes and unary codes.)
+
 */
 
 mod bit_stream;

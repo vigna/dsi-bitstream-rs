@@ -71,7 +71,7 @@ const type parameters, in particular, whether to use decoding tables or not
 However, there are traits with non-parametric methods (e.g.,
 [`GammaRead::read_gamma`]) that are the standard entry points for the user.
 These traits are implemented for [`BufBitReader`]/[`BufBitWriter`] depending on
-a third type parameter≤ of type [`ReadParams`]/[`WriteParams`], respectively.
+a third type parameter of type [`ReadParams`]/[`WriteParams`], respectively.
 The default value for the parameter is
 [`DefaultReadParams`]/[`DefaultWriteParams`], which uses choices we tested on
 several platforms and that we believe are good defaults, but by passing a
@@ -79,9 +79,11 @@ different implementation of [`ReadParams`]/[`WriteParams`] you can change the
 default behavior.
 
 One exception to this rule is the unary code, as it is embedded in the
-read/write trait, and we could not find a single case in which using a table is
-better than not using it when reading, so the default is to not use a table, and
-it is hardwired in the trait.
+read/write traits: implementations can choose how to implement
+[`BitRead::read_unary`] and [`BitWrite::write_unary`].
+We could not find a single case in which using a table is
+better than not using it when reading, so the [`BitRead`] default
+implementation does not use a table.
 
 Finally, if you choose to use tables, the size of the tables is hardwired in the
 source code (in particular, in the files `*_tables.rs` in the `codes` source

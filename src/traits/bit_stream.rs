@@ -19,8 +19,6 @@ pub trait BitRead<E: Endianness> {
     type Error: Error;
 
     /// The type we can read from the stream without advancing.
-    /// On buffered readers this is usually half the buffer size,
-    /// which is equal to the word size of the underlying [`WordRead`].
     type PeekWord: UpcastableInto<u64>;
 
     /// Read `n` bits and return them in the lowest bits.
@@ -37,7 +35,7 @@ pub trait BitRead<E: Endianness> {
     ///
     /// This is an internal optimization used to skip bits we know
     /// are already in some internal buffer as we [peeked](BitRead::peek_bits)
-    /// at them.
+    /// at them. Please don't use.
     #[inline(always)]
     fn skip_bits_after_table_lookup(&mut self, n: usize) -> Result<(), Self::Error> {
         self.skip_bits(n)
@@ -55,7 +53,8 @@ pub trait BitRead<E: Endianness> {
     ///
     /// This version of the method uses the version of
     /// of [`BitRead::read_unary_param`] selected as default by
-    /// the implementing type.
+    /// the implementing type. The default implementation does
+    /// not use a table.
     #[inline(always)]
     fn read_unary(&mut self) -> Result<u64, Self::Error> {
         self.read_unary_param::<false>()
@@ -72,22 +71,19 @@ pub trait BitRead<E: Endianness> {
 /// Sequential, streaming bit-by-bit writes.
 ///
 /// This trait specify basic operation over which codes can be implemented
-/// by traits such as [`crate::codes::GammaWrite`].
-///
-/// Note that the endianness parameter `E` is used only to specify the
-/// endianness of the bit stream, and not that of the method arguments.
+/// by traits such as [`crate::codes::GammaWriteParam`].
 pub trait BitWrite<E: Endianness> {
     type Error: Error;
 
     /// Write the lowest `n` bits of value to the stream and return the number of
     /// bits written, that is, `n`.
     ///
-    /// The other bits should be ignored, but it is allow to check them
+    /// The other bits should be ignored, but it is allowed to check them
     /// and panic in test mode if they are not zero.
     fn write_bits(&mut self, value: u64, n: usize) -> Result<usize, Self::Error>;
 
-    /// Write `value` as an unary code to the stream and return the number of
-    /// bits written, that is, `values` plus one.
+    /// Write `value` as a unary code to the stream and return the number of
+    /// bits written, that is, `value` plus one.
     ///     
     /// This version of the method has a constant parameter
     /// deciding whether to use an encoding table. You should rather use
@@ -98,13 +94,16 @@ pub trait BitWrite<E: Endianness> {
         value: u64,
     ) -> Result<usize, Self::Error>;
 
-    /// Write `value` as an unary code to the stream and return the number of
+    /// Write `value` as a unary code to the stream and return the number of
     /// bits written, that is, `values` plus one.
     ///
     /// This version of the method uses the version of
     /// of [`BitWrite::write_unary_param`] selected as default by
-    /// the implementing type.
-    fn write_unary(&mut self, value: u64) -> Result<usize, Self::Error>;
+    /// the implementing type. The default implementation
+    /// uses a table.
+    fn write_unary(&mut self, value: u64) -> Result<usize, Self::Error> {
+        self.write_unary_param::<true>(value)
+    }
 
     /// Flush the buffer, consuming the bit stream.
     fn flush(self) -> Result<(), Self::Error>;
@@ -113,8 +112,9 @@ pub trait BitWrite<E: Endianness> {
 /// Seekability for [`BitRead`] and [`BitWrite`] streams.
 pub trait BitSeek {
     type Error: Error;
-
+    /// Get the current position in bits from the start of the file.
     fn get_bit_pos(&mut self) -> Result<u64, Self::Error>;
 
+    /// Set the current position in bits from the start of the file to `bit_pos`.
     fn set_bit_pos(&mut self, bit_pos: u64) -> Result<(), Self::Error>;
 }

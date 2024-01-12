@@ -207,10 +207,6 @@ where
         self.bits_in_buffer = (value % WW::Word::BITS as u64) as usize + 1;
         Ok(code_length as usize)
     }
-
-    fn write_unary(&mut self, value: u64) -> Result<usize, Self::Error> {
-        self.write_unary_param::<true>(value)
-    }
 }
 
 impl<WW: WordWrite, WP: WriteParams> DropHelper<WW, WP> for LE {
@@ -334,10 +330,6 @@ where
         self.buffer = WW::Word::ONE << (WW::Word::BITS - 1);
         self.bits_in_buffer = value as usize + 1;
         Ok(code_length as usize)
-    }
-
-    fn write_unary(&mut self, value: u64) -> Result<usize, Self::Error> {
-        self.write_unary_param::<true>(value)
     }
 }
 
