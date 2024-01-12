@@ -16,11 +16,14 @@ use crate::traits::*;
 /// An implementation of [`BitRead`] with peek word `u32` for a
 /// [`WordRead`] with word `u64` and of [`BitSeek`] for a [`WordSeek`].
 ///
-/// Endianness can be selected using the parameter `E`.
-///
 /// This implementation accesses randomly the underlying [`WordRead`]
 /// without any buffering. It is usually slower than
 /// [`BufBitReader`](crate::impls::BufBitReader).
+///
+/// The additional type parameter `RP` is used to select the parameters for the
+/// instantanous codes, but the casual user should be happy with the default value.
+/// See [`ReadParams`] for more details.
+
 #[derive(Debug, Clone)]
 pub struct BitReader<E: Endianness, WR, RP: ReadParams = DefaultReadParams> {
     /// The stream which we will read words from.
@@ -31,7 +34,6 @@ pub struct BitReader<E: Endianness, WR, RP: ReadParams = DefaultReadParams> {
 }
 
 impl<E: Endianness, WR, RP: ReadParams> BitReader<E, WR, RP> {
-    /// Create a new BitStreamRead on a generig WordRead
     pub fn new(data: WR) -> Self {
         Self {
             data,

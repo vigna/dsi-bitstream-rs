@@ -41,6 +41,35 @@ usually significantly slower than [`BufBitReader`].
 If you want to optimize these choices for your architecture, we suggest to
 run the benchmarks in the `benchmarks` directory.
 
+## Examples
+
+### Reading from a file
+
+```rust
+use dsi_bitstream::prelude::*;
+use std::io::BufReader;
+
+let file = std::fs::File::open("README.md").unwrap();
+// Adapt to word type u32, select little endianness
+let mut reader = BufBitReader::<LE, _>::new(WordAdapter::<u32, _>::new(BufReader::new(file)));
+reader.read_gamma().unwrap();
+```
+
+### Writing to and reading from a vector
+
+```rust
+use dsi_bitstream::prelude::*;
+
+let mut v: Vec<u64> = vec![];
+// Automatically chooses word type u64, select big endianness
+let mut writer = BufBitWriter::<BE, _, _>::new(MemWordWriterVec::new(&mut v));
+writer.write_gamma(42).unwrap();
+writer.flush().unwrap();
+
+let mut reader = BufBitReader::<BE, _>::new(MemWordReader::new(&v));
+assert_eq!(reader.read_gamma().unwrap(), 42);
+```
+
 */
 
 mod mem_word_reader;

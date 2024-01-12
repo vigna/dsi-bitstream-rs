@@ -18,9 +18,8 @@ use std::error::Error;
 type BB<WR> = <<WR as WordRead>::Word as DoubleType>::DoubleType;
 
 /// An implementation of [`BitRead`] and [`BitSeek`] for a
-/// [`WordRead`] and a [`WordSeek`].
-///
-/// Endianness can be selected using the parameter `E`.
+/// [`WordRead`] and a [`WordSeek`]. The peek word is equal to the word
+/// of the [`WordRead`].
 ///
 /// This implementation uses a
 /// bit buffer to store bits that are not yet read. The buffer is sized

@@ -75,7 +75,7 @@ pub trait BitRead<E: Endianness> {
 pub trait BitWrite<E: Endianness> {
     type Error: Error;
 
-    /// Write the lowest `n` bits of value to the stream and return the number of
+    /// Write the lowest `n` bits of `value` to the stream and return the number of
     /// bits written, that is, `n`.
     ///
     /// The other bits should be ignored, but it is allowed to check them
@@ -95,7 +95,7 @@ pub trait BitWrite<E: Endianness> {
     ) -> Result<usize, Self::Error>;
 
     /// Write `value` as a unary code to the stream and return the number of
-    /// bits written, that is, `values` plus one.
+    /// bits written, that is, `value` plus one.
     ///
     /// This version of the method uses the version of
     /// of [`BitWrite::write_unary_param`] selected as default by

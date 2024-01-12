@@ -11,12 +11,7 @@ use crate::codes::unary_tables;
 use crate::traits::*;
 use common_traits::{CastableInto, Integer, Number, Scalar};
 
-/// An implementation of [`BitWrite`] for a
-/// [`WordWrite`].
-///
-/// Endianness can be selected using the parameter `E`. Its possible values are
-/// the standard [`BE`] and [`LE`] types: the `DropHelper` trait is internal
-/// and should be ignored.
+/// An implementation of [`BitWrite`] for a [`WordWrite`].
 ///
 /// This implementation uses a bit buffer to store bits that are not yet written.
 /// The size of the bit buffer is the size of the word used by the [`WordWrite`],
@@ -75,11 +70,13 @@ impl<E: DropHelper<WW, WP>, WW: WordWrite, WP: WriteParams> core::ops::Drop
     }
 }
 
+#[doc(hidden)]
 /// Ignore. Inner trait needed for dispatching of drop logic based on endianess
 /// of a [`BufBitWriter`]. This is public to avoid the leak of
-/// private traits in public defs, an user should never need to implement this.
+/// private traits in public defs. A user should never need to implement this.
 ///
-/// I discussed this [here](https://users.rust-lang.org/t/on-generic-associated-enum-and-type-comparisons/92072).
+/// I discuss the need for this trait
+/// [here](https://users.rust-lang.org/t/on-generic-associated-enum-and-type-comparisons/92072).
 pub trait DropHelper<WW: WordWrite, WP: WriteParams>: Sized + Endianness {
     /// handle the drop
     fn flush(buf_bit_writer: &mut BufBitWriter<Self, WW, WP>) -> Result<(), WW::Error>;
