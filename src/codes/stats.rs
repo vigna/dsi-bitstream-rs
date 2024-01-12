@@ -7,14 +7,15 @@
 use super::*;
 use core::sync::atomic::{AtomicUsize, Ordering};
 
-pub fn len_golomb(value: u64, b: u64) -> usize {
+fn len_golomb(value: u64, b: u64) -> usize {
     (value / b) as usize + 1 + len_minimal_binary(value % b, b)
 }
 
 #[derive(Default, Debug)]
-/// A struct to keep track of the space needed to store a stream of integers
-/// using different codes, this can be used to determine which code is the
-/// most efficient for a given stream.
+/// Keeps track of the space needed to store a stream of integers using different codes.
+///
+/// This structure can be used to determine empirically which code
+/// provides the best compression for a given stream.
 pub struct CodesStats {
     pub unary: AtomicUsize,
     pub gamma: AtomicUsize,
@@ -24,28 +25,23 @@ pub struct CodesStats {
 }
 
 impl CodesStats {
-    /// Create a new `CodesStats` struct
-    pub fn new() -> Self {
-        Default::default()
-    }
-
-    /// Update the stats with the length of the code for `value` and return back
-    /// `value` for convienience
-    pub fn update(&self, value: u64) -> u64 {
-        self.unary.fetch_add(value as usize + 1, Ordering::Relaxed);
-        self.gamma.fetch_add(len_gamma(value), Ordering::Relaxed);
-        self.delta.fetch_add(len_delta(value), Ordering::Relaxed);
+    /// Update the stats with the lengths of the codes for `n` and return back
+    /// `n` for convenience.
+    pub fn update(&self, n: u64) -> u64 {
+        self.unary.fetch_add(n as usize + 1, Ordering::Relaxed);
+        self.gamma.fetch_add(len_gamma(n), Ordering::Relaxed);
+        self.delta.fetch_add(len_delta(n), Ordering::Relaxed);
 
         for (k, val) in self.zeta.iter().enumerate() {
-            val.fetch_add(len_zeta(value, (k + 1) as _), Ordering::Relaxed);
+            val.fetch_add(len_zeta(n, (k + 1) as _), Ordering::Relaxed);
         }
         for (b, val) in self.golomb.iter().enumerate() {
-            val.fetch_add(len_golomb(value, (b + 1) as _), Ordering::Relaxed);
+            val.fetch_add(len_golomb(n, (b + 1) as _), Ordering::Relaxed);
         }
-        value
+        n
     }
-    /// Return the best code for the stream, as in the one that needed the
-    /// least space, and the space needed by that code
+
+    /// Return the best code for the stream and its space usage.
     pub fn get_best_code(&self) -> (Code, usize) {
         // TODO!: make cleaner
         let mut best = self.unary.load(Ordering::Relaxed);

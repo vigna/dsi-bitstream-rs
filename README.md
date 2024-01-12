@@ -1,7 +1,6 @@
 # dsi-bitstream
 
-A Rust implementation of bit streams supporting several types of instantaneous
-codes.
+A Rust implementation of bit streams supporting several types of instantaneous codes.
 
 This library mimics the behavior of the analogous classes in the [DSI
 Utilities](https://dsiutils.di.unimi.it/), but it aims at being much more

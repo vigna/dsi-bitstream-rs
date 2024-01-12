@@ -13,9 +13,9 @@ of bits read or written to a [`BitRead`](crate::traits::BitRead)
 and [`BitWrite`](crate::traits::BitWrite), respectively,
 optionally printing on standard error the operations performed on the stream.
 
- [`DbgCodeReader`] and [`DbgCodeWriter`] print on standard error all code-based
-operation beformed by a [`CodeRead`](crate::codes::CodeRead)
-or [`CodeWrite`](crate::codes::CodeWrite).
+ [`DbgBitReader`] and [`DbgBitWriter`] print on standard error all
+operation beformed by a [`BitRead`](crate::traits::BitRead) or
+[`BitWrite`](crate::traits::BitWrite).
 
 */
 

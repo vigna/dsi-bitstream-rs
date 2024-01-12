@@ -10,7 +10,23 @@
 
 Traits for reading and writing instantaneous codes.
 
-This modules contains code for reading and writing instantaneous codes. Each
+This modules contains code for reading and writing instantaneous codes.
+Codewords are uniformely indexed from 0 for codes. For example, the
+first few words of [unary](crate::traits::BitRead::read_unary),
+[γ](gamma), and [δ](delta) codes are:
+
+| Arg |  unary   |    γ    |     δ    |
+|-----|---------:|--------:|---------:|
+| 0   |        1 |       1 |        1 |
+| 1   |       01 |     010 |     0100 |
+| 2   |      001 |     011 |     0101 |
+| 3   |     0001 |   00100 |    01100 |
+| 4   |    00001 |   00101 |    01101 |
+| 5   |   000001 |   00110 |    01110 |
+| 6   |  0000001 |   00111 |    01111 |
+| 7   | 00000001 | 0001000 | 00100000 |
+
+Each
 code is implemented as a pair of traits for reading and writing (e.g., [`GammaRead`]
 and [`GammaWrite`]). The traits for reading depend on the trait [`BitRead`](crate::traits::BitRead), whereas
 the traits for writing depend on the trait [`BitWrite`](crate::traits::BitWrite).
@@ -28,7 +44,9 @@ which contains reasonable default choices.
 
 */
 
-// Available codes
+/// Typed names for instantaneous codes.
+///
+/// Not all codes are currenly implemented.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "fuzz", derive(arbitrary::Arbitrary))]
 pub enum Code {
@@ -44,21 +62,21 @@ pub enum Code {
 
 pub mod table_params;
 
-mod gamma;
+pub mod gamma;
 
 pub use gamma::{
     len_gamma, len_gamma_param, GammaRead, GammaReadParam, GammaWrite, GammaWriteParam,
 };
 
-mod delta;
+pub mod delta;
 pub use delta::{
     len_delta, len_delta_param, DeltaRead, DeltaReadParam, DeltaWrite, DeltaWriteParam,
 };
 
-mod minimal_binary;
+pub mod minimal_binary;
 pub use minimal_binary::{len_minimal_binary, MinimalBinaryRead, MinimalBinaryWrite};
 
-mod zeta;
+pub mod zeta;
 pub use zeta::{len_zeta, len_zeta_param, ZetaRead, ZetaReadParam, ZetaWrite, ZetaWriteParam};
 
 pub mod delta_tables;

@@ -249,6 +249,10 @@ impl<E: Endianness, BR: BitRead<E>, const PRINT: bool> BitRead<E> for CountBitRe
         }
         self.bit_read.skip_bits(n_bits)
     }
+
+    fn skip_bits_after_table_lookup(&mut self, n: usize) {
+        self.bit_read.skip_bits_after_table_lookup(n)
+    }
 }
 
 impl<E: Endianness, BR: BitRead<E> + GammaRead<E>, const PRINT: bool> GammaRead<E>

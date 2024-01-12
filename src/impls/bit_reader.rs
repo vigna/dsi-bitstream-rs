@@ -111,7 +111,7 @@ impl<E: Error, WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>, RP: Re
     #[inline]
     fn read_unary_param<const USE_TABLE: bool>(&mut self) -> Result<u64, Self::Error> {
         if USE_TABLE {
-            if let Some((res, _)) = unary_tables::read_table_be(self)? {
+            if let Some((res, _)) = unary_tables::read_table_be(self) {
                 return Ok(res);
             }
         }
@@ -133,6 +133,10 @@ impl<E: Error, WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>, RP: Re
             bits_in_word = 64;
             word = self.data.read_word()?.to_be();
         }
+    }
+
+    fn skip_bits_after_table_lookup(&mut self, n: usize) {
+        self.bit_index += n as u64;
     }
 }
 
@@ -232,7 +236,7 @@ impl<E: Error, WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>, RP: Re
     #[inline]
     fn read_unary_param<const USE_TABLE: bool>(&mut self) -> Result<u64, Self::Error> {
         if USE_TABLE {
-            if let Some((res, _)) = unary_tables::read_table_le(self)? {
+            if let Some((res, _)) = unary_tables::read_table_le(self) {
                 return Ok(res);
             }
         }
@@ -254,5 +258,9 @@ impl<E: Error, WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>, RP: Re
             bits_in_word = 64;
             word = self.data.read_word()?.to_le();
         }
+    }
+
+    fn skip_bits_after_table_lookup(&mut self, n: usize) {
+        self.bit_index += n as u64;
     }
 }

@@ -188,10 +188,9 @@ where
     }
 
     #[inline(always)]
-    fn skip_bits_after_table_lookup(&mut self, n_bits: usize) -> Result<(), Self::Error> {
+    fn skip_bits_after_table_lookup(&mut self, n_bits: usize) {
         self.bits_in_buffer -= n_bits;
         self.buffer <<= n_bits;
-        Ok(())
     }
 
     #[inline]
@@ -236,7 +235,7 @@ where
     #[inline]
     fn read_unary_param<const USE_TABLE: bool>(&mut self) -> Result<u64, Self::Error> {
         if USE_TABLE {
-            if let Some((res, _)) = unary_tables::read_table_be(self)? {
+            if let Some((res, _)) = unary_tables::read_table_be(self) {
                 return Ok(res);
             }
         }
@@ -353,10 +352,9 @@ where
     }
 
     #[inline(always)]
-    fn skip_bits_after_table_lookup(&mut self, n_bits: usize) -> Result<(), Self::Error> {
+    fn skip_bits_after_table_lookup(&mut self, n_bits: usize) {
         self.bits_in_buffer -= n_bits;
         self.buffer >>= n_bits;
-        Ok(())
     }
 
     #[inline]
@@ -419,7 +417,7 @@ where
     #[inline]
     fn read_unary_param<const USE_TABLE: bool>(&mut self) -> Result<u64, Self::Error> {
         if USE_TABLE {
-            if let Some((res, _)) = unary_tables::read_table_le(self)? {
+            if let Some((res, _)) = unary_tables::read_table_le(self) {
                 return Ok(res);
             }
         }

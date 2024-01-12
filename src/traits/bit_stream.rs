@@ -31,15 +31,13 @@ pub trait BitRead<E: Endianness> {
     /// Skip `n` bits from the stream.
     fn skip_bits(&mut self, n: usize) -> Result<(), Self::Error>;
 
+    #[doc(hidden)]
     /// Skip bits form the stream after a call to [`BitRead::peek_bits`].
     ///
     /// This is an internal optimization used to skip bits we know
     /// are already in some internal buffer as we [peeked](BitRead::peek_bits)
     /// at them. Please don't use.
-    #[inline(always)]
-    fn skip_bits_after_table_lookup(&mut self, n: usize) -> Result<(), Self::Error> {
-        self.skip_bits(n)
-    }
+    fn skip_bits_after_table_lookup(&mut self, n: usize);
 
     /// Read a unary code.
     ///

@@ -55,6 +55,10 @@ where
         eprintln!("{{U:{}}}", value);
         Ok(value)
     }
+
+    fn skip_bits_after_table_lookup(&mut self, n: usize) {
+        self.reader.skip_bits_after_table_lookup(n)
+    }
 }
 
 impl<E: Endianness, R: GammaRead<E>> GammaRead<E> for DbgBitReader<E, R>
