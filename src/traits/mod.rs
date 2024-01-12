@@ -45,16 +45,29 @@ and bits is usually more convenient and makes for more efficient implementations
 
 Byte-level endianness is used to read memory word-by-word, greatly reducing the number
 of memory accesses when reading from slices. However, it is important to note that
-values have thair least significant bit always stored at the lowest bit position,
+fixed-width values have thair least significant bit always stored at the lowest bit position,
 independently of endianness, as current CPUs always use big-endian bit order.
-In particular, reversing the order of the bits of each byte of a file will not
-in general give a file with complementary endianness.
+In particular, reversing the order of the bits of each byte of a file containing
+a sequence of fixed-width integers or instantaneous codes
+will not in general yield a file containing the same sequence of integers or codes
+with the opposite endianness.
 
 For example, if we write just the value 6 to a big-endian bit stream, we will
 get as first byte `110xxxxx`, while if we write it to a little-endian bit stream
 we will obtain the byte `xxxxx110`. Clearly, reversing the order of the bits
 of each byte will not give the other byte. (There are however a few exceptions
 for which reversing works, such as palindromic bit writes and unary codes.)
+
+The situation becomes even more intricated when considering instantaneous codes.
+For example, the minimal(-redundancy) binary code of order seven has
+code words `00`, `010`, `011`, `100`, `101`, `110`, and `111`.
+To decode such a code efficiently, one first reads two
+bits, and then decides, based on their value, whether to read a further
+bit and add it on the right. But this means
+that we have to encode `011` as `011xxxx` in the big-endian case, and
+as `xxxx101` in the little-endian case. If we were to encode the
+little-endian case as `xxxx110`, the first two bits we read would have
+a reversed representation.
 
 */
 

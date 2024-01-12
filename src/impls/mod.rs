@@ -62,7 +62,7 @@ use dsi_bitstream::prelude::*;
 
 let mut v: Vec<u64> = vec![];
 // Automatically chooses word type u64, select big endianness
-let mut writer = BufBitWriter::<BE, _, _>::new(MemWordWriterVec::new(&mut v));
+let mut writer = BufBitWriter::<BE, _>::new(MemWordWriterVec::new(&mut v));
 writer.write_gamma(42).unwrap();
 writer.flush().unwrap();
 
