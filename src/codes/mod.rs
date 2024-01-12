@@ -11,7 +11,7 @@
 Reading and writing instantaneous codes.
 
 This modules contains code for reading and writing instantaneous codes. Each
-code is iimplemented as a pair of traits for reading and writing (e.g., [`GammaRead`]
+code is implemented as a pair of traits for reading and writing (e.g., [`GammaRead`]
 and [`GammaWrite`]). The traits for reading depend on the trait [`BitRead`](crate::traits::BitRead), whereas
 the traits for writing depend on the trait [`BitWrite`](crate::traits::BitWrite).
 
@@ -69,15 +69,3 @@ pub mod zeta_tables;
 mod stats;
 use crate::traits::Endianness;
 pub use stats::*;
-
-// A trait combining the codes used by BVGraph when reading.
-pub trait CodeRead<E: Endianness>: GammaRead<E> + DeltaRead<E> + ZetaRead<E> {}
-// A trait combining the codes used by BVGraph when writing.
-pub trait CodeWrite<E: Endianness>: GammaWrite<E> + DeltaWrite<E> + ZetaWrite<E> {}
-
-/// Blanket implementation so we can consider [`CodeRead`] just as an alias for
-/// a sum of traits
-impl<E: Endianness, T> CodeRead<E> for T where T: GammaRead<E> + DeltaRead<E> + ZetaRead<E> {}
-/// Blanket implementation so we can consider [`CodeWrite`] just as an alias for
-/// a sum of traits
-impl<E: Endianness, T> CodeWrite<E> for T where T: GammaWrite<E> + DeltaWrite<E> + ZetaWrite<E> {}
