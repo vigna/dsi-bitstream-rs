@@ -8,7 +8,7 @@
 
 use common_traits::*;
 
-use crate::codes::table_params::{DefaultReadParams, ReadParams};
+use crate::codes::params::{DefaultReadParams, ReadParams};
 use crate::codes::unary_tables;
 use crate::traits::*;
 use std::error::Error;
@@ -17,23 +17,27 @@ use std::error::Error;
 /// [`WordRead`].
 type BB<WR> = <<WR as WordRead>::Word as DoubleType>::DoubleType;
 
-/// An implementation of [`BitRead`] and [`BitSeek`] for a
-/// [`WordRead`] and a [`WordSeek`]. The peek word is equal to the word
-/// of the [`WordRead`].
+/// An implementation of [`BitRead`] and [`BitSeek`] for a [`WordRead`] and a
+/// [`WordSeek`].
 ///
-/// This implementation uses a
-/// bit buffer to store bits that are not yet read. The buffer is sized
-/// as twice the word size of the underlying [`WordRead`]. Typically, the
-/// best choice is to have a buffer that is sized as `usize`, which means
-/// that the word of the underlying [`WordRead`] should be half of that
-/// (i.e., `u32` for a 64-bit architecture). However, results will vary
+/// This implementation uses a bit buffer to store bits that are not yet read.
+/// The buffer is sized as twice the word size of the underlying [`WordRead`].
+/// Typically, the best choice is to have a buffer that is sized as `usize`,
+/// which means that the word of the underlying [`WordRead`] should be half of
+/// that (i.e., `u32` for a 64-bit architecture). However, results will vary
 /// depending on the CPU.
 ///
-/// This implementation is usually faster than [`BitReader`](crate::impls::BitReader).
+/// The peek word is equal to the bit buffer. The value returned
+/// by [`peek_bits`](crate::traits::BitRead::peek_bits) contains at least as
+/// many bits as the word size plus one (extended with zeros beyond end of
+/// stream).
+///
+/// This implementation is usually faster than
+/// [`BitReader`](crate::impls::BitReader).
 ///
 /// The additional type parameter `RP` is used to select the parameters for the
-/// instantanous codes, but the casual user should be happy with the default value.
-/// See [`ReadParams`] for more details.
+/// instantanous codes, but the casual user should be happy with the default
+/// value. See [`ReadParams`] for more details.
 
 #[derive(Debug)]
 pub struct BufBitReader<E: Endianness, WR: WordRead, RP: ReadParams = DefaultReadParams>
@@ -80,6 +84,7 @@ where
     /// ```
     #[must_use]
     pub fn new(backend: WR) -> Self {
+        check_tables(WR::Word::BITS + 1);
         Self {
             backend,
             buffer: BB::<WR>::ZERO,

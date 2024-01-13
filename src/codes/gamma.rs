@@ -56,7 +56,7 @@ pub trait GammaRead<E: Endianness>: BitRead<E> {
 ///
 /// We provide an implementation of this trait for [`BitRead`]. An implementation
 /// of [`GammaRead`] using default values is usually provided exploiting the
-/// [`crate::codes::table_params::ReadParams`] mechanism.
+/// [`crate::codes::params::ReadParams`] mechanism.
 pub trait GammaReadParam<E: Endianness>: BitRead<E> {
     fn read_gamma_param<const USE_TABLE: bool>(&mut self) -> Result<u64, Self::Error>;
     fn skip_gamma_param<const USE_TABLE: bool>(&mut self) -> Result<(), Self::Error>;
@@ -135,7 +135,7 @@ pub trait GammaWrite<E: Endianness>: BitWrite<E> {
 ///
 /// We provide an implementation of this trait for [`BitWrite`]. An implementation
 /// of [`GammaWrite`] using default values is usually provided exploiting the
-/// [`crate::codes::table_params::WriteParams`] mechanism.
+/// [`crate::codes::params::WriteParams`] mechanism.
 pub trait GammaWriteParam<E: Endianness>: BitWrite<E> {
     fn write_gamma_param<const USE_TABLE: bool>(&mut self, n: u64) -> Result<usize, Self::Error>;
 }

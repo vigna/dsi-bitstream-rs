@@ -9,20 +9,24 @@
 use core::convert::Infallible;
 use std::error::Error;
 
-use crate::codes::table_params::{DefaultReadParams, ReadParams};
+use crate::codes::params::{DefaultReadParams, ReadParams};
 use crate::codes::unary_tables;
 use crate::traits::*;
 
-/// An implementation of [`BitRead`] with peek word `u32` for a
-/// [`WordRead`] with word `u64` and of [`BitSeek`] for a [`WordSeek`].
+/// An implementation of [`BitRead`] for a [`WordRead`] with word `u64` and of
+/// [`BitSeek`] for a [`WordSeek`].
 ///
-/// This implementation accesses randomly the underlying [`WordRead`]
-/// without any buffering. It is usually slower than
+/// This implementation accesses randomly the underlying [`WordRead`] without
+/// any buffering. It is usually slower than
 /// [`BufBitReader`](crate::impls::BufBitReader).
 ///
+/// The peek word is `u32`. The value returned by
+/// [`peek_bits`](crate::traits::BitRead::peek_bits) contains at least 32 bits
+/// (extended with zeros beyond end of stream), that is, a full peek word.
+///
 /// The additional type parameter `RP` is used to select the parameters for the
-/// instantanous codes, but the casual user should be happy with the default value.
-/// See [`ReadParams`] for more details.
+/// instantanous codes, but the casual user should be happy with the default
+/// value. See [`ReadParams`] for more details.
 
 #[derive(Debug, Clone)]
 pub struct BitReader<E: Endianness, WR, RP: ReadParams = DefaultReadParams> {
@@ -35,6 +39,7 @@ pub struct BitReader<E: Endianness, WR, RP: ReadParams = DefaultReadParams> {
 
 impl<E: Endianness, WR, RP: ReadParams> BitReader<E, WR, RP> {
     pub fn new(data: WR) -> Self {
+        check_tables(32);
         Self {
             data,
             bit_index: 0,

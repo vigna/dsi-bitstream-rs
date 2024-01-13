@@ -63,7 +63,7 @@ pub trait ZetaRead<E: Endianness>: BitRead<E> {
 ///
 /// We provide an implementation of this trait for [`BitRead`]. An implementation
 /// of [`ZetaRead`] using default values is usually provided exploiting the
-/// [`crate::codes::table_params::ReadParams`] mechanism.
+/// [`crate::codes::params::ReadParams`] mechanism.
 pub trait ZetaReadParam<E: Endianness>: MinimalBinaryRead<E> {
     fn read_zeta_param(&mut self, k: u64) -> Result<u64, Self::Error>;
     fn read_zeta3_param<const USE_TABLE: bool>(&mut self) -> Result<u64, Self::Error>;
@@ -177,7 +177,7 @@ pub trait ZetaWrite<E: Endianness>: BitWrite<E> {
 ///
 /// We provide an implementation of this trait for [`BitWrite`]. An implementation
 /// of [`ZetaWrite`] using default values is usually provided exploiting the
-/// [`crate::codes::table_params::WriteParams`] mechanism.
+/// [`crate::codes::params::WriteParams`] mechanism.
 pub trait ZetaWriteParam<E: Endianness>: MinimalBinaryWrite<E> {
     fn write_zeta_param<const USE_TABLE: bool>(
         &mut self,

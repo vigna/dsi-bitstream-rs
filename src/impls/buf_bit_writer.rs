@@ -6,7 +6,7 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
-use crate::codes::table_params::{DefaultWriteParams, WriteParams};
+use crate::codes::params::{DefaultWriteParams, WriteParams};
 use crate::codes::unary_tables;
 use crate::traits::*;
 use common_traits::{CastableInto, Integer, Number, Scalar};

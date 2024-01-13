@@ -59,7 +59,7 @@ pub trait DeltaRead<E: Endianness>: BitRead<E> {
 ///
 /// We provide an implementation of this trait for [`BitRead`]. An implementation
 /// of [`DeltaRead`] using default values is usually provided exploiting the
-/// [`crate::codes::table_params::ReadParams`] mechanism.
+/// [`crate::codes::params::ReadParams`] mechanism.
 pub trait DeltaReadParam<E: Endianness>: GammaReadParam<E> {
     fn read_delta_param<const USE_DELTA_TABLE: bool, const USE_GAMMA_TABLE: bool>(
         &mut self,
@@ -170,7 +170,7 @@ pub trait DeltaWrite<E: Endianness>: BitWrite<E> {
 ///
 /// We provide an implementation of this trait for [`BitWrite`]. An implementation
 /// of [`DeltaWrite`] using default values is usually provided exploiting the
-/// [`crate::codes::table_params::WriteParams`] mechanism.
+/// [`crate::codes::params::WriteParams`] mechanism.
 pub trait DeltaWriteParam<E: Endianness>: GammaWriteParam<E> {
     fn write_delta_param<const USE_DELTA_TABLE: bool, const USE_GAMMA_TABLE: bool>(
         &mut self,
