@@ -146,7 +146,7 @@ where
     type Error = <WR as WordRead>::Error;
     type PeekWord = BB<WR>;
 
-    #[inline]
+    #[inline(always)]
     fn peek_bits(&mut self, n_bits: usize) -> Result<Self::PeekWord, Self::Error> {
         debug_assert!(n_bits > 0);
         debug_assert!(n_bits <= Self::PeekWord::BITS);
@@ -155,6 +155,8 @@ where
         if n_bits > self.bits_in_buffer {
             self.refill()?;
         }
+
+        debug_assert!(n_bits <= self.bits_in_buffer);
 
         // Read the `n_bits` highest bits of the buffer and shift them to
         // be the lowest.
@@ -195,9 +197,7 @@ where
 
     #[inline]
     fn read_bits(&mut self, mut n_bits: usize) -> Result<u64, Self::Error> {
-        #[cfg(feature = "checks")]
-        assert!(n_bits <= 64);
-
+        debug_assert!(n_bits <= 64);
         debug_assert!(self.bits_in_buffer < BB::<WR>::BITS);
 
         // most common path, we just read the buffer
@@ -360,9 +360,7 @@ where
 
     #[inline]
     fn read_bits(&mut self, mut n_bits: usize) -> Result<u64, Self::Error> {
-        #[cfg(feature = "checks")]
-        assert!(n_bits <= 64);
-
+        debug_assert!(n_bits <= 64);
         debug_assert!(self.bits_in_buffer < BB::<WR>::BITS);
 
         // most common path, we just read the buffer
@@ -398,7 +396,7 @@ where
         Ok(result)
     }
 
-    #[inline]
+    #[inline(always)]
     fn peek_bits(&mut self, n_bits: usize) -> Result<Self::PeekWord, Self::Error> {
         debug_assert!(n_bits > 0);
         debug_assert!(n_bits <= Self::PeekWord::BITS);
@@ -407,6 +405,8 @@ where
         if n_bits > self.bits_in_buffer {
             self.refill()?;
         }
+
+        debug_assert!(n_bits <= self.bits_in_buffer);
 
         // Read the `n_bits` highest bits of the buffer and shift them to
         // be the lowest.

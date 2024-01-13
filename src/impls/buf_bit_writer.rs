@@ -108,16 +108,14 @@ where
 
     #[inline]
     fn write_bits(&mut self, mut value: u64, n_bits: usize) -> Result<usize, Self::Error> {
+        debug_assert!(n_bits <= 64);
         #[cfg(feature = "checks")]
-        {
-            assert!(n_bits <= 64);
-            assert!(
-                value & (1_u128 << n_bits).wrapping_sub(1) as u64 == value,
-                "Error: value {} does not fit in {} bits",
-                value,
-                n_bits
-            );
-        }
+        assert!(
+            value & (1_u128 << n_bits).wrapping_sub(1) as u64 == value,
+            "Error: value {} does not fit in {} bits",
+            value,
+            n_bits
+        );
 
         #[cfg(test)]
         if n_bits < 64 {
@@ -233,16 +231,14 @@ where
 
     #[inline]
     fn write_bits(&mut self, mut value: u64, n_bits: usize) -> Result<usize, Self::Error> {
+        debug_assert!(n_bits <= 64);
         #[cfg(feature = "checks")]
-        {
-            assert!(n_bits <= 64);
-            assert!(
-                value & (1_u128 << n_bits).wrapping_sub(1) as u64 == value,
-                "Error: value {} does not fit in {} bits",
-                value,
-                n_bits
-            );
-        }
+        assert!(
+            value & (1_u128 << n_bits).wrapping_sub(1) as u64 == value,
+            "Error: value {} does not fit in {} bits",
+            value,
+            n_bits
+        );
 
         #[cfg(test)]
         if n_bits < 64 {
