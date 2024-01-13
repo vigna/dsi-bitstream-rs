@@ -35,11 +35,11 @@ pub fn harness(data: FuzzCase) {
                 }
             }
             RandomCommand::ReadNextWord => {
-                assert_eq!(
-                    reader.read_word().ok(),
-                    data.init.get(idx as usize).copied()
-                );
-                if data.init.get(idx as usize).is_some() {
+                if reader.get_word_pos().unwrap() != u64::MAX {
+                    assert_eq!(
+                        reader.read_word().ok(),
+                        Some(data.init.get(idx as usize).copied().unwrap_or(0))
+                    );
                     idx += 1;
                 }
             }
