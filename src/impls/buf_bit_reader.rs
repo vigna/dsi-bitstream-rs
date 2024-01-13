@@ -158,7 +158,7 @@ where
 
         // Read the `n_bits` highest bits of the buffer and shift them to
         // be the lowest.
-        Ok((self.buffer >> (BB::<WR>::BITS - n_bits)).downcast())
+        Ok(self.buffer >> (BB::<WR>::BITS - n_bits))
     }
 
     #[inline]
@@ -393,8 +393,7 @@ where
         let final_bits: u64 = ((upcasted << shamt) >> shamt).downcast();
         result |= final_bits << bits_in_res;
         // and put the rest in the buffer
-        self.buffer = UpcastableInto::<BB<WR>>::upcast(new_word);
-        self.buffer >>= n_bits;
+        self.buffer = UpcastableInto::<BB<WR>>::upcast(new_word) >> n_bits;
 
         Ok(result)
     }
@@ -412,7 +411,7 @@ where
         // Read the `n_bits` highest bits of the buffer and shift them to
         // be the lowest.
         let shamt = BB::<WR>::BITS - n_bits;
-        Ok(((self.buffer << shamt) >> shamt).downcast())
+        Ok((self.buffer << shamt) >> shamt)
     }
 
     #[inline]
