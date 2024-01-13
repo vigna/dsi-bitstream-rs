@@ -14,6 +14,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+# plt.rcParams['text.usetex'] = True
+
 if len(sys.argv) != 2 or not sys.argv[1] in { "u16", "u32", "u64" }:
     sys.exit("Usage: %s [u16 | u32 | u64]" % sys.argv[0])
 
@@ -118,10 +120,10 @@ for code in ["unary", "gamma", "delta", "delta_gamma", "zeta3"]:
     )
 
     ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
-    ax.ylim(bottom=0)  # ymin is your value
-    ax.xlim([left, right])  # ymin is your value
-    ax.xticks(ratios.index)
-    ax.title(
+    ax.set_ylim(bottom=0)  # ymin is your value
+    ax.set_xlim([left, right])  # ymin is your value
+    ax.set_xticks(ratios.index)
+    ax.set_title(
         (
             "Performance of writes (%s) in %s code in function of the table size\n"
             "Shaded areas are the 25%% and 75%% percentiles and the plots "
@@ -129,8 +131,9 @@ for code in ["unary", "gamma", "delta", "delta_gamma", "zeta3"]:
         )
         % (write_word, nice[code])
     )
-    ax.xlabel(r"\log_2 \left ( \text{Table Bits} \right )")
-    ax.ylabel("ns")
+    ax.set_xlabel("log2(Table Bits)")
+    #ax.set_xlabel(r"\log_2 \left ( \text{Table Bits} \right )")
+    ax.set_ylabel("ns")
     plots.append((
         fig,
         ax,
