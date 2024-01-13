@@ -31,9 +31,9 @@ Once you have a way to read or write by words, you can use [`BufBitReader`] and
 [`BufBitWriter`] to read or write bits. Both have a statically
 selectable endianness and use an internal bit buffer to store bits that are not
 yet read or written. In the case of [`BufBitReader`], the bit buffer is
-twice large as the word type, so we suggest to use `u32` as word type,
+twice large as the word type, so we suggest to use a type that is half of `usize` as word type,
 whereas in the case of [`BufBitWriter`] the bit buffer is as large as the word,
-so we suggest to use `u64` as word type.
+so we suggest to use `usize` as word type.
 
 [`BitReader`] reads memory directly, without using a bit buffer, but it is
 usually significantly slower than [`BufBitReader`].

@@ -58,7 +58,7 @@ There are a few options to modify the behavior of the bit read/write traits:
 - Data is read from or written to the backend one word at a time, and the size
   of the word can be selected using the second parameter, but it must match the
   word size of the backend, so it is usually inferred. Currently, we suggest
-  `u64` for writing and `u32` for reading.
+  `usize` for writing and a type that is half of `usize` for reading.
 
 More in-depth (and much more complicated) tuning can be obtained by modifying
 the default values for the parameters of instantaneous codes. Methods reading or
