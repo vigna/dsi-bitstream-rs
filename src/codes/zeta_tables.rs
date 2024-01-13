@@ -12,7 +12,7 @@ pub const MISSING_VALUE_LEN: u8 = 255;
 pub const WRITE_MAX: u64 = 1023;
 
 #[inline(always)]
-/// Reads a value using a decoding table.
+/// Read a value using a decoding table.
 ///
 /// If the result is `Some` the decoding was successful, and
 /// the decoded value and the length of the code are returned.
@@ -28,7 +28,7 @@ pub fn read_table_le<B: BitRead<LE>>(backend: &mut B) -> Option<(u64, usize)> {
     None
 }
 #[inline(always)]
-/// Computes the length of the code representing a value using a decoding table.
+/// Compute the length of the code representing a value using a decoding table.
 ///
 /// If the result is `Some` the lookup was successful, and
 /// the length of the code is returned.
@@ -45,9 +45,9 @@ pub fn len_table_le<B: BitRead<LE>>(backend: &mut B) -> Option<usize> {
 }
 
 #[inline(always)]
-/// Writes a value using an encoding table.
+/// Write a value using an encoding table.
 ///
-/// If the result is `Some` the endecoding was successful, and
+/// If the result is `Some` the encoding was successful, and
 /// length of the code is returned.
 pub fn write_table_le<B: BitWrite<LE>>(
     backend: &mut B,
@@ -63,7 +63,7 @@ pub fn write_table_le<B: BitWrite<LE>>(
 }
 
 #[inline(always)]
-/// Reads a value using a decoding table.
+/// Read a value using a decoding table.
 ///
 /// If the result is `Some` the decoding was successful, and
 /// the decoded value and the length of the code are returned.
@@ -79,7 +79,7 @@ pub fn read_table_be<B: BitRead<BE>>(backend: &mut B) -> Option<(u64, usize)> {
     None
 }
 #[inline(always)]
-/// Computes the length of the code representing a value using a decoding table.
+/// Compute the length of the code representing a value using a decoding table.
 ///
 /// If the result is `Some` the lookup was successful, and
 /// the length of the code is returned.
@@ -96,9 +96,9 @@ pub fn len_table_be<B: BitRead<BE>>(backend: &mut B) -> Option<usize> {
 }
 
 #[inline(always)]
-/// Writes a value using an encoding table.
+/// Write a value using an encoding table.
 ///
-/// If the result is `Some` the endecoding was successful, and
+/// If the result is `Some` the encoding was successful, and
 /// length of the code is returned.
 pub fn write_table_be<B: BitWrite<BE>>(
     backend: &mut B,

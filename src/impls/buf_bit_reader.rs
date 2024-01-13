@@ -393,6 +393,7 @@ where
         // and put the rest in the buffer
         self.buffer = UpcastableInto::<BB<WR>>::upcast(new_word);
         // TODO: n_bits might be equal to buffer size (?!?)
+        assert!(n_bits < BB::<WR>::BITS);
         self.buffer = self.buffer >> (n_bits - 1) >> 1;
 
         Ok(result)

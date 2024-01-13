@@ -175,11 +175,6 @@ fn default_write_gamma<E: Endianness, B: BitWrite<E>>(
 ) -> Result<usize, B::Error> {
     n += 1;
     let number_of_bits_to_write = n.ilog2();
-    // TODO: do we want to write 64 bits?
-    debug_assert!(number_of_bits_to_write <= 64);
-    // remove the most significant 1
-    let no_msb = n ^ (1 << number_of_bits_to_write);
-    // Write the code
     Ok(backend.write_unary(number_of_bits_to_write as _)?
-        + backend.write_bits(no_msb, number_of_bits_to_write as usize)?)
+        + backend.write_bits(n, number_of_bits_to_write as _)?)
 }
