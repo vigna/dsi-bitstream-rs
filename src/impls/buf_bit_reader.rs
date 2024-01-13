@@ -105,7 +105,7 @@ where
 
         let new_word: BB<WR> = self.backend.read_word()?.to_be().upcast();
         self.bits_in_buffer += WR::Word::BITS;
-        self.buffer |= new_word << (BB::<WR>::BITS - self.bits_in_buffer); 
+        self.buffer |= new_word << (BB::<WR>::BITS - self.bits_in_buffer);
         Ok(())
     }
 }
@@ -144,7 +144,7 @@ where
     BB<WR>: CastableInto<u64>,
 {
     type Error = <WR as WordRead>::Error;
-    type PeekWord = WR::Word;
+    type PeekWord = BB<WR>;
 
     #[inline]
     fn peek_bits(&mut self, n_bits: usize) -> Result<Self::PeekWord, Self::Error> {
@@ -324,7 +324,7 @@ where
     BB<WR>: CastableInto<u64>,
 {
     type Error = <WR as WordRead>::Error;
-    type PeekWord = WR::Word;
+    type PeekWord = BB<WR>;
 
     #[inline]
     fn skip_bits(&mut self, mut n_bits: usize) -> Result<(), Self::Error> {

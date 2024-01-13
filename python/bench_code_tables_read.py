@@ -25,9 +25,7 @@ if len(sys.argv) != 2 or not sys.argv[1] in { "u16", "u32", "u64" }:
 read_word = sys.argv[1]
 first_time = True
 
-upper_bound_bits = 17 if read_word == "u16" else 18
-
-for bits in range(1, upper_bound_bits):
+for bits in range(1, 18):
     print("\nBenchmarking with read word = %s, table bits = %d\n" % (read_word, bits), file=sys.stderr)
     for tables_num in [1, 2]:
         # Clean the target to force the recreation of the tables

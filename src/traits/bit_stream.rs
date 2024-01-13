@@ -9,7 +9,19 @@
 use std::error::Error;
 
 use crate::traits::*;
-use common_traits::UpcastableInto;
+use common_traits::CastableInto;
+
+pub trait Peekable<const N: usize> {}
+macro_rules! impl_peekable {
+    ($($n:literal),*) => {$(
+        impl<T: Peekable<{$n + 1}>> Peekable<$n> for T {}
+    )*};
+}
+
+impl_peekable!(
+    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
+    26, 27, 28, 29, 30, 31, 32
+);
 
 /// Sequential, streaming bit-by-bit reads.
 ///
@@ -19,7 +31,7 @@ pub trait BitRead<E: Endianness> {
     type Error: Error;
 
     /// The type we can read from the stream without advancing.
-    type PeekWord: UpcastableInto<u64>;
+    type PeekWord: CastableInto<u64>;
 
     /// Read `n` bits and return them in the lowest bits.
     ///

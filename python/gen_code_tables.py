@@ -46,7 +46,7 @@ read_func_merged_table = """
 /// the decoded value and the length of the code are returned.
 pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> Option<(u64, usize)> {
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
-        let idx: u64 = idx.upcast();
+        let idx: u64 = idx.cast();
         let (value, len) = READ_%(BO)s[idx as usize];
         if len != MISSING_VALUE_LEN {
             backend.skip_bits_after_table_lookup(len as usize);
@@ -65,7 +65,7 @@ read_func_two_table = """
 /// the decoded value and the length of the code are returned.
 pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> Option<(u64, usize)> {
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
-        let idx: u64 = idx.upcast();
+        let idx: u64 = idx.cast();
         let len = READ_LEN_%(BO)s[idx as usize];
         if len != MISSING_VALUE_LEN {
             backend.skip_bits_after_table_lookup(len as usize);
@@ -81,7 +81,7 @@ pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> Option<(u64, us
 /// the length of the code is returned.
 pub fn len_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> Option<usize> {
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
-        let idx: u64 = idx.upcast();
+        let idx: u64 = idx.cast();
         let len = READ_LEN_%(BO)s[idx as usize];
         if len != MISSING_VALUE_LEN {
             backend.skip_bits_after_table_lookup(len as usize);

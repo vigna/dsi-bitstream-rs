@@ -18,7 +18,7 @@ pub const WRITE_MAX: u64 = 1023;
 /// the decoded value and the length of the code are returned.
 pub fn read_table_le<B: BitRead<LE>>(backend: &mut B) -> Option<(u64, usize)> {
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
-        let idx: u64 = idx.upcast();
+        let idx: u64 = idx.cast();
         let len = READ_LEN_LE[idx as usize];
         if len != MISSING_VALUE_LEN {
             backend.skip_bits_after_table_lookup(len as usize);
@@ -34,7 +34,7 @@ pub fn read_table_le<B: BitRead<LE>>(backend: &mut B) -> Option<(u64, usize)> {
 /// the length of the code is returned.
 pub fn len_table_le<B: BitRead<LE>>(backend: &mut B) -> Option<usize> {
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
-        let idx: u64 = idx.upcast();
+        let idx: u64 = idx.cast();
         let len = READ_LEN_LE[idx as usize];
         if len != MISSING_VALUE_LEN {
             backend.skip_bits_after_table_lookup(len as usize);
@@ -69,7 +69,7 @@ pub fn write_table_le<B: BitWrite<LE>>(
 /// the decoded value and the length of the code are returned.
 pub fn read_table_be<B: BitRead<BE>>(backend: &mut B) -> Option<(u64, usize)> {
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
-        let idx: u64 = idx.upcast();
+        let idx: u64 = idx.cast();
         let len = READ_LEN_BE[idx as usize];
         if len != MISSING_VALUE_LEN {
             backend.skip_bits_after_table_lookup(len as usize);
@@ -85,7 +85,7 @@ pub fn read_table_be<B: BitRead<BE>>(backend: &mut B) -> Option<(u64, usize)> {
 /// the length of the code is returned.
 pub fn len_table_be<B: BitRead<BE>>(backend: &mut B) -> Option<usize> {
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
-        let idx: u64 = idx.upcast();
+        let idx: u64 = idx.cast();
         let len = READ_LEN_BE[idx as usize];
         if len != MISSING_VALUE_LEN {
             backend.skip_bits_after_table_lookup(len as usize);
