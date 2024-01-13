@@ -105,7 +105,7 @@ where
 
         let new_word: BB<WR> = self.backend.read_word()?.to_be().upcast();
         self.bits_in_buffer += WR::Word::BITS;
-        self.buffer |= (new_word << (BB::<WR>::BITS - self.bits_in_buffer - 1)) << 1;
+        self.buffer |= new_word << (BB::<WR>::BITS - self.bits_in_buffer); 
         Ok(())
     }
 }
