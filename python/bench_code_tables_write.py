@@ -25,7 +25,7 @@ if len(sys.argv) != 2 or not sys.argv[1] in { "u16", "u32", "u64" }:
 write_word = sys.argv[1]
 first_time = True
 
-for bits in range(1, 18):
+for bits in range(1, 17):
     value_max = 2**bits - 1
     print("\nBenchmarking with write word = %s, table bits = %d\n" % (write_word, bits), file=sys.stderr)
     for tables_num in [1, 2]:

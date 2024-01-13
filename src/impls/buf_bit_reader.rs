@@ -195,6 +195,9 @@ where
 
     #[inline]
     fn read_bits(&mut self, mut n_bits: usize) -> Result<u64, Self::Error> {
+        #[cfg(feature = "checks")]
+        assert!(n_bits <= 64);
+
         debug_assert!(self.bits_in_buffer < BB::<WR>::BITS);
 
         // most common path, we just read the buffer
@@ -205,8 +208,6 @@ where
             self.buffer <<= n_bits;
             return Ok(result);
         }
-
-        assert!(n_bits <= 64);
 
         let mut result: u64 =
             (self.buffer >> (BB::<WR>::BITS - 1 - self.bits_in_buffer) >> 1_u8).cast();
@@ -359,6 +360,9 @@ where
 
     #[inline]
     fn read_bits(&mut self, mut n_bits: usize) -> Result<u64, Self::Error> {
+        #[cfg(feature = "checks")]
+        assert!(n_bits <= 64);
+
         debug_assert!(self.bits_in_buffer < BB::<WR>::BITS);
 
         // most common path, we just read the buffer
@@ -368,8 +372,6 @@ where
             self.buffer >>= n_bits;
             return Ok(result);
         }
-
-        assert!(n_bits <= 64);
 
         let mut result: u64 = self.buffer.cast();
         let mut bits_in_res = self.bits_in_buffer;

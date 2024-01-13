@@ -22,6 +22,9 @@ pub trait BitRead<E: Endianness> {
     type PeekWord: UpcastableInto<u64>;
 
     /// Read `n` bits and return them in the lowest bits.
+    ///
+    /// Implementors should check the value of `n` when the `checks` feature is
+    /// enabled and panic if it is greater than 64.
     fn read_bits(&mut self, n: usize) -> Result<u64, Self::Error>;
 
     /// Peeks at `n` bits without advancing the stream position.
@@ -73,10 +76,14 @@ pub trait BitRead<E: Endianness> {
 pub trait BitWrite<E: Endianness> {
     type Error: Error;
 
-    /// Write the lowest `n` bits of `value` to the stream and return the number of
-    /// bits written, that is, `n`.
+    /// Write the lowest `n` bits of `value` to the stream and return the number
+    /// of bits written, that is, `n`.
     ///
-    /// The remaining bits must be ignored.
+    ///
+    /// Implementors should check the value of `n` when the `checks` feature is
+    /// enabled and panic if it is greater than 64. Moreover, under the same
+    /// conditions they should check that the remaining bits of `value` are
+    /// zero.
     fn write_bits(&mut self, value: u64, n: usize) -> Result<usize, Self::Error>;
 
     /// Write `value` as a unary code to the stream and return the number of

@@ -180,11 +180,12 @@ impl<E: Error, WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>, RP: Re
 
     #[inline]
     fn read_bits(&mut self, n_bits: usize) -> Result<u64, Self::Error> {
+        #[cfg(feature = "checks")]
+        assert!(n_bits <= 64);
+
         if n_bits == 0 {
             return Ok(0);
         }
-
-        assert!(n_bits <= 64);
 
         self.data.set_word_pos(self.bit_index / 64)?;
         let in_word_offset = (self.bit_index % 64) as usize;

@@ -219,6 +219,13 @@ fn default_write_delta<E: Endianness, B: GammaWriteParam<E>, const USE_GAMMA_TAB
 ) -> Result<usize, B::Error> {
     n += 1;
     let number_of_bits_to_write = n.ilog2();
+
+    #[cfg(feature = "checks")]
+    {
+        // Clean up n in case checks are enabled
+        n ^= 1 << number_of_bits_to_write;
+    }
+
     Ok(
         backend.write_gamma_param::<USE_GAMMA_TABLE>(number_of_bits_to_write as _)?
             + backend.write_bits(n, number_of_bits_to_write as _)?,
