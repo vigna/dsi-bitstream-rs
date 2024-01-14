@@ -5,7 +5,7 @@
 use crate::traits::{BitRead, BitWrite, BE, LE};
 use common_traits::*;
 /// How many bits are needed to read the tables in this
-pub const READ_BITS: usize = 1;
+pub const READ_BITS: usize = 6;
 /// The len we assign to a code that cannot be decoded through the table
 pub const MISSING_VALUE_LEN: u8 = 255;
 /// Maximum value writable using the table(s)
@@ -113,13 +113,27 @@ pub fn write_table_be<B: BitWrite<BE>>(
     })
 }
 /// Precomputed table for writing unary codes
-pub const READ_BE: &[u8] = &[0, 0];
+pub const READ_BE: &[u8] = &[
+    0, 5, 4, 4, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+];
 /// Precomputed lengths table for reading unary codes
-pub const READ_LEN_BE: &[u8] = &[255, 1];
+pub const READ_LEN_BE: &[u8] = &[
+    255, 6, 5, 5, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+    2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1,
+];
 /// Precomputed table for writing unary codes
-pub const READ_LE: &[u8] = &[0, 0];
+pub const READ_LE: &[u8] = &[
+    0, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0, 4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+    5, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0, 4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+];
 /// Precomputed lengths table for reading unary codes
-pub const READ_LEN_LE: &[u8] = &[255, 1];
+pub const READ_LEN_LE: &[u8] = &[
+    255, 1, 2, 1, 3, 1, 2, 1, 4, 1, 2, 1, 3, 1, 2, 1, 5, 1, 2, 1, 3, 1, 2, 1, 4, 1, 2, 1, 3, 1, 2,
+    1, 6, 1, 2, 1, 3, 1, 2, 1, 4, 1, 2, 1, 3, 1, 2, 1, 5, 1, 2, 1, 3, 1, 2, 1, 4, 1, 2, 1, 3, 1, 2,
+    1,
+];
 ///Table used to speed up the writing of unary codes
 pub const WRITE_BE: &[u16] = &[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
 ///Table used to speed up the writing of unary codes
