@@ -172,6 +172,7 @@ fn test_eof_table_read() {
         writer.write_delta(1).unwrap();
     }
     writer.flush().unwrap();
+    drop(writer);
 
     let mut reader =
         crate::prelude::BufBitReader::<crate::prelude::LE, _>::new(MemWordReader::new(&words));

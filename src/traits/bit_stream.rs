@@ -140,7 +140,7 @@ pub trait BitWrite<E: Endianness> {
     }
 
     /// Flush the buffer, consuming the bit stream.
-    fn flush(self) -> Result<(), Self::Error>;
+    fn flush(&mut self) -> Result<(), Self::Error>;
 }
 
 /// Seekability for [`BitRead`] and [`BitWrite`] streams.

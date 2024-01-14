@@ -102,8 +102,8 @@ where
 {
     type Error = <WW as WordWrite>::Error;
 
-    fn flush(mut self) -> Result<(), Self::Error> {
-        BE::flush(&mut self)
+    fn flush(&mut self) -> Result<(), Self::Error> {
+        BE::flush(self)
     }
 
     #[inline]
@@ -225,8 +225,8 @@ where
 {
     type Error = <WW as WordWrite>::Error;
 
-    fn flush(mut self) -> Result<(), Self::Error> {
-        LE::flush(&mut self)
+    fn flush(&mut self) -> Result<(), Self::Error> {
+        LE::flush(self)
     }
 
     #[inline]

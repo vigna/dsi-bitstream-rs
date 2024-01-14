@@ -81,7 +81,7 @@ impl<E: Endianness, BW: BitWrite<E>, const PRINT: bool> BitWrite<E>
         })
     }
 
-    fn flush(self) -> Result<(), Self::Error> {
+    fn flush(&mut self) -> Result<(), Self::Error> {
         self.bit_write.flush()
     }
 }
@@ -401,6 +401,7 @@ fn test_count() -> Result<(), Box<dyn std::error::Error>> {
     count_bit_write.write_zeta3(0)?;
     assert_eq!(count_bit_write.bits_written, 174);
     count_bit_write.flush()?;
+    drop(count_bit_write);
 
     let bit_read = <BufBitReader<LE, _>>::new(MemWordReader::<u64, _>::new(&buffer));
     let mut count_bit_read = CountBitReader::<_, _, true>::new(bit_read);

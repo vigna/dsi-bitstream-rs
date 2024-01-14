@@ -27,6 +27,7 @@ writer.write_gamma(1).unwrap();
 // Write 3 in δ code
 writer.write_delta(2).unwrap();
 writer.flush();
+drop(writer); // We must drop the writer release the borrow on data
 
 // Reading back the data is similar, but since a reader has a bit buffer
 // twice as large as the read word size, it is more efficient to use a 
