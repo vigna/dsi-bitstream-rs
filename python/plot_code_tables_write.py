@@ -42,7 +42,10 @@ for code in ["unary", "gamma", "delta", "delta_gamma", "zeta3"]:
             "%s::LE::Table" % code,
             "%s::BE::Table" % code,
         ]:
-            values = df[(df.pat == pat) & (df.tables_num == tables_n)]
+            if code == "unary":
+                values = df[(df.pat == pat) & (df.tables_num == tables_n) & (df["max"] <= 64)]
+            else:
+                values = df[(df.pat == pat) & (df.tables_num == tables_n)]
             m = min(values.ns_median)
             i = np.argmin(values.ns_median)
             ax.errorbar(
@@ -68,7 +71,10 @@ for code in ["unary", "gamma", "delta", "delta_gamma", "zeta3"]:
         "%s::LE::NoTable" % code,
         "%s::BE::NoTable" % code,
     ]:
-        values = df[df.pat == pat].groupby(x_label).mean(numeric_only=True)
+        if code == "unary":
+            values = df[(df.pat == pat) & (df["max"] <= 64)].groupby(x_label).mean(numeric_only=True)
+        else:
+            values = df[df.pat == pat].groupby(x_label).mean(numeric_only=True)
         m = min(values.ns_median)
         ax.errorbar(
             values.index,
@@ -131,8 +137,7 @@ for code in ["unary", "gamma", "delta", "delta_gamma", "zeta3"]:
         )
         % (write_word, nice[code])
     )
-    ax.set_xlabel("log2(Table Bits)")
-    #ax.set_xlabel(r"\log_2 \left ( \text{Table Bits} \right )")
+    ax.set_xlabel("log₂(table size)")
     ax.set_ylabel("ns")
     plots.append((
         fig,
