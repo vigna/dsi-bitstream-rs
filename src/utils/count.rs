@@ -378,7 +378,7 @@ impl<E: Endianness, BR: BitRead<E> + BitSeek, const PRINT: bool> BitSeek
 
 #[cfg(test)]
 #[test]
-fn test_count() -> anyhow::Result<()> {
+fn test_count() -> Result<(), Box<dyn std::error::Error>> {
     use crate::prelude::*;
     let mut buffer = <Vec<u64>>::new();
     let bit_write = <BufBitWriter<LE, _>>::new(MemWordWriterVec::new(&mut buffer));

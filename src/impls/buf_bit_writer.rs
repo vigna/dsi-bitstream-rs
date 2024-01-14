@@ -331,7 +331,7 @@ where
 macro_rules! test_buf_bit_writer {
     ($f: ident, $word:ty) => {
         #[test]
-        fn $f() -> Result<(), anyhow::Error> {
+        fn $f() -> Result<(), Box<dyn std::error::Error>> {
             use super::MemWordWriterVec;
             use crate::{
                 codes::{GammaRead, GammaWrite},

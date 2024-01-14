@@ -23,7 +23,7 @@ pub enum RandomCommand {
 
 pub fn harness(data: FuzzCase) {
     let mut idx = 0;
-    let mut reader = MemWordReader::new(&data.init);
+    let mut reader = MemWordReader::new_strict(&data.init);
     for command in data.commands {
         match command {
             RandomCommand::GetPosition => {
@@ -31,10 +31,12 @@ pub fn harness(data: FuzzCase) {
             }
             RandomCommand::SetPosition(word_index) => {
                 let _ = reader.set_word_pos(word_index as u64);
-                idx = word_index as u64;
+                if word_index <= data.init.len() {
+                    idx = word_index as u64;
+                }
             }
             RandomCommand::ReadNextWord => {
-                if reader.get_word_pos().unwrap() != u64::MAX {
+                if reader.get_word_pos().unwrap() < data.init.len() as u64 {
                     assert_eq!(
                         reader.read_word().ok(),
                         Some(data.init.get(idx as usize).copied().unwrap_or(0))

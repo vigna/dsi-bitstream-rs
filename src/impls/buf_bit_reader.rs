@@ -456,7 +456,7 @@ where
 macro_rules! test_buf_bit_reader {
     ($f: ident, $word:ty) => {
         #[test]
-        fn $f() -> anyhow::Result<()> {
+        fn $f() -> Result<(), Box<dyn Error>> {
             use super::MemWordWriterVec;
             use crate::{
                 codes::{GammaRead, GammaWrite},

@@ -15,8 +15,6 @@
 //! Note that this module provides a generic implementation of ζ codes, and
 //! a specialized implementation for ζ₃ that may use tables.
 
-use anyhow::Result;
-
 use super::{len_minimal_binary, zeta_tables, MinimalBinaryRead, MinimalBinaryWrite};
 use crate::traits::*;
 

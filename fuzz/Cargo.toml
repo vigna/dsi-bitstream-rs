@@ -29,6 +29,12 @@ test = false
 doc = false
 
 [[bin]]
+name = "mem_word_reader_strict"
+path = "fuzz_targets/mem_word_reader_strict.rs"
+test = false
+doc = false
+
+[[bin]]
 name = "mem_word_writer"
 path = "fuzz_targets/mem_word_writer.rs"
 test = false

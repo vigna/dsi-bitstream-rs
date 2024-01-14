@@ -6,14 +6,11 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
-#[cfg(feature = "fuzz")]
-use anyhow::Result;
-
 macro_rules! impl_fuzz_repr {
     ($func_name:ident, $func_zip_name:ident, $fuzz_name:ident) => {
         #[cfg(feature = "fuzz")]
         #[test]
-        fn $func_name() -> Result<()> {
+        fn $func_name() -> Result<Box<dyn std::error::Error>> {
             use arbitrary::Arbitrary;
             use dsi_bitstream::fuzz::$fuzz_name::*;
             use std::io::Read;
@@ -45,7 +42,7 @@ macro_rules! impl_fuzz_repr {
 
         #[cfg(feature = "fuzz")]
         #[test]
-        fn $func_zip_name() -> Result<()> {
+        fn $func_zip_name() -> Result<Box<dyn std::error::Error>> {
             use arbitrary::Arbitrary;
             use dsi_bitstream::fuzz::$fuzz_name::*;
             use std::io::prelude::*;

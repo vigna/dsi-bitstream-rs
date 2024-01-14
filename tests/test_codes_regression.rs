@@ -6,7 +6,6 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
-use anyhow::Result;
 use dsi_bitstream::prelude::*;
 
 macro_rules! test_code {
@@ -38,7 +37,7 @@ macro_rules! test_code {
 type Backend<'a, E> = BufBitWriter<E, MemWordWriterVec<u64, &'a mut Vec<u64>>>;
 
 #[test]
-fn test_unary() -> Result<()> {
+fn test_unary() -> Result<(), Box<dyn std::error::Error>> {
     for i in 0..63 {
         test_code!(
             |b: &mut Backend<BE>| b.write_unary(i),
@@ -52,7 +51,7 @@ fn test_unary() -> Result<()> {
 }
 
 #[test]
-fn test_gamma() -> Result<()> {
+fn test_gamma() -> Result<(), Box<dyn std::error::Error>> {
     test_code!(
         |b: &mut Backend<BE>| b.write_gamma(0),
         0b1_000000000000000000000000000000000000000000000000000000000000000,
@@ -124,7 +123,7 @@ fn test_gamma() -> Result<()> {
 }
 
 #[test]
-fn test_delta() -> Result<()> {
+fn test_delta() -> Result<(), Box<dyn std::error::Error>> {
     test_code!(
         |b: &mut Backend<BE>| b.write_delta(0),
         0b1_000000000000000000000000000000000000000000000000000000000000000,
@@ -196,7 +195,7 @@ fn test_delta() -> Result<()> {
 }
 
 #[test]
-fn test_zeta3() -> Result<()> {
+fn test_zeta3() -> Result<(), Box<dyn std::error::Error>> {
     test_code!(
         |b: &mut Backend<BE>| b.write_zeta3(0),
         0b1000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000,
@@ -268,7 +267,7 @@ fn test_zeta3() -> Result<()> {
 }
 
 #[test]
-fn test_zeta2() -> Result<()> {
+fn test_zeta2() -> Result<(), Box<dyn std::error::Error>> {
     test_code!(
         |b: &mut Backend<BE>| b.write_zeta(0, 2),
         0b1000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000_0000,

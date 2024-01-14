@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2023 Inria
+ * SPDX-FileCopyrightText: 2023 Sebastiano Vigna
  *
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
@@ -37,7 +38,7 @@ pub fn harness(data: FuzzCase) {
             }
             RandomCommand::SetPosition(word_index) => {
                 let _ = writer.set_word_pos(word_index as u64);
-                if buffer.get(word_index).is_some() {
+                if word_index <= buffer.len() {
                     idx = word_index as u64;
                 }
             }

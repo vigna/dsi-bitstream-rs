@@ -6,7 +6,6 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
-use anyhow::Result;
 use dsi_bitstream::prelude::{
     BitRead, BitSeek, BitWrite, BufBitReader, BufBitWriter, DeltaRead, DeltaWrite, GammaRead,
     GammaWrite, MemWordReader, MemWordWriterVec, MinimalBinaryRead, MinimalBinaryWrite, ZetaRead,
@@ -19,7 +18,7 @@ use rand::{Rng, SeedableRng};
 macro_rules! test_stream {
     ($endianness: ident, $name: ident) => {
         #[test]
-        fn $name() -> Result<()> {
+        fn $name() -> Result<(), Box<dyn std::error::Error>> {
             const N: usize = 100000;
             let mut r = SmallRng::seed_from_u64(0);
             let mut v = SmallRng::seed_from_u64(1);

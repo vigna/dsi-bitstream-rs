@@ -1,7 +1,7 @@
 # Fuzzing
 
 This crate provides fuzzing for `dsi-bitstream` using `cargo-fuzz` (you will
-the nightly compiler).
+need the nightly compiler).
 
 The fuzzing harnesses, however, can be found in `dsi-bitstream::fuzz`, 
 so you can easily replace `cargo-fuzz` with any other fuzzing framework.
