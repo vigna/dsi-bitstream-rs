@@ -70,12 +70,12 @@ const type parameters, in particular, whether to use decoding tables or not
 However, there are traits with non-parametric methods (e.g.,
 [`GammaRead::read_gamma`]) that are the standard entry points for the user.
 These traits are implemented for [`BufBitReader`]/[`BufBitWriter`] depending on
-a third type parameter of type [`ReadParams`]/[`WriteParams`], respectively.
+a selector type implementing [`ReadParams`]/[`WriteParams`], respectively.
 The default value for the parameter is
 [`DefaultReadParams`]/[`DefaultWriteParams`], which uses choices we tested on
 several platforms and that we believe are good defaults, but by passing a
 different implementation of [`ReadParams`]/[`WriteParams`] you can change the
-default behavior.
+default behavior. See [`params`] for more details.
 
 One exception to this rule is the unary code, as it is embedded in the
 read/write traits: implementations can choose how to implement
@@ -89,11 +89,6 @@ source code (in particular, in the files `*_tables.rs` in the `codes` source
 directory) and can be changed only by regenerating the tables using the script
 `gen_code_tables.py` in the `python` directory. You will need to modify the
 values hardwired at the end of the script.
-
-Note that while using a custom [`ReadParams`]/[`WriteParams`] to _not_ use a
-table does not require changing the source of the library, using a custom
-[`ReadParams`]/[`WriteParams`] to use a table will require, in general, to
-generate the table and add it to the library sources.
 
 ## Benchmarks
 
@@ -131,6 +126,8 @@ grant ANR-20-CE23-0002 of the French Agence Nationale de la Recherche.
 [`GammaReadParam::read_gamma_param`]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/codes/gamma/trait.GammaReadParam.html#tymethod.read_gamma_param
 [`WordAdapter`]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/impls/struct.WordAdapter.html
 [`traits`]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/traits/index.html
+[`impls`]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/impls/index.html
+[`params`]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/codes/params/index.html
 [`GammaRead::read_gamma`]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/codes/gamma/trait.GammaRead.html#tymethod.read_gamma
 [`BE`]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/traits/type.BE.html
 [`LE`]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/traits/type.LE.html
