@@ -1,9 +1,10 @@
 # Benchmarks for `dsi-bitstream`
 
 This crate provides performance benchmarks for several variants of 
-`BitRead` and `BitWrite` implementations. The benchmarks measure the
-speed of reading and writing instantaneous codes, and in particular
-unary, γ, δ and ζ₃.
+`BitRead` and `BitWrite` implementations. The benchmarks measure the speed
+of reading and writing instantaneous codes, and in particular unary, γ, δ
+and ζ₃. The `svg` directory contains the results of these benchmarks of a
+few architectures.
 
 Each code is tested in all possible combinations of the following parameters:
 - Big endian / little endian

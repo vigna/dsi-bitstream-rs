@@ -100,7 +100,8 @@ generate the table and add it to the library sources.
 To understand the behavior of the traits on your hardware, you can run the
 benchmarks in the `benchmarks` directory, which test the speed of read/write
 operations under several combinations of parameters. Please refer to the crate
-documentation therein.
+documentation therein. The `svg` directory contains the results of these
+benchmarks of a few architectures.
 
 ## Testing
 
