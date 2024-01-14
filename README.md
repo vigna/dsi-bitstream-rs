@@ -92,10 +92,10 @@ values hardwired at the end of the script.
 
 ## Benchmarks
 
-To understand the behavior of the traits on your hardware, you can run the
+To evaluate the performance on your hardware you can run the
 benchmarks in the `benchmarks` directory, which test the speed of read/write
 operations under several combinations of parameters. Please refer to the crate
-documentation therein. The `svg` directory contains the results of these
+documentation therein. The `svg` directory contains reference results of these
 benchmarks of a few architectures.
 
 ## Testing
