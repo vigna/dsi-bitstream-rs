@@ -96,7 +96,7 @@ for iter in 0..(WARMUP_ITERS + BENCH_ITERS) {
             buffer.len() * (core::mem::size_of::<u64>() / core::mem::size_of::<ReadWord>()),
         )};
 
-        let mut r = BufBitReader::<$bo, _, dsi_bitstream::prelude::table_params::DefaultReadParams>::new(
+        let mut r = BufBitReader::<$bo, _>::new(
             MemWordReader::<ReadWord, _>::new(&transmuted_buff)
         );
 
