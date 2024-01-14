@@ -64,7 +64,7 @@ More in-depth (and much more complicated) tuning can be obtained by modifying
 the default values for the parameters of instantaneous codes. Methods reading or
 writing instantaneous codes are defined in supporting traits and usually have
 const type parameters, in particular, whether to use decoding tables or not
-(e.g., [`GammaReadParam::read_gamma_param]`). Such traits are implemented for
+(e.g., [`GammaReadParam::read_gamma_param`]). Such traits are implemented for
 [`BitRead`]/[`BitWrite`].
 
 However, there are traits with non-parametric methods (e.g.,
@@ -120,3 +120,20 @@ the top-level `fuzz` directory, if any are present.
 This software has been partially supported by project SERICS (PE00000014) under
 the NRRP MUR program funded by the EU - NGEU, and by project ANR COREGRAPHIE,
 grant ANR-20-CE23-0002 of the French Agence Nationale de la Recherche.
+
+[`BitRead`]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/traits/trait.BitRead.html
+[`BitWrite`]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/traits/trait.BitWrite.html
+[`BufBitReader`]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/impls/struct.BufBitReader.html
+[`BufBitWriter`]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/impls/struct.BufBitWriter.html
+[`ReadParams`]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/codes/params/trait.ReadParams.html
+[`WriteParams`]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/codes/params/trait.WriteParams.html
+[`GammaReadParam::read_gamma_param`]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/codes/gamma/trait.GammaReadParam.html#tymethod.read_gamma_param
+[`WordAdapter`]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/impls/struct.WordAdapter.html
+[`traits`]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/traits/index.html
+[`GammaRead::read_gamma`]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/codes/gamma/trait.GammaRead.html#tymethod.read_gamma
+[`BE`]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/traits/type.BE.html
+[`LE`]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/traits/type.LE.html
+[`DefaultReadParams`]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/codes/params/struct.DefaultReadParams.html
+[`DefaultWriteParams`]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/codes/params/struct.DefaultWriteParams.html
+[`BitRead::read_unary`]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/traits/trait.BitRead.html#method.read_unary
+[`BitWrite::write_unary`]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/traits/trait.BitWrite.html#method.write_unary
