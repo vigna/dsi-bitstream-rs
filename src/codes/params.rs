@@ -16,24 +16,24 @@ a default way, to select parameters for parameterized traits
 such as [`GammaReadParam`] and [`GammaWriteParam`].
 
 The traits and structure in this module work closely with the
-bitstream readers and writers in [`crate::impls`], which have an
-additional type parameter `RP`/`WP` that must be a type implementing [`ReadParams`] or
-[`WriteParams`], respectively. These traits are _selector traits_:
-have no methods, but the type assigned to the parameter can be used as
-a selector for a blanket implementation
-of all parameterless traits in [`crate::codes`] such as [`GammaRead`],
+bitstream readers and writers in [`impls`](crate::impls), which have an
+additional type parameter `RP`/`WP` that must
+implement marker traits [`ReadParams`] or [`WriteParams`], respectively.
+The type is then used as a selector type to provide blanket implementations
+of parameterless traits in [`codes`](crate::codes) such as [`GammaRead`],
 [`GammaWrite`], [`DeltaRead`], [`DeltaWrite`], and so on.
 
-The default implementation of [`ReadParams`] and [`WriteParams`] are
-[`DefaultReadParams`] and [`DefaultWriteParams`], respectively. These
-are also the default value for the parameter `RP`/`WP` in the bitstream
-readers and writers in [`crate::impls`]. Thus, if you not specify
-a value for the parameter `RP`/`WP`, you will obtain automatically
+This module provides default selector types [`DefaultReadParams`] and [`DefaultWriteParams`]
+which are also the default value for the parameter `RP`/`WP` in the bitstream
+readers and writers in [`crate::impls`]. Type-selected blanket implementations
+of all parameterless traits in [`crate::codes`] are provided for the bitstream
+readers and writers in [`impls`](crate::impls). Thus, if you not specify a value for the
+parameter `RP`/`WP`, you will obtain automatically
 the blanket implementations for parameterless traits contained in this module.
 
-However, you can also create a new type implementing [`ReadParams`]/[`WriteParams`] and
-write blanket implementations for the bitstream readers and writers in [`crate::impls`],
-fixing `RP`/`WP` to your type. Then, by specifying your type as value of the
+However, you can also create new selector types implementing [`ReadParams`]/[`WriteParams`] and
+write blanket implementations for the bitstream readers and writers in [`crate::impls`]
+where `RP`/`WP` is set to your selector types. Then, by specifying your type as value of the
 parameter `RP`/`WP` when creating such readers and writers you will use
 automatically your blanket implementations instead of the ones provided by this module.
 
@@ -45,15 +45,14 @@ use crate::traits::*;
 use common_traits::*;
 use std::error::Error;
 
-/// Selector trait for parameters of code-reading methods.
+/// Marker trait for read-parameters selector types.
 ///
-/// Note that this trait is only a convenient way to avoid that the user
-/// specifies a nonsensical type: the mechanism would work even removing this
-/// trait, as it is the type (e.g., [DefaultReadParams])
-/// that selects the implementation.
+/// Note that in principle marker traits are not necessary to use
+/// selector types, but they are useful to avoid that the user specifies
+/// a nonsensical type, and to document the meaning of type parameters.
 pub trait ReadParams {}
 
-/// An implementation of [`ReadParams`] providing reasonable defaults.
+/// A selector type for read parameters providing reasonable defaults.
 ///
 /// If you want to optimize these choices for your architecture, we suggest to
 /// run the benchmarks in the `benchmarks` directory and write your
@@ -198,16 +197,15 @@ macro_rules! impl_default_read_codes {
 
 impl_default_read_codes! {LittleEndian, BigEndian}
 
-/// Selector trait for parameters of code-writing methods.
+/// Marker trait for write-parameters selector types.
 ///
-/// Note that this trait is only a convenient way to avoid that the user
-/// specifies a nonsensical type: the mechanism would work even removing this
-/// trait, as it is the type (e.g., [DefaultWriteParams])
-/// that selects the implementation.
+/// Note that in principle marker traits are not necessary to use
+/// selector types, but they are useful to avoid that the user specifies
+/// a nonsensical type, and to document the meaning of type parameters.
 pub trait WriteParams {}
 
 #[derive(Debug, Clone)]
-/// An implementation of [`WriteParams`] providing reasonable defaults.
+/// A selector type for write parameters providing reasonable defaults.
 ///
 /// If you want to optimize these choices for your architecture, we suggest to
 /// run the benchmarks in the `benchmarks` directory and write your

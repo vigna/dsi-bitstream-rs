@@ -17,9 +17,9 @@ on fixed-width blocks of bits and unary codes. More complex operations,
 such as [reading instantaneous codes](crate::codes::GammaReadParam),
 are built on these basic traits.
 
-The [`Endianness`] trait is used to specify the endianness
-of a bit stream by using its only two implementations, [`BigEndian`] (AKA [`LE`]) and
-[`LittleEndian`] (AKA [`BE`]).
+The endianness of a bit stream specified by using the selector types
+[`BigEndian`] (AKA [`LE`]) and [`LittleEndian`] (AKA [`BE`]), which
+are the only implementations of the sealed marker trait [`Endianness`].
 
 The implementations we provide for these traits (e.g.,
 [`BufBitReader`](crate::impls::BufBitReader)) are based on

@@ -15,14 +15,20 @@ mod private {
 
 impl<T: private::Endianness> Endianness for T {}
 
-/// Marker trait satisfied only by [`LittleEndian`] or [`BigEndian`]
+/// Marker trait for endianness selector types.
+///
+/// Its only implementations are [`LittleEndian`] and [`BigEndian`]
+///
+/// Note that in principle marker traits are not necessary to use
+/// selector types, but they are useful to avoid that the user specifies
+/// a nonsensical type, and to document the meaning of type parameters.
 pub trait Endianness: private::Endianness {}
 
-/// Marker struct for little-endian streams.
+/// Selector type for little-endian streams.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LittleEndian;
 
-/// Marker struct for big-endian streams.
+/// Selector type for big-endian streams.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct BigEndian;
 
