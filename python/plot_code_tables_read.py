@@ -7,17 +7,21 @@
 # SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
 #
 
-"""This script takes the data generated from `code_tables_study.py` and plots them"""
+"""Plots data generated from `bench_code_tables_read.py`"""
 
 import sys
 import numpy as np
 import pandas as pd
+import matplotlib
 import matplotlib.pyplot as plt
+
 
 # plt.rcParams['text.usetex'] = True
 
 if len(sys.argv) != 2 or not sys.argv[1] in { "u16", "u32", "u64" }:
     sys.exit("Usage: %s [u16 | u32 | u64]" % sys.argv[0])
+
+colors = matplotlib.cm.tab10.colors
 
 read_word = sys.argv[1]
 
@@ -26,9 +30,11 @@ nice = {"unary":"unary", "gamma":u"γ", "delta":"δ (no γ tables)", "delta_gamm
 df = pd.read_csv(sys.stdin, index_col=None, header=0)
 
 plots = []
+
 for code in ["unary", "gamma", "delta", "delta_gamma", "zeta3"]:
     fig, ax = plt.subplots(1, 1, figsize=(10, 8), dpi=200, facecolor="white")
     for ty in ["read_buff", "read_unbuff"]:
+        color = 0
         for tables_n in [1, 2]:
             if tables_n == 1:
                 table_txt = "merged"
@@ -53,7 +59,10 @@ for code in ["unary", "gamma", "delta", "delta_gamma", "zeta3"]:
                         "::".join(pat.split("::")[1:]), table_txt, ty, m, i
                     ),
                     marker=marker,
+                    linestyle="dotted" if ty == "read_unbuff" else "solid",
+                    color = colors[color],
                 )
+                color += 1
                 ax.fill_between(
                     values.n_bits,
                     values.ns_perc25,
@@ -78,7 +87,10 @@ for code in ["unary", "gamma", "delta", "delta_gamma", "zeta3"]:
                     "::".join(pat.split("::")[1:]), ty, m
                 ),
                 marker="^",
+                linestyle="dotted" if ty == "read_unbuff" else "solid",
+                color = colors[color % 10],
             )
+            color += 1
             ax.fill_between(
                 values.index,
                 values.ns_perc25,
@@ -134,8 +146,7 @@ for code in ["unary", "gamma", "delta", "delta_gamma", "zeta3"]:
         )
         % (read_word, nice[code])
     )
-    ax.set_xlabel("log2(Table Bits)")
-    #ax.set_xlabel(r"\log_2 \left ( \text{Table Bits} \right )")
+    ax.set_xlabel("table bits")
     ax.set_ylabel("ns")
     plots.append((
         fig,

@@ -7,7 +7,7 @@
 # SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
 #
 
-"""This script takes the data generated from `code_tables_study.py` and plots them"""
+"""Plots data generated from `bench_code_tables_write.py`"""
 
 import sys
 import numpy as np
