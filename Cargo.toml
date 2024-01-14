@@ -1,6 +1,6 @@
 [package]
 name = "dsi-bitstream"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "A Rust implementation of read/write bit streams supporting several types of instantaneous codes"
 repository = "https://github.com/vigna/dsi-bitstream-rs/"
@@ -8,7 +8,7 @@ license = "Apache-2.0 OR LGPL-2.1-or-later"
 readme = "README.md"
 keywords = ["bitstream", "codes", "compression"]
 categories = ["compression"]
-authors = ["Tommaso Fontana", "Sebastiano Vigna <sebastiano.vigna@unimi.it>"]
+authors = ["Tommaso Fontana <tommaso.fontana.96@gmail.com>", "Sebastiano Vigna <sebastiano.vigna@unimi.it>"]
 
 [dependencies]
 rand = { version = "0.8.5", features = ["small_rng"] }
