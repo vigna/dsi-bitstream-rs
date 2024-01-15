@@ -92,6 +92,7 @@ impl<WW: WordWrite, WP: WriteParams> DropHelper<WW, WP> for BE {
                 .write_word(buf_bit_writer.buffer.to_be())?;
             buf_bit_writer.bits_in_buffer = 0;
         }
+        buf_bit_writer.backend.flush()?;
         Ok(())
     }
 }
@@ -215,6 +216,7 @@ impl<WW: WordWrite, WP: WriteParams> DropHelper<WW, WP> for LE {
                 .write_word(buf_bit_writer.buffer.to_le())?;
             buf_bit_writer.bits_in_buffer = 0;
         }
+        buf_bit_writer.backend.flush()?;
         Ok(())
     }
 }
