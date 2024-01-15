@@ -197,6 +197,10 @@ impl<W: UnsignedInt, B: AsMut<[W]>> WordWrite for MemWordWriterSlice<W, B> {
             )),
         }
     }
+
+    fn flush(&mut self) -> Result<(), Self::Error> {
+        Ok(())
+    }
 }
 
 #[cfg(feature = "alloc")]
@@ -211,6 +215,10 @@ impl<W: UnsignedInt, B: AsMut<alloc::vec::Vec<W>>> WordWrite for MemWordWriterVe
         }
         self.data.as_mut()[self.word_index] = word;
         self.word_index += 1;
+        Ok(())
+    }
+
+    fn flush(&mut self) -> Result<(), Self::Error> {
         Ok(())
     }
 }

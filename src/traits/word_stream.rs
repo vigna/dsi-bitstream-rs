@@ -29,6 +29,9 @@ pub trait WordWrite {
 
     /// Write a word and advance the current position.
     fn write_word(&mut self, word: Self::Word) -> Result<(), Self::Error>;
+
+    /// Flush the stream.
+    fn flush(&mut self) -> Result<(), Self::Error>;
 }
 
 /// Seekability for [`WordRead`] and [`WordWrite`] streams.

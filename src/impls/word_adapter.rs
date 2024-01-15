@@ -19,15 +19,15 @@ use std::io::{Read, Seek, SeekFrom, Write};
 /// into a source or destination of words.
 #[derive(Clone)]
 pub struct WordAdapter<W: UnsignedInt, B> {
-    file: B,
+    backend: B,
     _marker: core::marker::PhantomData<W>,
 }
 
 impl<W: UnsignedInt, B> WordAdapter<W, B> {
     /// Create a new WordAdapter
-    pub fn new(file: B) -> Self {
+    pub fn new(backend: B) -> Self {
         Self {
-            file,
+            backend,
             _marker: core::marker::PhantomData,
         }
     }
@@ -40,7 +40,7 @@ impl<W: UnsignedInt, B: Read> WordRead for WordAdapter<W, B> {
     #[inline]
     fn read_word(&mut self) -> Result<W, std::io::Error> {
         let mut res: W::Bytes = Default::default();
-        let _ = self.file.read(res.as_mut())?;
+        let _ = self.backend.read(res.as_mut())?;
         Ok(W::from_ne_bytes(res))
     }
 }
@@ -51,8 +51,12 @@ impl<W: UnsignedInt, B: Write> WordWrite for WordAdapter<W, B> {
 
     #[inline]
     fn write_word(&mut self, word: W) -> Result<(), std::io::Error> {
-        let _ = self.file.write(word.to_ne_bytes().as_ref())?;
+        let _ = self.backend.write(word.to_ne_bytes().as_ref())?;
         Ok(())
+    }
+
+    fn flush(&mut self) -> Result<(), Self::Error> {
+        self.backend.flush()
     }
 }
 
@@ -61,7 +65,7 @@ impl<W: UnsignedInt, B: Seek> WordSeek for WordAdapter<W, B> {
 
     #[inline(always)]
     fn get_word_pos(&mut self) -> Result<u64, std::io::Error> {
-        let byte_pos = self.file.stream_position()?;
+        let byte_pos = self.backend.stream_position()?;
         if byte_pos % W::BYTES as u64 != 0 {
             Err(std::io::Error::new(
                 std::io::ErrorKind::InvalidData,
@@ -74,7 +78,7 @@ impl<W: UnsignedInt, B: Seek> WordSeek for WordAdapter<W, B> {
 
     #[inline(always)]
     fn set_word_pos(&mut self, word_index: u64) -> Result<(), std::io::Error> {
-        self.file
+        self.backend
             .seek(SeekFrom::Start(word_index * W::BYTES as u64))?;
         Ok(())
     }
