@@ -40,3 +40,13 @@ pub type LE = LittleEndian;
 
 impl private::Endianness for LittleEndian {}
 impl private::Endianness for BigEndian {}
+
+#[cfg(target_endian = "little")]
+/// A type alias for the native endianness of the target platform.
+pub type NativeEndian = LittleEndian;
+#[cfg(target_endian = "big")]
+/// A type alias for the native endianness of the target platform.
+pub type NativeEndian = BigEndian;
+
+/// An Alias for [`NativeEndian`]
+pub type NE = NativeEndian;
