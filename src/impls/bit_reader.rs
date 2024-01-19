@@ -48,8 +48,11 @@ impl<E: Endianness, WR, RP: ReadParams> BitReader<E, WR, RP> {
     }
 }
 
-impl<E: Error, WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>, RP: ReadParams>
-    BitRead<BE> for BitReader<BE, WR, RP>
+impl<
+        E: Error + Send + Sync + 'static,
+        WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>,
+        RP: ReadParams,
+    > BitRead<BE> for BitReader<BE, WR, RP>
 {
     type Error = <WR as WordRead>::Error;
     type PeekWord = u32;
@@ -171,8 +174,11 @@ impl<WR: WordSeek, RP: ReadParams> BitSeek for BitReader<BE, WR, RP> {
     }
 }
 
-impl<E: Error, WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>, RP: ReadParams>
-    BitRead<LE> for BitReader<LE, WR, RP>
+impl<
+        E: Error + Send + Sync + 'static,
+        WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>,
+        RP: ReadParams,
+    > BitRead<LE> for BitReader<LE, WR, RP>
 {
     type Error = <WR as WordRead>::Error;
     type PeekWord = u32;

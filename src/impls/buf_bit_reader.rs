@@ -115,8 +115,11 @@ where
     }
 }
 
-impl<E: Error, WR: WordRead<Error = E> + WordSeek<Error = E>, RP: ReadParams> BitSeek
-    for BufBitReader<BE, WR, RP>
+impl<
+        E: Error + Send + Sync + 'static,
+        WR: WordRead<Error = E> + WordSeek<Error = E>,
+        RP: ReadParams,
+    > BitSeek for BufBitReader<BE, WR, RP>
 where
     WR::Word: DoubleType,
 {
@@ -294,8 +297,11 @@ where
     }
 }
 
-impl<E: Error, WR: WordRead<Error = E> + WordSeek<Error = E>, RP: ReadParams> BitSeek
-    for BufBitReader<LE, WR, RP>
+impl<
+        E: Error + Send + Sync + 'static,
+        WR: WordRead<Error = E> + WordSeek<Error = E>,
+        RP: ReadParams,
+    > BitSeek for BufBitReader<LE, WR, RP>
 where
     WR::Word: DoubleType,
 {

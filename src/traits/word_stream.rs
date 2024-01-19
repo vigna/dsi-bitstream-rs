@@ -11,7 +11,7 @@ use std::error::Error;
 use common_traits::*;
 /// Sequential, streaming word-by-word reads.
 pub trait WordRead {
-    type Error: Error;
+    type Error: Error + Send + Sync + 'static;
 
     /// The word type (the type of the result of [`WordRead::read_word`]).
     type Word: UnsignedInt;
@@ -22,7 +22,7 @@ pub trait WordRead {
 
 /// Sequential, streaming word-by-word writes.
 pub trait WordWrite {
-    type Error: Error;
+    type Error: Error + Send + Sync + 'static;
 
     /// The word type (the type of the argument of [`WordWrite::write_word`]).
     type Word: UnsignedInt;
@@ -36,7 +36,7 @@ pub trait WordWrite {
 
 /// Seekability for [`WordRead`] and [`WordWrite`] streams.
 pub trait WordSeek {
-    type Error: Error;
+    type Error: Error + Send + Sync + 'static;
     /// Get the current position in words from the start of the file.
     fn get_word_pos(&mut self) -> Result<u64, Self::Error>;
 

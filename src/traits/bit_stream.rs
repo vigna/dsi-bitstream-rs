@@ -46,7 +46,7 @@ impl_peekable!(
 /// Please see the documentation of the [`impls`](crate::impls) module for more
 /// details.
 pub trait BitRead<E: Endianness> {
-    type Error: Error;
+    type Error: Error + Send + Sync + 'static;
 
     /// The type we can read from the stream without advancing.
     type PeekWord: CastableInto<u64>;
@@ -104,7 +104,7 @@ pub trait BitRead<E: Endianness> {
 /// This trait specify basic operation over which codes can be implemented
 /// by traits such as [`crate::codes::GammaWriteParam`].
 pub trait BitWrite<E: Endianness> {
-    type Error: Error;
+    type Error: Error + Send + Sync + 'static;
 
     /// Write the lowest `n` bits of `value` to the stream and return the number
     /// of bits written, that is, `n`.
@@ -145,7 +145,7 @@ pub trait BitWrite<E: Endianness> {
 
 /// Seekability for [`BitRead`] and [`BitWrite`] streams.
 pub trait BitSeek {
-    type Error: Error;
+    type Error: Error + Send + Sync + 'static;
     /// Get the current position in bits from the start of the file.
     fn get_bit_pos(&mut self) -> Result<u64, Self::Error>;
 

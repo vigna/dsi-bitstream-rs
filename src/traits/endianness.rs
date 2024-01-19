@@ -12,18 +12,18 @@ mod private {
     /// This is a [SealedTrait](https://predr.ag/blog/definitive-guide-to-sealed-traits-in-rust/).
     pub trait Endianness {
         /// The name of the endianness.
-        const NAME: &'static str;
+        const _NAME: &'static str;
         /// Whether the endianness is little-endian.
-        const IS_LITTLE: bool;
+        const _IS_LITTLE: bool;
         /// Whether the endianness is big-endian.
-        const IS_BIG: bool;
+        const _IS_BIG: bool;
     }
 }
 
 impl<T: private::Endianness> Endianness for T {
-    const NAME: &'static str = T::NAME;
-    const IS_LITTLE: bool = T::IS_LITTLE;
-    const IS_BIG: bool = T::IS_BIG;
+    const NAME: &'static str = T::_NAME;
+    const IS_LITTLE: bool = T::_IS_LITTLE;
+    const IS_BIG: bool = T::_IS_BIG;
 }
 
 /// Marker trait for endianness selector types.
@@ -63,15 +63,15 @@ pub struct LittleEndian;
 pub struct BigEndian;
 
 impl private::Endianness for LittleEndian {
-    const NAME: &'static str = "little";
-    const IS_LITTLE: bool = true;
-    const IS_BIG: bool = false;
+    const _NAME: &'static str = "little";
+    const _IS_LITTLE: bool = true;
+    const _IS_BIG: bool = false;
 }
 
 impl private::Endianness for BigEndian {
-    const NAME: &'static str = "big";
-    const IS_LITTLE: bool = false;
-    const IS_BIG: bool = true;
+    const _NAME: &'static str = "big";
+    const _IS_LITTLE: bool = false;
+    const _IS_BIG: bool = true;
 }
 
 /// Alias for [`BigEndian`]
