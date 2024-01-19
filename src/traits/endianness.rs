@@ -10,10 +10,21 @@
 /// impossible for other structs.
 mod private {
     /// This is a [SealedTrait](https://predr.ag/blog/definitive-guide-to-sealed-traits-in-rust/).
-    pub trait Endianness {}
+    pub trait Endianness {
+        /// The name of the endianness.
+        const NAME: &'static str;
+        /// Whether the endianness is little-endian.
+        const IS_LITTLE: bool;
+        /// Whether the endianness is big-endian.
+        const IS_BIG: bool;
+    }
 }
 
-impl<T: private::Endianness> Endianness for T {}
+impl<T: private::Endianness> Endianness for T {
+    const NAME: &'static str = T::NAME;
+    const IS_LITTLE: bool = T::IS_LITTLE;
+    const IS_BIG: bool = T::IS_BIG;
+}
 
 /// Marker trait for endianness selector types.
 ///
@@ -22,7 +33,20 @@ impl<T: private::Endianness> Endianness for T {}
 /// Note that in principle marker traits are not necessary to use
 /// selector types, but they are useful to avoid that the user specifies
 /// a nonsensical type, and to document the meaning of type parameters.
-pub trait Endianness: private::Endianness {}
+pub trait Endianness: private::Endianness {
+    /// The name of the endianness.
+    const NAME: &'static str;
+    /// Whether the endianness is little-endian.
+    const IS_LITTLE: bool;
+    /// Whether the endianness is big-endian.
+    const IS_BIG: bool;
+}
+
+impl<E: Endianness> ToString for E {
+    fn to_string(&self) -> String {
+        E::NAME.to_string()
+    }
+}
 
 /// Selector type for little-endian streams.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -32,14 +56,23 @@ pub struct LittleEndian;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct BigEndian;
 
+impl private::Endianness for LittleEndian {
+    const NAME: &'static str = "little";
+    const IS_LITTLE: bool = true;
+    const IS_BIG: bool = false;
+}
+
+impl private::Endianness for BigEndian {
+    const NAME: &'static str = "big";
+    const IS_LITTLE: bool = false;
+    const IS_BIG: bool = true;
+}
+
 /// Alias for [`BigEndian`]
 pub type BE = BigEndian;
 
 /// Alias for [`LittleEndian`]
 pub type LE = LittleEndian;
-
-impl private::Endianness for LittleEndian {}
-impl private::Endianness for BigEndian {}
 
 #[cfg(target_endian = "little")]
 /// A type alias for the native endianness of the target platform.
