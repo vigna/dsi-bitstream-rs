@@ -42,9 +42,15 @@ pub trait Endianness: private::Endianness {
     const IS_BIG: bool;
 }
 
-impl<E: Endianness> ToString for E {
+impl ToString for LE {
     fn to_string(&self) -> String {
-        E::NAME.to_string()
+        LE::NAME.to_string()
+    }
+}
+
+impl ToString for BE {
+    fn to_string(&self) -> String {
+        LE::NAME.to_string()
     }
 }
 
