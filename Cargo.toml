@@ -1,6 +1,6 @@
 [package]
 name = "dsi-bitstream"
-version = "0.1.3"
+version = "0.1.4"
 edition = "2021"
 description = "A Rust implementation of read/write bit streams supporting several types of instantaneous codes"
 repository = "https://github.com/vigna/dsi-bitstream-rs/"
