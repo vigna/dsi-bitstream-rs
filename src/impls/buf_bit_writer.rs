@@ -64,16 +64,20 @@ impl<E: Endianness, WW: WordWrite, WP: WriteParams> BufBitWriter<E, WW, WP> {
 
 impl<E: Endianness, WW: WordWrite, WP: WriteParams> core::ops::Drop for BufBitWriter<E, WW, WP> {
     fn drop(&mut self) {
-        let type_id = TypeId::of::<E>();
-        if type_id == TypeId::of::<LE>() {
+        if TypeId::of::<E>() == TypeId::of::<LE>() {
             flush_le(self).unwrap()
         } else {
-            // type_id = TypeId::of::<BE>()
+            // TypeId::of::<E>() = TypeId::of::<BE>()
             flush_be(self).unwrap()
         }
     }
 }
 
+/// Helper function flushing a [`BufBitWriter`] in big-endian fashion.
+///
+/// The endianness is hardwired because the function is called
+/// from [`BufBitWriter::drop`] using a check on the
+/// [`TypeId`] of the endianness.
 fn flush_be<E: Endianness, WW: WordWrite, WP: WriteParams>(
     buf_bit_writer: &mut BufBitWriter<E, WW, WP>,
 ) -> Result<(), WW::Error> {
@@ -197,6 +201,11 @@ where
     }
 }
 
+/// Helper function flushing a [`BufBitWriter`] in big-endian fashion.
+///
+/// The endianness is hardwired because the function is called
+/// from [`BufBitWriter::drop`] using a check on the
+/// [`TypeId`] of the endianness.
 fn flush_le<E: Endianness, WW: WordWrite, WP: WriteParams>(
     buf_bit_writer: &mut BufBitWriter<E, WW, WP>,
 ) -> Result<(), WW::Error> {
