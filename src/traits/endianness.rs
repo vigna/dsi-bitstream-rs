@@ -10,7 +10,7 @@
 /// impossible for other structs.
 mod private {
     /// This is a [SealedTrait](https://predr.ag/blog/definitive-guide-to-sealed-traits-in-rust/).
-    pub trait Endianness {
+    pub trait Endianness: 'static {
         /// The name of the endianness.
         const _NAME: &'static str;
         /// Whether the endianness is little-endian.

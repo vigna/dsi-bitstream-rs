@@ -91,4 +91,4 @@ mod buf_bit_reader;
 pub use buf_bit_reader::BufBitReader;
 
 mod buf_bit_writer;
-pub use buf_bit_writer::{BufBitWriter, DropHelper};
+pub use buf_bit_writer::BufBitWriter;

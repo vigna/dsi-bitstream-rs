@@ -6,6 +6,8 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
+use core::any::TypeId;
+
 use crate::codes::params::{DefaultWriteParams, WriteParams};
 use crate::codes::unary_tables;
 use crate::traits::*;
@@ -22,8 +24,7 @@ use common_traits::{CastableInto, Integer, Number, Scalar};
 /// See [`WriteParams`] for more details.
 
 #[derive(Debug)]
-pub struct BufBitWriter<E: DropHelper<WW, WP>, WW: WordWrite, WP: WriteParams = DefaultWriteParams>
-{
+pub struct BufBitWriter<E: Endianness, WW: WordWrite, WP: WriteParams = DefaultWriteParams> {
     /// The [`WordWrite`] to which we will write words.
     backend: WW,
     /// The buffer where we store bits until we have a word worth of them.
@@ -36,7 +37,7 @@ pub struct BufBitWriter<E: DropHelper<WW, WP>, WW: WordWrite, WP: WriteParams = 
     _marker_endianness: core::marker::PhantomData<(E, WP)>,
 }
 
-impl<E: DropHelper<WW, WP>, WW: WordWrite, WP: WriteParams> BufBitWriter<E, WW, WP> {
+impl<E: Endianness, WW: WordWrite, WP: WriteParams> BufBitWriter<E, WW, WP> {
     /// Create a new [`BufBitWriter`] around a [`WordWrite`].
     ///
     /// ### Example
@@ -61,40 +62,30 @@ impl<E: DropHelper<WW, WP>, WW: WordWrite, WP: WriteParams> BufBitWriter<E, WW, 
     }
 }
 
-impl<E: DropHelper<WW, WP>, WW: WordWrite, WP: WriteParams> core::ops::Drop
-    for BufBitWriter<E, WW, WP>
-{
+impl<E: Endianness, WW: WordWrite, WP: WriteParams> core::ops::Drop for BufBitWriter<E, WW, WP> {
     fn drop(&mut self) {
-        // During a drop we can't save anything if it goes bad :/
-        let _ = E::flush(self);
-    }
-}
-
-#[doc(hidden)]
-/// Ignore. Inner trait needed for dispatching of drop logic based on endianess
-/// of a [`BufBitWriter`]. This is public to avoid the leak of
-/// private traits in public defs. A user should never need to implement this.
-///
-/// I discuss the need for this trait
-/// [here](https://users.rust-lang.org/t/on-generic-associated-enum-and-type-comparisons/92072).
-pub trait DropHelper<WW: WordWrite, WP: WriteParams>: Sized + Endianness {
-    /// handle the drop
-    fn flush(buf_bit_writer: &mut BufBitWriter<Self, WW, WP>) -> Result<(), WW::Error>;
-}
-
-impl<WW: WordWrite, WP: WriteParams> DropHelper<WW, WP> for BE {
-    #[inline]
-    fn flush(buf_bit_writer: &mut BufBitWriter<Self, WW, WP>) -> Result<(), WW::Error> {
-        if buf_bit_writer.bits_in_buffer > 0 {
-            buf_bit_writer.buffer <<= WW::Word::BITS - buf_bit_writer.bits_in_buffer;
-            buf_bit_writer
-                .backend
-                .write_word(buf_bit_writer.buffer.to_be())?;
-            buf_bit_writer.bits_in_buffer = 0;
+        let type_id = TypeId::of::<E>();
+        if type_id == TypeId::of::<LE>() {
+            flush_le(self).unwrap()
+        } else {
+            // type_id = TypeId::of::<BE>()
+            flush_be(self).unwrap()
         }
-        buf_bit_writer.backend.flush()?;
-        Ok(())
     }
+}
+
+fn flush_be<E: Endianness, WW: WordWrite, WP: WriteParams>(
+    buf_bit_writer: &mut BufBitWriter<E, WW, WP>,
+) -> Result<(), WW::Error> {
+    if buf_bit_writer.bits_in_buffer > 0 {
+        buf_bit_writer.buffer <<= WW::Word::BITS - buf_bit_writer.bits_in_buffer;
+        buf_bit_writer
+            .backend
+            .write_word(buf_bit_writer.buffer.to_be())?;
+        buf_bit_writer.bits_in_buffer = 0;
+    }
+    buf_bit_writer.backend.flush()?;
+    Ok(())
 }
 
 impl<WW: WordWrite, WP: WriteParams> BitWrite<BE> for BufBitWriter<BE, WW, WP>
@@ -104,7 +95,7 @@ where
     type Error = <WW as WordWrite>::Error;
 
     fn flush(&mut self) -> Result<(), Self::Error> {
-        BE::flush(self)
+        flush_be(self)
     }
 
     #[inline]
@@ -206,19 +197,18 @@ where
     }
 }
 
-impl<WW: WordWrite, WP: WriteParams> DropHelper<WW, WP> for LE {
-    #[inline]
-    fn flush(buf_bit_writer: &mut BufBitWriter<Self, WW, WP>) -> Result<(), WW::Error> {
-        if buf_bit_writer.bits_in_buffer > 0 {
-            buf_bit_writer.buffer >>= WW::Word::BITS - buf_bit_writer.bits_in_buffer;
-            buf_bit_writer
-                .backend
-                .write_word(buf_bit_writer.buffer.to_le())?;
-            buf_bit_writer.bits_in_buffer = 0;
-        }
-        buf_bit_writer.backend.flush()?;
-        Ok(())
+fn flush_le<E: Endianness, WW: WordWrite, WP: WriteParams>(
+    buf_bit_writer: &mut BufBitWriter<E, WW, WP>,
+) -> Result<(), WW::Error> {
+    if buf_bit_writer.bits_in_buffer > 0 {
+        buf_bit_writer.buffer >>= WW::Word::BITS - buf_bit_writer.bits_in_buffer;
+        buf_bit_writer
+            .backend
+            .write_word(buf_bit_writer.buffer.to_le())?;
+        buf_bit_writer.bits_in_buffer = 0;
     }
+    buf_bit_writer.backend.flush()?;
+    Ok(())
 }
 
 impl<WW: WordWrite, WP: WriteParams> BitWrite<LE> for BufBitWriter<LE, WW, WP>
@@ -228,7 +218,7 @@ where
     type Error = <WW as WordWrite>::Error;
 
     fn flush(&mut self) -> Result<(), Self::Error> {
-        LE::flush(self)
+        flush_le(self)
     }
 
     #[inline]
