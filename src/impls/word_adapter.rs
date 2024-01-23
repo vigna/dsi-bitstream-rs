@@ -40,7 +40,7 @@ impl<W: UnsignedInt, B: Read> WordRead for WordAdapter<W, B> {
     #[inline]
     fn read_word(&mut self) -> Result<W, std::io::Error> {
         let mut res: W::Bytes = Default::default();
-        let _ = self.backend.read(res.as_mut())?;
+        let _ = self.backend.read_exact(res.as_mut())?;
         Ok(W::from_ne_bytes(res))
     }
 }
@@ -69,7 +69,12 @@ impl<W: UnsignedInt, B: Seek> WordSeek for WordAdapter<W, B> {
         if byte_pos % W::BYTES as u64 != 0 {
             Err(std::io::Error::new(
                 std::io::ErrorKind::InvalidData,
-                "The current position is not a multiple of the word size",
+                format_args!(
+                    "The current position ({}) is not a multiple of the word size ({})",
+                    byte_pos,
+                    W::BYTES
+                )
+                .to_string(),
             ))
         } else {
             Ok(byte_pos / W::BYTES as u64)
