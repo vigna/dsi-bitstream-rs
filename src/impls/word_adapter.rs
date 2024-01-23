@@ -40,7 +40,7 @@ impl<W: UnsignedInt, B: Read> WordRead for WordAdapter<W, B> {
     #[inline]
     fn read_word(&mut self) -> Result<W, std::io::Error> {
         let mut res: W::Bytes = Default::default();
-        let _ = self.backend.read_exact(res.as_mut())?;
+        self.backend.read_exact(res.as_mut())?;
         Ok(W::from_ne_bytes(res))
     }
 }
