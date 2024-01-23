@@ -86,6 +86,3 @@ pub mod delta_tables;
 pub mod gamma_tables;
 pub mod unary_tables;
 pub mod zeta_tables;
-
-mod stats;
-pub use stats::*;
