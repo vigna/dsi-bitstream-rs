@@ -129,15 +129,14 @@ where
         debug_assert!(n_bits > 0);
         debug_assert!(n_bits <= Self::PeekWord::BITS);
 
-        // A peek can do at most one refill, otherwise we might lose 9888data
+        // A peek can do at most one refill, otherwise we might lose data
         if n_bits > self.bits_in_buffer {
             self.refill()?;
         }
 
         debug_assert!(n_bits <= self.bits_in_buffer);
 
-        // Read the `n_bits` highest bits of the buffer and shift them to
-        // be the lowest.
+        // Move the n_bits highest bits of the buffer to the lowest
         Ok(self.buffer >> (BB::<WR>::BITS - n_bits))
     }
 
@@ -307,6 +306,23 @@ where
     type Error = <WR as WordRead>::Error;
     type PeekWord = BB<WR>;
 
+    #[inline(always)]
+    fn peek_bits(&mut self, n_bits: usize) -> Result<Self::PeekWord, Self::Error> {
+        debug_assert!(n_bits > 0);
+        debug_assert!(n_bits <= Self::PeekWord::BITS);
+
+        // A peek can do at most one refill, otherwise we might lose data
+        if n_bits > self.bits_in_buffer {
+            self.refill()?;
+        }
+
+        debug_assert!(n_bits <= self.bits_in_buffer);
+
+        // Keep the n_bits lowest bits of the buffer
+        let shamt = BB::<WR>::BITS - n_bits;
+        Ok((self.buffer << shamt) >> shamt)
+    }
+
     #[inline]
     fn skip_bits(&mut self, mut n_bits: usize) -> Result<(), Self::Error> {
         // happy case, just shift the buffer
@@ -375,24 +391,6 @@ where
         self.buffer = UpcastableInto::<BB<WR>>::upcast(new_word) >> n_bits;
 
         Ok(result)
-    }
-
-    #[inline(always)]
-    fn peek_bits(&mut self, n_bits: usize) -> Result<Self::PeekWord, Self::Error> {
-        debug_assert!(n_bits > 0);
-        debug_assert!(n_bits <= Self::PeekWord::BITS);
-
-        // A peek can do at most one refill, otherwise we might lose data
-        if n_bits > self.bits_in_buffer {
-            self.refill()?;
-        }
-
-        debug_assert!(n_bits <= self.bits_in_buffer);
-
-        // Read the `n_bits` highest bits of the buffer and shift them to
-        // be the lowest.
-        let shamt = BB::<WR>::BITS - n_bits;
-        Ok((self.buffer << shamt) >> shamt)
     }
 
     #[inline]
