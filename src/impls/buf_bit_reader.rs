@@ -94,6 +94,10 @@ where
     }
 }
 
+//
+// Big-endian implementation
+//
+
 impl<WR: WordRead, RP: ReadParams> BufBitReader<BE, WR, RP>
 where
     WR::Word: DoubleType,
@@ -103,10 +107,7 @@ where
     /// `WR::Word::BITS` free bits in the buffer.
     #[inline(always)]
     fn refill(&mut self) -> Result<(), <WR as WordRead>::Error> {
-        // if we have 64 valid bits, we don't have space for a new word
-        // and by definition we can only read
-        let free_bits = BB::<WR>::BITS - self.bits_in_buffer;
-        debug_assert!(free_bits >= WR::Word::BITS);
+        debug_assert!(BB::<WR>::BITS - self.bits_in_buffer >= WR::Word::BITS);
 
         let new_word: BB<WR> = self.backend.read_word()?.to_be().upcast();
         self.bits_in_buffer += WR::Word::BITS;
@@ -289,10 +290,7 @@ where
     /// `WR::Word::BITS` free bits in the buffer.
     #[inline(always)]
     fn refill(&mut self) -> Result<(), <WR as WordRead>::Error> {
-        // if we have 64 valid bits, we don't have space for a new word
-        // and by definition we can only read
-        let free_bits = BB::<WR>::BITS - self.bits_in_buffer;
-        debug_assert!(free_bits >= WR::Word::BITS);
+        debug_assert!(BB::<WR>::BITS - self.bits_in_buffer >= WR::Word::BITS);
 
         let new_word: BB<WR> = self.backend.read_word()?.to_le().upcast();
         self.buffer |= new_word << self.bits_in_buffer;
