@@ -149,10 +149,8 @@ where
             return Ok(());
         }
 
-        // clean the buffer data
         n_bits -= self.bits_in_buffer;
-        self.bits_in_buffer = 0;
-        self.buffer = BB::<WR>::ZERO;
+
         // skip words as needed
         while n_bits > WR::Word::BITS {
             let _ = self.backend.read_word()?;
@@ -332,10 +330,8 @@ where
             return Ok(());
         }
 
-        // clean the buffer data
         n_bits -= self.bits_in_buffer;
-        self.bits_in_buffer = 0;
-        self.buffer = BB::<WR>::ZERO;
+
         // skip words as needed
         while n_bits > WR::Word::BITS {
             let _ = self.backend.read_word()?;
