@@ -5,12 +5,17 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
+use core::ops::Add;
+
 use crate::prelude::{len_delta, len_gamma, len_minimal_binary, len_zeta, Code};
 
 // To be replaced when Golomb codes will be implemented.
 fn len_golomb(value: u64, b: u64) -> usize {
     (value / b) as usize + 1 + len_minimal_binary(value % b, b)
 }
+
+const ZETA: usize = 10;
+const GOLOMB: usize = 20;
 
 /// Keeps track of the space needed to store a stream of integers using
 /// different codes.
@@ -25,8 +30,34 @@ pub struct CodesStats {
     pub unary: u64,
     pub gamma: u64,
     pub delta: u64,
-    pub zeta: [u64; 10],
-    pub golomb: [u64; 20],
+    pub zeta: [u64; ZETA],
+    pub golomb: [u64; GOLOMB],
+}
+
+impl Add for CodesStats {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        Self {
+            unary: self.unary + rhs.unary,
+            gamma: self.gamma + rhs.gamma,
+            delta: self.delta + rhs.delta,
+            zeta: {
+                let mut zeta = [0; ZETA];
+                for (i, (a, b)) in self.zeta.iter().zip(rhs.zeta.iter()).enumerate() {
+                    zeta[i] = a + b;
+                }
+                zeta
+            },
+            golomb: {
+                let mut golomb = [0; GOLOMB];
+                for (i, (a, b)) in self.golomb.iter().zip(rhs.golomb.iter()).enumerate() {
+                    golomb[i] = a + b;
+                }
+                golomb
+            },
+        }
+    }
 }
 
 impl CodesStats {
