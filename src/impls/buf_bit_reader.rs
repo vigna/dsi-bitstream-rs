@@ -170,6 +170,10 @@ where
             result = (result << WR::Word::BITS) | new_word;
             n_bits -= WR::Word::BITS;
         }
+
+        debug_assert!(n_bits > 0);
+        debug_assert!(n_bits <= WR::Word::BITS);
+
         // get the final word
         let new_word = self.backend.read_word()?.to_be();
         self.bits_in_buffer = WR::Word::BITS - n_bits;
@@ -352,8 +356,12 @@ where
             bits_in_res += WR::Word::BITS;
         }
 
-        // get the final word
         n_bits -= bits_in_res;
+
+        debug_assert!(n_bits > 0);
+        debug_assert!(n_bits <= WR::Word::BITS);
+
+        // get the final word
         let new_word = self.backend.read_word()?.to_le();
         self.bits_in_buffer = WR::Word::BITS - n_bits;
         // compose the remaining bits
