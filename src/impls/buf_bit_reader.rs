@@ -115,37 +115,6 @@ where
     }
 }
 
-impl<
-        E: Error + Send + Sync + 'static,
-        WR: WordRead<Error = E> + WordSeek<Error = E>,
-        RP: ReadParams,
-    > BitSeek for BufBitReader<BE, WR, RP>
-where
-    WR::Word: DoubleType,
-{
-    type Error = <WR as WordSeek>::Error;
-
-    #[inline]
-    fn get_bit_pos(&mut self) -> Result<u64, Self::Error> {
-        Ok(self.backend.get_word_pos()? * WR::Word::BITS as u64 - self.bits_in_buffer as u64)
-    }
-
-    #[inline]
-    fn set_bit_pos(&mut self, bit_index: u64) -> Result<(), Self::Error> {
-        self.backend
-            .set_word_pos(bit_index / WR::Word::BITS as u64)?;
-        let bit_offset = (bit_index % WR::Word::BITS as u64) as usize;
-        self.buffer = BB::<WR>::ZERO;
-        self.bits_in_buffer = 0;
-        if bit_offset != 0 {
-            let new_word: BB<WR> = self.backend.read_word()?.to_be().upcast();
-            self.bits_in_buffer = WR::Word::BITS - bit_offset;
-            self.buffer = new_word << (BB::<WR>::BITS - self.bits_in_buffer);
-        }
-        Ok(())
-    }
-}
-
 impl<WR: WordRead, RP: ReadParams> BitRead<BE> for BufBitReader<BE, WR, RP>
 where
     WR::Word: DoubleType + UpcastableInto<u64>,
@@ -276,6 +245,41 @@ where
     }
 }
 
+impl<
+        E: Error + Send + Sync + 'static,
+        WR: WordRead<Error = E> + WordSeek<Error = E>,
+        RP: ReadParams,
+    > BitSeek for BufBitReader<BE, WR, RP>
+where
+    WR::Word: DoubleType,
+{
+    type Error = <WR as WordSeek>::Error;
+
+    #[inline]
+    fn get_bit_pos(&mut self) -> Result<u64, Self::Error> {
+        Ok(self.backend.get_word_pos()? * WR::Word::BITS as u64 - self.bits_in_buffer as u64)
+    }
+
+    #[inline]
+    fn set_bit_pos(&mut self, bit_index: u64) -> Result<(), Self::Error> {
+        self.backend
+            .set_word_pos(bit_index / WR::Word::BITS as u64)?;
+        let bit_offset = (bit_index % WR::Word::BITS as u64) as usize;
+        self.buffer = BB::<WR>::ZERO;
+        self.bits_in_buffer = 0;
+        if bit_offset != 0 {
+            let new_word: BB<WR> = self.backend.read_word()?.to_be().upcast();
+            self.bits_in_buffer = WR::Word::BITS - bit_offset;
+            self.buffer = new_word << (BB::<WR>::BITS - self.bits_in_buffer);
+        }
+        Ok(())
+    }
+}
+
+//
+// Little-endian implementation
+//
+
 impl<WR: WordRead, RP: ReadParams> BufBitReader<LE, WR, RP>
 where
     WR::Word: DoubleType,
@@ -293,38 +297,6 @@ where
         let new_word: BB<WR> = self.backend.read_word()?.to_le().upcast();
         self.buffer |= new_word << self.bits_in_buffer;
         self.bits_in_buffer += WR::Word::BITS;
-        Ok(())
-    }
-}
-
-impl<
-        E: Error + Send + Sync + 'static,
-        WR: WordRead<Error = E> + WordSeek<Error = E>,
-        RP: ReadParams,
-    > BitSeek for BufBitReader<LE, WR, RP>
-where
-    WR::Word: DoubleType,
-{
-    type Error = <WR as WordSeek>::Error;
-
-    #[inline]
-    fn get_bit_pos(&mut self) -> Result<u64, Self::Error> {
-        Ok(self.backend.get_word_pos()? * WR::Word::BITS as u64 - self.bits_in_buffer as u64)
-    }
-
-    #[inline]
-    fn set_bit_pos(&mut self, bit_index: u64) -> Result<(), Self::Error> {
-        self.backend
-            .set_word_pos(bit_index / WR::Word::BITS as u64)?;
-
-        let bit_offset = (bit_index % WR::Word::BITS as u64) as usize;
-        self.buffer = BB::<WR>::ZERO;
-        self.bits_in_buffer = 0;
-        if bit_offset != 0 {
-            let new_word: BB<WR> = self.backend.read_word()?.to_le().upcast();
-            self.bits_in_buffer = WR::Word::BITS - bit_offset;
-            self.buffer = new_word >> bit_offset;
-        }
         Ok(())
     }
 }
@@ -456,6 +428,38 @@ where
             }
             result += WR::Word::BITS as u64;
         }
+    }
+}
+
+impl<
+        E: Error + Send + Sync + 'static,
+        WR: WordRead<Error = E> + WordSeek<Error = E>,
+        RP: ReadParams,
+    > BitSeek for BufBitReader<LE, WR, RP>
+where
+    WR::Word: DoubleType,
+{
+    type Error = <WR as WordSeek>::Error;
+
+    #[inline]
+    fn get_bit_pos(&mut self) -> Result<u64, Self::Error> {
+        Ok(self.backend.get_word_pos()? * WR::Word::BITS as u64 - self.bits_in_buffer as u64)
+    }
+
+    #[inline]
+    fn set_bit_pos(&mut self, bit_index: u64) -> Result<(), Self::Error> {
+        self.backend
+            .set_word_pos(bit_index / WR::Word::BITS as u64)?;
+
+        let bit_offset = (bit_index % WR::Word::BITS as u64) as usize;
+        self.buffer = BB::<WR>::ZERO;
+        self.bits_in_buffer = 0;
+        if bit_offset != 0 {
+            let new_word: BB<WR> = self.backend.read_word()?.to_le().upcast();
+            self.bits_in_buffer = WR::Word::BITS - bit_offset;
+            self.buffer = new_word >> bit_offset;
+        }
+        Ok(())
     }
 }
 
