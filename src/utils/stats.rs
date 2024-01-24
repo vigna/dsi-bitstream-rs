@@ -12,7 +12,9 @@ fn len_golomb(value: u64, b: u64) -> usize {
     (value / b) as usize + 1 + len_minimal_binary(value % b, b)
 }
 
+/// How many ζ codes to consider.
 const ZETA: usize = 10;
+/// How many Golomb codes to consider.
 const GOLOMB: usize = 20;
 
 /// Keeps track of the space needed to store a stream of integers using
