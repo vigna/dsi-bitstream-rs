@@ -53,8 +53,8 @@ pub trait BitRead<E: Endianness> {
 
     /// Read `n` bits and return them in the lowest bits.
     ///
-    /// Implementors should check the value of `n` when the `checks` feature is
-    /// enabled and panic if it is greater than 64.
+    /// Implementors should check the value of `n` when in test mode
+    /// and panic if it is greater than 64.
     fn read_bits(&mut self, n: usize) -> Result<u64, Self::Error>;
 
     /// Peeks at `n` bits without advancing the stream position.
@@ -62,6 +62,9 @@ pub trait BitRead<E: Endianness> {
     fn peek_bits(&mut self, n: usize) -> Result<Self::PeekWord, Self::Error>;
 
     /// Skip `n` bits from the stream.
+    ///
+    /// When moving forward by a small amount of bits, this method might be
+    /// more efficient than [`BitSeek::set_bit_pos`].
     fn skip_bits(&mut self, n: usize) -> Result<(), Self::Error>;
 
     #[doc(hidden)]
@@ -110,10 +113,9 @@ pub trait BitWrite<E: Endianness> {
     /// of bits written, that is, `n`.
     ///
     ///
-    /// Implementors should check the value of `n` when the `checks` feature is
-    /// enabled and panic if it is greater than 64. Moreover, under the same
-    /// conditions they should check that the remaining bits of `value` are
-    /// zero.
+    /// Implementors should check the value of `n` in test mode and panic if it
+    /// is greater than 64. Moreover, if the feature `checks` is enabled they
+    /// should check that the remaining bits of `value` are zero.
     fn write_bits(&mut self, value: u64, n: usize) -> Result<usize, Self::Error>;
 
     /// Write `value` as a unary code to the stream and return the number of
@@ -150,6 +152,9 @@ pub trait BitSeek {
     fn get_bit_pos(&mut self) -> Result<u64, Self::Error>;
 
     /// Set the current position in bits from the start of the file to `bit_pos`.
+    ///
+    /// Note that moving forward by a small amount of bits may be accomplished
+    /// more efficiently by calling [`BitRead::skip_bits`].
     fn set_bit_pos(&mut self, bit_pos: u64) -> Result<(), Self::Error>;
 }
 

@@ -182,8 +182,9 @@ where
         let final_bits: u64 = (upcasted >> self.bits_in_buffer).downcast();
         result = (result << (n_bits - 1) << 1) | final_bits;
         // and put the rest in the buffer
-        self.buffer = UpcastableInto::<BB<WR>>::upcast(new_word);
-        self.buffer = (self.buffer << (BB::<WR>::BITS - self.bits_in_buffer - 1)) << 1;
+        self.buffer = (UpcastableInto::<BB<WR>>::upcast(new_word)
+            << (BB::<WR>::BITS - self.bits_in_buffer - 1))
+            << 1;
 
         Ok(result)
     }
