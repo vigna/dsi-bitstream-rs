@@ -59,20 +59,6 @@ pub trait MinimalBinaryRead<BO: Endianness>: BitRead<BO> {
             prefix - limit
         })
     }
-
-    #[inline(always)]
-    fn skip_minimal_binary(&mut self, max: u64) -> Result<(), Self::Error> {
-        ensure_max(max);
-        let l = max.ilog2();
-        let limit = (1 << (l + 1)) - max;
-
-        let prefix = self.read_bits(l as _)?;
-
-        if prefix >= limit {
-            self.skip_bits(1)?;
-        }
-        Ok(())
-    }
 }
 
 /// Trait for writing minimal binary codes.

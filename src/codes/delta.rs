@@ -18,7 +18,7 @@
 //! the initial γ code in case the whole δ code could not be decoded
 //! by tables.
 
-use super::{delta_tables, gamma_tables, len_gamma_param, GammaReadParam, GammaWriteParam};
+use super::{delta_tables, len_gamma_param, GammaReadParam, GammaWriteParam};
 use crate::traits::*;
 
 /// Return the length of the δ code for `n`.
@@ -49,7 +49,6 @@ pub fn len_delta(n: u64) -> usize {
 /// This is the trait you should usually pull in scope to read δ codes.
 pub trait DeltaRead<E: Endianness>: BitRead<E> {
     fn read_delta(&mut self) -> Result<u64, Self::Error>;
-    fn skip_delta(&mut self) -> Result<(), Self::Error>;
 }
 
 /// Parametric trait for reading δ codes.
@@ -64,9 +63,6 @@ pub trait DeltaReadParam<E: Endianness>: GammaReadParam<E> {
     fn read_delta_param<const USE_DELTA_TABLE: bool, const USE_GAMMA_TABLE: bool>(
         &mut self,
     ) -> Result<u64, Self::Error>;
-    fn skip_delta_param<const USE_DELTA_TABLE: bool, const USE_GAMMA_TABLE: bool>(
-        &mut self,
-    ) -> Result<(), Self::Error>;
 }
 
 /// Default, internal non-table based implementation that works
@@ -80,31 +76,6 @@ fn default_read_delta<E: Endianness, B: GammaReadParam<E>, const USE_GAMMA_TABLE
     Ok(backend.read_bits(len as usize)? + (1 << len) - 1)
 }
 
-macro_rules! default_skip_delta_impl {
-    ($endianness:ty, $default_skip_delta: ident, $read_table: ident) => {
-        #[inline(always)]
-        fn $default_skip_delta<B: GammaReadParam<$endianness>, const USE_GAMMA_TABLE: bool>(
-            backend: &mut B,
-        ) -> Result<(), B::Error> {
-            let gamma_len = 'outer: {
-                if USE_GAMMA_TABLE {
-                    if let Some((gamma_len, _)) = gamma_tables::$read_table(backend) {
-                        break 'outer gamma_len;
-                    }
-                }
-
-                let len = backend.read_unary_param::<false>()?;
-                debug_assert!(len <= 64);
-                backend.read_bits(len as usize)? + (1 << len) - 1
-            };
-            backend.skip_bits(gamma_len as usize)
-        }
-    };
-}
-
-default_skip_delta_impl!(LE, default_skip_delta_le, read_table_le);
-default_skip_delta_impl!(BE, default_skip_delta_be, read_table_be);
-
 impl<B: GammaReadParam<BE>> DeltaReadParam<BE> for B {
     #[inline]
     fn read_delta_param<const USE_DELTA_TABLE: bool, const USE_GAMMA_TABLE: bool>(
@@ -117,19 +88,8 @@ impl<B: GammaReadParam<BE>> DeltaReadParam<BE> for B {
         }
         default_read_delta::<BE, _, USE_GAMMA_TABLE>(self)
     }
-
-    #[inline]
-    fn skip_delta_param<const USE_DELTA_TABLE: bool, const USE_GAMMA_TABLE: bool>(
-        &mut self,
-    ) -> Result<(), B::Error> {
-        if USE_DELTA_TABLE {
-            if let Some((_, _)) = delta_tables::read_table_be(self) {
-                return Ok(());
-            }
-        }
-        default_skip_delta_be::<_, USE_GAMMA_TABLE>(self)
-    }
 }
+
 impl<B: GammaReadParam<LE>> DeltaReadParam<LE> for B {
     #[inline]
     fn read_delta_param<const USE_DELTA_TABLE: bool, const USE_GAMMA_TABLE: bool>(
@@ -141,18 +101,6 @@ impl<B: GammaReadParam<LE>> DeltaReadParam<LE> for B {
             }
         }
         default_read_delta::<LE, _, USE_GAMMA_TABLE>(self)
-    }
-
-    #[inline]
-    fn skip_delta_param<const USE_DELTA_TABLE: bool, const USE_GAMMA_TABLE: bool>(
-        &mut self,
-    ) -> Result<(), B::Error> {
-        if USE_DELTA_TABLE {
-            if let Some((_, _)) = delta_tables::read_table_le(self) {
-                return Ok(());
-            }
-        }
-        default_skip_delta_le::<_, USE_GAMMA_TABLE>(self)
     }
 }
 

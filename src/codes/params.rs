@@ -75,13 +75,6 @@ macro_rules! impl_default_read_codes {
                 // without tables for ɣ codes.
                 return self.read_gamma_param::<false>();
             }
-
-            #[inline(always)]
-            fn skip_gamma(&mut self) -> Result<(), Self::Error> {
-                // From our tests, the ARM architecture is faster
-                // without tables for ɣ codes.
-                return self.skip_gamma_param::<false>();
-            }
         }
 
         impl<WR: WordRead> DeltaRead<$endianess>
@@ -93,11 +86,6 @@ macro_rules! impl_default_read_codes {
             #[inline(always)]
             fn read_delta(&mut self) -> Result<u64, Self::Error> {
                 return self.read_delta_param::<false, true>();
-            }
-
-            #[inline(always)]
-            fn skip_delta(&mut self) -> Result<(), Self::Error> {
-                return self.skip_delta_param::<false, true>();
             }
         }
 
@@ -113,18 +101,8 @@ macro_rules! impl_default_read_codes {
             }
 
             #[inline(always)]
-            fn skip_zeta(&mut self, k: u64) -> Result<(), Self::Error> {
-                self.skip_zeta_param(k)
-            }
-
-            #[inline(always)]
             fn read_zeta3(&mut self) -> Result<u64, Self::Error> {
                 self.read_zeta3_param::<true>()
-            }
-
-            #[inline(always)]
-            fn skip_zeta3(&mut self) -> Result<(), Self::Error> {
-                self.skip_zeta3_param::<true>()
             }
         }
 
@@ -140,13 +118,6 @@ macro_rules! impl_default_read_codes {
                 // without tables for ɣ codes.
                 return self.read_gamma_param::<false>();
             }
-
-            #[inline(always)]
-            fn skip_gamma(&mut self) -> Result<(), Self::Error> {
-                // From our tests, the ARM architecture is faster
-                // without tables for ɣ codes.
-                return self.skip_gamma_param::<false>();
-            }
         }
 
         impl<E: Error + Send + Sync + 'static, WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>> DeltaRead<$endianess>
@@ -158,11 +129,6 @@ macro_rules! impl_default_read_codes {
             #[inline(always)]
             fn read_delta(&mut self) -> Result<u64, Self::Error> {
                 return self.read_delta_param::<false, true>();
-            }
-
-            #[inline(always)]
-            fn skip_delta(&mut self) -> Result<(), Self::Error> {
-                return self.skip_delta_param::<false, true>();
             }
         }
 
@@ -178,18 +144,8 @@ macro_rules! impl_default_read_codes {
             }
 
             #[inline(always)]
-            fn skip_zeta(&mut self, k: u64) -> Result<(), Self::Error> {
-                self.skip_zeta_param(k)
-            }
-
-            #[inline(always)]
             fn read_zeta3(&mut self) -> Result<u64, Self::Error> {
                 self.read_zeta3_param::<true>()
-            }
-
-            #[inline(always)]
-            fn skip_zeta3(&mut self) -> Result<(), Self::Error> {
-                self.skip_zeta3_param::<true>()
             }
         }
     )*};

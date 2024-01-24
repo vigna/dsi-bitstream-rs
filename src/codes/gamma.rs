@@ -46,7 +46,6 @@ pub fn len_gamma(n: u64) -> usize {
 /// This is the trait you should usually pull in scope to read γ codes.
 pub trait GammaRead<E: Endianness>: BitRead<E> {
     fn read_gamma(&mut self) -> Result<u64, Self::Error>;
-    fn skip_gamma(&mut self) -> Result<(), Self::Error>;
 }
 
 /// Parametric trait for reading γ codes.
@@ -59,7 +58,6 @@ pub trait GammaRead<E: Endianness>: BitRead<E> {
 /// [`crate::codes::params::ReadParams`] mechanism.
 pub trait GammaReadParam<E: Endianness>: BitRead<E> {
     fn read_gamma_param<const USE_TABLE: bool>(&mut self) -> Result<u64, Self::Error>;
-    fn skip_gamma_param<const USE_TABLE: bool>(&mut self) -> Result<(), Self::Error>;
 }
 
 /// Default, internal non-table based implementation that works
@@ -69,13 +67,6 @@ fn default_read_gamma<E: Endianness, B: BitRead<E>>(backend: &mut B) -> Result<u
     let len = backend.read_unary()?;
     debug_assert!(len <= 64);
     Ok(backend.read_bits(len as usize)? + (1 << len) - 1)
-}
-
-#[inline(always)]
-fn default_skip_gamma<E: Endianness, B: BitRead<E>>(backend: &mut B) -> Result<(), B::Error> {
-    let len = backend.read_unary()?;
-    debug_assert!(len <= 64);
-    backend.skip_bits(len as usize)
 }
 
 impl<B: BitRead<BE>> GammaReadParam<BE> for B {
@@ -88,17 +79,8 @@ impl<B: BitRead<BE>> GammaReadParam<BE> for B {
         }
         default_read_gamma(self)
     }
-
-    #[inline]
-    fn skip_gamma_param<const USE_TABLE: bool>(&mut self) -> Result<(), Self::Error> {
-        if USE_TABLE {
-            if let Some((_, _)) = gamma_tables::read_table_be(self) {
-                return Ok(());
-            }
-        }
-        default_skip_gamma(self)
-    }
 }
+
 impl<B: BitRead<LE>> GammaReadParam<LE> for B {
     #[inline]
     fn read_gamma_param<const USE_TABLE: bool>(&mut self) -> Result<u64, Self::Error> {
@@ -108,16 +90,6 @@ impl<B: BitRead<LE>> GammaReadParam<LE> for B {
             }
         }
         default_read_gamma(self)
-    }
-
-    #[inline]
-    fn skip_gamma_param<const USE_TABLE: bool>(&mut self) -> Result<(), Self::Error> {
-        if USE_TABLE {
-            if let Some((_, _)) = gamma_tables::read_table_le(self) {
-                return Ok(());
-            }
-        }
-        default_skip_gamma(self)
     }
 }
 

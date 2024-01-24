@@ -70,12 +70,6 @@ where
         eprintln!("{{g:{}}}", value);
         Ok(value)
     }
-
-    fn skip_gamma(&mut self) -> Result<(), R::Error> {
-        self.reader.skip_gamma()?;
-        eprintln!("{{skip g}}");
-        Ok(())
-    }
 }
 
 impl<E: Endianness, R: DeltaRead<E>> DeltaRead<E> for DbgBitReader<E, R>
@@ -86,12 +80,6 @@ where
         let value = self.reader.read_delta()?;
         eprintln!("{{d:{}}}", value);
         Ok(value)
-    }
-
-    fn skip_delta(&mut self) -> Result<(), R::Error> {
-        self.reader.skip_delta()?;
-        eprintln!("{{skip d}}");
-        Ok(())
     }
 }
 
@@ -105,22 +93,10 @@ where
         Ok(value)
     }
 
-    fn skip_zeta3(&mut self) -> Result<(), R::Error> {
-        self.reader.skip_zeta3()?;
-        eprintln!("{{skip z3}}");
-        Ok(())
-    }
-
     fn read_zeta(&mut self, k: u64) -> Result<u64, R::Error> {
         let value = self.reader.read_zeta(k)?;
         eprintln!("{{z{}:{}}}", k, value);
         Ok(value)
-    }
-
-    fn skip_zeta(&mut self, k: u64) -> Result<(), R::Error> {
-        self.reader.skip_zeta(k)?;
-        eprintln!("{{skip z {}}}", k);
-        Ok(())
     }
 }
 

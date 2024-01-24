@@ -93,13 +93,6 @@ pub trait BitRead<E: Endianness> {
     fn read_unary(&mut self) -> Result<u64, Self::Error> {
         self.read_unary_param::<false>()
     }
-
-    /// Skip a unary code.
-    #[inline(always)]
-    fn skip_unary(&mut self) -> Result<(), Self::Error> {
-        self.read_unary()?;
-        Ok(())
-    }
 }
 
 /// Sequential, streaming bit-by-bit writes.
