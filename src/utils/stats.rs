@@ -5,8 +5,6 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
-use core::ops::Add;
-
 use crate::prelude::{len_delta, len_gamma, len_minimal_binary, len_zeta, Code};
 
 // To be replaced when Golomb codes will be implemented.
@@ -34,32 +32,6 @@ pub struct CodesStats {
     pub golomb: [u64; GOLOMB],
 }
 
-impl Add for CodesStats {
-    type Output = Self;
-
-    fn add(self, rhs: Self) -> Self::Output {
-        Self {
-            unary: self.unary + rhs.unary,
-            gamma: self.gamma + rhs.gamma,
-            delta: self.delta + rhs.delta,
-            zeta: {
-                let mut zeta = [0; ZETA];
-                for (i, (a, b)) in self.zeta.iter().zip(rhs.zeta.iter()).enumerate() {
-                    zeta[i] = a + b;
-                }
-                zeta
-            },
-            golomb: {
-                let mut golomb = [0; GOLOMB];
-                for (i, (a, b)) in self.golomb.iter().zip(rhs.golomb.iter()).enumerate() {
-                    golomb[i] = a + b;
-                }
-                golomb
-            },
-        }
-    }
-}
-
 impl CodesStats {
     /// Update the stats with the lengths of the codes for `n` and return
     /// `n` for convenience.
@@ -75,6 +47,19 @@ impl CodesStats {
             *val += len_golomb(n, (b + 1) as _) as u64;
         }
         n
+    }
+
+    // Combines additively this stats with another one.
+    pub fn add(&mut self, rhs: &Self) {
+        self.unary += rhs.unary;
+        self.gamma += rhs.gamma;
+        self.delta += rhs.delta;
+        for (a, b) in self.zeta.iter_mut().zip(rhs.zeta.iter()) {
+            *a += *b;
+        }
+        for (a, b) in self.golomb.iter_mut().zip(rhs.golomb.iter()) {
+            *a += *b;
+        }
     }
 
     /// Return the best code for the stream and its space usage.
