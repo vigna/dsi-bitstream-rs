@@ -149,6 +149,7 @@ where
             return Ok(());
         }
 
+        // clean the buffer data
         n_bits -= self.bits_in_buffer;
 
         // skip words as needed
@@ -157,9 +158,11 @@ where
             n_bits -= WR::Word::BITS;
         }
         // read the new word and clear the final bits
-        self.refill()?;
-        self.bits_in_buffer -= n_bits;
-        self.buffer <<= n_bits;
+        // get the final word
+        let new_word = self.backend.read_word()?.to_be();
+        self.bits_in_buffer = WR::Word::BITS - n_bits;
+        self.buffer =
+            UpcastableInto::<BB<WR>>::upcast(new_word) << (BB::<WR>::BITS - self.bits_in_buffer);
 
         Ok(())
     }
@@ -330,8 +333,10 @@ where
             return Ok(());
         }
 
+        // clean the buffer data
         n_bits -= self.bits_in_buffer;
-
+        self.bits_in_buffer = 0;
+        self.buffer = BB::<WR>::ZERO;
         // skip words as needed
         while n_bits > WR::Word::BITS {
             let _ = self.backend.read_word()?;
