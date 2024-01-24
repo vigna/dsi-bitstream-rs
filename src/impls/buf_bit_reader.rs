@@ -140,32 +140,6 @@ where
         Ok(self.buffer >> (BB::<WR>::BITS - n_bits))
     }
 
-    #[inline]
-    fn skip_bits(&mut self, mut n_bits: usize) -> Result<(), Self::Error> {
-        // happy case, just shift the buffer
-        if n_bits <= self.bits_in_buffer {
-            self.bits_in_buffer -= n_bits;
-            self.buffer <<= n_bits;
-            return Ok(());
-        }
-
-        n_bits -= self.bits_in_buffer;
-
-        // skip words as needed
-        while n_bits > WR::Word::BITS {
-            let _ = self.backend.read_word()?;
-            n_bits -= WR::Word::BITS;
-        }
-
-        // get the final word
-        let new_word = self.backend.read_word()?.to_be();
-        self.bits_in_buffer = WR::Word::BITS - n_bits;
-        self.buffer =
-            UpcastableInto::<BB<WR>>::upcast(new_word) << (BB::<WR>::BITS - self.bits_in_buffer);
-
-        Ok(())
-    }
-
     #[inline(always)]
     fn skip_bits_after_table_lookup(&mut self, n_bits: usize) {
         self.bits_in_buffer -= n_bits;
@@ -242,6 +216,32 @@ where
             }
             result += WR::Word::BITS as u64;
         }
+    }
+
+    #[inline]
+    fn skip_bits(&mut self, mut n_bits: usize) -> Result<(), Self::Error> {
+        // happy case, just shift the buffer
+        if n_bits <= self.bits_in_buffer {
+            self.bits_in_buffer -= n_bits;
+            self.buffer <<= n_bits;
+            return Ok(());
+        }
+
+        n_bits -= self.bits_in_buffer;
+
+        // skip words as needed
+        while n_bits > WR::Word::BITS {
+            let _ = self.backend.read_word()?;
+            n_bits -= WR::Word::BITS;
+        }
+
+        // get the final word
+        let new_word = self.backend.read_word()?.to_be();
+        self.bits_in_buffer = WR::Word::BITS - n_bits;
+        self.buffer =
+            UpcastableInto::<BB<WR>>::upcast(new_word) << (BB::<WR>::BITS - self.bits_in_buffer);
+
+        Ok(())
     }
 }
 
@@ -323,31 +323,6 @@ where
         Ok((self.buffer << shamt) >> shamt)
     }
 
-    #[inline]
-    fn skip_bits(&mut self, mut n_bits: usize) -> Result<(), Self::Error> {
-        // happy case, just shift the buffer
-        if n_bits <= self.bits_in_buffer {
-            self.bits_in_buffer -= n_bits;
-            self.buffer >>= n_bits;
-            return Ok(());
-        }
-
-        n_bits -= self.bits_in_buffer;
-
-        // skip words as needed
-        while n_bits > WR::Word::BITS {
-            let _ = self.backend.read_word()?;
-            n_bits -= WR::Word::BITS;
-        }
-
-        // get the final word
-        let new_word = self.backend.read_word()?.to_le();
-        self.bits_in_buffer = WR::Word::BITS - n_bits;
-        self.buffer = UpcastableInto::<BB<WR>>::upcast(new_word) >> n_bits;
-
-        Ok(())
-    }
-
     #[inline(always)]
     fn skip_bits_after_table_lookup(&mut self, n_bits: usize) {
         self.bits_in_buffer -= n_bits;
@@ -423,6 +398,31 @@ where
             }
             result += WR::Word::BITS as u64;
         }
+    }
+
+    #[inline]
+    fn skip_bits(&mut self, mut n_bits: usize) -> Result<(), Self::Error> {
+        // happy case, just shift the buffer
+        if n_bits <= self.bits_in_buffer {
+            self.bits_in_buffer -= n_bits;
+            self.buffer >>= n_bits;
+            return Ok(());
+        }
+
+        n_bits -= self.bits_in_buffer;
+
+        // skip words as needed
+        while n_bits > WR::Word::BITS {
+            let _ = self.backend.read_word()?;
+            n_bits -= WR::Word::BITS;
+        }
+
+        // get the final word
+        let new_word = self.backend.read_word()?.to_le();
+        self.bits_in_buffer = WR::Word::BITS - n_bits;
+        self.buffer = UpcastableInto::<BB<WR>>::upcast(new_word) >> n_bits;
+
+        Ok(())
     }
 }
 
