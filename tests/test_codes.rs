@@ -7,9 +7,8 @@
  */
 
 use dsi_bitstream::prelude::{
-    BitRead, BitSeek, BitWrite, BufBitReader, BufBitWriter, DeltaRead, DeltaWrite, GammaRead,
-    GammaWrite, MemWordReader, MemWordWriterVec, MinimalBinaryRead, MinimalBinaryWrite, ZetaRead,
-    ZetaWrite,
+    BitRead, BitWrite, BufBitReader, BufBitWriter, DeltaRead, DeltaWrite, GammaRead, GammaWrite,
+    MemWordReader, MemWordWriterVec, MinimalBinaryRead, MinimalBinaryWrite, ZetaRead, ZetaWrite,
 };
 use dsi_bitstream::traits::{BE, LE};
 use rand::rngs::SmallRng;

@@ -5,7 +5,15 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
-use crate::prelude::{len_delta, len_gamma, len_minimal_binary, len_zeta, Code};
+pub enum Code {
+    Unary,
+    Gamma,
+    Delta,
+    Zeta { k: usize },
+    Golomb { b: usize },
+}
+
+use crate::prelude::{len_delta, len_gamma, len_minimal_binary, len_zeta};
 
 // To be replaced when Golomb codes will be implemented.
 fn len_golomb(value: u64, b: u64) -> usize {

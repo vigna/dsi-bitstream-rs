@@ -47,22 +47,6 @@ to use a read word of at least 16 bits.
 
 */
 
-/// Typed names for instantaneous codes.
-///
-/// Not all codes are currenly implemented.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[cfg_attr(feature = "fuzz", derive(arbitrary::Arbitrary))]
-pub enum Code {
-    Unary,
-    Gamma,
-    Delta,
-    Zeta { k: u64 },
-    Golomb { b: u64 },
-    SkewedGolomb { b: u64 },
-    MinimalBinary { k: u64 },
-    Nibble,
-}
-
 pub mod params;
 
 pub mod gamma;
