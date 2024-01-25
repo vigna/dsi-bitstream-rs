@@ -5,6 +5,7 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Code {
     Unary,
     Gamma,
