@@ -29,4 +29,4 @@ mod dbg_codes;
 pub use dbg_codes::*;
 
 mod stats;
-pub use stats::*;
+pub use stats::CodesStats;
