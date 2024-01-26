@@ -1,4 +1,9 @@
 # dsi-bitstream
+[![downloads](https://img.shields.io/crates/d/dsi-bitstream)](https://crates.io/crates/dsi-bitstream)
+[![dependents](https://img.shields.io/librariesio/dependents/cargo/dsi-bitstream)](https://crates.io/crates/dsi-bitstream/reverse_dependencies)
+![GitHub CI](https://github.com/vigna/dsi-bitstream-rs/actions/workflows/rust.yml/badge.svg)
+![license](https://img.shields.io/crates/l/dsi-bitstream)
+[![](https://tokei.rs/b1/github/vigna/dsi-bitstream-rs)](https://github.com/vigna/dsi-bitstream-rs).
 
 A Rust implementation of bit streams supporting several types of instantaneous codes.
 
