@@ -8,15 +8,26 @@
 
 use crate::traits::*;
 use common_traits::*;
-use std::io::{Read, Seek, SeekFrom, Write};
+use std::io::{ErrorKind, Read, Seek, SeekFrom, Write};
 
-/// An adapter from [`Read`], [`Write`], and [`Seek`],
-/// to [`WordRead`], [`WordWrite`], and [`WordSeek`], respectively.
+/// An adapter from [`Read`], [`Write`], and [`Seek`], to [`WordRead`],
+/// [`WordWrite`], and [`WordSeek`], respectively.
 ///
 /// Instances of this struct can be created using [`WordAdapter::new`]. They
-/// turn every standard (possibly seekable) source or destination of
-/// bytes (such as [`std::fs::File`], [`std::io::BufReader`], sockets, etc.)
-/// into a source or destination of words.
+/// turn every standard (possibly seekable) source or destination of bytes (such
+/// as [`std::fs::File`], [`std::io::BufReader`], sockets, etc.) into a source
+/// or destination of words.
+///
+/// Due to the necessity of managing files whose length is not a multiple of the
+/// word length, [`read_word`](WordAdapter::read_word) will return a partially
+/// read word extended with zeros at the end of such files.
+///
+/// To provide a sensible value after such a read,
+/// [`get_word_pos`](WordAdapter::get_word_pos) will always return the position
+/// of the underlying [`Seek`] rounded up to the next multiple of `W::Bytes`,
+/// This requires that if you adapt a [`Seek`], its current position must be
+/// a multiple of `W::Bytes`, or the results of [`get_word_pos`](WordAdapter::get_word_pos)
+/// will be shifted by the rounding.
 #[derive(Clone)]
 pub struct WordAdapter<W: UnsignedInt, B> {
     backend: B,
@@ -40,8 +51,12 @@ impl<W: UnsignedInt, B: Read> WordRead for WordAdapter<W, B> {
     #[inline]
     fn read_word(&mut self) -> Result<W, std::io::Error> {
         let mut res: W::Bytes = Default::default();
-        self.backend.read_exact(res.as_mut())?;
-        Ok(W::from_ne_bytes(res))
+        match self.backend.read_exact(res.as_mut()) {
+            Ok(()) => Ok(W::from_ne_bytes(res)),
+            // We must guarantee zero-extension
+            Err(e) if e.kind() == ErrorKind::UnexpectedEof => Ok(W::from_ne_bytes(res)),
+            Err(e) => Err(e),
+        }
     }
 }
 
@@ -65,20 +80,7 @@ impl<W: UnsignedInt, B: Seek> WordSeek for WordAdapter<W, B> {
 
     #[inline(always)]
     fn get_word_pos(&mut self) -> Result<u64, std::io::Error> {
-        let byte_pos = self.backend.stream_position()?;
-        if byte_pos % W::BYTES as u64 != 0 {
-            Err(std::io::Error::new(
-                std::io::ErrorKind::InvalidData,
-                format_args!(
-                    "The current position ({}) is not a multiple of the word size ({})",
-                    byte_pos,
-                    W::BYTES
-                )
-                .to_string(),
-            ))
-        } else {
-            Ok(byte_pos / W::BYTES as u64)
-        }
+        Ok(self.backend.stream_position()?.align_to(W::BYTES as u64))
     }
 
     #[inline(always)]
