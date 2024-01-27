@@ -1,4 +1,5 @@
 # dsi-bitstream
+
 [![downloads](https://img.shields.io/crates/d/dsi-bitstream)](https://crates.io/crates/dsi-bitstream)
 [![dependents](https://img.shields.io/librariesio/dependents/cargo/dsi-bitstream)](https://crates.io/crates/dsi-bitstream/reverse_dependencies)
 ![GitHub CI](https://github.com/vigna/dsi-bitstream-rs/actions/workflows/rust.yml/badge.svg)
@@ -11,8 +12,8 @@ This library mimics the behavior of the analogous classes in the [DSI
 Utilities](https://dsiutils.di.unimi.it/), but it aims at being much more
 flexible and (hopefully) efficient.
 
-The two main traits are [`BitWrite`] and [`BitRead`], with which are associated
-two main implementations [`BufBitWriter`] and [`BufBitReader`].
+The two main traits are [`BitRead`] and [`BitWrite`], with which are associated
+two main implementations [`BufBitReader`] and [`BufBitWriter`].
 
 ```rust
 use dsi_bitstream::prelude::*;
