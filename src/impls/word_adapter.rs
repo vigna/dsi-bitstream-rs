@@ -24,8 +24,8 @@ use std::io::{ErrorKind, Read, Seek, SeekFrom, Write};
 ///
 /// To provide a sensible value after such a read,
 /// [`get_word_pos`](WordAdapter::get_word_pos) will always return the position
-/// of the underlying [`Seek`] rounded up to the next multiple of `W::Bytes`,
-/// This requires that if you adapt a [`Seek`], its current position must be
+/// of the underlying [`Seek`] rounded up to the next multiple of `W::Bytes`.
+/// This approach, however, requires that if you adapt a [`Seek`], its current position must be
 /// a multiple of `W::Bytes`, or the results of [`get_word_pos`](WordAdapter::get_word_pos)
 /// will be shifted by the rounding.
 #[derive(Clone)]
