@@ -17,11 +17,10 @@ two main implementations [`BufBitReader`] and [`BufBitWriter`].
 
 ```rust
 use dsi_bitstream::prelude::*;
-// The output backend. It could be a file, etc. 
-// Output backends are word-based for efficiency.
-let mut data = Vec::<u64>::new();
-// To write a bit stream, we need first a WordWrite.
-let mut word_write = MemWordWriterVec::new(&mut data);
+// To write a bit stream, we need first a WordWrite around an output backend
+// (in this case, a vector), which is word-based for efficiency.
+// It could be a file, etc. 
+let mut word_write = MemWordWriterVec::new(Vec::<u64>::new());
 // Let us create a little-endian bit writer. The write word size will be inferred.
 let mut writer = BufBitWriter::<LE, _>::new(word_write);
 // Write 0 using 10 bits
@@ -33,14 +32,15 @@ writer.write_gamma(1).unwrap();
 // Write 3 in δ code
 writer.write_delta(2).unwrap();
 writer.flush();
-drop(writer); // We must drop the writer release the borrow on data
+
+// Let's recover the data
+let data = writer.into_inner().unwrap().into_inner();
 
 // Reading back the data is similar, but since a reader has a bit buffer
 // twice as large as the read word size, it is more efficient to use a 
 // u32 as read word, so we need to transmute the data.
-
 let data = unsafe { std::mem::transmute::<_, Vec<u32>>(data) };
-let mut reader = BufBitReader::<LE, _>::new(MemWordReader::new(&data));
+let mut reader = BufBitReader::<LE, _>::new(MemWordReader::new(data));
 assert_eq!(reader.read_bits(10).unwrap(), 0);
 assert_eq!(reader.read_unary().unwrap(), 0);
 assert_eq!(reader.read_gamma().unwrap(), 1);
@@ -50,6 +50,29 @@ assert_eq!(reader.read_delta().unwrap(), 2);
 In this case, the backend is already word-based, but if you have a byte-based
 backend such as a file [`WordAdapter`] can be used to adapt it to a word-based
 backend.
+
+You can also use references to backends instead of owned values,
+but this approach is less efficient:
+
+```rust
+use dsi_bitstream::prelude::*;
+let mut data = Vec::<u64>::new();
+let mut word_write = MemWordWriterVec::new(&mut data);
+let mut writer = BufBitWriter::<LE, _>::new(word_write);
+writer.write_bits(0, 10).unwrap();
+writer.write_unary(0).unwrap();
+writer.write_gamma(1).unwrap();
+writer.write_delta(2).unwrap();
+writer.flush();
+drop(writer); // We must drop the writer release the borrow on data
+
+let data = unsafe { std::mem::transmute::<_, Vec<u32>>(data) };
+let mut reader = BufBitReader::<LE, _>::new(MemWordReader::new(&data));
+assert_eq!(reader.read_bits(10).unwrap(), 0);
+assert_eq!(reader.read_unary().unwrap(), 0);
+assert_eq!(reader.read_gamma().unwrap(), 1);
+assert_eq!(reader.read_delta().unwrap(), 2);
+```
 
 Please read the documentation of the [`traits`] module and the [`impls`] module
 for more details.
