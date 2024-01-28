@@ -11,6 +11,7 @@ use common_traits::*;
 use crate::codes::params::{DefaultReadParams, ReadParams};
 use crate::codes::unary_tables;
 use crate::traits::*;
+use core::{mem, ptr};
 use std::error::Error;
 
 /// An internal shortcut to the double type of the word of a
@@ -72,6 +73,7 @@ where
 impl<E: Endianness, WR: WordRead, RP: ReadParams> BufBitReader<E, WR, RP>
 where
     WR::Word: DoubleType,
+    BufBitReader<E, WR, RP>: BitRead<E>,
 {
     /// Create a new [`BufBitReader`] around a [`WordRead`].
     ///
@@ -91,6 +93,14 @@ where
             bits_in_buffer: 0,
             _marker: core::marker::PhantomData,
         }
+    }
+
+    ///  Return the backend, consuming this reader.
+    pub fn into_inner(self) -> Result<WR, <Self as BitRead<E>>::Error> {
+        // SAFETY: forget(self) prevents double dropping inner
+        let backend = unsafe { ptr::read(&self.backend) };
+        mem::forget(self);
+        Ok(backend)
     }
 }
 

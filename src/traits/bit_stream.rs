@@ -26,6 +26,11 @@ impl_peekable!(
     26, 27, 28, 29, 30, 31, 32
 );
 
+pub enum CopyError<E: Error + Send + Sync + 'static> {
+    ReadError(E),
+    WriteError(E),
+}
+
 /// Sequential, streaming bit-by-bit reads.
 ///
 /// This trait specify basic operation over which codes can be implemented by
@@ -93,6 +98,20 @@ pub trait BitRead<E: Endianness> {
     fn read_unary(&mut self) -> Result<u64, Self::Error> {
         self.read_unary_param::<false>()
     }
+
+    fn copy_to<F: Endianness>(
+        &mut self,
+        bit_write: &mut impl BitWrite<F>,
+        mut n: u64,
+    ) -> Result<(), Box<dyn Error>> {
+        while n > 0 {
+            let to_read = std::cmp::min(n, 64) as usize;
+            let read = self.read_bits(to_read)?;
+            bit_write.write_bits(read, to_read)?;
+            n -= to_read as u64;
+        }
+        Ok(())
+    }
 }
 
 /// Sequential, streaming bit-by-bit writes.
@@ -136,6 +155,20 @@ pub trait BitWrite<E: Endianness> {
 
     /// Flush the buffer, consuming the bit stream.
     fn flush(&mut self) -> Result<(), Self::Error>;
+
+    fn copy_from<F: Endianness>(
+        &mut self,
+        bit_read: &mut impl BitRead<F>,
+        mut n: u64,
+    ) -> Result<(), Box<dyn Error>> {
+        while n > 0 {
+            let to_read = std::cmp::min(n, 64) as usize;
+            let read = bit_read.read_bits(to_read)?;
+            self.write_bits(read, to_read)?;
+            n -= to_read as u64;
+        }
+        Ok(())
+    }
 }
 
 /// Seekability for [`BitRead`] and [`BitWrite`] streams.

@@ -7,6 +7,7 @@
  */
 
 use core::any::TypeId;
+use core::{mem, ptr};
 
 use crate::codes::params::{DefaultWriteParams, WriteParams};
 use crate::codes::unary_tables;
@@ -37,7 +38,10 @@ pub struct BufBitWriter<E: Endianness, WW: WordWrite, WP: WriteParams = DefaultW
     _marker_endianness: core::marker::PhantomData<(E, WP)>,
 }
 
-impl<E: Endianness, WW: WordWrite, WP: WriteParams> BufBitWriter<E, WW, WP> {
+impl<E: Endianness, WW: WordWrite, WP: WriteParams> BufBitWriter<E, WW, WP>
+where
+    BufBitWriter<E, WW, WP>: BitWrite<E>,
+{
     /// Create a new [`BufBitWriter`] around a [`WordWrite`].
     ///
     /// ### Example
@@ -59,6 +63,16 @@ impl<E: Endianness, WW: WordWrite, WP: WriteParams> BufBitWriter<E, WW, WP> {
     #[must_use]
     fn space_left_in_buffer(&self) -> usize {
         WW::Word::BITS - self.bits_in_buffer
+    }
+
+    ///  Return the backend, consuming this writer after
+    /// [flushing it](BufBitWriter::flush).
+    pub fn into_inner(mut self) -> Result<WW, <Self as BitWrite<E>>::Error> {
+        self.flush()?;
+        // SAFETY: forget(self) prevents double dropping inner
+        let backend = unsafe { ptr::read(&self.backend) };
+        mem::forget(self);
+        Ok(backend)
     }
 }
 

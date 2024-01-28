@@ -78,6 +78,10 @@ impl<W: UnsignedInt, B: AsMut<[W]> + AsRef<[W]>> MemWordWriterSlice<W, B> {
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }
+
+    pub fn into_inner(self) -> B {
+        self.data
+    }
 }
 
 /// An implementation of [`WordRead`], [`WordWrite`], and [`WordSeek`]
@@ -130,6 +134,10 @@ impl<W: UnsignedInt, B: AsMut<alloc::vec::Vec<W>> + AsRef<alloc::vec::Vec<W>>>
 
     pub fn is_empty(&self) -> bool {
         self.len() == 0
+    }
+
+    pub fn into_inner(self) -> B {
+        self.data
     }
 }
 

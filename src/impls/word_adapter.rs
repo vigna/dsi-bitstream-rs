@@ -42,6 +42,10 @@ impl<W: UnsignedInt, B> WordAdapter<W, B> {
             _marker: core::marker::PhantomData,
         }
     }
+
+    pub fn into_inner(self) -> B {
+        self.backend
+    }
 }
 
 impl<W: UnsignedInt, B: Read> WordRead for WordAdapter<W, B> {
