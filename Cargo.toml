@@ -22,3 +22,4 @@ std = ["alloc"]
 alloc = []
 fuzz = ["dep:arbitrary", "dep:zip"]
 checks = []
+no_copy_impls = [] # Disable copy_from/copy_to implementations so to test the default methods

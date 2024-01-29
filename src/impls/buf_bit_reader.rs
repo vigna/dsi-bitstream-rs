@@ -253,8 +253,46 @@ where
         // get the final word
         let new_word = self.backend.read_word()?.to_be();
         self.bits_in_buffer = WR::Word::BITS - n_bits;
-        self.buffer =
-            UpcastableInto::<BB<WR>>::upcast(new_word) << (BB::<WR>::BITS - self.bits_in_buffer);
+
+        // TODO
+        if self.bits_in_buffer == 0 {
+            self.buffer = BB::<WR>::ZERO;
+        } else {
+            self.buffer = UpcastableInto::<BB<WR>>::upcast(new_word)
+                << (BB::<WR>::BITS - self.bits_in_buffer);
+        }
+
+        Ok(())
+    }
+
+    #[cfg(not(feature = "no_copy_impls"))]
+    fn copy_to<F: Endianness>(
+        &mut self,
+        bit_write: &mut impl BitWrite<F>,
+        mut n: u64,
+    ) -> Result<(), Box<dyn Error>> {
+        let from_buffer = Ord::min(n, self.bits_in_buffer as _);
+        self.buffer = self.buffer.rotate_left(from_buffer as _);
+
+        bit_write.write_bits(self.buffer.cast(), from_buffer as usize)?;
+        n -= from_buffer;
+
+        if n == 0 {
+            self.bits_in_buffer -= from_buffer as usize;
+            return Ok(());
+        }
+
+        while n > WR::Word::BITS as u64 {
+            bit_write.write_bits(self.backend.read_word()?.to_be().upcast(), WR::Word::BITS)?;
+            n -= WR::Word::BITS as u64;
+        }
+
+        assert!(n > 0);
+        let new_word = self.backend.read_word()?.to_be();
+        self.bits_in_buffer = WR::Word::BITS - n as usize;
+        bit_write.write_bits((new_word >> self.bits_in_buffer).upcast(), n as usize)?;
+        self.buffer = UpcastableInto::<BB<WR>>::upcast(new_word)
+            .rotate_right(WR::Word::BITS as u32 - n as u32);
 
         Ok(())
     }
@@ -441,6 +479,37 @@ where
         self.bits_in_buffer = WR::Word::BITS - n_bits;
         self.buffer = UpcastableInto::<BB<WR>>::upcast(new_word) >> n_bits;
 
+        Ok(())
+    }
+
+    #[cfg(not(feature = "no_copy_impls"))]
+    fn copy_to<F: Endianness>(
+        &mut self,
+        bit_write: &mut impl BitWrite<F>,
+        mut n: u64,
+    ) -> Result<(), Box<dyn Error>> {
+        let from_buffer = Ord::min(n, self.bits_in_buffer as _);
+
+        bit_write.write_bits(self.buffer.cast(), from_buffer as usize)?;
+
+        self.buffer >>= from_buffer;
+        n -= from_buffer;
+
+        if n == 0 {
+            self.bits_in_buffer -= from_buffer as usize;
+            return Ok(());
+        }
+
+        while n > WR::Word::BITS as u64 {
+            bit_write.write_bits(self.backend.read_word()?.to_le().upcast(), WR::Word::BITS)?;
+            n -= WR::Word::BITS as u64;
+        }
+
+        assert!(n > 0);
+        let new_word = self.backend.read_word()?.to_le();
+        self.bits_in_buffer = WR::Word::BITS - n as usize;
+        bit_write.write_bits(new_word.upcast(), n as usize)?;
+        self.buffer = UpcastableInto::<BB<WR>>::upcast(new_word) >> n;
         Ok(())
     }
 }

@@ -12,7 +12,7 @@ use core::{mem, ptr};
 use crate::codes::params::{DefaultWriteParams, WriteParams};
 use crate::codes::unary_tables;
 use crate::traits::*;
-use common_traits::{CastableInto, Integer, Number, Scalar};
+use common_traits::{CastableInto, Integer, Number, Scalar, UpcastableInto};
 
 /// An implementation of [`BitWrite`] for a [`WordWrite`].
 ///
@@ -151,7 +151,10 @@ where
 
         // Load the bottom of the buffer, if necessary, and dump the whole buffer
         if space_left_in_buffer != 0 {
-            self.buffer <<= space_left_in_buffer;
+            // TODO
+            if space_left_in_buffer != WW::Word::BITS {
+                self.buffer <<= space_left_in_buffer;
+            }
             // The first shift discards bits higher than n_bits
             self.buffer |= (value << (64 - n_bits) >> (64 - space_left_in_buffer)).cast();
         }
@@ -212,6 +215,39 @@ where
         self.buffer = WW::Word::ONE;
         self.bits_in_buffer = (value % WW::Word::BITS as u64) as usize + 1;
         Ok(code_length as usize)
+    }
+
+    #[cfg(not(feature = "no_copy_impls"))]
+    fn copy_from<F: Endianness>(
+        &mut self,
+        bit_read: &mut impl BitRead<F>,
+        mut n: u64,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let to_buffer = Ord::min(n, self.space_left_in_buffer() as u64);
+        self.buffer |= bit_read
+            .read_bits(to_buffer as usize)?
+            .rotate_left(self.bits_in_buffer as u32)
+            .cast();
+
+        n -= to_buffer;
+        if n == 0 {
+            self.bits_in_buffer += to_buffer as usize;
+            return Ok(());
+        }
+
+        self.backend.write_word(self.buffer.to_be())?;
+
+        while n > WW::Word::BITS as u64 {
+            self.backend
+                .write_word(bit_read.read_bits(WW::Word::BITS)?.to_be().cast())?;
+            n -= WW::Word::BITS as u64;
+        }
+
+        self.buffer =
+            bit_read.read_bits(n as usize)?.to_be().cast() << (WW::Word::BITS - n as usize);
+        self.bits_in_buffer = n as usize;
+
+        Ok(())
     }
 }
 
@@ -277,7 +313,10 @@ where
 
         // Load the top of the buffer, if necessary, and dump the whole buffer
         if space_left_in_buffer != 0 {
-            self.buffer >>= space_left_in_buffer;
+            // TODO
+            if space_left_in_buffer != WW::Word::BITS {
+                self.buffer >>= space_left_in_buffer;
+            }
             self.buffer |= value.cast() << self.bits_in_buffer;
         }
         self.backend.write_word(self.buffer.to_le())?;
@@ -340,6 +379,39 @@ where
         self.buffer = WW::Word::ONE << (WW::Word::BITS - 1);
         self.bits_in_buffer = value as usize + 1;
         Ok(code_length as usize)
+    }
+
+    #[cfg(not(feature = "no_copy_impls"))]
+
+    fn copy_from<F: Endianness>(
+        &mut self,
+        bit_read: &mut impl BitRead<F>,
+        mut n: u64,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let to_buffer = Ord::min(n, self.space_left_in_buffer() as u64);
+        self.buffer |= bit_read
+            .read_bits(to_buffer as usize)?
+            .rotate_right(self.bits_in_buffer as u32)
+            .cast();
+
+        n -= to_buffer;
+        if n == 0 {
+            self.bits_in_buffer += to_buffer as usize;
+            return Ok(());
+        }
+
+        self.backend.write_word(self.buffer.to_le())?;
+
+        while n > WW::Word::BITS as u64 {
+            self.backend
+                .write_word(bit_read.read_bits(WW::Word::BITS)?.to_le().cast())?;
+            n -= WW::Word::BITS as u64;
+        }
+
+        self.buffer = bit_read.read_bits(n as usize)?.to_le().cast();
+        self.bits_in_buffer = n as usize;
+
+        Ok(())
     }
 }
 
