@@ -183,9 +183,8 @@ def gen_table(
                     codes.append((value, read_bits - len(bits_left)))
                 except ValueError:
                     codes.append((None, None))
-            
-            read_max_val = max(x[0] for x in codes if x[0] is not None)
-            read_max_len = max(x[1] for x in codes if x[1] is not None)
+            read_max_val = max(x[0] or 0 for x in codes)
+            read_max_len = max(x[1] or 0 for x in codes)
             len_ty = "u8"
             f.write(
                 "/// The len we assign to a code that cannot be decoded through the table\n"
