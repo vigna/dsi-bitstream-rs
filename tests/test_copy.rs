@@ -14,13 +14,13 @@ use rand::{Rng, SeedableRng};
 
 #[test]
 fn test() -> Result<(), Box<dyn std::error::Error>> {
-    //test_endianness::<LE, u8>()?;
+    test_endianness::<LE, u8>()?;
     test_endianness::<BE, u8>()?;
-    //test_endianness::<LE, u16>()?;
+    test_endianness::<LE, u16>()?;
     test_endianness::<BE, u16>()?;
-    //test_endianness::<LE, u32>()?;
+    test_endianness::<LE, u32>()?;
     test_endianness::<BE, u32>()?;
-    //test_endianness::<LE, u64>()?;
+    test_endianness::<LE, u64>()?;
     test_endianness::<BE, u64>()?;
     Ok(())
 }
@@ -69,13 +69,13 @@ where
     for len in 0..MAX_LEN {
         // copy_to, BufBitReader implementation
 
-        /*for skip in 0..=W::BITS.min(len as usize) {
+        for skip in 0..=W::BITS.min(len as usize) {
             let mut read = BufBitReader::<E, _>::new(MemWordReader::new(buffer.clone()));
             let mut copy_write = BufBitWriter::<E, _>::new(MemWordWriterVec::new(Vec::<W>::new()));
             read.skip_bits(skip)?;
             read.copy_to(&mut copy_write, len - skip as u64)?;
             verify(copy_write.into_inner()?.into_inner(), len, skip, true)?;
-        }*/
+        }
 
         // copy_from, BufBitWriter implementation
 

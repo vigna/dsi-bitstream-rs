@@ -389,13 +389,19 @@ where
         bit_read: &mut impl BitRead<F>,
         mut n: u64,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        let to_buffer = Ord::min(n, self.space_left_in_buffer() as u64);
-        self.buffer |= bit_read
-            .read_bits(to_buffer as usize)?
-            .rotate_right(self.bits_in_buffer as u32)
-            .cast();
+        let to_buffer = Ord::min(n, self.space_left_in_buffer() as u64) as usize;
+        // TODO
+        if to_buffer == WW::Word::BITS {
+            self.buffer = bit_read.read_bits(to_buffer)?.cast();
+        } else {
+            // TODO this assumes the unused part of the buffer is zero
+            //            self.buffer = self.buffer >> to_buffer
+            //               | (bit_read.read_bits(to_buffer)?.cast()).rotate_right(to_buffer as u32);
+            self.buffer = (self.buffer | bit_read.read_bits(to_buffer)?.cast())
+                .rotate_right(to_buffer as u32);
+        }
 
-        n -= to_buffer;
+        n -= to_buffer as u64;
         if n == 0 {
             self.bits_in_buffer += to_buffer as usize;
             return Ok(());
@@ -405,11 +411,11 @@ where
 
         while n > WW::Word::BITS as u64 {
             self.backend
-                .write_word(bit_read.read_bits(WW::Word::BITS)?.to_le().cast())?;
+                .write_word(bit_read.read_bits(WW::Word::BITS)?.cast().to_le())?;
             n -= WW::Word::BITS as u64;
         }
 
-        self.buffer = bit_read.read_bits(n as usize)?.to_le().cast();
+        self.buffer = bit_read.read_bits(n as usize)?.cast() << WW::Word::BITS - n as usize;
         self.bits_in_buffer = n as usize;
 
         Ok(())
