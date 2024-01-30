@@ -201,7 +201,6 @@ where
             self.buffer = self.buffer << value << 1; // Might be code_length == WW::Word::BITS
             self.buffer |= WW::Word::ONE;
             self.backend.write_word(self.buffer.to_be())?;
-            self.buffer = WW::Word::ZERO; // TODO
             return Ok(code_length as usize);
         }
 
@@ -219,8 +218,6 @@ where
         if value == WW::Word::BITS as u64 - 1 {
             self.backend.write_word(WW::Word::ONE.to_be())?;
             self.bits_in_buffer = 0;
-            self.buffer = WW::Word::ZERO; // TODO
-
             return Ok(code_length as usize);
         }
 
@@ -235,28 +232,26 @@ where
         bit_read: &mut impl BitRead<F>,
         mut n: u64,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        let to_buffer = Ord::min(n, self.space_left_in_buffer() as u64) as usize;
-        // TODO
-        if to_buffer == WW::Word::BITS {
-            self.buffer = bit_read.read_bits(to_buffer)?.cast();
-        } else {
-            self.buffer = self.buffer << to_buffer | bit_read.read_bits(to_buffer)?.cast();
-        }
+        let space_left_in_buffer = self.space_left_in_buffer();
 
-        n -= to_buffer as u64;
-        if n == 0 {
-            self.bits_in_buffer += to_buffer;
+        if n < space_left_in_buffer as u64 {
+            self.buffer = self.buffer << n | bit_read.read_bits(n as usize)?.cast();
+            self.bits_in_buffer += n as usize;
             return Ok(());
         }
 
+        self.buffer = self.buffer << space_left_in_buffer - 1 << 1
+            | bit_read.read_bits(space_left_in_buffer)?.cast();
+        n -= space_left_in_buffer as u64;
+
         self.backend.write_word(self.buffer.to_be())?;
 
-        while n > WW::Word::BITS as u64 {
+        for _ in 0..n / WW::Word::BITS as u64 {
             self.backend
                 .write_word(bit_read.read_bits(WW::Word::BITS)?.cast().to_be())?;
-            n -= WW::Word::BITS as u64;
         }
 
+        n %= WW::Word::BITS as u64;
         self.buffer = bit_read.read_bits(n as usize)?.cast();
         self.bits_in_buffer = n as usize;
 
@@ -412,33 +407,32 @@ where
         bit_read: &mut impl BitRead<F>,
         mut n: u64,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        let to_buffer = Ord::min(n, self.space_left_in_buffer() as u64) as usize;
-        // TODO
-        if to_buffer == WW::Word::BITS {
-            self.buffer = bit_read.read_bits(to_buffer)?.cast();
-        } else {
-            self.buffer = self.buffer >> to_buffer
-                | (bit_read.read_bits(to_buffer)?.cast()).rotate_right(to_buffer as u32);
-            // TODO this assumes the unused part of the buffer is zero
-            //self.buffer = (self.buffer | bit_read.read_bits(to_buffer)?.cast())
-            //  .rotate_right(to_buffer as u32);
-        }
+        let space_left_in_buffer = self.space_left_in_buffer();
 
-        n -= to_buffer as u64;
-        if n == 0 {
-            self.bits_in_buffer += to_buffer as usize;
+        if n < space_left_in_buffer as u64 {
+            self.buffer =
+                self.buffer >> n | (bit_read.read_bits(n as usize)?.cast()).rotate_right(n as u32);
+            self.bits_in_buffer += n as usize;
             return Ok(());
         }
 
+        self.buffer = self.buffer >> space_left_in_buffer - 1 >> 1
+            | (bit_read.read_bits(space_left_in_buffer as usize)?.cast())
+                << (WW::Word::BITS - space_left_in_buffer);
+        n -= space_left_in_buffer as u64;
+
         self.backend.write_word(self.buffer.to_le())?;
 
-        while n > WW::Word::BITS as u64 {
+        for _ in 0..n / WW::Word::BITS as u64 {
             self.backend
                 .write_word(bit_read.read_bits(WW::Word::BITS)?.cast().to_le())?;
-            n -= WW::Word::BITS as u64;
         }
 
-        self.buffer = bit_read.read_bits(n as usize)?.cast() << WW::Word::BITS - n as usize;
+        n %= WW::Word::BITS as u64;
+        self.buffer = bit_read
+            .read_bits(n as usize)?
+            .cast()
+            .rotate_right(n as u32);
         self.bits_in_buffer = n as usize;
 
         Ok(())
