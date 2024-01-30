@@ -164,47 +164,19 @@ where
     ) -> Result<usize, Self::Error> {
         debug_assert_ne!(value, u64::MAX);
         debug_assert!(self.space_left_in_buffer > 0);
-        if USE_TABLE {
-            if let Some(len) = unary_tables::write_table_be(self, value)? {
-                return Ok(len);
-            }
-        } else {
-            if value < 64 {
-                return self.write_bits(1, value as usize + 1);
-            }
+
+        let code_length = (value + 1) as usize;
+
+        if code_length <= 64 {
+            return self.write_bits(1, code_length);
         }
 
-        let code_length = value + 1;
-
-        // Easy way out: we fit the buffer
-        if code_length < self.space_left_in_buffer as u64 {
-            self.space_left_in_buffer -= code_length as usize;
-            self.buffer = self.buffer << code_length;
-            self.buffer |= WW::Word::ONE;
-            return Ok(code_length as usize);
-        }
-
-        if (code_length - self.space_left_in_buffer as u64) % WW::Word::BITS as u64 == 0 {
-            if code_length == self.space_left_in_buffer as u64 {
-                self.space_left_in_buffer = WW::Word::BITS;
-                self.buffer = self.buffer << value << 1; // Might be code_length == WW::Word::BITS
-                self.buffer |= WW::Word::ONE;
-                self.backend.write_word(self.buffer.to_be())?;
-                return Ok(code_length as usize);
+        if WW::Word::BITS == 128 {
+            if code_length <= 128 {
+                self.write_bits(0, 64)?;
+                self.write_bits(1, code_length - 64)?;
+                return Ok(code_length);
             }
-
-            self.buffer = self.buffer << self.space_left_in_buffer - 1 << 1;
-            self.backend.write_word(self.buffer.to_be())?;
-
-            value -= self.space_left_in_buffer as u64;
-
-            for _ in 0..value / WW::Word::BITS as u64 {
-                self.backend.write_word(WW::Word::ZERO)?;
-            }
-
-            self.backend.write_word(WW::Word::ONE.to_be())?;
-            self.space_left_in_buffer = WW::Word::BITS;
-            return Ok(code_length as usize);
         }
 
         self.buffer = self.buffer << self.space_left_in_buffer - 1 << 1;
@@ -218,6 +190,13 @@ where
 
         value %= WW::Word::BITS as u64;
         self.buffer = WW::Word::ONE;
+
+        if value == WW::Word::BITS as u64 - 1 {
+            self.space_left_in_buffer = WW::Word::BITS;
+            self.backend.write_word(self.buffer.to_be())?;
+            return Ok(code_length as usize);
+        }
+
         self.space_left_in_buffer = WW::Word::BITS - (value as usize + 1);
         Ok(code_length as usize)
     }
@@ -337,48 +316,19 @@ where
     ) -> Result<usize, Self::Error> {
         debug_assert_ne!(value, u64::MAX);
         debug_assert!(self.space_left_in_buffer > 0);
-        if USE_TABLE {
-            if let Some(len) = unary_tables::write_table_le(self, value)? {
-                return Ok(len);
-            }
-        } else {
-            if value < 64 {
-                return self.write_bits(1 << value, value as usize + 1);
-            }
+
+        let code_length = (value + 1) as usize;
+
+        if code_length <= 64 {
+            return self.write_bits(1 << value, code_length);
         }
 
-        let code_length = value + 1;
-
-        // Easy way out: we fit the buffer
-        if code_length < self.space_left_in_buffer as u64 {
-            self.space_left_in_buffer -= code_length as usize;
-            self.buffer = self.buffer >> code_length;
-            self.buffer |= WW::Word::ONE << (WW::Word::BITS - 1);
-            return Ok(code_length as usize);
-        }
-
-        if (code_length - self.space_left_in_buffer as u64) % WW::Word::BITS as u64 == 0 {
-            if code_length == self.space_left_in_buffer as u64 {
-                self.space_left_in_buffer = WW::Word::BITS;
-                self.buffer = self.buffer >> value >> 1; // Might be code_length == WW::Word::BITS
-                self.buffer |= WW::Word::ONE << (WW::Word::BITS - 1);
-                self.backend.write_word(self.buffer.to_le())?;
-                return Ok(code_length as usize);
+        if WW::Word::BITS == 128 {
+            if code_length <= 128 {
+                self.write_bits(0, 64)?;
+                self.write_bits(1 << value - 64, code_length - 64)?;
+                return Ok(code_length);
             }
-
-            self.buffer = self.buffer >> self.space_left_in_buffer - 1 >> 1;
-            self.backend.write_word(self.buffer.to_le())?;
-
-            value -= self.space_left_in_buffer as u64;
-
-            for _ in 0..value / WW::Word::BITS as u64 {
-                self.backend.write_word(WW::Word::ZERO)?;
-            }
-
-            self.backend
-                .write_word((WW::Word::ONE << (WW::Word::BITS - 1)).to_le())?;
-            self.space_left_in_buffer = WW::Word::BITS;
-            return Ok(code_length as usize);
         }
 
         self.buffer = self.buffer >> self.space_left_in_buffer - 1 >> 1;
@@ -391,7 +341,14 @@ where
         }
 
         value %= WW::Word::BITS as u64;
-        self.buffer = WW::Word::ONE << (WW::Word::BITS - 1);
+        self.buffer = WW::Word::ONE.rotate_right(1);
+
+        if value == WW::Word::BITS as u64 - 1 {
+            self.space_left_in_buffer = WW::Word::BITS;
+            self.backend.write_word(self.buffer.to_le())?;
+            return Ok(code_length as usize);
+        }
+
         self.space_left_in_buffer = WW::Word::BITS - (value as usize + 1);
         return Ok(code_length as usize);
     }
