@@ -29,12 +29,12 @@ pub struct BufBitWriter<E: Endianness, WW: WordWrite, WP: WriteParams = DefaultW
     /// The [`WordWrite`] to which we will write words.
     backend: WW,
     /// The buffer where we store bits until we have a word worth of them.
-    /// It might be empty, partial full or full.
-    /// Note that only `bits_in_buffer` bits are valid: the rest have undefined value.
+    /// It might be empty, but it is never full.
+    /// Only the lower (BE) or upper (LE) `WW::Word::BITS - space_left_in_buffer`
+    /// bits are valid: the rest have undefined value.
     buffer: WW::Word,
-    /// Number of valid bits in the buffer, from zero
-    /// to `WW::Word::BITS`, both included.
-    bits_in_buffer: usize,
+    /// Number of upper (BE) or lower (LE) free bits in the buffer. It is always greater than zero.
+    space_left_in_buffer: usize,
     _marker_endianness: core::marker::PhantomData<(E, WP)>,
 }
 
@@ -54,15 +54,9 @@ where
         Self {
             backend,
             buffer: WW::Word::ZERO,
-            bits_in_buffer: 0,
+            space_left_in_buffer: WW::Word::BITS,
             _marker_endianness: core::marker::PhantomData,
         }
-    }
-
-    #[inline(always)]
-    #[must_use]
-    fn space_left_in_buffer(&self) -> usize {
-        WW::Word::BITS - self.bits_in_buffer
     }
 
     ///  Return the backend, consuming this writer after
@@ -95,12 +89,12 @@ impl<E: Endianness, WW: WordWrite, WP: WriteParams> core::ops::Drop for BufBitWr
 fn flush_be<E: Endianness, WW: WordWrite, WP: WriteParams>(
     buf_bit_writer: &mut BufBitWriter<E, WW, WP>,
 ) -> Result<(), WW::Error> {
-    if buf_bit_writer.bits_in_buffer > 0 {
-        buf_bit_writer.buffer <<= WW::Word::BITS - buf_bit_writer.bits_in_buffer;
+    if buf_bit_writer.space_left_in_buffer != WW::Word::BITS {
+        buf_bit_writer.buffer <<= buf_bit_writer.space_left_in_buffer;
         buf_bit_writer
             .backend
             .write_word(buf_bit_writer.buffer.to_be())?;
-        buf_bit_writer.bits_in_buffer = 0;
+        buf_bit_writer.space_left_in_buffer = WW::Word::BITS;
     }
     buf_bit_writer.backend.flush()?;
     Ok(())
@@ -126,7 +120,7 @@ where
             value,
             n_bits
         );
-        debug_assert!(self.bits_in_buffer < WW::Word::BITS);
+        debug_assert!(self.space_left_in_buffer > 0);
 
         #[cfg(test)]
         if n_bits < 64 {
@@ -134,9 +128,8 @@ where
             value |= u64::MAX << n_bits;
         }
 
-        let space_left_in_buffer = self.space_left_in_buffer();
         // Easy way out: we fit the buffer
-        if n_bits < space_left_in_buffer {
+        if n_bits < self.space_left_in_buffer {
             if n_bits == 0 {
                 // Handling this case algorithmically is a pain
                 return Ok(0);
@@ -145,17 +138,17 @@ where
             // Clean up bits higher than n_bits
             value = value << (64 - n_bits) >> (64 - n_bits);
             self.buffer |= value.cast();
-            self.bits_in_buffer += n_bits;
+            self.space_left_in_buffer -= n_bits;
             return Ok(n_bits);
         }
 
         // Load the bottom of the buffer, if necessary, and dump the whole buffer
-        self.buffer = self.buffer << space_left_in_buffer - 1 << 1;
+        self.buffer = self.buffer << self.space_left_in_buffer - 1 << 1;
         // The first shift discards bits higher than n_bits
-        self.buffer |= (value << (64 - n_bits) >> (64 - space_left_in_buffer)).cast();
+        self.buffer |= (value << (64 - n_bits) >> (64 - self.space_left_in_buffer)).cast();
         self.backend.write_word(self.buffer.to_be())?;
 
-        let mut to_write = n_bits - space_left_in_buffer;
+        let mut to_write = n_bits - self.space_left_in_buffer;
 
         for _ in 0..to_write / WW::Word::BITS {
             to_write -= WW::Word::BITS;
@@ -163,10 +156,10 @@ where
                 .write_word((value >> to_write).cast().to_be())?;
         }
 
-        self.bits_in_buffer = to_write;
+        self.space_left_in_buffer = WW::Word::BITS - to_write;
         // The first shift discards bits that should be ignored
         self.buffer = value.cast() & ((WW::Word::ONE << to_write) - WW::Word::ONE);
-        assert!(self.bits_in_buffer != WW::Word::BITS);
+        assert!(self.space_left_in_buffer > 0);
         Ok(n_bits)
     }
 
@@ -177,7 +170,7 @@ where
         mut value: u64,
     ) -> Result<usize, Self::Error> {
         debug_assert_ne!(value, u64::MAX);
-        debug_assert!(self.bits_in_buffer < WW::Word::BITS);
+        debug_assert!(self.space_left_in_buffer > 0);
         if USE_TABLE {
             if let Some(len) = unary_tables::write_table_be(self, value)? {
                 return Ok(len);
@@ -185,28 +178,27 @@ where
         }
 
         let code_length = value + 1;
-        let space_left_in_buffer = self.space_left_in_buffer() as u64;
 
         // Easy way out: we fit the buffer
-        if code_length < space_left_in_buffer {
-            self.bits_in_buffer += code_length as usize;
+        if code_length < self.space_left_in_buffer as u64 {
+            self.space_left_in_buffer -= code_length as usize;
             self.buffer = self.buffer << code_length;
             self.buffer |= WW::Word::ONE;
             return Ok(code_length as usize);
         }
 
-        if code_length == space_left_in_buffer {
-            self.bits_in_buffer = 0;
+        if code_length == self.space_left_in_buffer as u64 {
+            self.space_left_in_buffer = WW::Word::BITS;
             self.buffer = self.buffer << value << 1; // Might be code_length == WW::Word::BITS
             self.buffer |= WW::Word::ONE;
             self.backend.write_word(self.buffer.to_be())?;
             return Ok(code_length as usize);
         }
 
-        self.buffer = self.buffer << space_left_in_buffer - 1 << 1;
+        self.buffer = self.buffer << self.space_left_in_buffer - 1 << 1;
         self.backend.write_word(self.buffer.to_be())?;
 
-        value -= space_left_in_buffer;
+        value -= self.space_left_in_buffer as u64;
 
         for _ in 0..value / WW::Word::BITS as u64 {
             self.backend.write_word(WW::Word::ZERO)?;
@@ -216,12 +208,12 @@ where
 
         if value == WW::Word::BITS as u64 - 1 {
             self.backend.write_word(WW::Word::ONE.to_be())?;
-            self.bits_in_buffer = 0;
+            self.space_left_in_buffer = WW::Word::BITS;
             return Ok(code_length as usize);
         }
 
         self.buffer = WW::Word::ONE;
-        self.bits_in_buffer = value as usize + 1;
+        self.space_left_in_buffer = WW::Word::BITS - (value as usize + 1);
         Ok(code_length as usize)
     }
 
@@ -231,17 +223,15 @@ where
         bit_read: &mut impl BitRead<F>,
         mut n: u64,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        let space_left_in_buffer = self.space_left_in_buffer();
-
-        if n < space_left_in_buffer as u64 {
+        if n < self.space_left_in_buffer as u64 {
             self.buffer = self.buffer << n | bit_read.read_bits(n as usize)?.cast();
-            self.bits_in_buffer += n as usize;
+            self.space_left_in_buffer -= n as usize;
             return Ok(());
         }
 
-        self.buffer = self.buffer << space_left_in_buffer - 1 << 1
-            | bit_read.read_bits(space_left_in_buffer)?.cast();
-        n -= space_left_in_buffer as u64;
+        self.buffer = self.buffer << self.space_left_in_buffer - 1 << 1
+            | bit_read.read_bits(self.space_left_in_buffer)?.cast();
+        n -= self.space_left_in_buffer as u64;
 
         self.backend.write_word(self.buffer.to_be())?;
 
@@ -252,7 +242,7 @@ where
 
         n %= WW::Word::BITS as u64;
         self.buffer = bit_read.read_bits(n as usize)?.cast();
-        self.bits_in_buffer = n as usize;
+        self.space_left_in_buffer = WW::Word::BITS - n as usize;
 
         Ok(())
     }
@@ -266,12 +256,12 @@ where
 fn flush_le<E: Endianness, WW: WordWrite, WP: WriteParams>(
     buf_bit_writer: &mut BufBitWriter<E, WW, WP>,
 ) -> Result<(), WW::Error> {
-    if buf_bit_writer.bits_in_buffer > 0 {
-        buf_bit_writer.buffer >>= WW::Word::BITS - buf_bit_writer.bits_in_buffer;
+    if buf_bit_writer.space_left_in_buffer != WW::Word::BITS {
+        buf_bit_writer.buffer >>= buf_bit_writer.space_left_in_buffer;
         buf_bit_writer
             .backend
             .write_word(buf_bit_writer.buffer.to_le())?;
-        buf_bit_writer.bits_in_buffer = 0;
+        buf_bit_writer.space_left_in_buffer = WW::Word::BITS;
     }
     buf_bit_writer.backend.flush()?;
     Ok(())
@@ -297,7 +287,7 @@ where
             value,
             n_bits
         );
-        debug_assert!(self.bits_in_buffer < WW::Word::BITS);
+        debug_assert!(self.space_left_in_buffer > 0);
 
         #[cfg(test)]
         if n_bits < 64 {
@@ -305,26 +295,25 @@ where
             value |= u64::MAX << n_bits;
         }
 
-        let space_left_in_buffer = self.space_left_in_buffer();
         // Easy way out: we fit the buffer
-        if n_bits < space_left_in_buffer {
+        if n_bits < self.space_left_in_buffer {
             if n_bits == 0 {
                 // Handling this case algorithmically is a pain
                 return Ok(0);
             }
             self.buffer >>= n_bits;
             self.buffer |= value.cast() << (WW::Word::BITS - n_bits);
-            self.bits_in_buffer += n_bits;
+            self.space_left_in_buffer -= n_bits;
             return Ok(n_bits);
         }
 
         // Load the top of the buffer, if necessary, and dump the whole buffer
-        self.buffer = self.buffer >> space_left_in_buffer - 1 >> 1;
-        self.buffer |= value.cast() << self.bits_in_buffer;
+        self.buffer = self.buffer >> self.space_left_in_buffer - 1 >> 1;
+        self.buffer |= value.cast() << WW::Word::BITS - self.space_left_in_buffer;
         self.backend.write_word(self.buffer.to_le())?;
 
-        let to_write = n_bits - space_left_in_buffer;
-        value = value >> space_left_in_buffer - 1 >> 1;
+        let to_write = n_bits - self.space_left_in_buffer;
+        value = value >> self.space_left_in_buffer - 1 >> 1;
 
         for _ in 0..to_write / WW::Word::BITS {
             self.backend.write_word(value.cast().to_le())?;
@@ -332,8 +321,8 @@ where
             value >>= WW::Word::BITS;
         }
 
-        self.bits_in_buffer = to_write % WW::Word::BITS;
-        self.buffer = value.cast().rotate_right(self.bits_in_buffer as u32);
+        self.space_left_in_buffer = WW::Word::BITS - to_write % WW::Word::BITS;
+        self.buffer = value.cast().rotate_right(to_write as u32);
         Ok(n_bits)
     }
 
@@ -344,7 +333,7 @@ where
         mut value: u64,
     ) -> Result<usize, Self::Error> {
         debug_assert_ne!(value, u64::MAX);
-        debug_assert!(self.bits_in_buffer < WW::Word::BITS);
+        debug_assert!(self.space_left_in_buffer > 0);
         if USE_TABLE {
             if let Some(len) = unary_tables::write_table_le(self, value)? {
                 return Ok(len);
@@ -352,28 +341,27 @@ where
         }
 
         let code_length = value + 1;
-        let space_left_in_buffer = self.space_left_in_buffer() as u64;
 
         // Easy way out: we fit the buffer
-        if code_length < space_left_in_buffer {
-            self.bits_in_buffer += code_length as usize;
+        if code_length < self.space_left_in_buffer as u64 {
+            self.space_left_in_buffer -= code_length as usize;
             self.buffer = self.buffer >> code_length;
             self.buffer |= WW::Word::ONE << (WW::Word::BITS - 1);
             return Ok(code_length as usize);
         }
 
-        if code_length == space_left_in_buffer {
-            self.bits_in_buffer = 0;
+        if code_length == self.space_left_in_buffer as u64 {
+            self.space_left_in_buffer = WW::Word::BITS;
             self.buffer = self.buffer >> value >> 1; // Might be code_length == WW::Word::BITS
             self.buffer |= WW::Word::ONE << (WW::Word::BITS - 1);
             self.backend.write_word(self.buffer.to_le())?;
             return Ok(code_length as usize);
         }
 
-        self.buffer = self.buffer >> space_left_in_buffer - 1 >> 1;
+        self.buffer = self.buffer >> self.space_left_in_buffer - 1 >> 1;
         self.backend.write_word(self.buffer.to_le())?;
 
-        value -= space_left_in_buffer;
+        value -= self.space_left_in_buffer as u64;
 
         for _ in 0..value / WW::Word::BITS as u64 {
             self.backend.write_word(WW::Word::ZERO)?;
@@ -384,12 +372,12 @@ where
         if value == WW::Word::BITS as u64 - 1 {
             self.backend
                 .write_word((WW::Word::ONE << (WW::Word::BITS - 1)).to_le())?;
-            self.bits_in_buffer = 0;
+            self.space_left_in_buffer = WW::Word::BITS;
             return Ok(code_length as usize);
         }
 
         self.buffer = WW::Word::ONE << (WW::Word::BITS - 1);
-        self.bits_in_buffer = value as usize + 1;
+        self.space_left_in_buffer = WW::Word::BITS - (value as usize + 1);
         Ok(code_length as usize)
     }
 
@@ -400,19 +388,19 @@ where
         bit_read: &mut impl BitRead<F>,
         mut n: u64,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        let space_left_in_buffer = self.space_left_in_buffer();
-
-        if n < space_left_in_buffer as u64 {
+        if n < self.space_left_in_buffer as u64 {
             self.buffer =
                 self.buffer >> n | (bit_read.read_bits(n as usize)?.cast()).rotate_right(n as u32);
-            self.bits_in_buffer += n as usize;
+            self.space_left_in_buffer -= n as usize;
             return Ok(());
         }
 
-        self.buffer = self.buffer >> space_left_in_buffer - 1 >> 1
-            | (bit_read.read_bits(space_left_in_buffer as usize)?.cast())
-                << (WW::Word::BITS - space_left_in_buffer);
-        n -= space_left_in_buffer as u64;
+        self.buffer = self.buffer >> self.space_left_in_buffer - 1 >> 1
+            | (bit_read
+                .read_bits(self.space_left_in_buffer as usize)?
+                .cast())
+            .rotate_right(self.space_left_in_buffer as u32); // TODO
+        n -= self.space_left_in_buffer as u64;
 
         self.backend.write_word(self.buffer.to_le())?;
 
@@ -426,7 +414,7 @@ where
             .read_bits(n as usize)?
             .cast()
             .rotate_right(n as u32);
-        self.bits_in_buffer = n as usize;
+        self.space_left_in_buffer = WW::Word::BITS - n as usize;
 
         Ok(())
     }

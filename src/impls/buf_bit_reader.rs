@@ -48,9 +48,12 @@ where
     /// The [`WordRead`] used to fill the buffer.
     backend: WR,
     /// The 2-word bit buffer that is used to read the codes. It is never full,
-    /// but it may be empty.
+    /// but it may be empty. Only the upper (BE) or lower (LE)
+    /// `bits_in_buffer` bits are valid.
+    /// TODO: and the rest?
     buffer: BB<WR>,
-    /// Number of valid bits in the buffer. It is always smaller than `BB::<WR>::BITS`.
+    /// Number of valid upper (BE) or lower (LE) bits in the buffer.
+    /// It is always smaller than `BB::<WR>::BITS`.
     bits_in_buffer: usize,
     _marker: core::marker::PhantomData<(E, RP)>,
 }
