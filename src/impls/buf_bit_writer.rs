@@ -164,6 +164,7 @@ where
     ) -> Result<usize, Self::Error> {
         debug_assert_ne!(value, u64::MAX);
         debug_assert!(self.space_left_in_buffer > 0);
+
         let code_length = value + 1;
 
         // Easy way out: we fit the buffer
@@ -192,15 +193,15 @@ where
         }
 
         value %= WW::Word::BITS as u64;
-        self.buffer = WW::Word::ONE;
 
         if value == WW::Word::BITS as u64 - 1 {
+            self.backend.write_word(WW::Word::ONE.to_be())?;
             self.space_left_in_buffer = WW::Word::BITS;
-            self.backend.write_word(self.buffer.to_be())?;
-        } else {
-            self.space_left_in_buffer = WW::Word::BITS - (value as usize + 1);
+            return Ok(code_length as usize);
         }
 
+        self.buffer = WW::Word::ONE;
+        self.space_left_in_buffer = WW::Word::BITS - (value as usize + 1);
         Ok(code_length as usize)
     }
 
@@ -320,6 +321,24 @@ where
         debug_assert_ne!(value, u64::MAX);
         debug_assert!(self.space_left_in_buffer > 0);
 
+        let code_length = value + 1;
+
+        // Easy way out: we fit the buffer
+        if code_length < self.space_left_in_buffer as u64 {
+            self.space_left_in_buffer -= code_length as usize;
+            self.buffer = self.buffer >> code_length;
+            self.buffer |= WW::Word::ONE << (WW::Word::BITS - 1);
+            return Ok(code_length as usize);
+        }
+
+        if code_length == self.space_left_in_buffer as u64 {
+            self.space_left_in_buffer = WW::Word::BITS;
+            self.buffer = self.buffer >> value >> 1; // Might be code_length == WW::Word::BITS
+            self.buffer |= WW::Word::ONE << (WW::Word::BITS - 1);
+            self.backend.write_word(self.buffer.to_le())?;
+            return Ok(code_length as usize);
+        }
+
         self.buffer = self.buffer >> self.space_left_in_buffer - 1 >> 1;
         self.backend.write_word(self.buffer.to_le())?;
 
@@ -330,16 +349,17 @@ where
         }
 
         value %= WW::Word::BITS as u64;
-        self.buffer = WW::Word::ONE.rotate_right(1);
 
         if value == WW::Word::BITS as u64 - 1 {
+            self.backend
+                .write_word((WW::Word::ONE << (WW::Word::BITS - 1)).to_le())?;
             self.space_left_in_buffer = WW::Word::BITS;
-            self.backend.write_word(self.buffer.to_le())?;
-        } else {
-            self.space_left_in_buffer = WW::Word::BITS - (value as usize + 1);
+            return Ok(code_length as usize);
         }
 
-        return Ok(code_length as usize);
+        self.buffer = WW::Word::ONE << (WW::Word::BITS - 1);
+        self.space_left_in_buffer = WW::Word::BITS - (value as usize + 1);
+        Ok(code_length as usize)
     }
 
     #[cfg(not(feature = "no_copy_impls"))]
