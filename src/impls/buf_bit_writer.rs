@@ -69,7 +69,7 @@ where
     /// [flushing it](BufBitWriter::flush).
     pub fn into_inner(mut self) -> Result<WW, <Self as BitWrite<E>>::Error> {
         self.flush()?;
-        // SAFETY: forget(self) prevents double dropping inner
+        // SAFETY: forget(self) prevents double dropping backend
         let backend = unsafe { ptr::read(&self.backend) };
         mem::forget(self);
         Ok(backend)
@@ -151,14 +151,9 @@ where
         }
 
         // Load the bottom of the buffer, if necessary, and dump the whole buffer
-        if space_left_in_buffer != 0 {
-            // TODO
-            if space_left_in_buffer != WW::Word::BITS {
-                self.buffer <<= space_left_in_buffer;
-            }
-            // The first shift discards bits higher than n_bits
-            self.buffer |= (value << (64 - n_bits) >> (64 - space_left_in_buffer)).cast();
-        }
+        self.buffer = self.buffer << space_left_in_buffer - 1 << 1;
+        // The first shift discards bits higher than n_bits
+        self.buffer |= (value << (64 - n_bits) >> (64 - space_left_in_buffer)).cast();
         self.backend.write_word(self.buffer.to_be())?;
 
         let mut to_write = n_bits - space_left_in_buffer;
@@ -331,13 +326,8 @@ where
         }
 
         // Load the top of the buffer, if necessary, and dump the whole buffer
-        if space_left_in_buffer != 0 {
-            // TODO
-            if space_left_in_buffer != WW::Word::BITS {
-                self.buffer >>= space_left_in_buffer;
-            }
-            self.buffer |= value.cast() << self.bits_in_buffer;
-        }
+        self.buffer = self.buffer >> space_left_in_buffer - 1 >> 1;
+        self.buffer |= value.cast() << self.bits_in_buffer;
         self.backend.write_word(self.buffer.to_le())?;
 
         let to_write = n_bits - space_left_in_buffer;

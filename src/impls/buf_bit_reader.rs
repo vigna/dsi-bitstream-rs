@@ -97,7 +97,7 @@ where
 
     ///  Return the backend, consuming this reader.
     pub fn into_inner(self) -> Result<WR, <Self as BitRead<E>>::Error> {
-        // SAFETY: forget(self) prevents double dropping inner
+        // SAFETY: forget(self) prevents double dropping backend
         let backend = unsafe { ptr::read(&self.backend) };
         mem::forget(self);
         Ok(backend)
