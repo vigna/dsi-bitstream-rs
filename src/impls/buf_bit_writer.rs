@@ -164,19 +164,22 @@ where
     ) -> Result<usize, Self::Error> {
         debug_assert_ne!(value, u64::MAX);
         debug_assert!(self.space_left_in_buffer > 0);
+        let code_length = value + 1;
 
-        let code_length = (value + 1) as usize;
-
-        if code_length <= 64 {
-            return self.write_bits(1, code_length);
+        // Easy way out: we fit the buffer
+        if code_length < self.space_left_in_buffer as u64 {
+            self.space_left_in_buffer -= code_length as usize;
+            self.buffer = self.buffer << code_length;
+            self.buffer |= WW::Word::ONE;
+            return Ok(code_length as usize);
         }
 
-        if WW::Word::BITS == 128 {
-            if code_length <= 128 {
-                self.write_bits(0, 64)?;
-                self.write_bits(1, code_length - 64)?;
-                return Ok(code_length);
-            }
+        if code_length == self.space_left_in_buffer as u64 {
+            self.space_left_in_buffer = WW::Word::BITS;
+            self.buffer = self.buffer << value << 1; // Might be code_length == WW::Word::BITS
+            self.buffer |= WW::Word::ONE;
+            self.backend.write_word(self.buffer.to_be())?;
+            return Ok(code_length as usize);
         }
 
         self.buffer = self.buffer << self.space_left_in_buffer - 1 << 1;
@@ -316,20 +319,6 @@ where
     ) -> Result<usize, Self::Error> {
         debug_assert_ne!(value, u64::MAX);
         debug_assert!(self.space_left_in_buffer > 0);
-
-        let code_length = (value + 1) as usize;
-
-        if code_length <= 64 {
-            return self.write_bits(1 << value, code_length);
-        }
-
-        if WW::Word::BITS == 128 {
-            if code_length <= 128 {
-                self.write_bits(0, 64)?;
-                self.write_bits(1 << value - 64, code_length - 64)?;
-                return Ok(code_length);
-            }
-        }
 
         self.buffer = self.buffer >> self.space_left_in_buffer - 1 >> 1;
         self.backend.write_word(self.buffer.to_le())?;
