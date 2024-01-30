@@ -25,7 +25,24 @@ fn test() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-fn verify<E: Endianness, W: UnsignedInt + DoubleType, A: AsRef<[W]>>(
+fn verify_read<E: Endianness>(
+    mut read: impl BitRead<E>,
+    len: u64,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let mut r = SmallRng::seed_from_u64(0);
+
+    for _ in 0..len {
+        let _ = r.gen_range(0..2);
+    }
+
+    for _ in len..MAX_LEN {
+        assert_eq!(read.read_bits(1)?, r.gen_range(0..2));
+    }
+
+    Ok(())
+}
+
+fn verify_write<E: Endianness, W: UnsignedInt + DoubleType, A: AsRef<[W]>>(
     buffer: A,
     mut len: u64,
     skip: usize,
@@ -48,6 +65,12 @@ where
     for b in 0..len {
         assert_eq!(read.read_bits(1)?, r.gen_range(0..2), "@ {b}/{len}");
     }
+
+    let mut r = SmallRng::seed_from_u64(1);
+    for _ in 0..100 {
+        assert_eq!(read.read_bits(1)?, r.gen_range(0..2));
+    }
+
     Ok(())
 }
 
@@ -74,7 +97,14 @@ where
             let mut copy_write = BufBitWriter::<E, _>::new(MemWordWriterVec::new(Vec::<W>::new()));
             read.skip_bits(skip)?;
             read.copy_to(&mut copy_write, len - skip as u64)?;
-            verify(copy_write.into_inner()?.into_inner(), len, skip, true)?;
+
+            let mut r = SmallRng::seed_from_u64(1);
+            for _ in 0..100 {
+                copy_write.write_bits(r.gen_range(0..2), 1)?;
+            }
+
+            verify_write(copy_write.into_inner()?.into_inner(), len, skip, true)?;
+            verify_read(read, len)?;
         }
 
         // copy_from, BufBitWriter implementation
@@ -86,7 +116,14 @@ where
                 copy_write.write_bits(0, 1)?;
             }
             copy_write.copy_from(&mut read, len)?;
-            verify(copy_write.into_inner()?.into_inner(), len, skip, false)?;
+
+            let mut r = SmallRng::seed_from_u64(1);
+            for _ in 0..100 {
+                copy_write.write_bits(r.gen_range(0..2), 1)?;
+            }
+
+            verify_write(copy_write.into_inner()?.into_inner(), len, skip, false)?;
+            verify_read(read, len)?;
         }
     }
 
