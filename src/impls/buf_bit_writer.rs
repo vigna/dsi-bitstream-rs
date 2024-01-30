@@ -130,14 +130,9 @@ where
 
         // Easy way out: we fit the buffer
         if n_bits < self.space_left_in_buffer {
-            if n_bits == 0 {
-                // Handling this case algorithmically is a pain
-                return Ok(0);
-            }
             self.buffer <<= n_bits;
             // Clean up bits higher than n_bits
-            value = value << (64 - n_bits) >> (64 - n_bits);
-            self.buffer |= value.cast();
+            self.buffer |= value.cast() & !(WW::Word::MAX << n_bits as u32);
             self.space_left_in_buffer -= n_bits;
             return Ok(n_bits);
         }
@@ -157,8 +152,7 @@ where
         }
 
         self.space_left_in_buffer = WW::Word::BITS - to_write;
-        // The first shift discards bits that should be ignored
-        self.buffer = value.cast() & ((WW::Word::ONE << to_write) - WW::Word::ONE);
+        self.buffer = value.cast();
         assert!(self.space_left_in_buffer > 0);
         Ok(n_bits)
     }
@@ -297,12 +291,10 @@ where
 
         // Easy way out: we fit the buffer
         if n_bits < self.space_left_in_buffer {
-            if n_bits == 0 {
-                // Handling this case algorithmically is a pain
-                return Ok(0);
-            }
             self.buffer >>= n_bits;
-            self.buffer |= value.cast() << (WW::Word::BITS - n_bits);
+            // Clean up bits higher than n_bits
+            self.buffer |=
+                (value.cast() & !(WW::Word::MAX << n_bits as u32)).rotate_right(n_bits as u32);
             self.space_left_in_buffer -= n_bits;
             return Ok(n_bits);
         }
