@@ -80,7 +80,6 @@ where
         // copy_from, BufBitWriter implementation
 
         for skip in 0..=W::BITS.min(len as usize) {
-            dbg!(len, skip);
             let mut read = BufBitReader::<E, _>::new(MemWordReader::new(buffer.clone()));
             let mut copy_write = BufBitWriter::<E, _>::new(MemWordWriterVec::new(Vec::<W>::new()));
             for _ in 0..skip {

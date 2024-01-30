@@ -201,6 +201,7 @@ where
 
     #[inline]
     fn read_unary_param<const USE_TABLE: bool>(&mut self) -> Result<u64, Self::Error> {
+        debug_assert!(self.bits_in_buffer < BB::<WR>::BITS);
         if USE_TABLE {
             if let Some((res, _)) = unary_tables::read_table_be(self) {
                 return Ok(res);
@@ -235,6 +236,7 @@ where
 
     #[inline]
     fn skip_bits(&mut self, mut n_bits: usize) -> Result<(), Self::Error> {
+        debug_assert!(self.bits_in_buffer < BB::<WR>::BITS);
         // happy case, just shift the buffer
         if n_bits <= self.bits_in_buffer {
             self.bits_in_buffer -= n_bits;
@@ -426,6 +428,7 @@ where
 
     #[inline]
     fn read_unary_param<const USE_TABLE: bool>(&mut self) -> Result<u64, Self::Error> {
+        debug_assert!(self.bits_in_buffer < BB::<WR>::BITS);
         if USE_TABLE {
             if let Some((res, _)) = unary_tables::read_table_le(self) {
                 return Ok(res);
@@ -459,6 +462,7 @@ where
 
     #[inline]
     fn skip_bits(&mut self, mut n_bits: usize) -> Result<(), Self::Error> {
+        debug_assert!(self.bits_in_buffer < BB::<WR>::BITS);
         // happy case, just shift the buffer
         if n_bits <= self.bits_in_buffer {
             self.bits_in_buffer -= n_bits;
