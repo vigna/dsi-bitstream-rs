@@ -331,16 +331,12 @@ where
         self.backend.write_word(self.buffer.to_le())?;
 
         let to_write = n_bits - space_left_in_buffer;
-        // TODO
-        if space_left_in_buffer < 64 {
-            value >>= space_left_in_buffer;
-        }
+        value = value >> space_left_in_buffer - 1 >> 1;
 
         for _ in 0..to_write / WW::Word::BITS {
             self.backend.write_word(value.cast().to_le())?;
-            // This might be executed with WW::Word == u64,
-            // but it cannot be executed with WW::Word == u128
-            value = value >> (WW::Word::BITS - 1) >> 1;
+            // This cannot be executed with WW::Word::BITS >= 64
+            value = value >> WW::Word::BITS;
         }
 
         self.bits_in_buffer = to_write % WW::Word::BITS;
