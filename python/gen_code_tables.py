@@ -48,7 +48,7 @@ pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> Option<(u64, us
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
         let idx: u64 = idx.cast();
         let (value, len) = READ_%(BO)s[idx as usize];
-        if len != MISSING_VALUE_LEN {
+        if len != MISSING_VALUE_LEN_%(BO)s {
             backend.skip_bits_after_table_lookup(len as usize);
             return Some((value as u64, len as usize));
         }
@@ -67,7 +67,7 @@ pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> Option<(u64, us
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
         let idx: u64 = idx.cast();
         let len = READ_LEN_%(BO)s[idx as usize];
-        if len != MISSING_VALUE_LEN {
+        if len != MISSING_VALUE_LEN_%(BO)s {
             backend.skip_bits_after_table_lookup(len as usize);
             return Some((READ_%(BO)s[idx as usize] as u64, len as usize));
         }
@@ -83,7 +83,7 @@ pub fn len_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> Option<usize> {
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
         let idx: u64 = idx.cast();
         let len = READ_LEN_%(BO)s[idx as usize];
-        if len != MISSING_VALUE_LEN {
+        if len != MISSING_VALUE_LEN_%(BO)s {
             backend.skip_bits_after_table_lookup(len as usize);
             return Some(len as usize);
         }
@@ -155,16 +155,6 @@ def gen_table(
 
         f.write("/// How many bits are needed to read the tables in this\n")
         f.write("pub const READ_BITS: usize = {};\n".format(read_bits))
-        # This value and type work across all codes and table sizes
-        MISSING_VALUE_LEN = 255
-        len_ty = "u8"
-        f.write(
-            "/// The len we assign to a code that cannot be decoded through the table\n"
-        )
-        f.write(
-            "pub const MISSING_VALUE_LEN: {} = {};\n".format(len_ty, MISSING_VALUE_LEN)
-        )
-
         f.write(
             "/// Maximum value writable using the table(s)\n"
         )
@@ -192,7 +182,18 @@ def gen_table(
                     value, bits_left = read_func(bits, BO == "BE")
                     codes.append((value, read_bits - len(bits_left)))
                 except ValueError:
-                    codes.append((0, MISSING_VALUE_LEN))
+                    codes.append((None, None))
+            
+            read_max_val = max(x[0] for x in codes if x[0] is not None)
+            read_max_len = max(x[1] for x in codes if x[1] is not None)
+            len_ty = "u8"
+            f.write(
+                "/// The len we assign to a code that cannot be decoded through the table\n"
+            )
+            f.write(
+                "pub const MISSING_VALUE_LEN_{}: {} = {};\n".format(BO, len_ty, read_max_len + 1)
+            )
+
 
             if merged_table:
                 f.write(
@@ -204,12 +205,12 @@ def gen_table(
                     "pub const READ_%s: &[(%s, %s)] = &["
                     % (
                         BO,
-                        get_best_fitting_type(read_bits),
-                        len_ty,
+                        get_best_fitting_type(log2(read_max_val + 1)),
+                        get_best_fitting_type(log2(read_max_len + 2)),  
                     )
                 )
                 for value, l in codes:
-                    f.write("({}, {}), ".format(value, l))
+                    f.write("({}, {}), ".format(value or 0, l or (read_max_len + 1)))
                 f.write("];\n")
             else:
                 f.write(
@@ -221,11 +222,11 @@ def gen_table(
                     "pub const READ_%s: &[%s] = &["
                     % (
                         BO,
-                        get_best_fitting_type(read_bits),
+                        get_best_fitting_type(log2(read_max_val + 1)),
                     )
                 )
                 for value, l in codes:
-                    f.write("{}, ".format(value))
+                    f.write("{}, ".format(value or 0))
                 f.write("];\n")
 
                 f.write(
@@ -237,11 +238,11 @@ def gen_table(
                     "pub const READ_LEN_%s: &[%s] = &["
                     % (
                         BO,
-                        len_ty,
+                        get_best_fitting_type(log2(read_max_len + 2)),
                     )
                 )
                 for value, l in codes:
-                    f.write("{}, ".format(l))
+                    f.write("{}, ".format(l or (read_max_len + 1)))
                 f.write("];\n")
 
         # Write the write tables
