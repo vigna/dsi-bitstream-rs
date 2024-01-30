@@ -153,7 +153,6 @@ where
 
         self.space_left_in_buffer = WW::Word::BITS - to_write;
         self.buffer = value.cast();
-        assert!(self.space_left_in_buffer > 0);
         Ok(n_bits)
     }
 
