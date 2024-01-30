@@ -194,10 +194,10 @@ where
         if value == WW::Word::BITS as u64 - 1 {
             self.space_left_in_buffer = WW::Word::BITS;
             self.backend.write_word(self.buffer.to_be())?;
-            return Ok(code_length as usize);
+        } else {
+            self.space_left_in_buffer = WW::Word::BITS - (value as usize + 1);
         }
 
-        self.space_left_in_buffer = WW::Word::BITS - (value as usize + 1);
         Ok(code_length as usize)
     }
 
@@ -346,10 +346,10 @@ where
         if value == WW::Word::BITS as u64 - 1 {
             self.space_left_in_buffer = WW::Word::BITS;
             self.backend.write_word(self.buffer.to_le())?;
-            return Ok(code_length as usize);
+        } else {
+            self.space_left_in_buffer = WW::Word::BITS - (value as usize + 1);
         }
 
-        self.space_left_in_buffer = WW::Word::BITS - (value as usize + 1);
         return Ok(code_length as usize);
     }
 
