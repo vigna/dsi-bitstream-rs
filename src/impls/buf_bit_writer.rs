@@ -168,6 +168,10 @@ where
             if let Some(len) = unary_tables::write_table_be(self, value)? {
                 return Ok(len);
             }
+        } else {
+            if value < 64 {
+                return self.write_bits(1, value as usize + 1);
+            }
         }
 
         let code_length = value + 1;
@@ -336,6 +340,10 @@ where
         if USE_TABLE {
             if let Some(len) = unary_tables::write_table_le(self, value)? {
                 return Ok(len);
+            }
+        } else {
+            if value < 64 {
+                return self.write_bits(1 << value, value as usize + 1);
             }
         }
 
