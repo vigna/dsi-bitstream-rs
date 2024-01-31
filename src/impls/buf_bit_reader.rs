@@ -11,6 +11,7 @@ use common_traits::*;
 use crate::codes::params::{DefaultReadParams, ReadParams};
 use crate::codes::unary_tables;
 use crate::traits::*;
+use core::convert::Infallible;
 use core::{mem, ptr};
 use std::error::Error;
 
@@ -75,7 +76,6 @@ where
 impl<E: Endianness, WR: WordRead, RP: ReadParams> BufBitReader<E, WR, RP>
 where
     WR::Word: DoubleType,
-    BufBitReader<E, WR, RP>: BitRead<E>,
 {
     /// Create a new [`BufBitReader`] around a [`WordRead`].
     ///
@@ -98,7 +98,7 @@ where
     }
 
     ///  Return the backend, consuming this reader.
-    pub fn into_inner(self) -> Result<WR, <Self as BitRead<E>>::Error> {
+    pub fn into_inner(self) -> Result<WR, Infallible> {
         // SAFETY: forget(self) prevents double dropping backend
         let backend = unsafe { ptr::read(&self.backend) };
         mem::forget(self);
