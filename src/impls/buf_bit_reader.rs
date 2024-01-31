@@ -49,8 +49,7 @@ where
     backend: WR,
     /// The 2-word bit buffer that is used to read the codes. It is never full,
     /// but it may be empty. Only the upper (BE) or lower (LE)
-    /// `bits_in_buffer` bits are valid.
-    /// TODO: and the rest?
+    /// `bits_in_buffer` bits are valid; the other bits are always zeroes.
     buffer: BB<WR>,
     /// Number of valid upper (BE) or lower (LE) bits in the buffer.
     /// It is always smaller than `BB::<WR>::BITS`.
