@@ -50,24 +50,6 @@ impl<E: Endianness, BW: BitWrite<E>, const PRINT: bool> BitWrite<E>
         })
     }
 
-    fn write_unary_param<const USE_TABLE: bool>(
-        &mut self,
-        value: u64,
-    ) -> Result<usize, Self::Error> {
-        self.bit_write
-            .write_unary_param::<USE_TABLE>(value)
-            .map(|x| {
-                self.bits_written += x;
-                if PRINT {
-                    eprintln!(
-                        "write_unary_param<{}>({}) = {} (total = {})",
-                        USE_TABLE, value, x, self.bits_written
-                    );
-                }
-                x
-            })
-    }
-
     fn write_unary(&mut self, value: u64) -> Result<usize, Self::Error> {
         self.bit_write.write_unary(value).map(|x| {
             self.bits_written += x;
@@ -317,7 +299,7 @@ fn test_count() -> Result<(), Box<dyn std::error::Error>> {
 
     count_bit_write.write_unary(5)?;
     assert_eq!(count_bit_write.bits_written, 6);
-    count_bit_write.write_unary_param::<true>(100)?;
+    count_bit_write.write_unary(100)?;
     assert_eq!(count_bit_write.bits_written, 107);
     count_bit_write.write_bits(1, 20)?;
     assert_eq!(count_bit_write.bits_written, 127);

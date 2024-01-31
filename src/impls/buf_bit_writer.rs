@@ -158,10 +158,7 @@ where
 
     #[inline]
     #[allow(clippy::collapsible_if)]
-    fn write_unary_param<const USE_TABLE: bool>(
-        &mut self,
-        mut value: u64,
-    ) -> Result<usize, Self::Error> {
+    fn write_unary(&mut self, mut value: u64) -> Result<usize, Self::Error> {
         debug_assert_ne!(value, u64::MAX);
         debug_assert!(self.space_left_in_buffer > 0);
 
@@ -314,10 +311,7 @@ where
 
     #[inline]
     #[allow(clippy::collapsible_if)]
-    fn write_unary_param<const USE_TABLE: bool>(
-        &mut self,
-        mut value: u64,
-    ) -> Result<usize, Self::Error> {
+    fn write_unary(&mut self, mut value: u64) -> Result<usize, Self::Error> {
         debug_assert_ne!(value, u64::MAX);
         debug_assert!(self.space_left_in_buffer > 0);
 
@@ -453,16 +447,9 @@ macro_rules! test_buf_bit_writer {
                     little.write_bits(r.gen::<u64>() & u64::MAX >> 64 - n_bits, n_bits)?;
                 }
                 let value = r.gen_range(0..128);
-                assert_eq!(big.write_unary_param::<false>(value)?, value as usize + 1);
+                assert_eq!(big.write_unary(value)?, value as usize + 1);
                 let value = r.gen_range(0..128);
-                assert_eq!(
-                    little.write_unary_param::<false>(value)?,
-                    value as usize + 1
-                );
-                let value = r.gen_range(0..128);
-                assert_eq!(big.write_unary_param::<true>(value)?, value as usize + 1);
-                let value = r.gen_range(0..128);
-                assert_eq!(little.write_unary_param::<true>(value)?, value as usize + 1);
+                assert_eq!(little.write_unary(value)?, value as usize + 1);
             }
 
             drop(big);
@@ -517,8 +504,6 @@ macro_rules! test_buf_bit_writer {
                     );
                 }
 
-                assert_eq!(big_buff.read_unary()?, r.gen_range(0..128));
-                assert_eq!(little_buff.read_unary()?, r.gen_range(0..128));
                 assert_eq!(big_buff.read_unary()?, r.gen_range(0..128));
                 assert_eq!(little_buff.read_unary()?, r.gen_range(0..128));
             }

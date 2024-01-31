@@ -600,16 +600,9 @@ macro_rules! test_buf_bit_reader {
                     little.write_bits(1, n_bits)?;
                 }
                 let value = r.gen_range(0..128);
-                assert_eq!(big.write_unary_param::<false>(value)?, value as usize + 1);
+                assert_eq!(big.write_unary(value)?, value as usize + 1);
                 let value = r.gen_range(0..128);
-                assert_eq!(
-                    little.write_unary_param::<false>(value)?,
-                    value as usize + 1
-                );
-                let value = r.gen_range(0..128);
-                assert_eq!(big.write_unary_param::<true>(value)?, value as usize + 1);
-                let value = r.gen_range(0..128);
-                assert_eq!(little.write_unary_param::<true>(value)?, value as usize + 1);
+                assert_eq!(little.write_unary(value)?, value as usize + 1);
             }
 
             drop(big);
@@ -658,8 +651,6 @@ macro_rules! test_buf_bit_reader {
                     assert_eq!(little_buff.read_bits(n_bits)?, 1);
                 }
 
-                assert_eq!(big_buff.read_unary()?, r.gen_range(0..128));
-                assert_eq!(little_buff.read_unary()?, r.gen_range(0..128));
                 assert_eq!(big_buff.read_unary()?, r.gen_range(0..128));
                 assert_eq!(little_buff.read_unary()?, r.gen_range(0..128));
             }

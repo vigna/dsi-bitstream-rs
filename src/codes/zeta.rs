@@ -199,5 +199,5 @@ fn default_write_zeta<E: Endianness, B: BitWrite<E>>(
     debug_assert!(n < u, "{} < {}", n, u);
 
     // Write the code
-    Ok(backend.write_unary_param::<false>(h)? + backend.write_minimal_binary(n - l, u - l)?)
+    Ok(backend.write_unary(h)? + backend.write_minimal_binary(n - l, u - l)?)
 }

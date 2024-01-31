@@ -123,17 +123,12 @@ impl<E: Endianness, W: BitWrite<E>> BitWrite<E> for DbgBitWriter<E, W> {
         eprintln!("write_bits({}, {})", value, n_bits);
         self.writer.write_bits(value, n_bits)
     }
-    fn write_unary_param<const USE_TABLE: bool>(
-        &mut self,
-        value: u64,
-    ) -> Result<usize, Self::Error> {
-        eprintln!("{{U<{}>:{}}}", USE_TABLE, value);
-        self.writer.write_unary(value)
-    }
+
     fn write_unary(&mut self, value: u64) -> Result<usize, Self::Error> {
         eprintln!("{{U:{}}}", value);
         self.writer.write_unary(value)
     }
+
     fn flush(&mut self) -> Result<(), Self::Error> {
         self.writer.flush()
     }

@@ -132,26 +132,7 @@ pub trait BitWrite<E: Endianness> {
 
     /// Write `value` as a unary code to the stream and return the number of
     /// bits written, that is, `value` plus one.
-    ///     
-    /// This version of the method has a constant parameter
-    /// deciding whether to use an encoding table. You should rather use
-    /// [`BitWrite::write_unary`], which uses the default
-    /// choice of the implementing type.
-    fn write_unary_param<const USE_TABLE: bool>(
-        &mut self,
-        value: u64,
-    ) -> Result<usize, Self::Error>;
-
-    /// Write `value` as a unary code to the stream and return the number of
-    /// bits written, that is, `value` plus one.
-    ///
-    /// This version of the method uses the version of
-    /// of [`BitWrite::write_unary_param`] selected as default by
-    /// the implementing type. The default implementation
-    /// uses a table.
-    fn write_unary(&mut self, value: u64) -> Result<usize, Self::Error> {
-        self.write_unary_param::<true>(value)
-    }
+    fn write_unary(&mut self, value: u64) -> Result<usize, Self::Error>;
 
     /// Flush the buffer, consuming the bit stream.
     fn flush(&mut self) -> Result<(), Self::Error>;
