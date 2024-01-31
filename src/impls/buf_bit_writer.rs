@@ -11,7 +11,6 @@ use core::{mem, ptr};
 
 use crate::codes::params::{DefaultWriteParams, WriteParams};
 use crate::traits::*;
-// TODO: are we abusing .cast()?
 use common_traits::{CastableInto, Integer, Number, Scalar};
 
 /// An implementation of [`BitWrite`] for a [`WordWrite`].
@@ -381,7 +380,7 @@ where
             | (bit_read
                 .read_bits(self.space_left_in_buffer as usize)?
                 .cast())
-            .rotate_right(self.space_left_in_buffer as u32); // TODO
+            .rotate_right(self.space_left_in_buffer as u32);
         n -= self.space_left_in_buffer as u64;
 
         self.backend.write_word(self.buffer.to_le())?;

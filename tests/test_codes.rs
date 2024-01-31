@@ -32,7 +32,7 @@ where
     const N: usize = 100000;
     let mut r = SmallRng::seed_from_u64(0);
     let mut v = SmallRng::seed_from_u64(1);
-    let mut buffer = Vec::<u64>::new();
+    let buffer = Vec::<u64>::new();
     let mut write = BufBitWriter::<E, _>::new(MemWordWriterVec::new(buffer));
 
     let mut pos = vec![];

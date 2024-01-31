@@ -259,13 +259,9 @@ where
         let new_word = self.backend.read_word()?.to_be();
         self.bits_in_buffer = WR::Word::BITS - n_bits;
 
-        // TODO
-        if self.bits_in_buffer == 0 {
-            self.buffer = BB::<WR>::ZERO;
-        } else {
-            self.buffer = UpcastableInto::<BB<WR>>::upcast(new_word)
-                << (BB::<WR>::BITS - self.bits_in_buffer);
-        }
+        self.buffer = UpcastableInto::<BB<WR>>::upcast(new_word)
+            << (BB::<WR>::BITS - 1 - self.bits_in_buffer)
+            << 1;
 
         Ok(())
     }
