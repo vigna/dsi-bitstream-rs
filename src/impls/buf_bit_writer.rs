@@ -12,7 +12,7 @@ use core::{mem, ptr};
 use crate::codes::params::{DefaultWriteParams, WriteParams};
 use crate::traits::*;
 // TODO: are we abusing .cast()?
-use common_traits::{CastableInto, Integer, Number, Scalar, UpcastableInto};
+use common_traits::{CastableInto, Integer, Number, Scalar};
 
 /// An implementation of [`BitWrite`] for a [`WordWrite`].
 ///
