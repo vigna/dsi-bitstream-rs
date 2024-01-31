@@ -16,6 +16,9 @@ arbitrary = { version = "1", features = ["derive"], optional = true }
 zip = { version="0.6.6", optional=true }
 common_traits = "0.9.0"
 
+[dev-dependencies]
+criterion = "0.5.1"
+
 [features]
 default = ["std"]
 std = ["alloc"]
@@ -23,3 +26,10 @@ alloc = []
 fuzz = ["dep:arbitrary", "dep:zip"]
 checks = []
 no_copy_impls = [] # Disable copy_from/copy_to implementations so to test the default methods
+
+[[bench]]
+name = "write_unary"
+harness = false
+
+
+
