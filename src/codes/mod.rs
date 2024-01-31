@@ -66,6 +66,12 @@ pub use minimal_binary::{len_minimal_binary, MinimalBinaryRead, MinimalBinaryWri
 pub mod zeta;
 pub use zeta::{len_zeta, len_zeta_param, ZetaRead, ZetaReadParam, ZetaWrite, ZetaWriteParam};
 
+pub mod golomb;
+pub use golomb::{len_golomb, GolombRead, GolombWrite};
+
+pub mod rice;
+pub use rice::{len_rice, RiceRead, RiceWrite};
+
 pub mod delta_tables;
 pub mod gamma_tables;
 pub mod unary_tables;

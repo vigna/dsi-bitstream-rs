@@ -10,8 +10,8 @@ use core::any::TypeId;
 use core::{mem, ptr};
 
 use crate::codes::params::{DefaultWriteParams, WriteParams};
-use crate::codes::unary_tables;
 use crate::traits::*;
+// TODO: are we abusing .cast()?
 use common_traits::{CastableInto, Integer, Number, Scalar, UpcastableInto};
 
 /// An implementation of [`BitWrite`] for a [`WordWrite`].
@@ -110,6 +110,7 @@ where
         flush_be(self)
     }
 
+    #[allow(unused_mut)]
     #[inline]
     fn write_bits(&mut self, mut value: u64, n_bits: usize) -> Result<usize, Self::Error> {
         debug_assert!(n_bits <= 64);

@@ -35,18 +35,10 @@ pub fn len_minimal_binary(n: u64, max: u64) -> usize {
     result
 }
 
-#[inline(always)]
-fn ensure_max(max: u64) {
-    assert!(max > 0, "max = {}", max);
-}
-
 /// Trait for reading minimal binary codes.
-///
-/// This is the trait you should usually pull in scope to read minimal binary codes.
-pub trait MinimalBinaryRead<BO: Endianness>: BitRead<BO> {
+pub trait MinimalBinaryRead<E: Endianness>: BitRead<E> {
     #[inline(always)]
     fn read_minimal_binary(&mut self, max: u64) -> Result<u64, Self::Error> {
-        ensure_max(max);
         let l = max.ilog2();
         let mut prefix = self.read_bits(l as _)?;
         let limit = (1 << (l + 1)) - max;
@@ -62,12 +54,9 @@ pub trait MinimalBinaryRead<BO: Endianness>: BitRead<BO> {
 }
 
 /// Trait for writing minimal binary codes.
-///
-/// This is the trait you should usually pull in scope to write minimal binary codes.
-pub trait MinimalBinaryWrite<BO: Endianness>: BitWrite<BO> {
+pub trait MinimalBinaryWrite<E: Endianness>: BitWrite<E> {
     #[inline]
     fn write_minimal_binary(&mut self, n: u64, max: u64) -> Result<usize, Self::Error> {
-        ensure_max(max);
         let l = max.ilog2();
         let limit = (1 << (l + 1)) - max;
 
@@ -83,5 +72,5 @@ pub trait MinimalBinaryWrite<BO: Endianness>: BitWrite<BO> {
     }
 }
 
-impl<BO: Endianness, B: BitRead<BO>> MinimalBinaryRead<BO> for B {}
-impl<BO: Endianness, B: BitWrite<BO>> MinimalBinaryWrite<BO> for B {}
+impl<E: Endianness, B: BitRead<E>> MinimalBinaryRead<E> for B {}
+impl<E: Endianness, B: BitWrite<E>> MinimalBinaryWrite<E> for B {}
