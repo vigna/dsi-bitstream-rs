@@ -172,15 +172,15 @@ where
             return Ok(code_length as usize);
         }
 
-        if (code_length - self.space_left_in_buffer as u64) % WW::Word::BITS as u64 == 0 {
-            if code_length == self.space_left_in_buffer as u64 {
-                self.space_left_in_buffer = WW::Word::BITS;
-                self.buffer = self.buffer << value << 1; // Might be code_length == WW::Word::BITS
-                self.buffer |= WW::Word::ONE;
-                self.backend.write_word(self.buffer.to_be())?;
-                return Ok(code_length as usize);
-            }
+        if code_length == self.space_left_in_buffer as u64 {
+            self.space_left_in_buffer = WW::Word::BITS;
+            self.buffer = self.buffer << value << 1; // Might be code_length == WW::Word::BITS
+            self.buffer |= WW::Word::ONE;
+            self.backend.write_word(self.buffer.to_be())?;
+            return Ok(code_length as usize);
+        }
 
+        if (code_length - self.space_left_in_buffer as u64) % WW::Word::BITS as u64 == 0 {
             self.buffer = self.buffer << self.space_left_in_buffer - 1 << 1;
             self.backend.write_word(self.buffer.to_be())?;
 
@@ -333,15 +333,15 @@ where
             return Ok(code_length as usize);
         }
 
-        if (code_length - self.space_left_in_buffer as u64) % WW::Word::BITS as u64 == 0 {
-            if code_length == self.space_left_in_buffer as u64 {
-                self.space_left_in_buffer = WW::Word::BITS;
-                self.buffer = self.buffer >> value >> 1; // Might be code_length == WW::Word::BITS
-                self.buffer |= WW::Word::ONE << (WW::Word::BITS - 1);
-                self.backend.write_word(self.buffer.to_le())?;
-                return Ok(code_length as usize);
-            }
+        if code_length == self.space_left_in_buffer as u64 {
+            self.space_left_in_buffer = WW::Word::BITS;
+            self.buffer = self.buffer >> value >> 1; // Might be code_length == WW::Word::BITS
+            self.buffer |= WW::Word::ONE << (WW::Word::BITS - 1);
+            self.backend.write_word(self.buffer.to_le())?;
+            return Ok(code_length as usize);
+        }
 
+        if (code_length - self.space_left_in_buffer as u64) % WW::Word::BITS as u64 == 0 {
             self.buffer = self.buffer >> self.space_left_in_buffer - 1 >> 1;
             self.backend.write_word(self.buffer.to_le())?;
 
