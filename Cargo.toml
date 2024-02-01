@@ -31,5 +31,8 @@ no_copy_impls = [] # Disable copy_from/copy_to implementations so to test the de
 name = "write_unary"
 harness = false
 
+[[bench]]
+name = "write_gamma"
+harness = false
 
 

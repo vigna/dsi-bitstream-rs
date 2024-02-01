@@ -13,10 +13,6 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     let mut w_be = <BufBitWriter<BE, _>>::new(MemWordWriterVec::new(v_be));
     let mut r = SmallRng::seed_from_u64(0);
 
-    c.bench_function("rng", |b| {
-        b.iter(|| black_box(r.next_u64().trailing_zeros() as u64))
-    });
-
     c.bench_function("rng + trailing_zeros", |b| {
         b.iter(|| black_box(r.next_u64().trailing_zeros() as u64))
     });
