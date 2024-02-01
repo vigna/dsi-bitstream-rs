@@ -36,20 +36,18 @@ where
         eprintln!("peek_bits({}): {}", n_bits, value);
         Ok(value)
     }
+
     fn skip_bits(&mut self, n_bits: usize) -> Result<(), Self::Error> {
         eprintln!("skip_bits({})", n_bits);
         self.reader.skip_bits(n_bits)
     }
+
     fn read_bits(&mut self, n_bits: usize) -> Result<u64, Self::Error> {
         let value = self.reader.read_bits(n_bits)?;
         eprintln!("read_bits({}): {}", n_bits, value);
         Ok(value)
     }
-    fn read_unary_param<const USE_TABLE: bool>(&mut self) -> Result<u64, Self::Error> {
-        let value = self.reader.read_unary_param::<USE_TABLE>()?;
-        eprintln!("{{U<{}>:{}}}", USE_TABLE, value);
-        Ok(value)
-    }
+
     fn read_unary(&mut self) -> Result<u64, Self::Error> {
         let value = self.reader.read_unary()?;
         eprintln!("{{U:{}}}", value);

@@ -9,7 +9,7 @@
 use std::error::Error;
 
 use crate::{
-    prelude::{delta_tables, gamma_tables, unary_tables, zeta_tables},
+    prelude::{delta_tables, gamma_tables, zeta_tables},
     traits::*,
 };
 use common_traits::CastableInto;
@@ -81,23 +81,7 @@ pub trait BitRead<E: Endianness> {
     fn skip_bits_after_table_lookup(&mut self, n: usize);
 
     /// Read a unary code.
-    ///
-    /// This version of the method has a constant parameter
-    /// deciding whether to use a decoding table. You should rather use
-    /// [`BitRead::read_unary`], which uses the default
-    /// choice of the implementing type.
-    fn read_unary_param<const USE_TABLE: bool>(&mut self) -> Result<u64, Self::Error>;
-
-    /// Read a unary code.
-    ///
-    /// This version of the method uses the version of
-    /// of [`BitRead::read_unary_param`] selected as default by
-    /// the implementing type. The default implementation does
-    /// not use a table.
-    #[inline(always)]
-    fn read_unary(&mut self) -> Result<u64, Self::Error> {
-        self.read_unary_param::<false>()
-    }
+    fn read_unary(&mut self) -> Result<u64, Self::Error>;
 
     fn copy_to<F: Endianness>(
         &mut self,
@@ -189,13 +173,6 @@ pub fn check_tables(peek_bits: usize) {
             "DANGER: your BitRead can peek at {} bits, but the tables for ζ₃ codes use {} bits",
             peek_bits,
             zeta_tables::READ_BITS
-        );
-    }
-    if peek_bits < unary_tables::READ_BITS {
-        eprintln!(
-            "DANGER: your BitRead can peek at {} bits, but the tables for unary codes use {} bits",
-            peek_bits,
-            unary_tables::READ_BITS
         );
     }
 }

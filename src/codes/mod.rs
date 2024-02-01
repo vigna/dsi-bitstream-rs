@@ -74,5 +74,4 @@ pub use rice::{len_rice, RiceRead, RiceWrite};
 
 pub mod delta_tables;
 pub mod gamma_tables;
-pub mod unary_tables;
 pub mod zeta_tables;

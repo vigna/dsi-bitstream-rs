@@ -183,19 +183,6 @@ impl<E: Endianness, BR: BitRead<E>, const PRINT: bool> BitRead<E> for CountBitRe
         })
     }
 
-    fn read_unary_param<const USE_TABLE: bool>(&mut self) -> Result<u64, Self::Error> {
-        self.bit_read.read_unary_param::<USE_TABLE>().map(|x| {
-            self.bits_read += x as usize + 1;
-            if PRINT {
-                eprintln!(
-                    "read_unary_param<{}>() = {} (total = {})",
-                    USE_TABLE, x, self.bits_read
-                );
-            }
-            x
-        })
-    }
-
     fn read_unary(&mut self) -> Result<u64, Self::Error> {
         self.bit_read.read_unary().map(|x| {
             self.bits_read += x as usize + 1;
@@ -322,7 +309,7 @@ fn test_count() -> Result<(), Box<dyn std::error::Error>> {
     assert_eq!(count_bit_read.peek_bits(5)?, 0);
     assert_eq!(count_bit_read.read_unary()?, 5);
     assert_eq!(count_bit_read.bits_read, 6);
-    assert_eq!(count_bit_read.read_unary_param::<true>()?, 100);
+    assert_eq!(count_bit_read.read_unary()?, 100);
     assert_eq!(count_bit_read.bits_read, 107);
     assert_eq!(count_bit_read.read_bits(20)?, 1);
     assert_eq!(count_bit_read.bits_read, 127);
