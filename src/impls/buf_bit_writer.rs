@@ -138,7 +138,7 @@ where
         }
 
         // Load the bottom of the buffer, if necessary, and dump the whole buffer
-        self.buffer = self.buffer << self.space_left_in_buffer - 1 << 1;
+        self.buffer = self.buffer << (self.space_left_in_buffer - 1) << 1;
         // The first shift discards bits higher than n_bits
         self.buffer |= (value << (64 - n_bits) >> (64 - self.space_left_in_buffer)).cast();
         self.backend.write_word(self.buffer.to_be())?;
@@ -170,7 +170,7 @@ where
         // Easy way out: we fit the buffer
         if code_length < self.space_left_in_buffer as u64 {
             self.space_left_in_buffer -= code_length as usize;
-            self.buffer = self.buffer << code_length;
+            self.buffer <<= code_length;
             self.buffer |= WW::Word::ONE;
             return Ok(code_length as usize);
         }
@@ -183,7 +183,7 @@ where
             return Ok(code_length as usize);
         }
 
-        self.buffer = self.buffer << self.space_left_in_buffer - 1 << 1;
+        self.buffer = self.buffer << (self.space_left_in_buffer - 1) << 1;
         self.backend.write_word(self.buffer.to_be())?;
 
         value -= self.space_left_in_buffer as u64;
@@ -217,7 +217,7 @@ where
             return Ok(());
         }
 
-        self.buffer = self.buffer << self.space_left_in_buffer - 1 << 1
+        self.buffer = self.buffer << (self.space_left_in_buffer - 1) << 1
             | bit_read.read_bits(self.space_left_in_buffer)?.cast();
         n -= self.space_left_in_buffer as u64;
 
@@ -294,12 +294,12 @@ where
         }
 
         // Load the top of the buffer, if necessary, and dump the whole buffer
-        self.buffer = self.buffer >> self.space_left_in_buffer - 1 >> 1;
-        self.buffer |= value.cast() << WW::Word::BITS - self.space_left_in_buffer;
+        self.buffer = self.buffer >> (self.space_left_in_buffer - 1) >> 1;
+        self.buffer |= value.cast() << (WW::Word::BITS - self.space_left_in_buffer);
         self.backend.write_word(self.buffer.to_le())?;
 
         let to_write = n_bits - self.space_left_in_buffer;
-        value = value >> self.space_left_in_buffer - 1 >> 1;
+        value = value >> (self.space_left_in_buffer - 1) >> 1;
 
         for _ in 0..to_write / WW::Word::BITS {
             self.backend.write_word(value.cast().to_le())?;
@@ -326,7 +326,7 @@ where
         // Easy way out: we fit the buffer
         if code_length < self.space_left_in_buffer as u64 {
             self.space_left_in_buffer -= code_length as usize;
-            self.buffer = self.buffer >> code_length;
+            self.buffer >>= code_length;
             self.buffer |= WW::Word::ONE << (WW::Word::BITS - 1);
             return Ok(code_length as usize);
         }
@@ -339,7 +339,7 @@ where
             return Ok(code_length as usize);
         }
 
-        self.buffer = self.buffer >> self.space_left_in_buffer - 1 >> 1;
+        self.buffer = self.buffer >> (self.space_left_in_buffer - 1) >> 1;
         self.backend.write_word(self.buffer.to_le())?;
 
         value -= self.space_left_in_buffer as u64;
@@ -376,11 +376,9 @@ where
             return Ok(());
         }
 
-        self.buffer = self.buffer >> self.space_left_in_buffer - 1 >> 1
-            | (bit_read
-                .read_bits(self.space_left_in_buffer as usize)?
-                .cast())
-            .rotate_right(self.space_left_in_buffer as u32);
+        self.buffer = self.buffer >> (self.space_left_in_buffer - 1) >> 1
+            | (bit_read.read_bits(self.space_left_in_buffer)?.cast())
+                .rotate_right(self.space_left_in_buffer as u32);
         n -= self.space_left_in_buffer as u64;
 
         self.backend.write_word(self.buffer.to_le())?;
