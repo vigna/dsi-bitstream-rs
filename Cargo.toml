@@ -1,6 +1,6 @@
 [package]
 name = "dsi-bitstream"
-version = "0.1.9"
+version = "0.2.0"
 edition = "2021"
 description = "A Rust implementation of read/write bit streams supporting several types of instantaneous codes"
 repository = "https://github.com/vigna/dsi-bitstream-rs/"
@@ -35,5 +35,3 @@ harness = false
 [[bench]]
 name = "write_gamma"
 harness = false
-
-
