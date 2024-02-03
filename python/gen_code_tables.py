@@ -705,11 +705,6 @@ def gen_zeta(read_bits, write_max_val, len_max_val=None, k=3, merged_table=False
 
 def generate_default_tables():
     # Generate the default tables
-    gen_unary(
-        read_bits=6, # Never worth it, but just in case someone selects it
-        write_max_val=15, # Very useful
-        merged_table=False, # Never worth it
-    )
     gen_gamma(
         read_bits=9, # No use on Xeon/ARM, little useful on i7
         write_max_val=63,

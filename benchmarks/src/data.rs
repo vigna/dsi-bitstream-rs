@@ -41,24 +41,6 @@ macro_rules! compute_hit_ratio {
     }};
 }
 
-/// Generate data to benchmark unary code.
-pub fn gen_unary_data() -> (f64, Vec<u64>) {
-    let mut rng = rand::thread_rng();
-
-    let unary_data = (0..N)
-        .map(|_| {
-            let v: u64 = rng.gen();
-            v.trailing_zeros() as u64
-        })
-        .collect::<Vec<_>>();
-
-    #[allow(unused_variables)]
-    let len_unary = |x: u64| x as usize + 1;
-    let ratio = compute_hit_ratio!(unary_data, unary_tables, len_unary);
-
-    (ratio, unary_data)
-}
-
 /// Generate data to benchmark γ code.
 pub fn gen_gamma_data() -> (f64, Vec<u64>) {
     let mut rng = rand::thread_rng();

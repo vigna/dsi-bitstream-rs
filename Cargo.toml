@@ -1,6 +1,6 @@
 [package]
 name = "dsi-bitstream"
-version = "0.1.9"
+version = "0.2.0"
 edition = "2021"
 description = "A Rust implementation of read/write bit streams supporting several types of instantaneous codes"
 repository = "https://github.com/vigna/dsi-bitstream-rs/"
@@ -16,6 +16,10 @@ arbitrary = { version = "1", features = ["derive"], optional = true }
 zip = { version="0.6.6", optional=true }
 common_traits = "0.9.0"
 
+[dev-dependencies]
+criterion = "0.5.1"
+rand_distr = "0.4.3"
+
 [features]
 default = ["std"]
 std = ["alloc"]
@@ -23,3 +27,11 @@ alloc = []
 fuzz = ["dep:arbitrary", "dep:zip"]
 checks = []
 no_copy_impls = [] # Disable copy_from/copy_to implementations so to test the default methods
+
+[[bench]]
+name = "write_unary"
+harness = false
+
+[[bench]]
+name = "write_gamma"
+harness = false

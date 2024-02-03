@@ -9,8 +9,8 @@
 use common_traits::*;
 
 use crate::codes::params::{DefaultReadParams, ReadParams};
-use crate::codes::unary_tables;
 use crate::traits::*;
+use core::convert::Infallible;
 use core::{mem, ptr};
 use std::error::Error;
 
@@ -75,7 +75,6 @@ where
 impl<E: Endianness, WR: WordRead, RP: ReadParams> BufBitReader<E, WR, RP>
 where
     WR::Word: DoubleType,
-    BufBitReader<E, WR, RP>: BitRead<E>,
 {
     /// Create a new [`BufBitReader`] around a [`WordRead`].
     ///
@@ -98,7 +97,7 @@ where
     }
 
     ///  Return the backend, consuming this reader.
-    pub fn into_inner(self) -> Result<WR, <Self as BitRead<E>>::Error> {
+    pub fn into_inner(self) -> Result<WR, Infallible> {
         // SAFETY: forget(self) prevents double dropping backend
         let backend = unsafe { ptr::read(&self.backend) };
         mem::forget(self);
@@ -202,13 +201,8 @@ where
     }
 
     #[inline]
-    fn read_unary_param<const USE_TABLE: bool>(&mut self) -> Result<u64, Self::Error> {
+    fn read_unary(&mut self) -> Result<u64, Self::Error> {
         debug_assert!(self.bits_in_buffer < BB::<WR>::BITS);
-        if USE_TABLE {
-            if let Some((res, _)) = unary_tables::read_table_be(self) {
-                return Ok(res);
-            }
-        }
 
         // count the zeros from the left
         let zeros: usize = self.buffer.leading_zeros() as _;
@@ -425,13 +419,8 @@ where
     }
 
     #[inline]
-    fn read_unary_param<const USE_TABLE: bool>(&mut self) -> Result<u64, Self::Error> {
+    fn read_unary(&mut self) -> Result<u64, Self::Error> {
         debug_assert!(self.bits_in_buffer < BB::<WR>::BITS);
-        if USE_TABLE {
-            if let Some((res, _)) = unary_tables::read_table_le(self) {
-                return Ok(res);
-            }
-        }
 
         // count the zeros from the right
         let zeros: usize = self.buffer.trailing_zeros() as usize;
@@ -600,16 +589,9 @@ macro_rules! test_buf_bit_reader {
                     little.write_bits(1, n_bits)?;
                 }
                 let value = r.gen_range(0..128);
-                assert_eq!(big.write_unary_param::<false>(value)?, value as usize + 1);
+                assert_eq!(big.write_unary(value)?, value as usize + 1);
                 let value = r.gen_range(0..128);
-                assert_eq!(
-                    little.write_unary_param::<false>(value)?,
-                    value as usize + 1
-                );
-                let value = r.gen_range(0..128);
-                assert_eq!(big.write_unary_param::<true>(value)?, value as usize + 1);
-                let value = r.gen_range(0..128);
-                assert_eq!(little.write_unary_param::<true>(value)?, value as usize + 1);
+                assert_eq!(little.write_unary(value)?, value as usize + 1);
             }
 
             drop(big);
@@ -658,8 +640,6 @@ macro_rules! test_buf_bit_reader {
                     assert_eq!(little_buff.read_bits(n_bits)?, 1);
                 }
 
-                assert_eq!(big_buff.read_unary()?, r.gen_range(0..128));
-                assert_eq!(little_buff.read_unary()?, r.gen_range(0..128));
                 assert_eq!(big_buff.read_unary()?, r.gen_range(0..128));
                 assert_eq!(little_buff.read_unary()?, r.gen_range(0..128));
             }

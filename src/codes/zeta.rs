@@ -106,7 +106,7 @@ fn default_read_zeta<BO: Endianness, B: BitRead<BO>>(
     backend: &mut B,
     k: u64,
 ) -> Result<u64, B::Error> {
-    let h = backend.read_unary_param::<false>()?;
+    let h = backend.read_unary()?;
     let u = 1 << ((h + 1) * k);
     let l = 1 << (h * k);
     let res = backend.read_minimal_binary(u - l)?;
@@ -199,5 +199,5 @@ fn default_write_zeta<E: Endianness, B: BitWrite<E>>(
     debug_assert!(n < u, "{} < {}", n, u);
 
     // Write the code
-    Ok(backend.write_unary_param::<false>(h)? + backend.write_minimal_binary(n - l, u - l)?)
+    Ok(backend.write_unary(h)? + backend.write_minimal_binary(n - l, u - l)?)
 }

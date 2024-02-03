@@ -2,7 +2,7 @@
 
 This crate provides performance benchmarks for several variants of
 `BitRead` and `BitWrite` implementations. The benchmarks measure the speed
-of reading and writing instantaneous codes, and in particular unary, γ, δ
+of reading and writing instantaneous codes, and in particular γ, δ
 and ζ₃. The `svg` directory contains reference results of these benchmarks of a
 few architectures.
 

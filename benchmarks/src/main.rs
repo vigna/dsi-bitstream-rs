@@ -211,13 +211,6 @@ pub fn main() {
     {
         impl_code!(
             calibration,
-            "unary",
-            read_unary_param,
-            write_unary_param,
-            gen_unary_data
-        );
-        impl_code!(
-            calibration,
             "gamma",
             read_gamma_param,
             write_gamma_param,

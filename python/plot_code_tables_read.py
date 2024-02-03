@@ -25,13 +25,13 @@ colors = matplotlib.cm.tab10.colors
 
 read_word = sys.argv[1]
 
-nice = {"unary":"unary", "gamma":u"γ", "delta":"δ (no γ tables)", "delta_gamma":u"δ (γ tables)", "zeta3":u"ζ₃"}
+nice = { "gamma":u"γ", "delta":"δ (no γ tables)", "delta_gamma":u"δ (γ tables)", "zeta3":u"ζ₃"}
 
 df = pd.read_csv(sys.stdin, index_col=None, header=0)
 
 plots = []
 
-for code in ["unary", "gamma", "delta", "delta_gamma", "zeta3"]:
+for code in ["gamma", "delta", "delta_gamma", "zeta3"]:
     fig, ax = plt.subplots(1, 1, figsize=(10, 8), dpi=200, facecolor="white")
     for ty in ["read_buff", "read_unbuff"]:
         color = 0

@@ -36,20 +36,18 @@ where
         eprintln!("peek_bits({}): {}", n_bits, value);
         Ok(value)
     }
+
     fn skip_bits(&mut self, n_bits: usize) -> Result<(), Self::Error> {
         eprintln!("skip_bits({})", n_bits);
         self.reader.skip_bits(n_bits)
     }
+
     fn read_bits(&mut self, n_bits: usize) -> Result<u64, Self::Error> {
         let value = self.reader.read_bits(n_bits)?;
         eprintln!("read_bits({}): {}", n_bits, value);
         Ok(value)
     }
-    fn read_unary_param<const USE_TABLE: bool>(&mut self) -> Result<u64, Self::Error> {
-        let value = self.reader.read_unary_param::<USE_TABLE>()?;
-        eprintln!("{{U<{}>:{}}}", USE_TABLE, value);
-        Ok(value)
-    }
+
     fn read_unary(&mut self) -> Result<u64, Self::Error> {
         let value = self.reader.read_unary()?;
         eprintln!("{{U:{}}}", value);
@@ -123,17 +121,12 @@ impl<E: Endianness, W: BitWrite<E>> BitWrite<E> for DbgBitWriter<E, W> {
         eprintln!("write_bits({}, {})", value, n_bits);
         self.writer.write_bits(value, n_bits)
     }
-    fn write_unary_param<const USE_TABLE: bool>(
-        &mut self,
-        value: u64,
-    ) -> Result<usize, Self::Error> {
-        eprintln!("{{U<{}>:{}}}", USE_TABLE, value);
-        self.writer.write_unary(value)
-    }
+
     fn write_unary(&mut self, value: u64) -> Result<usize, Self::Error> {
         eprintln!("{{U:{}}}", value);
         self.writer.write_unary(value)
     }
+
     fn flush(&mut self) -> Result<(), Self::Error> {
         self.writer.flush()
     }

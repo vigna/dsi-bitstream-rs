@@ -75,11 +75,11 @@ a reversed representation.
 
 */
 
-mod bit_stream;
-pub use bit_stream::*;
+mod bits;
+pub use bits::*;
 
-mod word_stream;
-pub use word_stream::*;
+mod words;
+pub use words::*;
 
 mod endianness;
 pub use endianness::*;

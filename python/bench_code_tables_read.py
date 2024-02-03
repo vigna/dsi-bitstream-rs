@@ -35,11 +35,6 @@ for bits in range(1, 18):
         )
 
         merged_table = tables_num == 1
-        gen_unary(
-            read_bits=bits, 
-            write_max_val=64, # unused
-            merged_table=merged_table,
-        )
         gen_gamma(
             read_bits=bits, 
             write_max_val=255, # unused

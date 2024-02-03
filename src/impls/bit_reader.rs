@@ -10,7 +10,6 @@ use core::convert::Infallible;
 use std::error::Error;
 
 use crate::codes::params::{DefaultReadParams, ReadParams};
-use crate::codes::unary_tables;
 use crate::traits::*;
 
 /// An implementation of [`BitRead`] for a [`WordRead`] with word `u64` and of
@@ -117,12 +116,7 @@ impl<
     }
 
     #[inline]
-    fn read_unary_param<const USE_TABLE: bool>(&mut self) -> Result<u64, Self::Error> {
-        if USE_TABLE {
-            if let Some((res, _)) = unary_tables::read_table_be(self) {
-                return Ok(res);
-            }
-        }
+    fn read_unary(&mut self) -> Result<u64, Self::Error> {
         self.data.set_word_pos(self.bit_index / 64)?;
         let in_word_offset = self.bit_index % 64;
         let mut bits_in_word = 64 - in_word_offset;
@@ -246,12 +240,7 @@ impl<
     }
 
     #[inline]
-    fn read_unary_param<const USE_TABLE: bool>(&mut self) -> Result<u64, Self::Error> {
-        if USE_TABLE {
-            if let Some((res, _)) = unary_tables::read_table_le(self) {
-                return Ok(res);
-            }
-        }
+    fn read_unary(&mut self) -> Result<u64, Self::Error> {
         self.data.set_word_pos(self.bit_index / 64)?;
         let in_word_offset = self.bit_index % 64;
         let mut bits_in_word = 64 - in_word_offset;

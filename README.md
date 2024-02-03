@@ -101,7 +101,8 @@ the default values for the parameters of instantaneous codes. Methods reading or
 writing instantaneous codes are defined in supporting traits and usually have
 const type parameters, in particular, whether to use decoding tables or not
 (e.g., [`GammaReadParam::read_gamma_param`]). Such traits are implemented for
-[`BitRead`]/[`BitWrite`].
+[`BitRead`]/[`BitWrite`]. The only exception is unary code, which is implemented
+by [`BitRead::read_unary`] and [`BitWrite::write_unary`].
 
 However, there are traits with non-parametric methods (e.g.,
 [`GammaRead::read_gamma`]) that are the standard entry points for the user.
@@ -112,13 +113,6 @@ The default value for the parameter is
 several platforms and that we believe are good defaults, but by passing a
 different implementation of [`ReadParams`]/[`WriteParams`] you can change the
 default behavior. See [`params`] for more details.
-
-One exception to this rule is the unary code, as it is embedded in the
-read/write traits: implementations can choose how to implement
-[`BitRead::read_unary`] and [`BitWrite::write_unary`].
-We could not find a single case in which using a table is
-better than not using it when reading, so the [`BitRead`] default
-implementation does not use a table.
 
 Finally, if you choose to use tables, the size of the tables is hardwired in the
 source code (in particular, in the files `*_tables.rs` in the `codes` source

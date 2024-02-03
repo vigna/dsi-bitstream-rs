@@ -158,28 +158,21 @@ where
 
     #[inline]
     #[allow(clippy::collapsible_if)]
-    fn write_unary_param<const USE_TABLE: bool>(
-        &mut self,
-        mut value: u64,
-    ) -> Result<usize, Self::Error> {
+    fn write_unary(&mut self, mut value: u64) -> Result<usize, Self::Error> {
         debug_assert_ne!(value, u64::MAX);
         debug_assert!(self.space_left_in_buffer > 0);
 
         let code_length = value + 1;
 
         // Easy way out: we fit the buffer
-        if code_length < self.space_left_in_buffer as u64 {
+        if code_length <= self.space_left_in_buffer as u64 {
             self.space_left_in_buffer -= code_length as usize;
-            self.buffer <<= code_length;
+            self.buffer = self.buffer << value << 1;
             self.buffer |= WW::Word::ONE;
-            return Ok(code_length as usize);
-        }
-
-        if code_length == self.space_left_in_buffer as u64 {
-            self.space_left_in_buffer = WW::Word::BITS;
-            self.buffer = self.buffer << value << 1; // Might be code_length == WW::Word::BITS
-            self.buffer |= WW::Word::ONE;
-            self.backend.write_word(self.buffer.to_be())?;
+            if self.space_left_in_buffer == 0 {
+                self.backend.write_word(self.buffer.to_be())?;
+                self.space_left_in_buffer = WW::Word::BITS;
+            }
             return Ok(code_length as usize);
         }
 
@@ -197,11 +190,11 @@ where
         if value == WW::Word::BITS as u64 - 1 {
             self.backend.write_word(WW::Word::ONE.to_be())?;
             self.space_left_in_buffer = WW::Word::BITS;
-            return Ok(code_length as usize);
+        } else {
+            self.buffer = WW::Word::ONE;
+            self.space_left_in_buffer = WW::Word::BITS - (value as usize + 1);
         }
 
-        self.buffer = WW::Word::ONE;
-        self.space_left_in_buffer = WW::Word::BITS - (value as usize + 1);
         Ok(code_length as usize)
     }
 
@@ -314,28 +307,21 @@ where
 
     #[inline]
     #[allow(clippy::collapsible_if)]
-    fn write_unary_param<const USE_TABLE: bool>(
-        &mut self,
-        mut value: u64,
-    ) -> Result<usize, Self::Error> {
+    fn write_unary(&mut self, mut value: u64) -> Result<usize, Self::Error> {
         debug_assert_ne!(value, u64::MAX);
         debug_assert!(self.space_left_in_buffer > 0);
 
         let code_length = value + 1;
 
         // Easy way out: we fit the buffer
-        if code_length < self.space_left_in_buffer as u64 {
+        if code_length <= self.space_left_in_buffer as u64 {
             self.space_left_in_buffer -= code_length as usize;
-            self.buffer >>= code_length;
+            self.buffer = self.buffer >> value >> 1;
             self.buffer |= WW::Word::ONE << (WW::Word::BITS - 1);
-            return Ok(code_length as usize);
-        }
-
-        if code_length == self.space_left_in_buffer as u64 {
-            self.space_left_in_buffer = WW::Word::BITS;
-            self.buffer = self.buffer >> value >> 1; // Might be code_length == WW::Word::BITS
-            self.buffer |= WW::Word::ONE << (WW::Word::BITS - 1);
-            self.backend.write_word(self.buffer.to_le())?;
+            if self.space_left_in_buffer == 0 {
+                self.backend.write_word(self.buffer.to_le())?;
+                self.space_left_in_buffer = WW::Word::BITS;
+            }
             return Ok(code_length as usize);
         }
 
@@ -354,11 +340,11 @@ where
             self.backend
                 .write_word((WW::Word::ONE << (WW::Word::BITS - 1)).to_le())?;
             self.space_left_in_buffer = WW::Word::BITS;
-            return Ok(code_length as usize);
+        } else {
+            self.buffer = WW::Word::ONE << (WW::Word::BITS - 1);
+            self.space_left_in_buffer = WW::Word::BITS - (value as usize + 1);
         }
 
-        self.buffer = WW::Word::ONE << (WW::Word::BITS - 1);
-        self.space_left_in_buffer = WW::Word::BITS - (value as usize + 1);
         Ok(code_length as usize)
     }
 
@@ -451,16 +437,9 @@ macro_rules! test_buf_bit_writer {
                     little.write_bits(r.gen::<u64>() & u64::MAX >> 64 - n_bits, n_bits)?;
                 }
                 let value = r.gen_range(0..128);
-                assert_eq!(big.write_unary_param::<false>(value)?, value as usize + 1);
+                assert_eq!(big.write_unary(value)?, value as usize + 1);
                 let value = r.gen_range(0..128);
-                assert_eq!(
-                    little.write_unary_param::<false>(value)?,
-                    value as usize + 1
-                );
-                let value = r.gen_range(0..128);
-                assert_eq!(big.write_unary_param::<true>(value)?, value as usize + 1);
-                let value = r.gen_range(0..128);
-                assert_eq!(little.write_unary_param::<true>(value)?, value as usize + 1);
+                assert_eq!(little.write_unary(value)?, value as usize + 1);
             }
 
             drop(big);
@@ -515,8 +494,6 @@ macro_rules! test_buf_bit_writer {
                     );
                 }
 
-                assert_eq!(big_buff.read_unary()?, r.gen_range(0..128));
-                assert_eq!(little_buff.read_unary()?, r.gen_range(0..128));
                 assert_eq!(big_buff.read_unary()?, r.gen_range(0..128));
                 assert_eq!(little_buff.read_unary()?, r.gen_range(0..128));
             }
