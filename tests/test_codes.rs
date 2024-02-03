@@ -14,15 +14,16 @@ use dsi_bitstream::prelude::{
 use dsi_bitstream::traits::{Endianness, BE, LE};
 use rand::rngs::SmallRng;
 use rand::{Rng, SeedableRng};
+use std::error::Error;
 
 #[test]
-fn test_codes() -> Result<(), Box<dyn std::error::Error>> {
+fn test_codes() -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
     test_codes_endianness::<LE>()?;
     test_codes_endianness::<BE>()?;
     Ok(())
 }
 
-fn test_codes_endianness<E: Endianness>() -> Result<(), Box<dyn std::error::Error>>
+fn test_codes_endianness<E: Endianness>() -> Result<(), Box<dyn Error + Send + Sync + 'static>>
 where
     BufBitWriter<E, MemWordWriterVec<u64, Vec<u64>>>:
         BitWrite<E> + GammaWrite<E> + DeltaWrite<E> + ZetaWrite<E> + GolombWrite<E> + RiceWrite<E>,

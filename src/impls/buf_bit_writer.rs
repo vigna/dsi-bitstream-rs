@@ -8,6 +8,7 @@
 
 use core::any::TypeId;
 use core::{mem, ptr};
+use std::error::Error;
 
 use crate::codes::params::{DefaultWriteParams, WriteParams};
 use crate::traits::*;
@@ -203,7 +204,7 @@ where
         &mut self,
         bit_read: &mut impl BitRead<F>,
         mut n: u64,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    ) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
         if n < self.space_left_in_buffer as u64 {
             self.buffer = self.buffer << n | bit_read.read_bits(n as usize)?.cast();
             self.space_left_in_buffer -= n as usize;
@@ -354,7 +355,7 @@ where
         &mut self,
         bit_read: &mut impl BitRead<F>,
         mut n: u64,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    ) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
         if n < self.space_left_in_buffer as u64 {
             self.buffer =
                 self.buffer >> n | (bit_read.read_bits(n as usize)?.cast()).rotate_right(n as u32);
@@ -388,7 +389,7 @@ where
 macro_rules! test_buf_bit_writer {
     ($f: ident, $word:ty) => {
         #[test]
-        fn $f() -> Result<(), Box<dyn std::error::Error>> {
+        fn $f() -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
             use super::MemWordWriterVec;
             use crate::{
                 codes::{GammaRead, GammaWrite},

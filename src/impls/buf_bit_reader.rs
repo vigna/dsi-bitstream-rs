@@ -264,7 +264,7 @@ where
         &mut self,
         bit_write: &mut impl BitWrite<F>,
         mut n: u64,
-    ) -> Result<(), Box<dyn Error>> {
+    ) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
         let from_buffer = Ord::min(n, self.bits_in_buffer as _);
         self.buffer = self.buffer.rotate_left(from_buffer as _);
 
@@ -478,7 +478,7 @@ where
         &mut self,
         bit_write: &mut impl BitWrite<F>,
         mut n: u64,
-    ) -> Result<(), Box<dyn Error>> {
+    ) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
         let from_buffer = Ord::min(n, self.bits_in_buffer as _);
 
         bit_write.write_bits(self.buffer.cast(), from_buffer as usize)?;
@@ -540,7 +540,7 @@ where
 macro_rules! test_buf_bit_reader {
     ($f: ident, $word:ty) => {
         #[test]
-        fn $f() -> Result<(), Box<dyn Error>> {
+        fn $f() -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
             use super::MemWordWriterVec;
             use crate::{
                 codes::{GammaRead, GammaWrite},

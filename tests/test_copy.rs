@@ -11,9 +11,10 @@ use dsi_bitstream::prelude::{
 use dsi_bitstream::traits::{Endianness, BE, LE};
 use rand::rngs::SmallRng;
 use rand::{Rng, SeedableRng};
+use std::error::Error;
 
 #[test]
-fn test() -> Result<(), Box<dyn std::error::Error>> {
+fn test() -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
     test_endianness::<LE, u8>()?;
     test_endianness::<BE, u8>()?;
     test_endianness::<LE, u16>()?;
@@ -28,7 +29,7 @@ fn test() -> Result<(), Box<dyn std::error::Error>> {
 fn verify_read<E: Endianness>(
     mut read: impl BitRead<E>,
     len: u64,
-) -> Result<(), Box<dyn std::error::Error>> {
+) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
     let mut r = SmallRng::seed_from_u64(0);
 
     for _ in 0..len {
@@ -47,7 +48,7 @@ fn verify_write<E: Endianness, W: UnsignedInt + DoubleType, A: AsRef<[W]>>(
     mut len: u64,
     skip: usize,
     skip_read: bool,
-) -> Result<(), Box<dyn std::error::Error>>
+) -> Result<(), Box<dyn Error + Send + Sync + 'static>>
 where
     BufBitReader<E, MemWordReader<W, A>>: BitRead<E>,
 {
@@ -77,7 +78,7 @@ where
 const MAX_LEN: u64 = 500;
 
 fn test_endianness<'a, E: Endianness, W: UnsignedInt + DoubleType + 'static>(
-) -> Result<(), Box<dyn std::error::Error>>
+) -> Result<(), Box<dyn Error + Send + Sync + 'static>>
 where
     BufBitReader<E, MemWordReader<W, Vec<W>>>: BitRead<E>,
     BufBitWriter<E, MemWordWriterVec<W, Vec<W>>>: BitWrite<E>,

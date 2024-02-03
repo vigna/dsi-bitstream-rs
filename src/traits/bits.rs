@@ -26,11 +26,6 @@ impl_peekable!(
     26, 27, 28, 29, 30, 31, 32
 );
 
-pub enum CopyError<E: Error + Send + Sync + 'static> {
-    ReadError(E),
-    WriteError(E),
-}
-
 /// Sequential, streaming bit-by-bit reads.
 ///
 /// This trait specify basic operation over which codes can be implemented by
@@ -87,7 +82,7 @@ pub trait BitRead<E: Endianness> {
         &mut self,
         bit_write: &mut impl BitWrite<F>,
         mut n: u64,
-    ) -> Result<(), Box<dyn Error>> {
+    ) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
         while n > 0 {
             let to_read = std::cmp::min(n, 64) as usize;
             let read = self.read_bits(to_read)?;
@@ -125,7 +120,7 @@ pub trait BitWrite<E: Endianness> {
         &mut self,
         bit_read: &mut impl BitRead<F>,
         mut n: u64,
-    ) -> Result<(), Box<dyn Error>> {
+    ) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
         while n > 0 {
             let to_read = std::cmp::min(n, 64) as usize;
             let read = bit_read.read_bits(to_read)?;
