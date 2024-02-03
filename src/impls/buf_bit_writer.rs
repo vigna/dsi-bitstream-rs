@@ -200,30 +200,49 @@ where
     }
 
     #[cfg(not(feature = "no_copy_impls"))]
-    fn copy_from<F: Endianness>(
+    fn copy_from<F: Endianness, R: BitRead<F>>(
         &mut self,
-        bit_read: &mut impl BitRead<F>,
+        bit_read: &mut R,
         mut n: u64,
-    ) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
+    ) -> Result<(), CopyError<R::Error, Self::Error>> {
         if n < self.space_left_in_buffer as u64 {
-            self.buffer = self.buffer << n | bit_read.read_bits(n as usize)?.cast();
+            self.buffer = self.buffer << n
+                | bit_read
+                    .read_bits(n as usize)
+                    .map_err(CopyError::ReadError)?
+                    .cast();
             self.space_left_in_buffer -= n as usize;
             return Ok(());
         }
 
         self.buffer = self.buffer << (self.space_left_in_buffer - 1) << 1
-            | bit_read.read_bits(self.space_left_in_buffer)?.cast();
+            | bit_read
+                .read_bits(self.space_left_in_buffer)
+                .map_err(|e| CopyError::ReadError(e))?
+                .cast();
         n -= self.space_left_in_buffer as u64;
 
-        self.backend.write_word(self.buffer.to_be())?;
+        self.backend
+            .write_word(self.buffer.to_be())
+            .map_err(CopyError::WriteError)?;
 
         for _ in 0..n / WW::Word::BITS as u64 {
             self.backend
-                .write_word(bit_read.read_bits(WW::Word::BITS)?.cast().to_be())?;
+                .write_word(
+                    bit_read
+                        .read_bits(WW::Word::BITS)
+                        .map_err(CopyError::ReadError)?
+                        .cast()
+                        .to_be(),
+                )
+                .map_err(CopyError::WriteError)?;
         }
 
         n %= WW::Word::BITS as u64;
-        self.buffer = bit_read.read_bits(n as usize)?.cast();
+        self.buffer = bit_read
+            .read_bits(n as usize)
+            .map_err(CopyError::ReadError)?
+            .cast();
         self.space_left_in_buffer = WW::Word::BITS - n as usize;
 
         Ok(())
@@ -351,33 +370,50 @@ where
 
     #[cfg(not(feature = "no_copy_impls"))]
 
-    fn copy_from<F: Endianness>(
+    fn copy_from<F: Endianness, R: BitRead<F>>(
         &mut self,
-        bit_read: &mut impl BitRead<F>,
+        bit_read: &mut R,
         mut n: u64,
-    ) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
+    ) -> Result<(), CopyError<R::Error, Self::Error>> {
         if n < self.space_left_in_buffer as u64 {
-            self.buffer =
-                self.buffer >> n | (bit_read.read_bits(n as usize)?.cast()).rotate_right(n as u32);
+            self.buffer = self.buffer >> n
+                | (bit_read
+                    .read_bits(n as usize)
+                    .map_err(CopyError::ReadError)?)
+                .cast()
+                .rotate_right(n as u32);
             self.space_left_in_buffer -= n as usize;
             return Ok(());
         }
 
         self.buffer = self.buffer >> (self.space_left_in_buffer - 1) >> 1
-            | (bit_read.read_bits(self.space_left_in_buffer)?.cast())
-                .rotate_right(self.space_left_in_buffer as u32);
+            | (bit_read
+                .read_bits(self.space_left_in_buffer)
+                .map_err(|e| CopyError::ReadError(e))?
+                .cast())
+            .rotate_right(self.space_left_in_buffer as u32);
         n -= self.space_left_in_buffer as u64;
 
-        self.backend.write_word(self.buffer.to_le())?;
+        self.backend
+            .write_word(self.buffer.to_le())
+            .map_err(CopyError::WriteError)?;
 
         for _ in 0..n / WW::Word::BITS as u64 {
             self.backend
-                .write_word(bit_read.read_bits(WW::Word::BITS)?.cast().to_le())?;
+                .write_word(
+                    bit_read
+                        .read_bits(WW::Word::BITS)
+                        .map_err(CopyError::ReadError)?
+                        .cast()
+                        .to_le(),
+                )
+                .map_err(CopyError::WriteError)?;
         }
 
         n %= WW::Word::BITS as u64;
         self.buffer = bit_read
-            .read_bits(n as usize)?
+            .read_bits(n as usize)
+            .map_err(CopyError::ReadError)?
             .cast()
             .rotate_right(n as u32);
         self.space_left_in_buffer = WW::Word::BITS - n as usize;

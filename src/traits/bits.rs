@@ -6,6 +6,7 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
+use core::fmt::{Display, Formatter};
 use std::error::Error;
 
 use crate::{
@@ -25,6 +26,38 @@ impl_peekable!(
     0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
     26, 27, 28, 29, 30, 31, 32
 );
+
+/// The error returned by the bit copy methods [`BitRead::copy_to`] and [`BitWrite::copy_from`].
+///
+/// It can be a read or a write error, depending on which stream (source or
+/// destination) generated the error.
+#[derive(Debug, Clone)]
+pub enum CopyError<RE: Error + Send + Sync + 'static, WE: Error + Send + Sync + 'static> {
+    ReadError(RE),
+    WriteError(WE),
+}
+
+impl<RE: Error + Send + Sync + 'static, WE: Error + Send + Sync + 'static> Display
+    for CopyError<RE, WE>
+{
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            CopyError::ReadError(e) => write!(f, "Read error while copying: {}", e),
+            CopyError::WriteError(e) => write!(f, "Write error while copying: {}", e),
+        }
+    }
+}
+
+impl<RE: Error + Send + Sync + 'static, WE: Error + Send + Sync + 'static> Error
+    for CopyError<RE, WE>
+{
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        match self {
+            CopyError::ReadError(e) => Some(e),
+            CopyError::WriteError(e) => Some(e),
+        }
+    }
+}
 
 /// Sequential, streaming bit-by-bit reads.
 ///
@@ -78,15 +111,19 @@ pub trait BitRead<E: Endianness> {
     /// Read a unary code.
     fn read_unary(&mut self) -> Result<u64, Self::Error>;
 
-    fn copy_to<F: Endianness>(
+    fn copy_to<F: Endianness, W: BitWrite<F>>(
         &mut self,
-        bit_write: &mut impl BitWrite<F>,
+        bit_write: &mut W,
         mut n: u64,
-    ) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
+    ) -> Result<(), CopyError<Self::Error, W::Error>> {
         while n > 0 {
             let to_read = std::cmp::min(n, 64) as usize;
-            let read = self.read_bits(to_read)?;
-            bit_write.write_bits(read, to_read)?;
+            let read = self
+                .read_bits(to_read)
+                .map_err(|e| CopyError::ReadError(e))?;
+            bit_write
+                .write_bits(read, to_read)
+                .map_err(|e| CopyError::WriteError(e))?;
             n -= to_read as u64;
         }
         Ok(())
@@ -116,15 +153,18 @@ pub trait BitWrite<E: Endianness> {
     /// Flush the buffer, consuming the bit stream.
     fn flush(&mut self) -> Result<(), Self::Error>;
 
-    fn copy_from<F: Endianness>(
+    fn copy_from<F: Endianness, R: BitRead<F>>(
         &mut self,
-        bit_read: &mut impl BitRead<F>,
+        bit_read: &mut R,
         mut n: u64,
-    ) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
+    ) -> Result<(), CopyError<R::Error, Self::Error>> {
         while n > 0 {
             let to_read = std::cmp::min(n, 64) as usize;
-            let read = bit_read.read_bits(to_read)?;
-            self.write_bits(read, to_read)?;
+            let read = bit_read
+                .read_bits(to_read)
+                .map_err(|e| CopyError::ReadError(e))?;
+            self.write_bits(read, to_read)
+                .map_err(|e| CopyError::WriteError(e))?;
             n -= to_read as u64;
         }
         Ok(())

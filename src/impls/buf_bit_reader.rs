@@ -260,15 +260,17 @@ where
     }
 
     #[cfg(not(feature = "no_copy_impls"))]
-    fn copy_to<F: Endianness>(
+    fn copy_to<F: Endianness, W: BitWrite<F>>(
         &mut self,
-        bit_write: &mut impl BitWrite<F>,
+        bit_write: &mut W,
         mut n: u64,
-    ) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
+    ) -> Result<(), CopyError<Self::Error, W::Error>> {
         let from_buffer = Ord::min(n, self.bits_in_buffer as _);
         self.buffer = self.buffer.rotate_left(from_buffer as _);
 
-        bit_write.write_bits(self.buffer.cast(), from_buffer as usize)?;
+        bit_write
+            .write_bits(self.buffer.cast(), from_buffer as usize)
+            .map_err(CopyError::WriteError)?;
         n -= from_buffer;
 
         if n == 0 {
@@ -277,14 +279,29 @@ where
         }
 
         while n > WR::Word::BITS as u64 {
-            bit_write.write_bits(self.backend.read_word()?.to_be().upcast(), WR::Word::BITS)?;
+            bit_write
+                .write_bits(
+                    self.backend
+                        .read_word()
+                        .map_err(CopyError::ReadError)?
+                        .to_be()
+                        .upcast(),
+                    WR::Word::BITS,
+                )
+                .map_err(CopyError::WriteError)?;
             n -= WR::Word::BITS as u64;
         }
 
         assert!(n > 0);
-        let new_word = self.backend.read_word()?.to_be();
+        let new_word = self
+            .backend
+            .read_word()
+            .map_err(CopyError::ReadError)?
+            .to_be();
         self.bits_in_buffer = WR::Word::BITS - n as usize;
-        bit_write.write_bits((new_word >> self.bits_in_buffer).upcast(), n as usize)?;
+        bit_write
+            .write_bits((new_word >> self.bits_in_buffer).upcast(), n as usize)
+            .map_err(CopyError::WriteError)?;
         self.buffer = UpcastableInto::<BB<WR>>::upcast(new_word)
             .rotate_right(WR::Word::BITS as u32 - n as u32);
 
@@ -474,14 +491,16 @@ where
     }
 
     #[cfg(not(feature = "no_copy_impls"))]
-    fn copy_to<F: Endianness>(
+    fn copy_to<F: Endianness, W: BitWrite<F>>(
         &mut self,
-        bit_write: &mut impl BitWrite<F>,
+        bit_write: &mut W,
         mut n: u64,
-    ) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
+    ) -> Result<(), CopyError<Self::Error, W::Error>> {
         let from_buffer = Ord::min(n, self.bits_in_buffer as _);
 
-        bit_write.write_bits(self.buffer.cast(), from_buffer as usize)?;
+        bit_write
+            .write_bits(self.buffer.cast(), from_buffer as usize)
+            .map_err(CopyError::WriteError)?;
 
         self.buffer >>= from_buffer;
         n -= from_buffer;
@@ -492,14 +511,29 @@ where
         }
 
         while n > WR::Word::BITS as u64 {
-            bit_write.write_bits(self.backend.read_word()?.to_le().upcast(), WR::Word::BITS)?;
+            bit_write
+                .write_bits(
+                    self.backend
+                        .read_word()
+                        .map_err(|e| CopyError::ReadError(e))?
+                        .to_le()
+                        .upcast(),
+                    WR::Word::BITS,
+                )
+                .map_err(CopyError::WriteError)?;
             n -= WR::Word::BITS as u64;
         }
 
         assert!(n > 0);
-        let new_word = self.backend.read_word()?.to_le();
+        let new_word = self
+            .backend
+            .read_word()
+            .map_err(CopyError::ReadError)?
+            .to_le();
         self.bits_in_buffer = WR::Word::BITS - n as usize;
-        bit_write.write_bits(new_word.upcast(), n as usize)?;
+        bit_write
+            .write_bits(new_word.upcast(), n as usize)
+            .map_err(CopyError::WriteError)?;
         self.buffer = UpcastableInto::<BB<WR>>::upcast(new_word) >> n;
         Ok(())
     }
