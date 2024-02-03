@@ -36,7 +36,7 @@ pub struct FuzzCase {
 pub enum RandomCommand {
     Bits(u64, usize),
     MinimalBinary(u64, u64),
-    Unary(u64, bool, bool),
+    Unary(u64),
     Gamma(u64, bool, bool),
     Delta(u64, bool, bool),
     Zeta(u64, u64, bool, bool),
@@ -54,7 +54,7 @@ pub fn harness(data: FuzzCase) {
                 *max = (*max).max(1).min(u32::MAX as _);
                 *value = (*value) % *max;
             }
-            RandomCommand::Unary(value, _, _) => {
+            RandomCommand::Unary(value) => {
                 *value = (*value).min(300);
             }
             RandomCommand::Gamma(value, _, _) => {
@@ -94,18 +94,11 @@ pub fn harness(data: FuzzCase) {
                     assert_eq!(big_success, little_success);
                     writes.push(big_success);
                 }
-                RandomCommand::Unary(value, _read_tab, write_tab) => {
-                    let (big_success, little_success) = if *write_tab {
-                        (
-                            big.write_unary_param::<true>(*value as u64).is_ok(),
-                            little.write_unary_param::<true>(*value as u64).is_ok(),
-                        )
-                    } else {
-                        (
-                            big.write_unary_param::<false>(*value as u64).is_ok(),
-                            little.write_unary_param::<false>(*value as u64).is_ok(),
-                        )
-                    };
+                RandomCommand::Unary(value) => {
+                    let (big_success, little_success) = (
+                        big.write_unary(*value as u64).is_ok(),
+                        little.write_unary(*value as u64).is_ok(),
+                    );
                     assert_eq!(big_success, little_success);
                     writes.push(big_success);
                 }
@@ -311,22 +304,14 @@ pub fn harness(data: FuzzCase) {
                     }
                 }
 
-                RandomCommand::Unary(value, read_tab, _write_tab) => {
-                    let (b, l, bb, lb) = if read_tab {
+                RandomCommand::Unary(value) => {
+                    let (b, l, bb, lb) = 
                         (
-                            big.read_unary_param::<true>(),
-                            little.read_unary_param::<true>(),
-                            big_buff.read_unary_param::<true>(),
-                            little_buff.read_unary_param::<true>(),
-                        )
-                    } else {
-                        (
-                            big.read_unary_param::<false>(),
-                            little.read_unary_param::<false>(),
-                            big_buff.read_unary_param::<false>(),
-                            little_buff.read_unary_param::<false>(),
-                        )
-                    };
+                            big.read_unary(),
+                            little.read_unary(),
+                            big_buff.read_unary(),
+                            little_buff.read_unary(),
+                        );
                     if succ {
                         assert_eq!(b.unwrap(), value as u64);
                         assert_eq!(l.unwrap(), value as u64);

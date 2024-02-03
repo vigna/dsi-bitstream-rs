@@ -13,18 +13,18 @@ authors = ["Tommaso Fontana <tommaso.fontana.96@gmail.com>", "Sebastiano Vigna <
 [dependencies]
 rand = { version = "0.8.5", features = ["small_rng"] }
 arbitrary = { version = "1", features = ["derive"], optional = true }
-zip = { version="0.6.6", optional=true }
-common_traits = "0.10.1"
+common_traits = ">=0.10.2"
 
 [dev-dependencies]
 criterion = "0.5.1"
+zip = "0.6.6"
 rand_distr = "0.4.3"
 
 [features]
 default = ["std"]
 std = ["alloc"]
 alloc = []
-fuzz = ["dep:arbitrary", "dep:zip"]
+fuzz = ["dep:arbitrary"]
 checks = []
 no_copy_impls = [] # Disable copy_from/copy_to implementations so to test the default methods
 
