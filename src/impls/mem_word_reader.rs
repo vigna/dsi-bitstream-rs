@@ -8,8 +8,6 @@
 
 use core::convert::Infallible;
 
-use common_traits::UnsignedInt;
-
 use crate::prelude::*;
 
 /**
@@ -46,13 +44,13 @@ assert!(word_reader.read_word().is_err());
 ```
 */
 #[derive(Debug, Clone, PartialEq)]
-pub struct MemWordReader<W: UnsignedInt, B: AsRef<[W]>, const INF: bool = true> {
+pub struct MemWordReader<W: Word, B: AsRef<[W]>, const INF: bool = true> {
     data: B,
     word_index: usize,
     _marker: core::marker::PhantomData<W>,
 }
 
-impl<W: UnsignedInt, B: AsRef<[W]>> MemWordReader<W, B> {
+impl<W: Word, B: AsRef<[W]>> MemWordReader<W, B> {
     /// Create a new [`MemWordReader`] from a slice of data
     #[must_use]
     pub fn new(data: B) -> Self {
@@ -68,7 +66,7 @@ impl<W: UnsignedInt, B: AsRef<[W]>> MemWordReader<W, B> {
     }
 }
 
-impl<W: UnsignedInt, B: AsRef<[W]>> MemWordReader<W, B, false> {
+impl<W: Word, B: AsRef<[W]>> MemWordReader<W, B, false> {
     /// Create a new [`MemWordReader`] from a slice of data
     #[must_use]
     pub fn new_strict(data: B) -> Self {
@@ -80,7 +78,7 @@ impl<W: UnsignedInt, B: AsRef<[W]>> MemWordReader<W, B, false> {
     }
 }
 
-impl<W: UnsignedInt, B: AsRef<[W]>> WordRead for MemWordReader<W, B, true> {
+impl<W: Word, B: AsRef<[W]>> WordRead for MemWordReader<W, B, true> {
     type Error = Infallible;
     type Word = W;
 
@@ -98,7 +96,7 @@ impl<W: UnsignedInt, B: AsRef<[W]>> WordRead for MemWordReader<W, B, true> {
     }
 }
 
-impl<W: UnsignedInt, B: AsRef<[W]>> WordRead for MemWordReader<W, B, false> {
+impl<W: Word, B: AsRef<[W]>> WordRead for MemWordReader<W, B, false> {
     type Error = std::io::Error;
     type Word = W;
 
@@ -118,7 +116,7 @@ impl<W: UnsignedInt, B: AsRef<[W]>> WordRead for MemWordReader<W, B, false> {
     }
 }
 
-impl<W: UnsignedInt, B: AsRef<[W]>> WordSeek for MemWordReader<W, B, true> {
+impl<W: Word, B: AsRef<[W]>> WordSeek for MemWordReader<W, B, true> {
     type Error = Infallible;
 
     #[inline(always)]
@@ -134,7 +132,7 @@ impl<W: UnsignedInt, B: AsRef<[W]>> WordSeek for MemWordReader<W, B, true> {
     }
 }
 
-impl<W: UnsignedInt, B: AsRef<[W]>> WordSeek for MemWordReader<W, B, false> {
+impl<W: Word, B: AsRef<[W]>> WordSeek for MemWordReader<W, B, false> {
     type Error = std::io::Error;
 
     #[inline(always)]

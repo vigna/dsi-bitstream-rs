@@ -9,12 +9,18 @@
 use std::error::Error;
 
 use common_traits::*;
+
+/// This is a trait alias for all the properties that we need words of memory
+/// read and wrote by either a [`WordRead`] or [`WordWrite`], respectively.
+pub trait Word: UnsignedInt + ToBytes + FromBytes + FiniteRangeNumber {}
+impl<W: UnsignedInt + ToBytes + FromBytes + FiniteRangeNumber> Word for W {}
+
 /// Sequential, streaming word-by-word reads.
 pub trait WordRead {
     type Error: Error + Send + Sync + 'static;
 
     /// The word type (the type of the result of [`WordRead::read_word`]).
-    type Word: UnsignedInt;
+    type Word: Word;
 
     /// Read a word and advance the current position.
     fn read_word(&mut self) -> Result<Self::Word, Self::Error>;
@@ -25,7 +31,7 @@ pub trait WordWrite {
     type Error: Error + Send + Sync + 'static;
 
     /// The word type (the type of the argument of [`WordWrite::write_word`]).
-    type Word: UnsignedInt;
+    type Word: Word;
 
     /// Write a word and advance the current position.
     fn write_word(&mut self, word: Self::Word) -> Result<(), Self::Error>;

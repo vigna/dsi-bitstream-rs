@@ -29,12 +29,12 @@ use std::io::{ErrorKind, Read, Seek, SeekFrom, Write};
 /// a multiple of `W::Bytes`, or the results of [`get_word_pos`](WordAdapter::get_word_pos)
 /// will be shifted by the rounding.
 #[derive(Clone)]
-pub struct WordAdapter<W: UnsignedInt, B> {
+pub struct WordAdapter<W: UnsignedInt + FromBytes + ToBytes, B> {
     backend: B,
     _marker: core::marker::PhantomData<W>,
 }
 
-impl<W: UnsignedInt, B> WordAdapter<W, B> {
+impl<W: UnsignedInt + FromBytes + ToBytes, B> WordAdapter<W, B> {
     /// Create a new WordAdapter
     pub fn new(backend: B) -> Self {
         Self {
@@ -48,7 +48,7 @@ impl<W: UnsignedInt, B> WordAdapter<W, B> {
     }
 }
 
-impl<W: UnsignedInt, B: Read> WordRead for WordAdapter<W, B> {
+impl<W: UnsignedInt + ToBytes + FromBytes + FiniteRangeNumber, B: Read> WordRead for WordAdapter<W, B> {
     type Error = std::io::Error;
     type Word = W;
 
@@ -64,7 +64,7 @@ impl<W: UnsignedInt, B: Read> WordRead for WordAdapter<W, B> {
     }
 }
 
-impl<W: UnsignedInt, B: Write> WordWrite for WordAdapter<W, B> {
+impl<W: UnsignedInt + ToBytes + FromBytes + FiniteRangeNumber, B: Write> WordWrite for WordAdapter<W, B> {
     type Error = std::io::Error;
     type Word = W;
 
@@ -79,7 +79,7 @@ impl<W: UnsignedInt, B: Write> WordWrite for WordAdapter<W, B> {
     }
 }
 
-impl<W: UnsignedInt, B: Seek> WordSeek for WordAdapter<W, B> {
+impl<W: UnsignedInt + ToBytes + FromBytes + FiniteRangeNumber, B: Seek> WordSeek for WordAdapter<W, B> {
     type Error = std::io::Error;
 
     #[inline(always)]

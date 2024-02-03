@@ -11,7 +11,7 @@ use core::{mem, ptr};
 
 use crate::codes::params::{DefaultWriteParams, WriteParams};
 use crate::traits::*;
-use common_traits::{CastableInto, Integer, Number, Scalar};
+use common_traits::{CastableInto, Integer, Number, AsBytes, FiniteRangeNumber};
 
 /// An implementation of [`BitWrite`] for a [`WordWrite`].
 ///
