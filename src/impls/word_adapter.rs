@@ -48,7 +48,9 @@ impl<W: UnsignedInt + FromBytes + ToBytes, B> WordAdapter<W, B> {
     }
 }
 
-impl<W: UnsignedInt + ToBytes + FromBytes + FiniteRangeNumber, B: Read> WordRead for WordAdapter<W, B> {
+impl<W: UnsignedInt + ToBytes + FromBytes + FiniteRangeNumber, B: Read> WordRead
+    for WordAdapter<W, B>
+{
     type Error = std::io::Error;
     type Word = W;
 
@@ -64,7 +66,9 @@ impl<W: UnsignedInt + ToBytes + FromBytes + FiniteRangeNumber, B: Read> WordRead
     }
 }
 
-impl<W: UnsignedInt + ToBytes + FromBytes + FiniteRangeNumber, B: Write> WordWrite for WordAdapter<W, B> {
+impl<W: UnsignedInt + ToBytes + FromBytes + FiniteRangeNumber, B: Write> WordWrite
+    for WordAdapter<W, B>
+{
     type Error = std::io::Error;
     type Word = W;
 
@@ -79,7 +83,9 @@ impl<W: UnsignedInt + ToBytes + FromBytes + FiniteRangeNumber, B: Write> WordWri
     }
 }
 
-impl<W: UnsignedInt + ToBytes + FromBytes + FiniteRangeNumber, B: Seek> WordSeek for WordAdapter<W, B> {
+impl<W: UnsignedInt + ToBytes + FromBytes + FiniteRangeNumber, B: Seek> WordSeek
+    for WordAdapter<W, B>
+{
     type Error = std::io::Error;
 
     #[inline(always)]
