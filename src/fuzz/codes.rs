@@ -305,13 +305,12 @@ pub fn harness(data: FuzzCase) {
                 }
 
                 RandomCommand::Unary(value) => {
-                    let (b, l, bb, lb) = 
-                        (
-                            big.read_unary(),
-                            little.read_unary(),
-                            big_buff.read_unary(),
-                            little_buff.read_unary(),
-                        );
+                    let (b, l, bb, lb) = (
+                        big.read_unary(),
+                        little.read_unary(),
+                        big_buff.read_unary(),
+                        little_buff.read_unary(),
+                    );
                     if succ {
                         assert_eq!(b.unwrap(), value as u64);
                         assert_eq!(l.unwrap(), value as u64);
