@@ -40,6 +40,9 @@ pub enum RandomCommand {
     Gamma(u64, bool, bool),
     Delta(u64, bool, bool),
     Zeta(u64, u64, bool, bool),
+    Golomb(u64, u64),
+    Rice(u64, usize),
+    ExpGolomb(u64, usize),
 }
 
 pub fn harness(data: FuzzCase) {
@@ -66,6 +69,18 @@ pub fn harness(data: FuzzCase) {
             RandomCommand::Zeta(value, k, _, _) => {
                 *value = (*value).min(u32::MAX as u64 - 1);
                 *k = (*k).max(1).min(7);
+            }
+            RandomCommand::Golomb(value, b) => {
+                *value = (*value).min(u16::MAX as u64 - 1);
+                *b = (*b).max(1).min(20);
+            }
+            RandomCommand::Rice(value, k) => {
+                *value = (*value).min(u16::MAX as u64 - 1);
+                *k = (*k).max(0).min(8);
+            }
+            RandomCommand::ExpGolomb(value, k) => {
+                *value = (*value).min(u16::MAX as u64 - 1);
+                *k = (*k).max(0).min(8);
             }
         };
     }
@@ -144,6 +159,30 @@ pub fn harness(data: FuzzCase) {
                             little.write_zeta_param::<false>(*value, *k).is_ok(),
                         )
                     };
+                    assert_eq!(big_success, little_success);
+                    writes.push(big_success);
+                }
+                RandomCommand::Golomb(value, b) => {
+                    let (big_success, little_success) = (
+                        big.write_golomb(*value, *b).is_ok(),
+                        little.write_golomb(*value, *b).is_ok(),
+                    );
+                    assert_eq!(big_success, little_success);
+                    writes.push(big_success);
+                }
+                RandomCommand::Rice(value, k) => {
+                    let (big_success, little_success) = (
+                        big.write_rice(*value, *k).is_ok(),
+                        little.write_rice(*value, *k).is_ok(),
+                    );
+                    assert_eq!(big_success, little_success);
+                    writes.push(big_success);
+                }
+                RandomCommand::ExpGolomb(value, k) => {
+                    let (big_success, little_success) = (
+                        big.write_exp_golomb(*value, *k).is_ok(),
+                        little.write_exp_golomb(*value, *k).is_ok(),
+                    );
                     assert_eq!(big_success, little_success);
                     writes.push(big_success);
                 }
@@ -559,6 +598,156 @@ pub fn harness(data: FuzzCase) {
                         );
                         assert_eq!(
                             pos + len_zeta_param::<true>(value, k) as u64,
+                            little_buff.bit_pos().unwrap()
+                        );
+                    } else {
+                        assert!(b.is_err());
+                        assert!(l.is_err());
+                        assert!(bb.is_err());
+                        assert!(lb.is_err());
+                        assert_eq!(pos, big.bit_pos().unwrap());
+                        assert_eq!(pos, little.bit_pos().unwrap());
+                        assert_eq!(pos, big_buff.bit_pos().unwrap());
+                        assert_eq!(pos, little_buff.bit_pos().unwrap());
+                    }
+                }
+                RandomCommand::Golomb(value, b_par) => {
+                    let (b, l, bb, lb) = (
+                        big.read_golomb(b_par),
+                        little.read_golomb(b_par),
+                        big_buff.read_golomb(b_par),
+                        little_buff.read_golomb(b_par),
+                    );
+                    if succ {
+                        assert_eq!(b.unwrap(), value as u64);
+                        assert_eq!(l.unwrap(), value as u64);
+                        assert_eq!(bb.unwrap(), value as u64);
+                        assert_eq!(lb.unwrap(), value as u64);
+                        assert_eq!(
+                            pos + len_golomb(value, b_par) as u64,
+                            big.bit_pos().unwrap()
+                        );
+                        assert_eq!(
+                            pos + len_golomb(value, b_par) as u64,
+                            little.bit_pos().unwrap()
+                        );
+                        assert_eq!(
+                            pos + len_golomb(value, b_par) as u64,
+                            big_buff.bit_pos().unwrap()
+                        );
+                        assert_eq!(
+                            pos + len_golomb(value, b_par) as u64,
+                            little_buff.bit_pos().unwrap()
+                        );
+
+                        assert_eq!(
+                            pos + len_golomb(value, b_par) as u64,
+                            big.bit_pos().unwrap()
+                        );
+                        assert_eq!(
+                            pos + len_golomb(value, b_par) as u64,
+                            little.bit_pos().unwrap()
+                        );
+                        assert_eq!(
+                            pos + len_golomb(value, b_par) as u64,
+                            big_buff.bit_pos().unwrap()
+                        );
+                        assert_eq!(
+                            pos + len_golomb(value, b_par) as u64,
+                            little_buff.bit_pos().unwrap()
+                        );
+                    } else {
+                        assert!(b.is_err());
+                        assert!(l.is_err());
+                        assert!(bb.is_err());
+                        assert!(lb.is_err());
+                        assert_eq!(pos, big.bit_pos().unwrap());
+                        assert_eq!(pos, little.bit_pos().unwrap());
+                        assert_eq!(pos, big_buff.bit_pos().unwrap());
+                        assert_eq!(pos, little_buff.bit_pos().unwrap());
+                    }
+                }
+                RandomCommand::Rice(value, k) => {
+                    let (b, l, bb, lb) = (
+                        big.read_rice(k),
+                        little.read_rice(k),
+                        big_buff.read_rice(k),
+                        little_buff.read_rice(k),
+                    );
+                    if succ {
+                        assert_eq!(b.unwrap(), value as u64);
+                        assert_eq!(l.unwrap(), value as u64);
+                        assert_eq!(bb.unwrap(), value as u64);
+                        assert_eq!(lb.unwrap(), value as u64);
+                        assert_eq!(pos + len_rice(value, k) as u64, big.bit_pos().unwrap());
+                        assert_eq!(pos + len_rice(value, k) as u64, little.bit_pos().unwrap());
+                        assert_eq!(pos + len_rice(value, k) as u64, big_buff.bit_pos().unwrap());
+                        assert_eq!(
+                            pos + len_rice(value, k) as u64,
+                            little_buff.bit_pos().unwrap()
+                        );
+
+                        assert_eq!(pos + len_rice(value, k) as u64, big.bit_pos().unwrap());
+                        assert_eq!(pos + len_rice(value, k) as u64, little.bit_pos().unwrap());
+                        assert_eq!(pos + len_rice(value, k) as u64, big_buff.bit_pos().unwrap());
+                        assert_eq!(
+                            pos + len_rice(value, k) as u64,
+                            little_buff.bit_pos().unwrap()
+                        );
+                    } else {
+                        assert!(b.is_err());
+                        assert!(l.is_err());
+                        assert!(bb.is_err());
+                        assert!(lb.is_err());
+                        assert_eq!(pos, big.bit_pos().unwrap());
+                        assert_eq!(pos, little.bit_pos().unwrap());
+                        assert_eq!(pos, big_buff.bit_pos().unwrap());
+                        assert_eq!(pos, little_buff.bit_pos().unwrap());
+                    }
+                }
+                RandomCommand::ExpGolomb(value, k) => {
+                    let (b, l, bb, lb) = (
+                        big.read_exp_golomb(k),
+                        little.read_exp_golomb(k),
+                        big_buff.read_exp_golomb(k),
+                        little_buff.read_exp_golomb(k),
+                    );
+                    if succ {
+                        assert_eq!(b.unwrap(), value as u64);
+                        assert_eq!(l.unwrap(), value as u64);
+                        assert_eq!(bb.unwrap(), value as u64);
+                        assert_eq!(lb.unwrap(), value as u64);
+                        assert_eq!(
+                            pos + len_exp_golomb(value, k) as u64,
+                            big.bit_pos().unwrap()
+                        );
+                        assert_eq!(
+                            pos + len_exp_golomb(value, k) as u64,
+                            little.bit_pos().unwrap()
+                        );
+                        assert_eq!(
+                            pos + len_exp_golomb(value, k) as u64,
+                            big_buff.bit_pos().unwrap()
+                        );
+                        assert_eq!(
+                            pos + len_exp_golomb(value, k) as u64,
+                            little_buff.bit_pos().unwrap()
+                        );
+
+                        assert_eq!(
+                            pos + len_exp_golomb(value, k) as u64,
+                            big.bit_pos().unwrap()
+                        );
+                        assert_eq!(
+                            pos + len_exp_golomb(value, k) as u64,
+                            little.bit_pos().unwrap()
+                        );
+                        assert_eq!(
+                            pos + len_exp_golomb(value, k) as u64,
+                            big_buff.bit_pos().unwrap()
+                        );
+                        assert_eq!(
+                            pos + len_exp_golomb(value, k) as u64,
                             little_buff.bit_pos().unwrap()
                         );
                     } else {
