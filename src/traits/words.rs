@@ -44,7 +44,7 @@ pub trait WordWrite {
 pub trait WordSeek {
     type Error: Error + Send + Sync + 'static;
     /// Get the current position in words from the start of the file.
-    fn get_word_pos(&mut self) -> Result<u64, Self::Error>;
+    fn word_pos(&mut self) -> Result<u64, Self::Error>;
 
     /// Set the current position in words from the start of the file to `word_pos`.
     fn set_word_pos(&mut self, word_pos: u64) -> Result<(), Self::Error>;

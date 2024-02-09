@@ -72,6 +72,9 @@ pub use golomb::{len_golomb, GolombRead, GolombWrite};
 pub mod rice;
 pub use rice::{len_rice, RiceRead, RiceWrite};
 
+pub mod exp_golomb;
+pub use exp_golomb::{len_exp_golomb, ExpGolombRead, ExpGolombWrite};
+
 pub mod delta_tables;
 pub mod gamma_tables;
 pub mod zeta_tables;

@@ -8,7 +8,7 @@
 //!
 //! Given a modulo `b`, the Golomb code of `x` is given by `⌊x / v⌋` in
 //! [unary code](BitRead::read_unary) followed by the [minimal binary
-//! code](super::minimal_binary) of `x % v`.
+//! code](super::minimal_binary) of `x mod v`.
 //!
 //! For natural numbers distributed with a geometric distribution with base `p`,
 //! the optimal code is a Golomb code with [`b = ⌈-log(2 – p) / log(1 – p)⌉`](b).

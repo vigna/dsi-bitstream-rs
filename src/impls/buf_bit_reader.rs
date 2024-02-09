@@ -320,8 +320,8 @@ where
     type Error = <WR as WordSeek>::Error;
 
     #[inline]
-    fn get_bit_pos(&mut self) -> Result<u64, Self::Error> {
-        Ok(self.backend.get_word_pos()? * WR::Word::BITS as u64 - self.bits_in_buffer as u64)
+    fn bit_pos(&mut self) -> Result<u64, Self::Error> {
+        Ok(self.backend.word_pos()? * WR::Word::BITS as u64 - self.bits_in_buffer as u64)
     }
 
     #[inline]
@@ -550,8 +550,8 @@ where
     type Error = <WR as WordSeek>::Error;
 
     #[inline]
-    fn get_bit_pos(&mut self) -> Result<u64, Self::Error> {
-        Ok(self.backend.get_word_pos()? * WR::Word::BITS as u64 - self.bits_in_buffer as u64)
+    fn bit_pos(&mut self) -> Result<u64, Self::Error> {
+        Ok(self.backend.word_pos()? * WR::Word::BITS as u64 - self.bits_in_buffer as u64)
     }
 
     #[inline]

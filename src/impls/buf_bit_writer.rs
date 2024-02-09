@@ -8,7 +8,6 @@
 
 use core::any::TypeId;
 use core::{mem, ptr};
-use std::error::Error;
 
 use crate::codes::params::{DefaultWriteParams, WriteParams};
 use crate::traits::*;
@@ -425,7 +424,7 @@ where
 macro_rules! test_buf_bit_writer {
     ($f: ident, $word:ty) => {
         #[test]
-        fn $f() -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
+        fn $f() -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
             use super::MemWordWriterVec;
             use crate::{
                 codes::{GammaRead, GammaWrite},

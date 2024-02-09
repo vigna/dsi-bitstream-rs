@@ -16,8 +16,7 @@ flexible and (hopefully) efficient.
 The two main traits are [`BitRead`] and [`BitWrite`], with which are associated
 two main implementations [`BufBitReader`] and [`BufBitWriter`]. Additional
 traits make it possible to read and write instantaneous codes, like the
-[Elias γ
-code](https://docs.rs/dsi-bitstream/0.1.9/dsi_bitstream/codes/gamma/index.html)
+[exponential Golomb codes](https://docs.rs/dsi-bitstream/latest/dsi_bitstream/codes/exp_golomb/index.html)
 used in [H.264 (MPEG-4)](https://en.wikipedia.org/wiki/Advanced_Video_Coding)
 and [H.265](https://en.wikipedia.org/wiki/High_Efficiency_Video_Coding).
 

@@ -174,10 +174,10 @@ pub trait BitWrite<E: Endianness> {
 /// Seekability for [`BitRead`] and [`BitWrite`] streams.
 pub trait BitSeek {
     type Error: Error + Send + Sync + 'static;
-    /// Get the current position in bits from the start of the file.
-    fn get_bit_pos(&mut self) -> Result<u64, Self::Error>;
+    /// Get the current position in bits from the start of the stream.
+    fn bit_pos(&mut self) -> Result<u64, Self::Error>;
 
-    /// Set the current position in bits from the start of the file to `bit_pos`.
+    /// Set the current position in bits from the start of the stream to `bit_pos`.
     ///
     /// Note that moving forward by a small amount of bits may be accomplished
     /// more efficiently by calling [`BitRead::skip_bits`].

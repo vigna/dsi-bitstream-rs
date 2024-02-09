@@ -120,7 +120,7 @@ impl<W: Word, B: AsRef<[W]>> WordSeek for MemWordReader<W, B, true> {
     type Error = Infallible;
 
     #[inline(always)]
-    fn get_word_pos(&mut self) -> Result<u64, Infallible> {
+    fn word_pos(&mut self) -> Result<u64, Infallible> {
         Ok(self.word_index as u64)
     }
 
@@ -136,7 +136,7 @@ impl<W: Word, B: AsRef<[W]>> WordSeek for MemWordReader<W, B, false> {
     type Error = std::io::Error;
 
     #[inline(always)]
-    fn get_word_pos(&mut self) -> Result<u64, std::io::Error> {
+    fn word_pos(&mut self) -> Result<u64, std::io::Error> {
         Ok(self.word_index as u64)
     }
     #[inline(always)]

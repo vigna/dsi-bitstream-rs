@@ -27,30 +27,30 @@ use crate::traits::*;
 /// let mut word_writer = MemWordWriterSlice::new(&mut words);
 ///
 /// // the stream is read sequentially
-/// assert_eq!(word_writer.get_word_pos().unwrap(), 0);
+/// assert_eq!(word_writer.word_pos().unwrap(), 0);
 /// assert_eq!(word_writer.read_word().unwrap(), 0x0043b59fcdf16077);
-/// assert_eq!(word_writer.get_word_pos().unwrap(), 1);
+/// assert_eq!(word_writer.word_pos().unwrap(), 1);
 /// assert_eq!(word_writer.read_word().unwrap(), 0x702863e6f9739b86);
-/// assert_eq!(word_writer.get_word_pos().unwrap(), 2);
+/// assert_eq!(word_writer.word_pos().unwrap(), 2);
 /// assert!(word_writer.read_word().is_err());
 ///
 /// // you can change position
 /// assert!(word_writer.set_word_pos(1).is_ok());
-/// assert_eq!(word_writer.get_word_pos().unwrap(), 1);
+/// assert_eq!(word_writer.word_pos().unwrap(), 1);
 /// assert_eq!(word_writer.read_word().unwrap(), 0x702863e6f9739b86);
 ///
 /// // errored set position doesn't change the current position
-/// assert_eq!(word_writer.get_word_pos().unwrap(), 2);
+/// assert_eq!(word_writer.word_pos().unwrap(), 2);
 /// assert!(word_writer.set_word_pos(100).is_err());
-/// assert_eq!(word_writer.get_word_pos().unwrap(), 2);
+/// assert_eq!(word_writer.word_pos().unwrap(), 2);
 ///
 /// // we can write and read back!
 /// assert!(word_writer.set_word_pos(0).is_ok());
 /// assert!(word_writer.write_word(0x0b801b2bf696e8d2).is_ok());
-/// assert_eq!(word_writer.get_word_pos().unwrap(), 1);
+/// assert_eq!(word_writer.word_pos().unwrap(), 1);
 /// assert!(word_writer.set_word_pos(0).is_ok());
 /// assert_eq!(word_writer.read_word().unwrap(), 0x0b801b2bf696e8d2);
-/// assert_eq!(word_writer.get_word_pos().unwrap(), 1);
+/// assert_eq!(word_writer.word_pos().unwrap(), 1);
 /// ```
 #[derive(Debug, PartialEq)]
 pub struct MemWordWriterSlice<W: Word, B: AsMut<[W]>> {
@@ -99,11 +99,11 @@ impl<W: Word, B: AsMut<[W]> + AsRef<[W]>> MemWordWriterSlice<W, B> {
 /// let mut word_writer = MemWordWriterVec::new(&mut words);
 ///
 /// // the stream is read sequentially
-/// assert_eq!(word_writer.get_word_pos().unwrap(), 0);
+/// assert_eq!(word_writer.word_pos().unwrap(), 0);
 /// assert!(word_writer.write_word(0).is_ok());
-/// assert_eq!(word_writer.get_word_pos().unwrap(), 1);
+/// assert_eq!(word_writer.word_pos().unwrap(), 1);
 /// assert!(word_writer.write_word(1).is_ok());
-/// assert_eq!(word_writer.get_word_pos().unwrap(), 2);
+/// assert_eq!(word_writer.word_pos().unwrap(), 2);
 /// ```
 #[derive(Debug, PartialEq)]
 #[cfg(feature = "alloc")]
@@ -161,7 +161,7 @@ impl<W: Word, B: AsRef<[W]> + AsMut<[W]>> WordSeek for MemWordWriterSlice<W, B> 
     type Error = std::io::Error;
 
     #[inline(always)]
-    fn get_word_pos(&mut self) -> Result<u64, std::io::Error> {
+    fn word_pos(&mut self) -> Result<u64, std::io::Error> {
         Ok(self.word_index as u64)
     }
 
@@ -255,7 +255,7 @@ impl<W: Word, B: AsMut<alloc::vec::Vec<W>> + AsRef<alloc::vec::Vec<W>>> WordSeek
     type Error = std::io::Error;
 
     #[inline(always)]
-    fn get_word_pos(&mut self) -> Result<u64, std::io::Error> {
+    fn word_pos(&mut self) -> Result<u64, std::io::Error> {
         Ok(self.word_index as u64)
     }
 

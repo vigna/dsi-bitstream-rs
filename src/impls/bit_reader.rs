@@ -145,7 +145,7 @@ impl<
 impl<WR: WordSeek, RP: ReadParams> BitSeek for BitReader<LE, WR, RP> {
     type Error = Infallible;
 
-    fn get_bit_pos(&mut self) -> Result<u64, Self::Error> {
+    fn bit_pos(&mut self) -> Result<u64, Self::Error> {
         Ok(self.bit_index)
     }
 
@@ -158,7 +158,7 @@ impl<WR: WordSeek, RP: ReadParams> BitSeek for BitReader<LE, WR, RP> {
 impl<WR: WordSeek, RP: ReadParams> BitSeek for BitReader<BE, WR, RP> {
     type Error = Infallible;
 
-    fn get_bit_pos(&mut self) -> Result<u64, Self::Error> {
+    fn bit_pos(&mut self) -> Result<u64, Self::Error> {
         Ok(self.bit_index)
     }
 

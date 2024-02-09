@@ -6,12 +6,7 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
-use dsi_bitstream::prelude::{
-    BitRead, BitWrite, BufBitReader, BufBitWriter, DeltaRead, DeltaWrite, GammaRead, GammaWrite,
-    GolombRead, GolombWrite, MemWordReader, MemWordWriterVec, MinimalBinaryRead,
-    MinimalBinaryWrite, RiceRead, RiceWrite, ZetaRead, ZetaWrite,
-};
-use dsi_bitstream::traits::{Endianness, BE, LE};
+use dsi_bitstream::prelude::*;
 use rand::rngs::SmallRng;
 use rand::{Rng, SeedableRng};
 use std::error::Error;
@@ -40,7 +35,7 @@ where
 
     for _ in 0..N {
         let mut written_bits = 0;
-        match r.gen_range(0..8) {
+        match r.gen_range(0..9) {
             0 => {
                 for _ in 0..r.gen_range(1..10) {
                     written_bits += write.write_unary(v.gen_range(0..100))?;
@@ -85,6 +80,12 @@ where
                     written_bits += write.write_rice(v.gen_range(0..100), log2_b)?;
                 }
             }
+            8 => {
+                let k = r.gen_range(0..4);
+                for _ in 0..r.gen_range(1..10) {
+                    written_bits += write.write_exp_golomb(v.gen_range(0..100), k)?;
+                }
+            }
             _ => unreachable!(),
         }
         pos.push(written_bits);
@@ -98,7 +99,7 @@ where
     let mut v = SmallRng::seed_from_u64(1);
 
     for _ in 0..N {
-        match r.gen_range(0..8) {
+        match r.gen_range(0..9) {
             0 => {
                 for _ in 0..r.gen_range(1..10) {
                     assert_eq!(v.gen_range(0..100), read.read_unary()?);
@@ -141,6 +142,12 @@ where
                 let log2_b = r.gen_range(0..4);
                 for _ in 0..r.gen_range(1..10) {
                     assert_eq!(v.gen_range(0..100), read.read_rice(log2_b)?);
+                }
+            }
+            8 => {
+                let k = r.gen_range(0..4);
+                for _ in 0..r.gen_range(1..10) {
+                    assert_eq!(v.gen_range(0..100), read.read_exp_golomb(k)?);
                 }
             }
             _ => unreachable!(),

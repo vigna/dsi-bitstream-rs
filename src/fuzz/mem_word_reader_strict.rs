@@ -27,7 +27,7 @@ pub fn harness(data: FuzzCase) {
     for command in data.commands {
         match command {
             RandomCommand::GetPosition => {
-                assert_eq!(reader.get_word_pos().unwrap(), idx);
+                assert_eq!(reader.word_pos().unwrap(), idx);
             }
             RandomCommand::SetPosition(word_index) => {
                 let _ = reader.set_word_pos(word_index as u64);
@@ -36,7 +36,7 @@ pub fn harness(data: FuzzCase) {
                 }
             }
             RandomCommand::ReadNextWord => {
-                if reader.get_word_pos().unwrap() < data.init.len() as u64 {
+                if reader.word_pos().unwrap() < data.init.len() as u64 {
                     assert_eq!(
                         reader.read_word().ok(),
                         Some(data.init.get(idx as usize).copied().unwrap_or(0))

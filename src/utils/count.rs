@@ -137,8 +137,8 @@ impl<E: Endianness, BR: BitWrite<E> + BitSeek, const PRINT: bool> BitSeek
 {
     type Error = <BR as BitSeek>::Error;
 
-    fn get_bit_pos(&mut self) -> Result<u64, Self::Error> {
-        self.bit_write.get_bit_pos()
+    fn bit_pos(&mut self) -> Result<u64, Self::Error> {
+        self.bit_write.bit_pos()
     }
 
     fn set_bit_pos(&mut self, bit_pos: u64) -> Result<(), Self::Error> {
@@ -267,8 +267,8 @@ impl<E: Endianness, BR: BitRead<E> + BitSeek, const PRINT: bool> BitSeek
 {
     type Error = <BR as BitSeek>::Error;
 
-    fn get_bit_pos(&mut self) -> Result<u64, Self::Error> {
-        self.bit_read.get_bit_pos()
+    fn bit_pos(&mut self) -> Result<u64, Self::Error> {
+        self.bit_read.bit_pos()
     }
 
     fn set_bit_pos(&mut self, bit_pos: u64) -> Result<(), Self::Error> {

@@ -23,10 +23,10 @@ use std::io::{ErrorKind, Read, Seek, SeekFrom, Write};
 /// read word extended with zeros at the end of such files.
 ///
 /// To provide a sensible value after such a read,
-/// [`get_word_pos`](WordAdapter::get_word_pos) will always return the position
+/// [`word_pos`](WordAdapter::word_pos) will always return the position
 /// of the underlying [`Seek`] rounded up to the next multiple of `W::Bytes`.
 /// This approach, however, requires that if you adapt a [`Seek`], its current position must be
-/// a multiple of `W::Bytes`, or the results of [`get_word_pos`](WordAdapter::get_word_pos)
+/// a multiple of `W::Bytes`, or the results of [`word_pos`](WordAdapter::word_pos)
 /// will be shifted by the rounding.
 #[derive(Clone)]
 pub struct WordAdapter<W: UnsignedInt + FromBytes + ToBytes, B> {
@@ -89,7 +89,7 @@ impl<W: UnsignedInt + ToBytes + FromBytes + FiniteRangeNumber, B: Seek> WordSeek
     type Error = std::io::Error;
 
     #[inline(always)]
-    fn get_word_pos(&mut self) -> Result<u64, std::io::Error> {
+    fn word_pos(&mut self) -> Result<u64, std::io::Error> {
         Ok(self.backend.stream_position()?.align_to(W::BYTES as u64))
     }
 
