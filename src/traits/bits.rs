@@ -118,9 +118,7 @@ pub trait BitRead<E: Endianness> {
     ) -> Result<(), CopyError<Self::Error, W::Error>> {
         while n > 0 {
             let to_read = std::cmp::min(n, 64) as usize;
-            let read = self
-                .read_bits(to_read)
-                .map_err(CopyError::ReadError)?;
+            let read = self.read_bits(to_read).map_err(CopyError::ReadError)?;
             bit_write
                 .write_bits(read, to_read)
                 .map_err(CopyError::WriteError)?;
@@ -160,9 +158,7 @@ pub trait BitWrite<E: Endianness> {
     ) -> Result<(), CopyError<R::Error, Self::Error>> {
         while n > 0 {
             let to_read = std::cmp::min(n, 64) as usize;
-            let read = bit_read
-                .read_bits(to_read)
-                .map_err(CopyError::ReadError)?;
+            let read = bit_read.read_bits(to_read).map_err(CopyError::ReadError)?;
             self.write_bits(read, to_read)
                 .map_err(CopyError::WriteError)?;
             n -= to_read as u64;
