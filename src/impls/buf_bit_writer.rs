@@ -217,7 +217,7 @@ where
         self.buffer = self.buffer << (self.space_left_in_buffer - 1) << 1
             | bit_read
                 .read_bits(self.space_left_in_buffer)
-                .map_err(|e| CopyError::ReadError(e))?
+                .map_err(CopyError::ReadError)?
                 .cast();
         n -= self.space_left_in_buffer as u64;
 
@@ -388,7 +388,7 @@ where
         self.buffer = self.buffer >> (self.space_left_in_buffer - 1) >> 1
             | (bit_read
                 .read_bits(self.space_left_in_buffer)
-                .map_err(|e| CopyError::ReadError(e))?
+                .map_err(CopyError::ReadError)?
                 .cast())
             .rotate_right(self.space_left_in_buffer as u32);
         n -= self.space_left_in_buffer as u64;

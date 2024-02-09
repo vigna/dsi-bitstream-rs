@@ -33,7 +33,7 @@ pub struct FuzzCase {
 }
 
 #[derive(Arbitrary, Debug, Clone)]
-pub enum RandomCommand {
+enum RandomCommand {
     Bits(u64, usize),
     MinimalBinary(u64, u64),
     Unary(u64),

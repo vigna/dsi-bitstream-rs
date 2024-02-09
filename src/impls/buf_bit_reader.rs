@@ -515,7 +515,7 @@ where
                 .write_bits(
                     self.backend
                         .read_word()
-                        .map_err(|e| CopyError::ReadError(e))?
+                        .map_err(CopyError::ReadError)?
                         .to_le()
                         .upcast(),
                     WR::Word::BITS,

@@ -120,10 +120,10 @@ pub trait BitRead<E: Endianness> {
             let to_read = std::cmp::min(n, 64) as usize;
             let read = self
                 .read_bits(to_read)
-                .map_err(|e| CopyError::ReadError(e))?;
+                .map_err(CopyError::ReadError)?;
             bit_write
                 .write_bits(read, to_read)
-                .map_err(|e| CopyError::WriteError(e))?;
+                .map_err(CopyError::WriteError)?;
             n -= to_read as u64;
         }
         Ok(())
@@ -162,9 +162,9 @@ pub trait BitWrite<E: Endianness> {
             let to_read = std::cmp::min(n, 64) as usize;
             let read = bit_read
                 .read_bits(to_read)
-                .map_err(|e| CopyError::ReadError(e))?;
+                .map_err(CopyError::ReadError)?;
             self.write_bits(read, to_read)
-                .map_err(|e| CopyError::WriteError(e))?;
+                .map_err(CopyError::WriteError)?;
             n -= to_read as u64;
         }
         Ok(())
