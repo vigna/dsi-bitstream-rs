@@ -72,10 +72,10 @@ where
 impl<E: Endianness, WW: WordWrite, WP: WriteParams> core::ops::Drop for BufBitWriter<E, WW, WP> {
     fn drop(&mut self) {
         if TypeId::of::<E>() == TypeId::of::<LE>() {
-            flush_le(self).unwrap()
+            flush_le(self).unwrap();
         } else {
             // TypeId::of::<E>() = TypeId::of::<BE>()
-            flush_be(self).unwrap()
+            flush_be(self).unwrap();
         }
     }
 }
@@ -87,8 +87,9 @@ impl<E: Endianness, WW: WordWrite, WP: WriteParams> core::ops::Drop for BufBitWr
 /// [`TypeId`] of the endianness.
 fn flush_be<E: Endianness, WW: WordWrite, WP: WriteParams>(
     buf_bit_writer: &mut BufBitWriter<E, WW, WP>,
-) -> Result<(), WW::Error> {
-    if buf_bit_writer.space_left_in_buffer != WW::Word::BITS {
+) -> Result<usize, WW::Error> {
+    let to_flush = WW::Word::BITS - buf_bit_writer.space_left_in_buffer;
+    if to_flush != 0 {
         buf_bit_writer.buffer <<= buf_bit_writer.space_left_in_buffer;
         buf_bit_writer
             .backend
@@ -96,7 +97,7 @@ fn flush_be<E: Endianness, WW: WordWrite, WP: WriteParams>(
         buf_bit_writer.space_left_in_buffer = WW::Word::BITS;
     }
     buf_bit_writer.backend.flush()?;
-    Ok(())
+    Ok(to_flush)
 }
 
 impl<WW: WordWrite, WP: WriteParams> BitWrite<BE> for BufBitWriter<BE, WW, WP>
@@ -105,7 +106,7 @@ where
 {
     type Error = <WW as WordWrite>::Error;
 
-    fn flush(&mut self) -> Result<(), Self::Error> {
+    fn flush(&mut self) -> Result<usize, Self::Error> {
         flush_be(self)
     }
 
@@ -255,8 +256,9 @@ where
 /// [`TypeId`] of the endianness.
 fn flush_le<E: Endianness, WW: WordWrite, WP: WriteParams>(
     buf_bit_writer: &mut BufBitWriter<E, WW, WP>,
-) -> Result<(), WW::Error> {
-    if buf_bit_writer.space_left_in_buffer != WW::Word::BITS {
+) -> Result<usize, WW::Error> {
+    let to_flush = WW::Word::BITS - buf_bit_writer.space_left_in_buffer;
+    if to_flush != 0 {
         buf_bit_writer.buffer >>= buf_bit_writer.space_left_in_buffer;
         buf_bit_writer
             .backend
@@ -264,7 +266,7 @@ fn flush_le<E: Endianness, WW: WordWrite, WP: WriteParams>(
         buf_bit_writer.space_left_in_buffer = WW::Word::BITS;
     }
     buf_bit_writer.backend.flush()?;
-    Ok(())
+    Ok(to_flush)
 }
 
 impl<WW: WordWrite, WP: WriteParams> BitWrite<LE> for BufBitWriter<LE, WW, WP>
@@ -273,7 +275,7 @@ where
 {
     type Error = <WW as WordWrite>::Error;
 
-    fn flush(&mut self) -> Result<(), Self::Error> {
+    fn flush(&mut self) -> Result<usize, Self::Error> {
         flush_le(self)
     }
 

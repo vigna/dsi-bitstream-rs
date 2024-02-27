@@ -149,7 +149,9 @@ pub trait BitWrite<E: Endianness> {
     fn write_unary(&mut self, value: u64) -> Result<usize, Self::Error>;
 
     /// Flush the buffer, consuming the bit stream.
-    fn flush(&mut self) -> Result<(), Self::Error>;
+    ///
+    /// Returns the number of bits written from the buffer (not including padding).
+    fn flush(&mut self) -> Result<usize, Self::Error>;
 
     fn copy_from<F: Endianness, R: BitRead<F>>(
         &mut self,

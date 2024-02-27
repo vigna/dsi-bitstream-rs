@@ -127,7 +127,7 @@ impl<E: Endianness, W: BitWrite<E>> BitWrite<E> for DbgBitWriter<E, W> {
         self.writer.write_unary(value)
     }
 
-    fn flush(&mut self) -> Result<(), Self::Error> {
+    fn flush(&mut self) -> Result<usize, Self::Error> {
         self.writer.flush()
     }
 }
