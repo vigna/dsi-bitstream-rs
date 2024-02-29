@@ -150,7 +150,7 @@ pub trait BitWrite<E: Endianness> {
 
     /// Flush the buffer, consuming the bit stream.
     ///
-    /// Returns the number of bits written from the buffer (not including padding).
+    /// Returns the number of bits written from the bit buffer (not including padding).
     fn flush(&mut self) -> Result<usize, Self::Error>;
 
     fn copy_from<F: Endianness, R: BitRead<F>>(
