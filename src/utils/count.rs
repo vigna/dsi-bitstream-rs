@@ -64,7 +64,13 @@ impl<E: Endianness, BW: BitWrite<E>, const PRINT: bool> BitWrite<E>
     }
 
     fn flush(&mut self) -> Result<usize, Self::Error> {
-        self.bit_write.flush()
+        self.bit_write.flush().map(|x| {
+            self.bits_written += x;
+            if PRINT {
+                eprintln!("flush() = {} (total = {})", x, self.bits_written);
+            }
+            x
+        })
     }
 }
 
