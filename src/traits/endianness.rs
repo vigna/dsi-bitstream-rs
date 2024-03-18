@@ -42,15 +42,15 @@ pub trait Endianness: private::Endianness {
     const IS_BIG: bool;
 }
 
-impl ToString for LE {
-    fn to_string(&self) -> String {
-        LE::NAME.to_string()
+impl core::fmt::Display for LE {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.write_str(LE::NAME)
     }
 }
 
-impl ToString for BE {
-    fn to_string(&self) -> String {
-        LE::NAME.to_string()
+impl core::fmt::Display for BE {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.write_str(BE::NAME)
     }
 }
 

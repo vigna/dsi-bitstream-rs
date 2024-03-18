@@ -3,7 +3,6 @@ use dsi_bitstream::prelude::*;
 use rand::rngs::SmallRng;
 use rand::Rng;
 use rand::SeedableRng;
-use rand_distr;
 use std::hint::black_box;
 use std::time::Duration;
 
