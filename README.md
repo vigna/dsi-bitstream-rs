@@ -10,15 +10,12 @@ A Rust implementation of bit streams supporting several types of instantaneous
 codes for compression.
 
 This library mimics the behavior of the analogous classes in the [DSI
-Utilities](https://dsiutils.di.unimi.it/), but it aims at being much more
-flexible and (hopefully) efficient.
+Utilities], but it aims at being much more flexible and (hopefully) efficient.
 
 The two main traits are [`BitRead`] and [`BitWrite`], with which are associated
 two main implementations [`BufBitReader`] and [`BufBitWriter`]. Additional
 traits make it possible to read and write instantaneous codes, like the
-[exponential Golomb codes](https://docs.rs/dsi-bitstream/latest/dsi_bitstream/codes/exp_golomb/index.html)
-used in [H.264 (MPEG-4)](https://en.wikipedia.org/wiki/Advanced_Video_Coding)
-and [H.265](https://en.wikipedia.org/wiki/High_Efficiency_Video_Coding).
+[exponential Golomb codes] used in [H.264 (MPEG-4)] and [H.265].
 
 ```rust
 use dsi_bitstream::prelude::*;
@@ -164,3 +161,7 @@ grant ANR-20-CE23-0002 of the French Agence Nationale de la Recherche.
 [`DefaultWriteParams`]: <https://docs.rs/dsi-bitstream/latest/dsi_bitstream/codes/params/struct.DefaultWriteParams.html>
 [`BitRead::read_unary`]: <https://docs.rs/dsi-bitstream/latest/dsi_bitstream/traits/trait.BitRead.html#method.read_unary>
 [`BitWrite::write_unary`]: <https://docs.rs/dsi-bitstream/latest/dsi_bitstream/traits/trait.BitWrite.html#method.write_unary>
+[DSI Utilities]: <https://dsiutils.di.unimi.it/>
+[exponential Golomb codes]: <https://docs.rs/dsi-bitstream/latest/dsi_bitstream/codes/exp_golomb/index.html>
+[H.264 (MPEG-4)]: <https://en.wikipedia.org/wiki/Advanced_Video_Coding>
+[H.265]: <https://en.wikipedia.org/wiki/High_Efficiency_Video_Coding>
