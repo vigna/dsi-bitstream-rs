@@ -46,29 +46,35 @@ run the benchmarks in the `benchmarks` directory.
 ### Reading from a file
 
 ```rust
+# fn main() -> Result<(), Box<dyn std::error::Error>> {
 use dsi_bitstream::prelude::*;
 use std::io::BufReader;
 
-let file = std::fs::File::open("README.md").unwrap();
+let file = std::fs::File::open("README.md")?;
 // Adapt to word type u32, select little endianness
 let mut reader = BufBitReader::<LE, _>::new(WordAdapter::<u32, _>::new(BufReader::new(file)));
-reader.read_gamma().unwrap();
+reader.read_gamma()?;
+# Ok(())
+# }
 ```
 
 ### Writing to and reading from a vector
 
 ```rust
+# fn main() -> Result<(), Box<dyn std::error::Error>> {
 use dsi_bitstream::prelude::*;
 
 let mut v: Vec<u64> = vec![];
 // Automatically chooses word type u64, select big endianness
 let mut writer = BufBitWriter::<BE, _>::new(MemWordWriterVec::new(&mut v));
-writer.write_gamma(42).unwrap();
-writer.flush().unwrap();
+writer.write_gamma(42)?;
+writer.flush()?;
 drop(writer); // We must drop the writer release the borrow on v
 
 let mut reader = BufBitReader::<BE, _>::new(MemWordReader::new(&v));
-assert_eq!(reader.read_gamma().unwrap(), 42);
+assert_eq!(reader.read_gamma()?, 42);
+# Ok(())
+# }
 ```
 
 */
