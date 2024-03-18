@@ -6,6 +6,9 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
+#[cfg(feature = "fuzz")]
+use std::error::Error;
+
 macro_rules! impl_fuzz_repr {
     ($func_name:ident, $func_zip_name:ident, $fuzz_name:ident) => {
         #[cfg(feature = "fuzz")]

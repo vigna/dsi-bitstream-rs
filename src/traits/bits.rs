@@ -15,10 +15,10 @@ use crate::{
 };
 use common_traits::CastableInto;
 
-pub trait Peekable<const N: usize> {}
+pub trait Peek<const N: usize> {}
 macro_rules! impl_peekable {
     ($($n:literal),*) => {$(
-        impl<T: Peekable<{$n + 1}>> Peekable<$n> for T {}
+        impl<T: Peek<{$n + 1}>> Peek<$n> for T {}
     )*};
 }
 
