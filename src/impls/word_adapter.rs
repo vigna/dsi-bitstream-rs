@@ -8,6 +8,7 @@
 
 use crate::traits::*;
 use common_traits::*;
+#[cfg(feature = "mem_dbg")]
 use mem_dbg::{MemDbg, MemSize};
 use std::io::{ErrorKind, Read, Seek, SeekFrom, Write};
 
@@ -29,7 +30,8 @@ use std::io::{ErrorKind, Read, Seek, SeekFrom, Write};
 /// This approach, however, requires that if you adapt a [`Seek`], its current position must be
 /// a multiple of `W::Bytes`, or the results of [`word_pos`](WordAdapter::word_pos)
 /// will be shifted by the rounding.
-#[derive(Debug, Clone, MemDbg, MemSize)]
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
 pub struct WordAdapter<W: UnsignedInt + FromBytes + ToBytes, B> {
     backend: B,
     _marker: core::marker::PhantomData<W>,

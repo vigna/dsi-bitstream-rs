@@ -8,6 +8,7 @@
 
 use crate::prelude::*;
 use core::convert::Infallible;
+#[cfg(feature = "mem_dbg")]
 use mem_dbg::{MemDbg, MemSize};
 
 /**
@@ -46,7 +47,8 @@ assert!(word_reader.read_word().is_err());
 # }
 ```
 */
-#[derive(Debug, Clone, PartialEq, MemDbg, MemSize)]
+#[derive(Debug, Clone, PartialEq)]
+#[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
 pub struct MemWordReader<W: Word, B: AsRef<[W]>, const INF: bool = true> {
     data: B,
     word_index: usize,

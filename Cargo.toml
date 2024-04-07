@@ -1,6 +1,6 @@
 [package]
 name = "dsi-bitstream"
-version = "0.4.0"
+version = "0.4.1"
 edition = "2021"
 description = "A Rust implementation of read/write bit streams supporting several types of instantaneous codes"
 repository = "https://github.com/vigna/dsi-bitstream-rs/"
@@ -14,7 +14,7 @@ authors = ["Tommaso Fontana <tommaso.fontana.96@gmail.com>", "Sebastiano Vigna <
 rand = { version = "0.8.5", features = ["small_rng"] }
 arbitrary = { version = "1", features = ["derive"], optional = true }
 common_traits = ">=0.10.2"
-mem_dbg = "0.1.5"
+mem_dbg = {version="0.1.8", optional = true}
 
 [dev-dependencies]
 criterion = "0.5.1"
@@ -22,7 +22,7 @@ zip = "0.6.6"
 rand_distr = "0.4.3"
 
 [features]
-default = ["std"]
+default = ["std", "mem_dbg"]
 std = ["alloc"]
 alloc = []
 fuzz = ["dep:arbitrary"]

@@ -42,6 +42,7 @@ use crate::codes::*;
 use crate::impls::*;
 use crate::traits::*;
 use common_traits::*;
+#[cfg(feature = "mem_dbg")]
 use mem_dbg::{MemDbg, MemSize};
 use std::error::Error;
 
@@ -53,7 +54,8 @@ pub trait ReadParams {}
 /// If you want to optimize these choices for your architecture, we suggest to
 /// run the benchmarks in the `benchmarks` directory and write your
 /// own implementation.
-#[derive(Debug, Clone, MemDbg, MemSize)]
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
 pub struct DefaultReadParams;
 impl ReadParams for DefaultReadParams {}
 
@@ -158,7 +160,8 @@ pub trait WriteParams {}
 /// If you want to optimize these choices for your architecture, we suggest to
 /// run the benchmarks in the `benchmarks` directory and write your
 /// own implementation.
-#[derive(Debug, Clone, MemDbg, MemSize)]
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
 pub struct DefaultWriteParams;
 impl WriteParams for DefaultWriteParams {}
 

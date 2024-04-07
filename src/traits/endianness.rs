@@ -56,11 +56,11 @@ impl core::fmt::Display for BE {
 }
 
 /// Selector type for little-endian streams.
-#[derive(Debug, Clone, PartialEq, Eq, MemDbg, MemSize)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LittleEndian;
 
 /// Selector type for big-endian streams.
-#[derive(Debug, Clone, PartialEq, Eq, MemDbg, MemSize)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct BigEndian;
 
 impl private::Endianness for LittleEndian {

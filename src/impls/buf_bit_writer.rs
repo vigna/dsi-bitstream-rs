@@ -12,6 +12,7 @@ use core::{mem, ptr};
 use crate::codes::params::{DefaultWriteParams, WriteParams};
 use crate::traits::*;
 use common_traits::{AsBytes, CastableInto, FiniteRangeNumber, Integer, Number};
+#[cfg(feature = "mem_dbg")]
 use mem_dbg::{MemDbg, MemSize};
 
 /// An implementation of [`BitWrite`] for a [`WordWrite`].
@@ -24,7 +25,8 @@ use mem_dbg::{MemDbg, MemSize};
 /// instantanous codes, but the casual user should be happy with the default value.
 /// See [`WriteParams`] for more details.
 
-#[derive(Debug, MemDbg, MemSize)]
+#[derive(Debug)]
+#[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
 pub struct BufBitWriter<E: Endianness, WW: WordWrite, WP: WriteParams = DefaultWriteParams> {
     /// The [`WordWrite`] to which we will write words.
     backend: WW,

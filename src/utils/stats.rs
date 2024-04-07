@@ -5,6 +5,7 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
+#[cfg(feature = "mem_dbg")]
 use mem_dbg::{MemDbg, MemSize};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, MemDbg, MemSize)]
@@ -36,7 +37,8 @@ const GOLOMB: usize = 20;
 /// structure](Self::update) with the integers in the stream; at any time, you
 /// can examine the statistics or call [`best_code`](Self::best_code) to get the
 /// best code.
-#[derive(Default, Debug, MemDbg, MemSize)]
+#[derive(Default, Debug)]
+#[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
 pub struct CodesStats {
     pub unary: u64,
     pub gamma: u64,

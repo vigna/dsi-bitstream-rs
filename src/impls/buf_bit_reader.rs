@@ -12,6 +12,7 @@ use crate::codes::params::{DefaultReadParams, ReadParams};
 use crate::traits::*;
 use core::convert::Infallible;
 use core::{mem, ptr};
+#[cfg(feature = "mem_dbg")]
 use mem_dbg::{MemDbg, MemSize};
 use std::error::Error;
 
@@ -41,7 +42,8 @@ type BB<WR> = <<WR as WordRead>::Word as DoubleType>::DoubleType;
 /// instantanous codes, but the casual user should be happy with the default
 /// value. See [`ReadParams`] for more details.
 
-#[derive(Debug, MemDbg, MemSize)]
+#[derive(Debug)]
+#[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
 pub struct BufBitReader<E: Endianness, WR: WordRead, RP: ReadParams = DefaultReadParams>
 where
     WR::Word: DoubleType,

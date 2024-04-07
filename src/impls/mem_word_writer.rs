@@ -7,6 +7,7 @@
  */
 
 use core::convert::Infallible;
+#[cfg(feature = "mem_dbg")]
 use mem_dbg::{MemDbg, MemSize};
 
 use crate::traits::*;
@@ -56,7 +57,8 @@ use crate::traits::*;
 /// # Ok(())
 /// # }
 /// ```
-#[derive(Debug, PartialEq, MemDbg, MemSize)]
+#[derive(Debug, PartialEq)]
+#[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
 pub struct MemWordWriterSlice<W: Word, B: AsMut<[W]>> {
     data: B,
     word_index: usize,
@@ -112,7 +114,8 @@ impl<W: Word, B: AsMut<[W]> + AsRef<[W]>> MemWordWriterSlice<W, B> {
 /// # Ok(())
 /// # }
 /// ```
-#[derive(Debug, PartialEq, MemDbg, MemSize)]
+#[derive(Debug, PartialEq)]
+#[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
 #[cfg(feature = "alloc")]
 pub struct MemWordWriterVec<W: Word, B: AsMut<alloc::vec::Vec<W>>> {
     data: B,
