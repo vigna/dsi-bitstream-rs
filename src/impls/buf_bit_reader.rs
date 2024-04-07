@@ -12,6 +12,7 @@ use crate::codes::params::{DefaultReadParams, ReadParams};
 use crate::traits::*;
 use core::convert::Infallible;
 use core::{mem, ptr};
+use mem_dbg::{MemDbg, MemSize};
 use std::error::Error;
 
 /// An internal shortcut to the double type of the word of a
@@ -40,7 +41,7 @@ type BB<WR> = <<WR as WordRead>::Word as DoubleType>::DoubleType;
 /// instantanous codes, but the casual user should be happy with the default
 /// value. See [`ReadParams`] for more details.
 
-#[derive(Debug)]
+#[derive(Debug, MemDbg, MemSize)]
 pub struct BufBitReader<E: Endianness, WR: WordRead, RP: ReadParams = DefaultReadParams>
 where
     WR::Word: DoubleType,

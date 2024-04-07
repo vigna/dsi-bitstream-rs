@@ -5,6 +5,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
+use mem_dbg::{MemDbg, MemSize};
 
 /// Inner private trait used to make implementing [`Endianness`]
 /// impossible for other structs.
@@ -55,11 +56,11 @@ impl core::fmt::Display for BE {
 }
 
 /// Selector type for little-endian streams.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, MemDbg, MemSize)]
 pub struct LittleEndian;
 
 /// Selector type for big-endian streams.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, MemDbg, MemSize)]
 pub struct BigEndian;
 
 impl private::Endianness for LittleEndian {

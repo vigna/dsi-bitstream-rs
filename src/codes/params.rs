@@ -43,6 +43,7 @@ use crate::codes::*;
 use crate::impls::*;
 use crate::traits::*;
 use common_traits::*;
+use mem_dbg::{MemDbg, MemSize};
 use std::error::Error;
 
 /// Marker trait for read-parameters selector types.
@@ -57,7 +58,7 @@ pub trait ReadParams {}
 /// If you want to optimize these choices for your architecture, we suggest to
 /// run the benchmarks in the `benchmarks` directory and write your
 /// own implementation.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, MemDbg, MemSize)]
 pub struct DefaultReadParams;
 impl ReadParams for DefaultReadParams {}
 
@@ -160,12 +161,12 @@ impl_default_read_codes! {LittleEndian, BigEndian}
 /// a nonsensical type, and to document the meaning of type parameters.
 pub trait WriteParams {}
 
-#[derive(Debug, Clone)]
 /// A selector type for write parameters providing reasonable defaults.
 ///
 /// If you want to optimize these choices for your architecture, we suggest to
 /// run the benchmarks in the `benchmarks` directory and write your
 /// own implementation.
+#[derive(Debug, Clone, MemDbg, MemSize)]
 pub struct DefaultWriteParams;
 impl WriteParams for DefaultWriteParams {}
 

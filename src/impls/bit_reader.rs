@@ -7,6 +7,7 @@
  */
 
 use core::convert::Infallible;
+use mem_dbg::{MemDbg, MemSize};
 use std::error::Error;
 
 use crate::codes::params::{DefaultReadParams, ReadParams};
@@ -27,7 +28,7 @@ use crate::traits::*;
 /// instantanous codes, but the casual user should be happy with the default
 /// value. See [`ReadParams`] for more details.
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, MemDbg, MemSize)]
 pub struct BitReader<E: Endianness, WR, RP: ReadParams = DefaultReadParams> {
     /// The stream which we will read words from.
     data: WR,

@@ -6,9 +6,9 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
-use core::convert::Infallible;
-
 use crate::prelude::*;
+use core::convert::Infallible;
+use mem_dbg::{MemDbg, MemSize};
 
 /**
 
@@ -46,7 +46,7 @@ assert!(word_reader.read_word().is_err());
 # }
 ```
 */
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, MemDbg, MemSize)]
 pub struct MemWordReader<W: Word, B: AsRef<[W]>, const INF: bool = true> {
     data: B,
     word_index: usize,

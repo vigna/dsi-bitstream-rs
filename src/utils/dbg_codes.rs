@@ -7,9 +7,11 @@
 
 use crate::prelude::*;
 use crate::traits::*;
+use mem_dbg::{MemDbg, MemSize};
 
 /// A wrapper over a [`BitRead`] that report on standard error all operations performed,
 /// including all code reads.
+#[derive(Debug, Clone, MemDbg, MemSize)]
 pub struct DbgBitReader<E: Endianness, R> {
     reader: R,
     _marker: core::marker::PhantomData<E>,
@@ -100,6 +102,7 @@ where
 
 /// A wrapper over a [`BitWrite`] that report on standard error all operations performed,
 /// including all code writes.
+#[derive(Debug, Clone, MemDbg, MemSize)]
 pub struct DbgBitWriter<E: Endianness, W> {
     writer: W,
     _marker: core::marker::PhantomData<E>,

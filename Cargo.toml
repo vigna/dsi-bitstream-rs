@@ -14,6 +14,7 @@ authors = ["Tommaso Fontana <tommaso.fontana.96@gmail.com>", "Sebastiano Vigna <
 rand = { version = "0.8.5", features = ["small_rng"] }
 arbitrary = { version = "1", features = ["derive"], optional = true }
 common_traits = ">=0.10.2"
+mem_dbg = "0.1.5"
 
 [dev-dependencies]
 criterion = "0.5.1"

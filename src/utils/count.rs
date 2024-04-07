@@ -11,10 +11,11 @@ use crate::{
     },
     traits::*,
 };
+use mem_dbg::{MemDbg, MemSize};
 
 /// A wrapper around a [`BitWrite`] that keeps track of the number of
 /// bits written and optionally prints on standard error the operations performed on the stream.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, MemDbg, MemSize)]
 pub struct CountBitWriter<E: Endianness, BW: BitWrite<E>, const PRINT: bool = false> {
     bit_write: BW,
     /// The number of bits written so far on the underlying [`BitWrite`].
@@ -154,7 +155,7 @@ impl<E: Endianness, BR: BitWrite<E> + BitSeek, const PRINT: bool> BitSeek
 
 /// A wrapper around a [`BitRead`] that keeps track of the number of
 /// bits read and optionally prints on standard error the operations performed on the stream.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, MemDbg, MemSize)]
 pub struct CountBitReader<E: Endianness, BR: BitRead<E>, const PRINT: bool = false> {
     bit_read: BR,
     /// The number of bits read (or skipped) so far from the underlying [`BitRead`].
