@@ -22,7 +22,7 @@ pub struct CountBitWriter<E: Endianness, BW: BitWrite<E>, const PRINT: bool = fa
     bit_write: BW,
     /// The number of bits written so far on the underlying [`BitWrite`].
     pub bits_written: usize,
-    _marker: std::marker::PhantomData<E>,
+    _marker: core::marker::PhantomData<E>,
 }
 
 impl<E: Endianness, BW: BitWrite<E>, const PRINT: bool> CountBitWriter<E, BW, PRINT> {
@@ -30,7 +30,7 @@ impl<E: Endianness, BW: BitWrite<E>, const PRINT: bool> CountBitWriter<E, BW, PR
         Self {
             bit_write,
             bits_written: 0,
-            _marker: std::marker::PhantomData,
+            _marker: core::marker::PhantomData,
         }
     }
 }
@@ -163,7 +163,7 @@ pub struct CountBitReader<E: Endianness, BR: BitRead<E>, const PRINT: bool = fal
     bit_read: BR,
     /// The number of bits read (or skipped) so far from the underlying [`BitRead`].
     pub bits_read: usize,
-    _marker: std::marker::PhantomData<E>,
+    _marker: core::marker::PhantomData<E>,
 }
 
 impl<E: Endianness, BR: BitRead<E>, const PRINT: bool> CountBitReader<E, BR, PRINT> {
@@ -171,7 +171,7 @@ impl<E: Endianness, BR: BitRead<E>, const PRINT: bool> CountBitReader<E, BR, PRI
         Self {
             bit_read,
             bits_read: 0,
-            _marker: std::marker::PhantomData,
+            _marker: core::marker::PhantomData,
         }
     }
 }

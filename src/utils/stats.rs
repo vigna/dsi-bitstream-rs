@@ -8,7 +8,8 @@
 #[cfg(feature = "mem_dbg")]
 use mem_dbg::{MemDbg, MemSize};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, MemDbg, MemSize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
 pub enum Code {
     Unary,
     Gamma,

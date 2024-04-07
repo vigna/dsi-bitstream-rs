@@ -40,7 +40,7 @@ pub enum CopyError<RE: Error + Send + Sync + 'static, WE: Error + Send + Sync + 
 impl<RE: Error + Send + Sync + 'static, WE: Error + Send + Sync + 'static> Display
     for CopyError<RE, WE>
 {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         match self {
             CopyError::ReadError(e) => write!(f, "Read error while copying: {}", e),
             CopyError::WriteError(e) => write!(f, "Write error while copying: {}", e),
@@ -117,7 +117,7 @@ pub trait BitRead<E: Endianness> {
         mut n: u64,
     ) -> Result<(), CopyError<Self::Error, W::Error>> {
         while n > 0 {
-            let to_read = std::cmp::min(n, 64) as usize;
+            let to_read = core::cmp::min(n, 64) as usize;
             let read = self.read_bits(to_read).map_err(CopyError::ReadError)?;
             bit_write
                 .write_bits(read, to_read)
@@ -159,7 +159,7 @@ pub trait BitWrite<E: Endianness> {
         mut n: u64,
     ) -> Result<(), CopyError<R::Error, Self::Error>> {
         while n > 0 {
-            let to_read = std::cmp::min(n, 64) as usize;
+            let to_read = core::cmp::min(n, 64) as usize;
             let read = bit_read.read_bits(to_read).map_err(CopyError::ReadError)?;
             self.write_bits(read, to_read)
                 .map_err(CopyError::WriteError)?;
