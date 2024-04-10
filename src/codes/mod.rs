@@ -49,6 +49,8 @@ to use a read word of at least 16 bits.
 
 pub mod params;
 
+pub mod huffman;
+
 pub mod gamma;
 
 pub use gamma::{
