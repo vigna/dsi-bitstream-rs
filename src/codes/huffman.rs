@@ -14,6 +14,8 @@ use anyhow::{Result, ensure};
 use crate::prelude::{BitRead, BitSeek, BitWrite, Endianness};
 
 #[derive(Debug, Clone, Copy, Epserde, MemDbg, MemSize)]
+#[repr(C)]
+#[zero_copy]
 /// A representation of a binary code. This is just used to make the code
 /// more readable.
 pub struct Code {
@@ -100,6 +102,8 @@ impl Ord for Node {
 }
 
 #[derive(Debug, Clone, Copy, Default, Epserde, MemDbg, MemSize)]
+#[repr(C)]
+#[zero_copy]
 /// Compact representation of a node in the huffman tree.
 /// The node is either a leaf or an index to another node.
 /// For debug purposes, it also encode "empty" to represent an invalid node,
