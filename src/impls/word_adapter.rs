@@ -26,7 +26,7 @@ use std::io::{ErrorKind, Read, Seek, SeekFrom, Write};
 ///
 /// To provide a sensible value after such a read,
 /// [`word_pos`](WordAdapter::word_pos) will always return the position
-/// of the underlying [`Seek`] rounded up to the next multiple of `W::Bytes`.
+/// of the underlying [`Seek`] rounded up to the next Word boundary.
 /// This approach, however, requires that if you adapt a [`Seek`], its current position must be
 /// a multiple of `W::Bytes`, or the results of [`word_pos`](WordAdapter::word_pos)
 /// will be shifted by the rounding.
@@ -93,7 +93,7 @@ impl<W: UnsignedInt + ToBytes + FromBytes + FiniteRangeNumber, B: Seek> WordSeek
 
     #[inline(always)]
     fn word_pos(&mut self) -> Result<u64, std::io::Error> {
-        Ok(self.backend.stream_position()?.align_to(W::BYTES as u64))
+        Ok(self.backend.stream_position()?.align_to(W::BYTES as u64) / W::BYTES as u64)
     }
 
     #[inline(always)]

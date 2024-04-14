@@ -16,6 +16,7 @@ arbitrary = { version = "1", features = ["derive"], optional = true }
 common_traits = ">=0.10.2"
 mem_dbg = {version="0.1.8", optional = true}
 epserde = "0.5.1"
+anyhow = "1.0.82"
 
 [dev-dependencies]
 criterion = "0.5.1"
@@ -36,4 +37,8 @@ harness = false
 
 [[bench]]
 name = "write_gamma"
+harness = false
+
+[[bench]]
+name = "read_huffman"
 harness = false

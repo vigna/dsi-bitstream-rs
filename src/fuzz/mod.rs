@@ -6,6 +6,7 @@
  */
 
 pub mod codes;
+pub mod huffman;
 pub mod mem_word_reader;
 pub mod mem_word_reader_strict;
 pub mod mem_word_writer;

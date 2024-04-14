@@ -149,7 +149,6 @@ where
         }
 
         debug_assert!(n_bits <= self.bits_in_buffer);
-
         // Move the n_bits highest bits of the buffer to the lowest
         Ok(self.buffer >> (BB::<WR>::BITS - n_bits))
     }

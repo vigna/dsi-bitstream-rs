@@ -9,16 +9,16 @@
 use common_traits::CastableInto;
 use mem_dbg::{MemDbg, MemSize};
 use epserde::Epserde;
+use anyhow::{Result, ensure};
 
-
-use crate::prelude::{BitRead, BitWrite, Endianness};
+use crate::prelude::{BitRead, BitSeek, BitWrite, Endianness};
 
 #[derive(Debug, Clone, Copy, Epserde, MemDbg, MemSize)]
 /// A representation of a binary code. This is just used to make the code
 /// more readable.
-struct Code {
-    code: usize,
-    len: u8,
+pub struct Code {
+    pub code: usize,
+    pub len: u8,
 }
 
 impl core::default::Default for Code {
@@ -28,13 +28,21 @@ impl core::default::Default for Code {
     }
 }
 
+impl core::fmt::Display for Code {
+    #[inline(always)]
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{:0width$b}", self.code, width = self.len as usize)
+    }
+}
+
 impl core::ops::Shl<bool> for Code {
     type Output = Self;
 
     #[inline(always)]
     fn shl(mut self, bit: bool) -> Self {
         debug_assert!(self.len < usize::BITS as u8, "Code too long");
-        self.code |= (bit as usize) << self.len;
+        self.code <<= 1;
+        self.code |= bit as usize;
         self.len += 1;
         self
     }
@@ -96,7 +104,7 @@ impl Ord for Node {
 /// The node is either a leaf or an index to another node.
 /// For debug purposes, it also encode "empty" to represent an invalid node,
 /// this is used for assretions, but is not needed for the algorithm. 
-struct CompactNode(u16);
+pub struct CompactNode(u16);
 
 impl CompactNode {
     #[inline(always)]
@@ -154,28 +162,23 @@ fn extract_codes(node: &Box<Node>, code: Code, result: &mut Vec<(usize, Code)>) 
 #[derive(Debug, Epserde, MemDbg, MemSize)]
 /// A huffman tree that can be used to encode and decode values with optimal
 /// prefix codes.
-pub struct HuffmanTree {
-    write_table: Vec<Code>,
-    decode_tree: Vec<[CompactNode; 64]>,
+pub struct HuffmanTree<W = Vec<Code>, D = Vec<[CompactNode; 256]>> {
+    pub write_table: W,
+    pub decode_tree: D,
 }
 
 impl HuffmanTree {
-    const BITS: usize = 6;
-    const ARRAY_LEN: usize = 1 << Self::BITS;
-
     /// inner recursive function to build the decode tree
     fn build(&mut self, node: &Node, idx: usize, code: Code) {
         debug_assert_eq!(Self::ARRAY_LEN, self.decode_tree[idx].len());
         match node {
             Node::Leaf { symbol, .. } => {
-                println!("Code: {:0width$b}", self.write_table[*symbol].code, width = self.write_table[*symbol].len as usize);
-                let len: usize = dbg!(code.len) as usize;
-                let code = dbg!(code.code) as usize;
+                let len: usize = code.len as usize;
+                let code = code.code as usize;
                 let bits_left = Self::BITS.saturating_sub(len as usize);
                 // fill all the codes that match the prefix
                 for value in 0..(1 << bits_left).max(1) {
-                    let offset = code | (value << len);
-                    println!("Idx: {:0width$b} Offset: {:0width$b} Value: {}", idx, offset, symbol, width = Self::BITS);
+                    let offset = (code << bits_left) | value;
                     debug_assert!(self.decode_tree[idx][offset].is_empty());
                     self.decode_tree[idx][offset] = CompactNode::new_leaf(*symbol);
                 }
@@ -197,7 +200,8 @@ impl HuffmanTree {
     }
 
     /// Given a vector count of occourences, computes the huffman codes.
-    pub fn new(counts: &[usize]) -> Self {
+    pub fn new(counts: &[usize]) -> Result<Self> {
+        ensure!(counts.len() > 0, "Empty counts");
         let mut nodes = counts
             .iter()
             .enumerate()
@@ -245,8 +249,17 @@ impl HuffmanTree {
             }
         }
 
-        res
+        Ok(res)
     }
+}
+
+impl<W, D> HuffmanTree<W, D> 
+where
+    W: AsRef<[Code]>,
+    D: AsRef<[[CompactNode; 256]]>,
+{
+    const BITS: usize = 8;
+    const ARRAY_LEN: usize = 1 << Self::BITS;
 
     #[inline(always)]
     /// Encodes a value using the huffman tree on the given writer and returns
@@ -256,38 +269,63 @@ impl HuffmanTree {
         value: u64,
         writer: &mut BW,
     ) -> Result<usize, BW::Error> {
-        debug_assert!(value < self.write_table.len() as u64, "Symbol out of range");
-        let code = self.write_table[value as usize];
+        let write_table = self.write_table.as_ref();
+        debug_assert!(value < write_table.len() as u64, "Symbol out of range");
+        let code = write_table[value as usize];
         writer.write_bits(code.code as u64, code.len as usize)
     }
 
     #[inline(always)]
     /// Decodes a value using the huffman tree on the given reader and returns
     /// the decoded value.
-    pub fn decode<E: Endianness, BR: BitRead<E>>(&self, reader: &mut BR) -> Result<u64, BR::Error> {
+    pub fn decode<E: Endianness, BR: BitRead<E> + BitSeek>(&self, reader: &mut BR) -> Result<u64, <BR as BitRead<E>>::Error> {
         let mut idx = 0;
+        let decode_tree = self.decode_tree.as_ref();
+        let mut bits_skipped = 0;
         loop {
-            let node = &self.decode_tree[idx];
+            let node = &decode_tree[idx];
             let code = reader.peek_bits(Self::BITS)?;
             let index: u64 = code.cast();
-            println!("Idx: {:0width$b}", index, width = Self::BITS);
             let compact_node = node[index as usize];
 
             debug_assert!(!compact_node.is_empty());
 
             if compact_node.is_leaf() {
                 // skip only the bits of the code
-                println!("{:016b}", compact_node.0);
-                let len = self.write_table[dbg!(compact_node.symbol()) as usize].len as usize;
-                dbg!(len);
-                reader.skip_bits(len)?;
+                let len = self.write_table.as_ref()[compact_node.symbol() as usize].len as usize;
+                reader.skip_bits_after_table_lookup(len - bits_skipped);
                 return Ok(compact_node.symbol() as u64);
             }
 
             // move to the next bits
-            reader.skip_bits(Self::BITS)?;
+            reader.skip_bits_after_table_lookup(Self::BITS);
+            bits_skipped += Self::BITS;
             idx = compact_node.index();
         }
+    }
+
+    fn debug_page(&self, idx: usize, depth: usize) {
+        let decode_tree = self.decode_tree.as_ref();
+        let node = &decode_tree[idx];
+        for (i, compact_node) in node.iter().enumerate() {
+            if compact_node.is_empty() {
+                continue;
+            }
+            let symbol = if compact_node.is_leaf() {
+                let symbol = compact_node.symbol();
+                format!("{} {}", symbol, self.write_table.as_ref()[symbol])
+            } else {
+                format!("idx: {}", compact_node.index())
+            };
+            println!("{:width$} {:0pad$b} {}", "", i, symbol, pad = Self::BITS, width = depth * 4);
+            if compact_node.is_index() {
+                self.debug_page(compact_node.index(), depth + 1);
+            }
+        }
+    }
+
+    pub fn debug(&self) {
+        self.debug_page(0, 0)
     }
 }
 
@@ -302,7 +340,8 @@ mod test {
 
     #[test]
     fn test_huffman() {
-        let huffman = HuffmanTree::new(&ENGLISH);
+        let counts = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+        let huffman = HuffmanTree::new(&counts).unwrap();
 
         huffman.mem_dbg(DbgFlags::default()).unwrap();
 
@@ -310,7 +349,7 @@ mod test {
             std::io::Cursor::new(Vec::new()),
         ));
 
-        for i in 0..ENGLISH.len() {
+        for i in 0..counts.len() {
             huffman.encode(i as u64, &mut writer).unwrap();
         }
 
@@ -319,7 +358,7 @@ mod test {
 
         let mut reader = BufBitReader::<LittleEndian, _>::new(WordAdapter::<u32, _>::new(data));
 
-        for i in 0..ENGLISH.len() {
+        for i in 0..counts.len() {
             let code = &huffman.write_table[i];
             println!("value: {} code: {:0width$b} len: {width}", i, code.code, width = code.len as usize);
             assert_eq!(huffman.decode(&mut reader).unwrap(), i as u64);
