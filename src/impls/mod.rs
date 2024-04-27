@@ -98,3 +98,7 @@ pub use buf_bit_reader::BufBitReader;
 
 mod buf_bit_writer;
 pub use buf_bit_writer::BufBitWriter;
+
+mod caba_reader;
+pub(crate) mod caba_tables;
+pub use caba_reader::CabaBinaryReader;

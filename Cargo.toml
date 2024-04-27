@@ -36,3 +36,7 @@ harness = false
 [[bench]]
 name = "write_gamma"
 harness = false
+
+[[bench]]
+name = "read_gamma"
+harness = false
