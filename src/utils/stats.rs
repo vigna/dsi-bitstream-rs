@@ -123,7 +123,7 @@ impl core::ops::Add for CodesStats {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self {
-        let mut res = self.clone();
+        let mut res = self;
         res += rhs;
         res
     }
