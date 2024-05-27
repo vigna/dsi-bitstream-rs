@@ -38,7 +38,7 @@ const GOLOMB: usize = 20;
 /// structure](Self::update) with the integers in the stream; at any time, you
 /// can examine the statistics or call [`best_code`](Self::best_code) to get the
 /// best code.
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Copy, Clone)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
 pub struct CodesStats {
     pub unary: u64,
@@ -52,15 +52,20 @@ impl CodesStats {
     /// Update the stats with the lengths of the codes for `n` and return
     /// `n` for convenience.
     pub fn update(&mut self, n: u64) -> u64 {
-        self.unary += n + 1;
-        self.gamma += len_gamma(n) as u64;
-        self.delta += len_delta(n) as u64;
+        self.update_many(n, 1)
+    }
+
+    #[inline]
+    pub fn update_many(&mut self, n: u64, count: u64) -> u64 {
+        self.unary += (n + 1) * count;
+        self.gamma += len_gamma(n) as u64 * count;
+        self.delta += len_delta(n) as u64 * count;
 
         for (k, val) in self.zeta.iter_mut().enumerate() {
-            *val += len_zeta(n, (k + 1) as _) as u64;
+            *val += (len_zeta(n, (k + 1) as _) as u64) * count;
         }
         for (b, val) in self.golomb.iter_mut().enumerate() {
-            *val += len_golomb(n, (b + 1) as _) as u64;
+            *val += (len_golomb(n, (b + 1) as _) as u64) * count;
         }
         n
     }
@@ -103,5 +108,30 @@ impl CodesStats {
         }
 
         (best_code, best)
+    }
+}
+
+/// Combines additively this stats with another one.
+impl core::ops::AddAssign for CodesStats {
+    fn add_assign(&mut self, rhs: Self) {
+        self.add(&rhs);
+    }
+}
+
+/// Combines additively this stats with another one creating a new one.
+impl core::ops::Add for CodesStats {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self {
+        let mut res = self.clone();
+        res += rhs;
+        res
+    }
+}
+
+/// Allow to call .sum() on an iterator of CodesStats.
+impl core::iter::Sum for CodesStats {
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+        iter.fold(Self::default(), |a, b| a + b)
     }
 }
