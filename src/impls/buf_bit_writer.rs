@@ -426,127 +426,248 @@ where
     }
 }
 
-macro_rules! test_buf_bit_writer {
-    ($f: ident, $word:ty) => {
-        #[test]
-        fn $f() -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
-            use super::MemWordWriterVec;
-            use crate::{
-                codes::{GammaRead, GammaWrite},
-                prelude::{
-                    len_delta, len_gamma, BufBitReader, DeltaRead, DeltaWrite, MemWordReader,
-                },
-            };
-            use rand::Rng;
-            use rand::{rngs::SmallRng, SeedableRng};
+impl<WW: WordWrite, WP: WriteParams> std::io::Write for BufBitWriter<BE, WW, WP>
+where
+    u64: CastableInto<WW::Word>,
+{
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        let mut iter = buf.chunks_exact(WW::Word::BYTES);
 
-            let mut buffer_be: Vec<$word> = vec![];
-            let mut buffer_le: Vec<$word> = vec![];
-            let mut big = BufBitWriter::<BE, _>::new(MemWordWriterVec::new(&mut buffer_be));
-            let mut little = BufBitWriter::<LE, _>::new(MemWordWriterVec::new(&mut buffer_le));
-
-            let mut r = SmallRng::seed_from_u64(0);
-            const ITER: usize = 1_000_000;
-
-            for _ in 0..ITER {
-                let value = r.gen_range(0..128);
-                assert_eq!(big.write_gamma(value)?, len_gamma(value));
-                let value = r.gen_range(0..128);
-                assert_eq!(little.write_gamma(value)?, len_gamma(value));
-                let value = r.gen_range(0..128);
-                assert_eq!(big.write_gamma(value)?, len_gamma(value));
-                let value = r.gen_range(0..128);
-                assert_eq!(little.write_gamma(value)?, len_gamma(value));
-                let value = r.gen_range(0..128);
-                assert_eq!(big.write_delta(value)?, len_delta(value));
-                let value = r.gen_range(0..128);
-                assert_eq!(little.write_delta(value)?, len_delta(value));
-                let value = r.gen_range(0..128);
-                assert_eq!(big.write_delta(value)?, len_delta(value));
-                let value = r.gen_range(0..128);
-                assert_eq!(little.write_delta(value)?, len_delta(value));
-                let n_bits = r.gen_range(0..=64);
-                if n_bits == 0 {
-                    big.write_bits(0, 0)?;
-                } else {
-                    big.write_bits(r.gen::<u64>() & u64::MAX >> 64 - n_bits, n_bits)?;
-                }
-                let n_bits = r.gen_range(0..=64);
-                if n_bits == 0 {
-                    little.write_bits(0, 0)?;
-                } else {
-                    little.write_bits(r.gen::<u64>() & u64::MAX >> 64 - n_bits, n_bits)?;
-                }
-                let value = r.gen_range(0..128);
-                assert_eq!(big.write_unary(value)?, value as usize + 1);
-                let value = r.gen_range(0..128);
-                assert_eq!(little.write_unary(value)?, value as usize + 1);
-            }
-
-            drop(big);
-            drop(little);
-
-            type ReadWord = u16;
-            let be_trans: &[ReadWord] = unsafe {
-                core::slice::from_raw_parts(
-                    buffer_be.as_ptr() as *const ReadWord,
-                    buffer_be.len()
-                        * (core::mem::size_of::<$word>() / core::mem::size_of::<ReadWord>()),
-                )
-            };
-            let le_trans: &[ReadWord] = unsafe {
-                core::slice::from_raw_parts(
-                    buffer_le.as_ptr() as *const ReadWord,
-                    buffer_le.len()
-                        * (core::mem::size_of::<$word>() / core::mem::size_of::<ReadWord>()),
-                )
-            };
-
-            let mut big_buff = BufBitReader::<BE, _>::new(MemWordReader::new(be_trans));
-            let mut little_buff = BufBitReader::<LE, _>::new(MemWordReader::new(le_trans));
-
-            let mut r = SmallRng::seed_from_u64(0);
-
-            for _ in 0..ITER {
-                assert_eq!(big_buff.read_gamma()?, r.gen_range(0..128));
-                assert_eq!(little_buff.read_gamma()?, r.gen_range(0..128));
-                assert_eq!(big_buff.read_gamma()?, r.gen_range(0..128));
-                assert_eq!(little_buff.read_gamma()?, r.gen_range(0..128));
-                assert_eq!(big_buff.read_delta()?, r.gen_range(0..128));
-                assert_eq!(little_buff.read_delta()?, r.gen_range(0..128));
-                assert_eq!(big_buff.read_delta()?, r.gen_range(0..128));
-                assert_eq!(little_buff.read_delta()?, r.gen_range(0..128));
-                let n_bits = r.gen_range(0..=64);
-                if n_bits == 0 {
-                    assert_eq!(big_buff.read_bits(0)?, 0);
-                } else {
-                    assert_eq!(
-                        big_buff.read_bits(n_bits)?,
-                        r.gen::<u64>() & u64::MAX >> 64 - n_bits
-                    );
-                }
-                let n_bits = r.gen_range(0..=64);
-                if n_bits == 0 {
-                    assert_eq!(little_buff.read_bits(0)?, 0);
-                } else {
-                    assert_eq!(
-                        little_buff.read_bits(n_bits)?,
-                        r.gen::<u64>() & u64::MAX >> 64 - n_bits
-                    );
-                }
-
-                assert_eq!(big_buff.read_unary()?, r.gen_range(0..128));
-                assert_eq!(little_buff.read_unary()?, r.gen_range(0..128));
-            }
-
-            Ok(())
+        for word in &mut iter {
+            self.write_bits(u64::from_be_bytes(word.try_into().unwrap()), 64)
+                .map_err(|_| {
+                    std::io::Error::new(std::io::ErrorKind::Other, "Could not write bits to stream")
+                })?;
         }
-    };
+
+        let rem = iter.remainder();
+        if !rem.is_empty() {
+            let mut word = 0;
+            let bits = rem.len() * 8;
+            for byte in rem.iter() {
+                word <<= 8;
+                word |= *byte as u64;
+            }
+            self.write_bits(word, bits).map_err(|_| {
+                std::io::Error::new(std::io::ErrorKind::Other, "Could not write bits to stream")
+            })?;
+        }
+
+        Ok(buf.len())
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        flush_be(self).map_err(|_| {
+            std::io::Error::new(std::io::ErrorKind::Other, "Could not flush bits to stream")
+        })?;
+        Ok(())
+    }
 }
 
-test_buf_bit_writer!(test_u128, u128);
-test_buf_bit_writer!(test_u64, u64);
-test_buf_bit_writer!(test_u32, u32);
+impl<WW: WordWrite, WP: WriteParams> std::io::Write for BufBitWriter<LE, WW, WP>
+where
+    u64: CastableInto<WW::Word>,
+{
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        let mut iter = buf.chunks_exact(WW::Word::BYTES);
 
-test_buf_bit_writer!(test_u16, u16);
-test_buf_bit_writer!(test_usize, usize);
+        for word in &mut iter {
+            self.write_bits(u64::from_le_bytes(word.try_into().unwrap()), 64)
+                .map_err(|_| {
+                    std::io::Error::new(std::io::ErrorKind::Other, "Could not write bits to stream")
+                })?;
+        }
+
+        let rem = iter.remainder();
+        if !rem.is_empty() {
+            let mut word = 0;
+            let bits = rem.len() * 8;
+            for byte in rem.iter().rev() {
+                word <<= 8;
+                word |= *byte as u64;
+            }
+            self.write_bits(word, bits).map_err(|_| {
+                std::io::Error::new(std::io::ErrorKind::Other, "Could not write bits to stream")
+            })?;
+        }
+
+        Ok(buf.len())
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        flush_le(self).map_err(|_| {
+            std::io::Error::new(std::io::ErrorKind::Other, "Could not flush bits to stream")
+        })?;
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::prelude::MemWordWriterVec;
+    use std::io::Write;
+
+    #[test]
+    fn test_write() {
+        let data = [
+            0x90, 0x2d, 0xd0, 0x26, 0xdf, 0x89, 0xbb, 0x7e, 0x3a, 0xd6, 0xc6, 0x96, 0x73, 0xe9,
+            0x9d, 0xc9, 0x2a, 0x77, 0x82, 0xa9, 0xe6, 0x4b, 0x53, 0xcc, 0x83, 0x80, 0x4a, 0xf3,
+            0xcd, 0xe3, 0x50, 0x4e, 0x45, 0x4a, 0x3a, 0x42, 0x00, 0x4b, 0x4d, 0xbe, 0x4c, 0x88,
+            0x24, 0xf2, 0x4b, 0x6b, 0xbd, 0x79, 0xeb, 0x74, 0xbc, 0xe8, 0x7d, 0xff, 0x4b, 0x3d,
+            0xa7, 0xd6, 0x0d, 0xef, 0x9c, 0x5b, 0xb3, 0xec, 0x94, 0x97, 0xcc, 0x8b, 0x41, 0xe1,
+            0x9c, 0xcc, 0x1a, 0x03, 0x58, 0xc4, 0xfb, 0xd0, 0xc0, 0x10, 0xe2, 0xa0, 0xc9, 0xac,
+            0xa7, 0xbb, 0x50, 0xf6, 0x5c, 0x87, 0x68, 0x0f, 0x42, 0x93, 0x3f, 0x2e, 0x28, 0x28,
+            0x76, 0x83, 0x9b, 0xeb, 0x12, 0xe0, 0x4f, 0xc5, 0xb0, 0x8d, 0x14, 0xda, 0x3b, 0xdf,
+            0xd3, 0x4b, 0x80, 0xd1, 0xfc, 0x87, 0x85, 0xae, 0x54, 0xc7, 0x45, 0xc9, 0x38, 0x43,
+            0xa7, 0x9f, 0xdd, 0xa9, 0x71, 0xa7, 0x52, 0x36, 0x82, 0xff, 0x49, 0x55, 0xdb, 0x84,
+            0xc2, 0x95, 0xad, 0x45, 0x80, 0xc6, 0x02, 0x80, 0xf8, 0xfc, 0x86, 0x79, 0xae, 0xb9,
+            0x57, 0xe7, 0x3b, 0x33, 0x64, 0xa8,
+        ];
+
+        for i in 0..data.len() {
+            let mut buffer = Vec::<u64>::new();
+            let mut writer = BufBitWriter::<BE, _>::new(MemWordWriterVec::new(&mut buffer));
+
+            writer.write_all(&data[..i]).unwrap();
+            std::io::Write::flush(&mut writer).unwrap();
+
+            let buffer = writer.into_inner().unwrap().into_inner();
+            assert_eq!(unsafe { &buffer.align_to::<u8>().1[..i] }, &data[..i]);
+
+            let mut buffer = Vec::<u64>::new();
+            let mut writer = BufBitWriter::<LE, _>::new(MemWordWriterVec::new(&mut buffer));
+
+            writer.write_all(&data[..i]).unwrap();
+            std::io::Write::flush(&mut writer).unwrap();
+
+            let buffer = writer.into_inner().unwrap().into_inner();
+            assert_eq!(unsafe { &buffer.align_to::<u8>().1[..i] }, &data[..i]);
+        }
+    }
+
+    macro_rules! test_buf_bit_writer {
+        ($f: ident, $word:ty) => {
+            #[test]
+            fn $f() -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
+                #[allow(unused_imports)]
+                use crate::{
+                    codes::{GammaRead, GammaWrite},
+                    prelude::{
+                        len_delta, len_gamma, BufBitReader, DeltaRead, DeltaWrite, MemWordReader,
+                    },
+                };
+                use rand::Rng;
+                use rand::{rngs::SmallRng, SeedableRng};
+
+                let mut buffer_be: Vec<$word> = vec![];
+                let mut buffer_le: Vec<$word> = vec![];
+                let mut big = BufBitWriter::<BE, _>::new(MemWordWriterVec::new(&mut buffer_be));
+                let mut little = BufBitWriter::<LE, _>::new(MemWordWriterVec::new(&mut buffer_le));
+
+                let mut r = SmallRng::seed_from_u64(0);
+                const ITER: usize = 1_000_000;
+
+                for _ in 0..ITER {
+                    let value = r.gen_range(0..128);
+                    assert_eq!(big.write_gamma(value)?, len_gamma(value));
+                    let value = r.gen_range(0..128);
+                    assert_eq!(little.write_gamma(value)?, len_gamma(value));
+                    let value = r.gen_range(0..128);
+                    assert_eq!(big.write_gamma(value)?, len_gamma(value));
+                    let value = r.gen_range(0..128);
+                    assert_eq!(little.write_gamma(value)?, len_gamma(value));
+                    let value = r.gen_range(0..128);
+                    assert_eq!(big.write_delta(value)?, len_delta(value));
+                    let value = r.gen_range(0..128);
+                    assert_eq!(little.write_delta(value)?, len_delta(value));
+                    let value = r.gen_range(0..128);
+                    assert_eq!(big.write_delta(value)?, len_delta(value));
+                    let value = r.gen_range(0..128);
+                    assert_eq!(little.write_delta(value)?, len_delta(value));
+                    let n_bits = r.gen_range(0..=64);
+                    if n_bits == 0 {
+                        big.write_bits(0, 0)?;
+                    } else {
+                        big.write_bits(r.gen::<u64>() & u64::MAX >> 64 - n_bits, n_bits)?;
+                    }
+                    let n_bits = r.gen_range(0..=64);
+                    if n_bits == 0 {
+                        little.write_bits(0, 0)?;
+                    } else {
+                        little.write_bits(r.gen::<u64>() & u64::MAX >> 64 - n_bits, n_bits)?;
+                    }
+                    let value = r.gen_range(0..128);
+                    assert_eq!(big.write_unary(value)?, value as usize + 1);
+                    let value = r.gen_range(0..128);
+                    assert_eq!(little.write_unary(value)?, value as usize + 1);
+                }
+
+                drop(big);
+                drop(little);
+
+                type ReadWord = u16;
+                let be_trans: &[ReadWord] = unsafe {
+                    core::slice::from_raw_parts(
+                        buffer_be.as_ptr() as *const ReadWord,
+                        buffer_be.len()
+                            * (core::mem::size_of::<$word>() / core::mem::size_of::<ReadWord>()),
+                    )
+                };
+                let le_trans: &[ReadWord] = unsafe {
+                    core::slice::from_raw_parts(
+                        buffer_le.as_ptr() as *const ReadWord,
+                        buffer_le.len()
+                            * (core::mem::size_of::<$word>() / core::mem::size_of::<ReadWord>()),
+                    )
+                };
+
+                let mut big_buff = BufBitReader::<BE, _>::new(MemWordReader::new(be_trans));
+                let mut little_buff = BufBitReader::<LE, _>::new(MemWordReader::new(le_trans));
+
+                let mut r = SmallRng::seed_from_u64(0);
+
+                for _ in 0..ITER {
+                    assert_eq!(big_buff.read_gamma()?, r.gen_range(0..128));
+                    assert_eq!(little_buff.read_gamma()?, r.gen_range(0..128));
+                    assert_eq!(big_buff.read_gamma()?, r.gen_range(0..128));
+                    assert_eq!(little_buff.read_gamma()?, r.gen_range(0..128));
+                    assert_eq!(big_buff.read_delta()?, r.gen_range(0..128));
+                    assert_eq!(little_buff.read_delta()?, r.gen_range(0..128));
+                    assert_eq!(big_buff.read_delta()?, r.gen_range(0..128));
+                    assert_eq!(little_buff.read_delta()?, r.gen_range(0..128));
+                    let n_bits = r.gen_range(0..=64);
+                    if n_bits == 0 {
+                        assert_eq!(big_buff.read_bits(0)?, 0);
+                    } else {
+                        assert_eq!(
+                            big_buff.read_bits(n_bits)?,
+                            r.gen::<u64>() & u64::MAX >> 64 - n_bits
+                        );
+                    }
+                    let n_bits = r.gen_range(0..=64);
+                    if n_bits == 0 {
+                        assert_eq!(little_buff.read_bits(0)?, 0);
+                    } else {
+                        assert_eq!(
+                            little_buff.read_bits(n_bits)?,
+                            r.gen::<u64>() & u64::MAX >> 64 - n_bits
+                        );
+                    }
+
+                    assert_eq!(big_buff.read_unary()?, r.gen_range(0..128));
+                    assert_eq!(little_buff.read_unary()?, r.gen_range(0..128));
+                }
+
+                Ok(())
+            }
+        };
+    }
+
+    test_buf_bit_writer!(test_u128, u128);
+    test_buf_bit_writer!(test_u64, u64);
+    test_buf_bit_writer!(test_u32, u32);
+
+    test_buf_bit_writer!(test_u16, u16);
+    test_buf_bit_writer!(test_usize, usize);
+}

@@ -6,6 +6,7 @@
 
 use crate::prelude::*;
 use arbitrary::Arbitrary;
+use std::io::{Read, Write};
 
 type ReadWord = u32;
 
@@ -43,6 +44,7 @@ enum RandomCommand {
     Golomb(u64, u64),
     Rice(u64, usize),
     ExpGolomb(u64, usize),
+    Bytes(Vec<u8>),
 }
 
 pub fn harness(data: FuzzCase) {
@@ -82,6 +84,7 @@ pub fn harness(data: FuzzCase) {
                 *value = (*value).min(u16::MAX as u64 - 1);
                 *k = (*k).max(0).min(8);
             }
+            RandomCommand::Bytes(_) => {}
         };
     }
 
@@ -183,6 +186,12 @@ pub fn harness(data: FuzzCase) {
                         big.write_exp_golomb(*value, *k).is_ok(),
                         little.write_exp_golomb(*value, *k).is_ok(),
                     );
+                    assert_eq!(big_success, little_success);
+                    writes.push(big_success);
+                }
+                RandomCommand::Bytes(bytes) => {
+                    let (big_success, little_success) =
+                        (big.write(bytes).is_ok(), little.write(bytes).is_ok());
                     assert_eq!(big_success, little_success);
                     writes.push(big_success);
                 }
@@ -750,6 +759,41 @@ pub fn harness(data: FuzzCase) {
                             pos + len_exp_golomb(value, k) as u64,
                             little_buff.bit_pos().unwrap()
                         );
+                    } else {
+                        assert!(b.is_err());
+                        assert!(l.is_err());
+                        assert!(bb.is_err());
+                        assert!(lb.is_err());
+                        assert_eq!(pos, big.bit_pos().unwrap());
+                        assert_eq!(pos, little.bit_pos().unwrap());
+                        assert_eq!(pos, big_buff.bit_pos().unwrap());
+                        assert_eq!(pos, little_buff.bit_pos().unwrap());
+                    }
+                }
+                RandomCommand::Bytes(bytes) => {
+                    let mut b_buffer = vec![0; bytes.len()];
+                    let b = big.read_exact(&mut b_buffer);
+                    let mut l_buffer = vec![0; bytes.len()];
+                    let l = little.read_exact(&mut l_buffer);
+                    let mut bb_buffer = vec![0; bytes.len()];
+                    let bb = big_buff.read_exact(&mut bb_buffer);
+                    let mut lb_buffer = vec![0; bytes.len()];
+                    let lb = little_buff.read_exact(&mut lb_buffer);
+
+                    if succ {
+                        assert_eq!(&b_buffer, &bytes);
+                        assert_eq!(&l_buffer, &bytes);
+                        assert_eq!(&bb_buffer, &bytes);
+                        assert_eq!(&lb_buffer, &bytes);
+                        assert_eq!(pos + bytes.len() as u64 * 8, big.bit_pos().unwrap());
+                        assert_eq!(pos + bytes.len() as u64 * 8, little.bit_pos().unwrap());
+                        assert_eq!(pos + bytes.len() as u64 * 8, big_buff.bit_pos().unwrap());
+                        assert_eq!(pos + bytes.len() as u64 * 8, little_buff.bit_pos().unwrap());
+
+                        assert_eq!(pos + bytes.len() as u64 * 8, big.bit_pos().unwrap());
+                        assert_eq!(pos + bytes.len() as u64 * 8, little.bit_pos().unwrap());
+                        assert_eq!(pos + bytes.len() as u64 * 8, big_buff.bit_pos().unwrap());
+                        assert_eq!(pos + bytes.len() as u64 * 8, little_buff.bit_pos().unwrap());
                     } else {
                         assert!(b.is_err());
                         assert!(l.is_err());

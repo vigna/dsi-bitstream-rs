@@ -1,5 +1,4 @@
 /*
- * SPDX-FileCopyrightText: 2023 Tommaso Fontana
  * SPDX-FileCopyrightText: 2023 Inria
  * SPDX-FileCopyrightText: 2023 Tommaso Fontana
  *
