@@ -17,13 +17,17 @@ use mem_dbg::{MemDbg, MemSize};
 
 /// An implementation of [`BitWrite`] for a [`WordWrite`].
 ///
-/// This implementation uses a bit buffer to store bits that are not yet written.
-/// The size of the bit buffer is the size of the word used by the [`WordWrite`],
-/// which on most platform should be `usize`.
+/// This implementation uses a bit buffer to store bits that are not yet
+/// written. The size of the bit buffer is the size of the word used by the
+/// [`WordWrite`], which on most platform should be `usize`.
 ///
 /// The additional type parameter `WP` is used to select the parameters for the
-/// instantanous codes, but the casual user should be happy with the default value.
-/// See [`WriteParams`] for more details.
+/// instantanous codes, but the casual user should be happy with the default
+/// value. See [`WriteParams`] for more details.
+///
+/// For additional flexibility, this structures implements [`std::io::Write`].
+/// Note that because of coherence rules it is not possible to implement
+/// [`std::io::Write`] for a generic [`BitWrite`].
 
 #[derive(Debug)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]

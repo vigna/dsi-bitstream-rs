@@ -41,6 +41,10 @@ type BB<WR> = <<WR as WordRead>::Word as DoubleType>::DoubleType;
 /// The additional type parameter `RP` is used to select the parameters for the
 /// instantanous codes, but the casual user should be happy with the default
 /// value. See [`ReadParams`] for more details.
+///
+/// For additional flexibility, this structures implements [`std::io::Read`].
+/// Note that because of coherence rules it is not possible to implement
+/// [`std::io::Read`] for a generic [`BitRead`].
 
 #[derive(Debug)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
