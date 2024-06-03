@@ -4,13 +4,11 @@
 
 ### New
 
-* Added `update_many` to `CodeStats`.
-
-* Added `core::ops::Add`, `core::ops::AddAssign`, and `core::iter::Sum` to
+* Added VByte and Elias Omega Codes.
+* Added `update_many` to `CodeStats` and added more codes.
+* Added `core::ops::Add`, `core::ops::AddAssign`, and `core::iter::Sum` to 
   CodeStats.
-
 * Implemented `std::io::Read` for `BitReader` and `BufBitReader`.
-
 * Implemented `std::io::Write` for `BufBitWriter`.
 
 

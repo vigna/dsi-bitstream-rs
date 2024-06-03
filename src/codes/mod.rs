@@ -50,7 +50,6 @@ to use a read word of at least 16 bits.
 pub mod params;
 
 pub mod gamma;
-
 pub use gamma::{
     len_gamma, len_gamma_param, GammaRead, GammaReadParam, GammaWrite, GammaWriteParam,
 };
@@ -59,6 +58,9 @@ pub mod delta;
 pub use delta::{
     len_delta, len_delta_param, DeltaRead, DeltaReadParam, DeltaWrite, DeltaWriteParam,
 };
+
+pub mod omega;
+pub use omega::{len_omega, OmegaRead, OmegaWrite};
 
 pub mod minimal_binary;
 pub use minimal_binary::{len_minimal_binary, MinimalBinaryRead, MinimalBinaryWrite};
@@ -74,6 +76,9 @@ pub use rice::{len_rice, RiceRead, RiceWrite};
 
 pub mod exp_golomb;
 pub use exp_golomb::{len_exp_golomb, ExpGolombRead, ExpGolombWrite};
+
+pub mod vbyte;
+pub use vbyte::{len_vbyte, VByteRead, VByteWrite};
 
 pub mod delta_tables;
 pub mod gamma_tables;
