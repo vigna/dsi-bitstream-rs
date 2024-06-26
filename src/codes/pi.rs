@@ -4,12 +4,12 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
-//! π code.
+//! π codes
 //!
 //! π codes allow efficient encoding of Zipf distributions that have an
 //! exponent even closer to 1 compared to ζ codes.
 //!
-//! The indeded distribution is:
+//! The intended distribution is:
 //! Θ( 1 / N^(1 + 2^-k) )
 //! so it's optimal for Zipf distributions of exponent α ≈ 1 + 2^−k
 //!
