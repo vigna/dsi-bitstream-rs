@@ -68,6 +68,9 @@ pub use minimal_binary::{len_minimal_binary, MinimalBinaryRead, MinimalBinaryWri
 pub mod zeta;
 pub use zeta::{len_zeta, len_zeta_param, ZetaRead, ZetaReadParam, ZetaWrite, ZetaWriteParam};
 
+pub mod pi;
+pub use pi::{len_pi, len_pi_web, PiRead, PiWebRead, PiWebWrite, PiWrite};
+
 pub mod golomb;
 pub use golomb::{len_golomb, GolombRead, GolombWrite};
 

@@ -28,5 +28,5 @@ pub use count::*;
 mod dbg_codes;
 pub use dbg_codes::*;
 
-mod stats;
+pub mod stats;
 pub use stats::CodesStats;

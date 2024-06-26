@@ -4,7 +4,7 @@
 
 ### New
 
-* Added VByte and Elias Omega Codes.
+* Added VByte, Elias Omega, Pi, and PiWeb Codes.
 * Added `update_many` to `CodeStats` and added more codes.
 * Added `core::ops::Add`, `core::ops::AddAssign`, and `core::iter::Sum` to 
   CodeStats.

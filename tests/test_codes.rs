@@ -20,10 +20,22 @@ fn test_codes() -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
 
 fn test_codes_endianness<E: Endianness>() -> Result<(), Box<dyn Error + Send + Sync + 'static>>
 where
-    BufBitWriter<E, MemWordWriterVec<u64, Vec<u64>>>:
-        BitWrite<E> + GammaWrite<E> + DeltaWrite<E> + ZetaWrite<E> + GolombWrite<E> + RiceWrite<E>,
-    BufBitReader<E, MemWordReader<u64, Vec<u64>>>:
-        BitRead<E> + GammaRead<E> + DeltaRead<E> + ZetaRead<E> + GolombRead<E> + RiceRead<E>,
+    BufBitWriter<E, MemWordWriterVec<u64, Vec<u64>>>: BitWrite<E>
+        + GammaWrite<E>
+        + DeltaWrite<E>
+        + ZetaWrite<E>
+        + GolombWrite<E>
+        + RiceWrite<E>
+        + OmegaWrite<E>
+        + PiWrite<E>,
+    BufBitReader<E, MemWordReader<u64, Vec<u64>>>: BitRead<E>
+        + GammaRead<E>
+        + DeltaRead<E>
+        + ZetaRead<E>
+        + GolombRead<E>
+        + RiceRead<E>
+        + OmegaRead<E>
+        + PiRead<E>,
 {
     const N: usize = 100000;
     let mut r = SmallRng::seed_from_u64(0);
@@ -35,7 +47,7 @@ where
 
     for _ in 0..N {
         let mut written_bits = 0;
-        match r.gen_range(0..9) {
+        match r.gen_range(0..12) {
             0 => {
                 for _ in 0..r.gen_range(1..10) {
                     written_bits += write.write_unary(v.gen_range(0..100))?;
@@ -86,6 +98,23 @@ where
                     written_bits += write.write_exp_golomb(v.gen_range(0..100), k)?;
                 }
             }
+            9 => {
+                for _ in 0..r.gen_range(1..10) {
+                    written_bits += write.write_omega(v.gen_range(0..100))?;
+                }
+            }
+            10 => {
+                let k = r.gen_range(1..4);
+                for _ in 0..r.gen_range(1..10) {
+                    written_bits += write.write_pi(v.gen_range(0..100), k)?;
+                }
+            }
+            11 => {
+                let k = r.gen_range(1..4);
+                for _ in 0..r.gen_range(1..10) {
+                    written_bits += write.write_pi_web(v.gen_range(0..100), k)?;
+                }
+            }
             _ => unreachable!(),
         }
         pos.push(written_bits);
@@ -99,7 +128,7 @@ where
     let mut v = SmallRng::seed_from_u64(1);
 
     for _ in 0..N {
-        match r.gen_range(0..9) {
+        match r.gen_range(0..12) {
             0 => {
                 for _ in 0..r.gen_range(1..10) {
                     assert_eq!(v.gen_range(0..100), read.read_unary()?);
@@ -148,6 +177,23 @@ where
                 let k = r.gen_range(0..4);
                 for _ in 0..r.gen_range(1..10) {
                     assert_eq!(v.gen_range(0..100), read.read_exp_golomb(k)?);
+                }
+            }
+            9 => {
+                for _ in 0..r.gen_range(1..10) {
+                    assert_eq!(v.gen_range(0..100), read.read_omega()?);
+                }
+            }
+            10 => {
+                let k = r.gen_range(1..4);
+                for _ in 0..r.gen_range(1..10) {
+                    assert_eq!(v.gen_range(0..100), read.read_pi(k)?);
+                }
+            }
+            11 => {
+                let k = r.gen_range(1..4);
+                for _ in 0..r.gen_range(1..10) {
+                    assert_eq!(v.gen_range(0..100), read.read_pi_web(k)?);
                 }
             }
             _ => unreachable!(),
