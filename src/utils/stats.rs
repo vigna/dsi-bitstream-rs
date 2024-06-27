@@ -5,123 +5,12 @@
  *
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
-
 #[cfg(feature = "mem_dbg")]
 use mem_dbg::{MemDbg, MemSize};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
-pub enum Code {
-    Unary,
-    Gamma,
-    Delta,
-    Omega,
-    VByte,
-    Zeta { k: usize },
-    Pi { k: usize },
-    PiWeb { k: usize },
-    Golomb { b: usize },
-    ExpGolomb { k: usize },
-    Rice { log2_b: usize },
-}
-
-impl Code {
-    #[inline]
-    /// Compute how many bits it takes to encode a value with this code.
-    pub fn len(&self, value: u64) -> usize {
-        match self {
-            Code::Unary => value as usize + 1,
-            Code::Gamma => len_gamma(value),
-            Code::Delta => len_delta(value),
-            Code::Omega => len_omega(value),
-            Code::VByte => len_vbyte(value),
-            Code::Zeta { k } => len_zeta(value, *k as u64),
-            Code::Pi { k } => len_pi(value, *k as u64),
-            Code::PiWeb { k } => len_pi_web(value, *k as u64),
-            Code::Golomb { b } => len_golomb(value, *b as u64),
-            Code::ExpGolomb { k } => len_exp_golomb(value, *k),
-            Code::Rice { log2_b } => len_rice(value, *log2_b),
-        }
-    }
-}
-
-impl core::fmt::Display for Code {
-    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        match self {
-            Code::Unary => write!(f, "Unary"),
-            Code::Gamma => write!(f, "Gamma"),
-            Code::Delta => write!(f, "Delta"),
-            Code::Omega => write!(f, "Omega"),
-            Code::VByte => write!(f, "VByte"),
-            Code::Zeta { k } => write!(f, "Zeta({})", k),
-            Code::Pi { k } => write!(f, "Pi({})", k),
-            Code::PiWeb { k } => write!(f, "PiWeb({})", k),
-            Code::Golomb { b } => write!(f, "Golomb({})", b),
-            Code::ExpGolomb { k } => write!(f, "ExpGolomb({})", k),
-            Code::Rice { log2_b } => write!(f, "Rice({})", log2_b),
-        }
-    }
-}
-
-#[derive(Debug)]
-pub enum CodeError {
-    ParseError(core::num::ParseIntError),
-    UnknownCode(String),
-}
-impl std::error::Error for CodeError {}
-impl core::fmt::Display for CodeError {
-    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        match self {
-            CodeError::ParseError(e) => write!(f, "Parse error: {}", e),
-            CodeError::UnknownCode(s) => write!(f, "Unknown code: {}", s),
-        }
-    }
-}
-
-impl From<core::num::ParseIntError> for CodeError {
-    fn from(e: core::num::ParseIntError) -> Self {
-        CodeError::ParseError(e)
-    }
-}
-
-impl std::str::FromStr for Code {
-    type Err = CodeError;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "Unary" => Ok(Code::Unary),
-            "Gamma" => Ok(Code::Gamma),
-            "Delta" => Ok(Code::Delta),
-            "Omega" => Ok(Code::Omega),
-            "VByte" => Ok(Code::VByte),
-            _ => {
-                let mut parts = s.split('(');
-                let name = parts
-                    .next()
-                    .ok_or_else(|| CodeError::UnknownCode(format!("Could not parse {}", s)))?;
-                let k = parts
-                    .next()
-                    .ok_or_else(|| CodeError::UnknownCode(format!("Could not parse {}", s)))?
-                    .split(')')
-                    .next()
-                    .ok_or_else(|| CodeError::UnknownCode(format!("Could not parse {}", s)))?;
-                match name {
-                    "Zeta" => Ok(Code::Zeta { k: k.parse()? }),
-                    "Pi" => Ok(Code::Pi { k: k.parse()? }),
-                    "PiWeb" => Ok(Code::PiWeb { k: k.parse()? }),
-                    "Golomb" => Ok(Code::Golomb { b: k.parse()? }),
-                    "ExpGolomb" => Ok(Code::ExpGolomb { k: k.parse()? }),
-                    "Rice" => Ok(Code::Rice { log2_b: k.parse()? }),
-                    _ => Err(CodeError::UnknownCode(format!("Could not parse {}", name))),
-                }
-            }
-        }
-    }
-}
-
 use crate::prelude::{
     len_delta, len_exp_golomb, len_gamma, len_golomb, len_omega, len_pi, len_pi_web, len_rice,
-    len_vbyte, len_zeta,
+    len_vbyte, len_zeta, Code,
 };
 
 /// Keeps track of the space needed to store a stream of integers using
