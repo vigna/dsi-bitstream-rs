@@ -18,7 +18,7 @@
 //!
 //! ## Reference
 //! Aaron Kiely,
-//! "Selecting the Golomb parameter in Rice coding"
+//! "Selecting the Golomb parameter in Rice coding,"
 //! Interplanetary Network Progress report 42-159 (2004) Jet Propulsion Laboratory.
 
 use crate::traits::*;

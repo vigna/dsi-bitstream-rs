@@ -17,7 +17,7 @@
 //!
 //! ## Reference
 //! Boldi Paolo and Sebastiano Vigna,
-//! “The Webgraph framework II: codes for the World-Wide Web.”
+//! “The Webgraph framework II: codes for the World-Wide Web,”
 //! Data Compression Conference, 2004. Proceedings. DCC 2004
 //! (2004): 528-; <https://doi.org/10.1109/DCC.2004.1281504>.
 
