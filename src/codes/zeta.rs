@@ -14,11 +14,17 @@
 //!
 //! Note that this module provides a generic implementation of ζ codes, and
 //! a specialized implementation for ζ₃ that may use tables.
+//! 
+//! ## Reference
+//! Boldi Paolo and Sebastiano Vigna,
+//! “The Webgraph framework II: codes for the World-Wide Web.” 
+//! Data Compression Conference, 2004. Proceedings. DCC 2004 
+//! (2004): 528-; <https://doi.org/10.1109/DCC.2004.1281504>.
 
 use super::{len_minimal_binary, zeta_tables, MinimalBinaryRead, MinimalBinaryWrite};
 use crate::traits::*;
 
-/// Return the length of the ζ code with parameter `k` for `n`.
+/// Returns the length of the ζ code with parameter `k` for `n`.
 #[must_use]
 #[inline]
 #[allow(clippy::collapsible_if)]
@@ -37,7 +43,7 @@ pub fn len_zeta_param<const USE_TABLE: bool>(mut n: u64, k: u64) -> usize {
     h as usize + 1 + len_minimal_binary(n - l, u - l)
 }
 
-/// Return the length of the ζ code with parameter `k` for `n` using
+/// Returns the length of the ζ code with parameter `k` for `n` using
 /// a default value for `USE_TABLE`.
 #[inline(always)]
 pub fn len_zeta(n: u64, k: u64) -> usize {

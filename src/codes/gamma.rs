@@ -14,11 +14,17 @@
 //!
 //! The `USE_TABLE` parameter enables or disables the use of
 //! pre-computed tables for decoding.
+//! 
+//! ## Reference
+//! Peter Elias,
+//! "Universal codeword sets and representations of the integers"
+//! IEEE Transactions on Information Theory, vol. 21, no. 2, pp. 194-203, March 
+//! 1975, doi:  <https://doi.org/10.1109/TIT.1975.1055349>. 
 
 use super::gamma_tables;
 use crate::traits::*;
 
-/// Return the length of the γ code for `n`.
+/// Returns the length of the γ code for `n`.
 #[must_use]
 #[inline]
 pub fn len_gamma_param<const USE_TABLE: bool>(mut n: u64) -> usize {
@@ -32,7 +38,7 @@ pub fn len_gamma_param<const USE_TABLE: bool>(mut n: u64) -> usize {
     2 * number_of_bits_to_write as usize + 1
 }
 
-/// Return the length of the γ code for `n` using
+/// Returns the length of the γ code for `n` using
 /// a default value for `USE_TABLE`.
 pub fn len_gamma(n: u64) -> usize {
     #[cfg(target_arch = "arm")]

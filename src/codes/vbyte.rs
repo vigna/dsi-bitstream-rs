@@ -40,7 +40,7 @@ const UPPER_BOUND_6: u64 = 128_u64.pow(6) + UPPER_BOUND_5;
 const UPPER_BOUND_7: u64 = 128_u64.pow(7) + UPPER_BOUND_6;
 const UPPER_BOUND_8: u64 = 128_u64.pow(8) + UPPER_BOUND_7;
 
-/// Return the length of the VByte code for `value` in bytes.
+/// Returns the length of the VByte code for `value` in bytes.
 #[must_use]
 #[inline]
 pub fn len_vbyte_bytes(value: u64) -> usize {
@@ -71,7 +71,7 @@ pub fn len_vbyte_bytes(value: u64) -> usize {
     9
 }
 
-/// Return the length of the VByte code for `value` in bits.
+/// Returns the length of the VByte code for `value` in bits.
 #[must_use]
 #[inline]
 pub fn len_vbyte(value: u64) -> usize {
@@ -175,7 +175,8 @@ pub trait VByteWrite<E: Endianness>: BitWrite<E> {
 impl<E: Endianness, B: BitRead<E>> VByteRead<E> for B {}
 impl<E: Endianness, B: BitWrite<E>> VByteWrite<E> for B {}
 
-/// VByte encode an integer to a byte stream and return the number of bytes written.
+/// Encodes an integer to a byte stream using VByte codes and return the 
+/// number of bytes written.
 #[inline(always)]
 pub fn vbyte_encode<E: Endianness, W: std::io::Write>(
     value: u64,
@@ -189,7 +190,7 @@ pub fn vbyte_encode<E: Endianness, W: std::io::Write>(
 }
 
 #[inline(always)]
-/// VByte decode an integer from a byte stream.
+/// Decodes an integer from a byte stream using VByte codes.
 pub fn vbyte_decode<E: Endianness, R: std::io::Read>(reader: &mut R) -> std::io::Result<u64> {
     if core::any::TypeId::of::<E>() == core::any::TypeId::of::<BigEndian>() {
         vbyte_decode_be(reader)
@@ -198,7 +199,8 @@ pub fn vbyte_decode<E: Endianness, R: std::io::Read>(reader: &mut R) -> std::io:
     }
 }
 
-/// VByte encode an integer to a little endian byte stream and return the number of bytes written.
+/// Encodes an integer to a little endian byte stream using VByte codes and 
+/// return the number of bytes written.
 pub fn vbyte_encode_le<W: std::io::Write>(
     mut value: u64,
     writer: &mut W,
@@ -302,7 +304,8 @@ pub fn vbyte_encode_le<W: std::io::Write>(
     Ok(9)
 }
 
-/// VByte encode an integer to a big endian byte stream and return the number of bytes written.
+/// Encodes an integer to a big endian byte stream using VByte codes and return 
+/// the number of bytes written.
 pub fn vbyte_encode_be<W: std::io::Write>(
     mut value: u64,
     writer: &mut W,
@@ -402,7 +405,7 @@ pub fn vbyte_encode_be<W: std::io::Write>(
     Ok(9)
 }
 
-/// VByte decode an integer from a little endian byte stream
+/// Decodes an integer from a little endian byte stream using VByte codes.
 pub fn vbyte_decode_le<R: std::io::Read>(reader: &mut R) -> std::io::Result<u64> {
     let mut data = [0; 9];
     reader.read_exact(&mut data[..1])?;
@@ -482,7 +485,7 @@ pub fn vbyte_decode_le<R: std::io::Read>(reader: &mut R) -> std::io::Result<u64>
     Ok(x)
 }
 
-/// VByte decode an integer from a big endian byte stream.
+/// Decodes an integer from a big endian byte stream using VByte codes.
 pub fn vbyte_decode_be<R: std::io::Read>(reader: &mut R) -> std::io::Result<u64> {
     let mut data = [0; 9];
     reader.read_exact(&mut data[..1])?;

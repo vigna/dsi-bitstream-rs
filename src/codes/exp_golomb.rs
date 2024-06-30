@@ -20,7 +20,7 @@
 use super::gamma::{len_gamma, GammaRead, GammaWrite};
 use crate::traits::*;
 
-/// Return the length of the exponential Golomb code for `n` with parameter `k`.
+/// Returns the length of the exponential Golomb code for `n` with parameter `k`.
 #[must_use]
 #[inline]
 pub fn len_exp_golomb(n: u64, k: usize) -> usize {

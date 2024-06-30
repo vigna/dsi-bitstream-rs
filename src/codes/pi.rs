@@ -17,14 +17,14 @@
 //! by 1 and any other positive integer n is encoded with a 0 followed by
 //! the π-code of n.
 //!
-//! ## References
-//! Graph Compression by BFS
-//! Alberto Apostolico 1,2 and Guido Drovandi
-//! Algorithms 2009, 2, 1031-1044; doi:10.3390/a2031031
+//! ## Reference
+//! Alberto Apostolico and Guido Drovandi.
+//! "Graph Compression by BFS"
+//! Algorithms 2009, 2, 1031-1044; <https://doi.org/10.3390/a2031031>.
 
 use crate::traits::*;
 
-/// Return the length of the π code for `n`.
+/// Returns the length of the π code for `n`.
 ///
 /// ```rust
 /// use dsi_bitstream::codes::len_pi;
@@ -119,7 +119,7 @@ pub trait PiWrite<E: Endianness>: BitWrite<E> {
 impl<E: Endianness, B: BitRead<E> + ?Sized> PiRead<E> for B {}
 impl<E: Endianness, B: BitWrite<E> + ?Sized> PiWrite<E> for B {}
 
-/// Return the length of the π web code for `n`.
+/// Returns the length of the π web code for `n`.
 #[must_use]
 #[inline(always)]
 pub fn len_pi_web(n: u64, k: u64) -> usize {

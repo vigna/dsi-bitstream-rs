@@ -17,11 +17,17 @@
 //! enables or disables the use of pre-computed tables for decoding the
 //! the initial γ code in case the whole δ code could not be decoded
 //! by tables.
-
+//!
+//! ## Reference
+//! Peter Elias,
+//! "Universal codeword sets and representations of the integers"
+//! IEEE Transactions on Information Theory, vol. 21, no. 2, pp. 194-203, March 
+//! 1975, doi:  <https://doi.org/10.1109/TIT.1975.1055349>. 
+//! 
 use super::{delta_tables, len_gamma_param, GammaReadParam, GammaWriteParam};
 use crate::traits::*;
 
-/// Return the length of the δ code for `n`.
+/// Returns the length of the δ code for `n`.
 #[must_use]
 #[inline]
 pub fn len_delta_param<const USE_DELTA_TABLE: bool, const USE_GAMMA_TABLE: bool>(n: u64) -> usize {
@@ -34,7 +40,7 @@ pub fn len_delta_param<const USE_DELTA_TABLE: bool, const USE_GAMMA_TABLE: bool>
     l as usize + len_gamma_param::<USE_GAMMA_TABLE>(l as _)
 }
 
-/// Return the length of the δ code for `n` using
+/// Returns the length of the δ code for `n` using
 /// a default value for `USE_DELTA_TABLE` and `USE_GAMMA_TABLE`.
 #[inline(always)]
 pub fn len_delta(n: u64) -> usize {

@@ -14,22 +14,31 @@
 //!
 //! For natural numbers distributed with a geometric distribution with base `p`,
 //! the base-2 logarithm of the optimal Rice code is [`⌈log₂(log((√5 + 1)/2) /
-//! log(1 - p))⌉`](log2_b). See [Aaron Kiely, "Selecting the Golomb parameter
-//! in Rice coding", IPN progress report 42-159
-//! (2004)](https://tda.jpl.nasa.gov/progress_report/42-159/159E.pdf).
+//! log(1 - p))⌉`](log2_b). See [reference](https://tda.jpl.nasa.gov/progress_report/42-159/159E.pdf).
+//! 
+//! ## Reference
+//! Aaron Kiely,
+//! "Selecting the Golomb parameter in Rice coding" 
+//! Interplanetary Network Progress report 42-159 (2004) Jet Propulsion Laboratory.
 
 use crate::traits::*;
 
-/// Return the length of the Rice code for `n` with parameter `log2_b`.
+/// Returns the length of the Rice code for `n` with parameter `log2_b`.
 #[must_use]
 #[inline]
 pub fn len_rice(n: u64, log2_b: usize) -> usize {
     (n >> log2_b) as usize + 1 + log2_b
 }
 
-/// Return the optimal value of `log2_b` for a geometric distribution of base `p`.
+/// Returns the optimal value of `log2_b` for a geometric distribution of base `p`.
 pub fn log2_b(p: f64) -> usize {
     ((-((5f64.sqrt() + 1.0) / 2.0).ln() / (-p).ln_1p()).log2()).ceil() as usize
+}
+
+/// Return the intended geometric distribution with base `p` for golomb codes
+/// with value `log2_b`.
+pub fn p(log2_b: u64) -> f64 {
+    crate::codes::golomb::p(1 << log2_b)
 }
 
 /// Trait for reading Rice codes.

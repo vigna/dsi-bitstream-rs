@@ -17,6 +17,12 @@
 //! possible in LittleEndian order. To write in LittleEndian order, we rotate by
 //! one the bits to the left, so that the MSB bit is the LSB bit, and we can peek
 //! at it.
+//! 
+//! ## Reference
+//! Peter Elias. 
+//! "Universal codeword sets and representations of the integers"
+//! IEEE Transactions on Information Theory, vol. 21, no. 2, pp. 194-203, March 
+//! 1975, doi:  <https://doi.org/10.1109/TIT.1975.1055349>. 
 
 use crate::traits::*;
 use common_traits::CastableInto;
@@ -25,7 +31,7 @@ fn ceil_log(n: u64) -> u64 {
     n.ilog2() as u64 + (!n.is_power_of_two()) as u64
 }
 
-/// Return the length of the ω code for `n`.
+/// Returns the length of the ω code for `n`.
 #[inline(always)]
 pub fn len_omega(n: u64) -> usize {
     // omega codes are indexed from 1

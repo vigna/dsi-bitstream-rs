@@ -19,7 +19,7 @@
 
 use crate::traits::*;
 
-/// Return the length of the minimal binary code for `n` with upper bound `max`.
+/// Returns the length of the minimal binary code for `n` with upper bound `max`.
 #[must_use]
 #[inline]
 pub fn len_minimal_binary(n: u64, max: u64) -> usize {
