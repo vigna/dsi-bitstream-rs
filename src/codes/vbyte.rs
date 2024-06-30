@@ -175,7 +175,7 @@ pub trait VByteWrite<E: Endianness>: BitWrite<E> {
 impl<E: Endianness, B: BitRead<E>> VByteRead<E> for B {}
 impl<E: Endianness, B: BitWrite<E>> VByteWrite<E> for B {}
 
-/// Encodes an integer to a byte stream using VByte codes and return the 
+/// Encodes an integer to a byte stream using VByte codes and return the
 /// number of bytes written.
 #[inline(always)]
 pub fn vbyte_encode<E: Endianness, W: std::io::Write>(
@@ -199,7 +199,7 @@ pub fn vbyte_decode<E: Endianness, R: std::io::Read>(reader: &mut R) -> std::io:
     }
 }
 
-/// Encodes an integer to a little endian byte stream using VByte codes and 
+/// Encodes an integer to a little endian byte stream using VByte codes and
 /// return the number of bytes written.
 pub fn vbyte_encode_le<W: std::io::Write>(
     mut value: u64,
@@ -304,7 +304,7 @@ pub fn vbyte_encode_le<W: std::io::Write>(
     Ok(9)
 }
 
-/// Encodes an integer to a big endian byte stream using VByte codes and return 
+/// Encodes an integer to a big endian byte stream using VByte codes and return
 /// the number of bytes written.
 pub fn vbyte_encode_be<W: std::io::Write>(
     mut value: u64,

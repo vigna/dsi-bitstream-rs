@@ -14,17 +14,17 @@
 //! the optimal code is a Golomb code with [`b = ⌈-log(2 – p) / log(1 – p)⌉`](b).
 //!
 //! For a faster, less precise alternative, see [Rice codes](super::rice).
-//! 
+//!
 //! ## References
-//! S. Golomb, 
-//! "Run-length encodings (Corresp.)," 
-//! IEEE Transactions on Information Theory, vol. 12, no. 3, pp. 399-401, 
+//! S. Golomb,
+//! "Run-length encodings (Corresp.),"
+//! IEEE Transactions on Information Theory, vol. 12, no. 3, pp. 399-401,
 //! July 1966, doi: <https://doi.org/10.1109/TIT.1966.1053907>.
-//! 
-//! R. Gallager and D. van Voorhis, 
-//! "Optimal source codes for geometrically distributed integer alphabets (Corresp.)," 
-//! IEEE Transactions on Information Theory, vol. 21, no. 2, pp. 228-230, 
-//! March 1975, doi:  <https://doi.org/10.1109/TIT.1975.1055357>. 
+//!
+//! R. Gallager and D. van Voorhis,
+//! "Optimal source codes for geometrically distributed integer alphabets (Corresp.),"
+//! IEEE Transactions on Information Theory, vol. 21, no. 2, pp. 228-230,
+//! March 1975, doi:  <https://doi.org/10.1109/TIT.1975.1055357>.
 
 use super::minimal_binary::{len_minimal_binary, MinimalBinaryRead, MinimalBinaryWrite};
 use crate::traits::*;

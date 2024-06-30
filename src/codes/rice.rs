@@ -15,10 +15,10 @@
 //! For natural numbers distributed with a geometric distribution with base `p`,
 //! the base-2 logarithm of the optimal Rice code is [`⌈log₂(log((√5 + 1)/2) /
 //! log(1 - p))⌉`](log2_b). See [reference](https://tda.jpl.nasa.gov/progress_report/42-159/159E.pdf).
-//! 
+//!
 //! ## Reference
 //! Aaron Kiely,
-//! "Selecting the Golomb parameter in Rice coding" 
+//! "Selecting the Golomb parameter in Rice coding"
 //! Interplanetary Network Progress report 42-159 (2004) Jet Propulsion Laboratory.
 
 use crate::traits::*;

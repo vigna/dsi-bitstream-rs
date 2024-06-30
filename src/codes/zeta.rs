@@ -14,11 +14,11 @@
 //!
 //! Note that this module provides a generic implementation of ζ codes, and
 //! a specialized implementation for ζ₃ that may use tables.
-//! 
+//!
 //! ## Reference
 //! Boldi Paolo and Sebastiano Vigna,
-//! “The Webgraph framework II: codes for the World-Wide Web.” 
-//! Data Compression Conference, 2004. Proceedings. DCC 2004 
+//! “The Webgraph framework II: codes for the World-Wide Web.”
+//! Data Compression Conference, 2004. Proceedings. DCC 2004
 //! (2004): 528-; <https://doi.org/10.1109/DCC.2004.1281504>.
 
 use super::{len_minimal_binary, zeta_tables, MinimalBinaryRead, MinimalBinaryWrite};
