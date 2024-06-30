@@ -22,7 +22,7 @@
 //!
 //! This is a byte aligned code so it's faster to encode / decode on byte-stream
 //! than bit-streams, so we provide also the functions
-//! [`vbyte_encode`] and [`vbyte_dencode`] that can be used on
+//! [`vbyte_encode`] and [`vbyte_decode`] that can be used on
 //! [`std::io::Read`] and [`std::io::Write`] objects.
 //!
 //! [`LEB128`]: https://en.wikipedia.org/wiki/LEB128
