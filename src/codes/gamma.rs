@@ -29,8 +29,8 @@ use crate::traits::*;
 #[inline]
 pub fn len_gamma_param<const USE_TABLE: bool>(mut n: u64) -> usize {
     if USE_TABLE {
-        if let Some(idx) = gamma_tables::LEN.get(n as usize) {
-            return *idx as usize;
+        if let Some(idx) = gamma_tables::len_table_be(n) {
+            return idx;
         }
     }
     n += 1;

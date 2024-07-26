@@ -38,3 +38,17 @@ pub fn pin_to_core(core_id: usize) {
         assert_ne!(res, -1);
     }
 }
+
+const SUBSCRIPTS: &str = "₀₁₂₃₄₅₆₇₈₉";
+
+pub fn subscript(n: u64) -> String {
+    n.to_string()
+        .chars()
+        .map(|c| {
+            SUBSCRIPTS
+                .chars()
+                .nth(c.to_digit(10).unwrap() as usize)
+                .unwrap()
+        })
+        .collect()
+}

@@ -25,8 +25,5 @@ integers using different codes.
 mod count;
 pub use count::*;
 
-mod dbg_codes;
-pub use dbg_codes::*;
-
 pub mod stats;
 pub use stats::CodesStats;

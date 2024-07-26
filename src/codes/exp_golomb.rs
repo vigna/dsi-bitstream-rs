@@ -42,6 +42,3 @@ pub trait ExpGolombWrite<E: Endianness>: BitWrite<E> + GammaWrite<E> {
         Ok(self.write_gamma(n >> k)? + self.write_bits(n, k)?)
     }
 }
-
-impl<E: Endianness, B: BitRead<E> + GammaRead<E>> ExpGolombRead<E> for B {}
-impl<E: Endianness, B: BitWrite<E> + GammaWrite<E>> ExpGolombWrite<E> for B {}

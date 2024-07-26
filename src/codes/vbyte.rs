@@ -172,9 +172,6 @@ pub trait VByteWrite<E: Endianness>: BitWrite<E> {
     }
 }
 
-impl<E: Endianness, B: BitRead<E>> VByteRead<E> for B {}
-impl<E: Endianness, B: BitWrite<E>> VByteWrite<E> for B {}
-
 /// Encodes an integer to a byte stream using VByte codes and return the
 /// number of bytes written.
 #[inline(always)]

@@ -21,7 +21,7 @@
 //! Data Compression Conference, 2004. Proceedings. DCC 2004
 //! (2004): 528-; <https://doi.org/10.1109/DCC.2004.1281504>.
 
-use super::{len_minimal_binary, zeta_tables, MinimalBinaryRead, MinimalBinaryWrite};
+use super::{len_minimal_binary, zeta3_tables, MinimalBinaryRead, MinimalBinaryWrite};
 use crate::traits::*;
 
 /// Returns the length of the ζ code with parameter `k` for `n`.
@@ -30,9 +30,9 @@ use crate::traits::*;
 #[allow(clippy::collapsible_if)]
 pub fn len_zeta_param<const USE_TABLE: bool>(mut n: u64, k: u64) -> usize {
     if USE_TABLE {
-        if k == zeta_tables::K {
-            if let Some(idx) = zeta_tables::LEN.get(n as usize) {
-                return *idx as usize;
+        if k == zeta3_tables::K {
+            if let Some(idx) = zeta3_tables::len_table_be(n) {
+                return idx;
             }
         }
     }
@@ -80,7 +80,7 @@ impl<B: BitRead<BE>> ZetaReadParam<BE> for B {
     #[inline(always)]
     fn read_zeta3_param<const USE_TABLE: bool>(&mut self) -> Result<u64, B::Error> {
         if USE_TABLE {
-            if let Some((res, _)) = zeta_tables::read_table_be(self) {
+            if let Some((res, _)) = zeta3_tables::read_table_be(self) {
                 return Ok(res);
             }
         }
@@ -97,7 +97,7 @@ impl<B: BitRead<LE>> ZetaReadParam<LE> for B {
     #[inline(always)]
     fn read_zeta3_param<const USE_TABLE: bool>(&mut self) -> Result<u64, B::Error> {
         if USE_TABLE {
-            if let Some((res, _)) = zeta_tables::read_table_le(self) {
+            if let Some((res, _)) = zeta3_tables::read_table_le(self) {
                 return Ok(res);
             }
         }
@@ -136,21 +136,13 @@ pub trait ZetaWrite<E: Endianness>: BitWrite<E> {
 /// of [`ZetaWrite`] using default values is usually provided exploiting the
 /// [`crate::codes::params::WriteParams`] mechanism.
 pub trait ZetaWriteParam<E: Endianness>: MinimalBinaryWrite<E> {
-    fn write_zeta_param<const USE_TABLE: bool>(
-        &mut self,
-        n: u64,
-        k: u64,
-    ) -> Result<usize, Self::Error>;
+    fn write_zeta_param(&mut self, n: u64, k: u64) -> Result<usize, Self::Error>;
     fn write_zeta3_param<const USE_TABLE: bool>(&mut self, n: u64) -> Result<usize, Self::Error>;
 }
 
 impl<B: BitWrite<BE>> ZetaWriteParam<BE> for B {
     #[inline]
-    fn write_zeta_param<const USE_TABLE: bool>(
-        &mut self,
-        n: u64,
-        k: u64,
-    ) -> Result<usize, Self::Error> {
+    fn write_zeta_param(&mut self, n: u64, k: u64) -> Result<usize, Self::Error> {
         default_write_zeta(self, n, k)
     }
 
@@ -158,7 +150,7 @@ impl<B: BitWrite<BE>> ZetaWriteParam<BE> for B {
     #[allow(clippy::collapsible_if)]
     fn write_zeta3_param<const USE_TABLE: bool>(&mut self, n: u64) -> Result<usize, Self::Error> {
         if USE_TABLE {
-            if let Some(len) = zeta_tables::write_table_be(self, n)? {
+            if let Some(len) = zeta3_tables::write_table_be(self, n)? {
                 return Ok(len);
             }
         }
@@ -168,11 +160,7 @@ impl<B: BitWrite<BE>> ZetaWriteParam<BE> for B {
 
 impl<B: BitWrite<LE>> ZetaWriteParam<LE> for B {
     #[inline]
-    fn write_zeta_param<const USE_TABLE: bool>(
-        &mut self,
-        n: u64,
-        k: u64,
-    ) -> Result<usize, Self::Error> {
+    fn write_zeta_param(&mut self, n: u64, k: u64) -> Result<usize, Self::Error> {
         default_write_zeta(self, n, k)
     }
 
@@ -180,7 +168,7 @@ impl<B: BitWrite<LE>> ZetaWriteParam<LE> for B {
     #[allow(clippy::collapsible_if)]
     fn write_zeta3_param<const USE_TABLE: bool>(&mut self, n: u64) -> Result<usize, Self::Error> {
         if USE_TABLE {
-            if let Some(len) = zeta_tables::write_table_le(self, n)? {
+            if let Some(len) = zeta3_tables::write_table_le(self, n)? {
                 return Ok(len);
             }
         }

@@ -97,9 +97,6 @@ fn recursive_write<E: Endianness, B: BitWrite<E> + ?Sized>(
     Ok(recursive_write(l - 1, writer)? + writer.write_bits(n, l as usize)?)
 }
 
-impl<E: Endianness, B: BitRead<E>> OmegaRead<E> for B {}
-impl<E: Endianness, B: BitWrite<E>> OmegaWrite<E> for B {}
-
 #[cfg(test)]
 mod test {
     use crate::prelude::*;

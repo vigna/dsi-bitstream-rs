@@ -102,7 +102,7 @@ pub fn gen_delta_data() -> (f64, Vec<u64>) {
 pub fn gen_zeta3_data() -> (f64, Vec<u64>) {
     let mut rng = rand::thread_rng();
 
-    let distr = rand_distr::Zeta::new(1.2).unwrap();
+    let distr = rand_distr::Zeta::new(1.0 + 1.0 / 3.0).unwrap();
     let zeta3_data = (0..N)
         .map(|_| rng.sample(distr) as u64 - 1)
         .collect::<Vec<_>>();
@@ -127,4 +127,72 @@ pub fn gen_zeta3_data() -> (f64, Vec<u64>) {
         / N as f64;
 
     (ratio, zeta3_data)
+}
+
+/// Generate data to benchmark ζ₃ code.
+pub fn gen_zeta_data(k: u64) -> Vec<u64> {
+    let mut rng = rand::thread_rng();
+
+    let distr = rand_distr::Zeta::new(1.0 + 1.0 / k as f64).unwrap();
+    (0..N)
+        .map(|_| rng.sample(distr) as u64 - 1)
+        .collect::<Vec<_>>()
+}
+
+/// Generate data to benchmark unary code.
+pub fn gen_unary_data() -> Vec<u64> {
+    let mut rng = rand::thread_rng();
+
+    let distr = rand_distr::Geometric::new(0.5).unwrap();
+    (0..N).map(|_| rng.sample(distr) as u64).collect::<Vec<_>>()
+}
+
+/// Generate data to benchmark golomb codes.
+pub fn gen_golomb_data(b: u64) -> Vec<u64> {
+    let mut rng = rand::thread_rng();
+
+    let distr = rand_distr::Geometric::new(dsi_bitstream::codes::golomb::p(b)).unwrap();
+    (0..N).map(|_| rng.sample(distr) as u64).collect::<Vec<_>>()
+}
+
+/// Generate data to benchmark golomb codes.
+pub fn gen_rice_data(log2_b: usize) -> Vec<u64> {
+    let mut rng = rand::thread_rng();
+
+    let distr = rand_distr::Geometric::new(dsi_bitstream::codes::rice::p(log2_b as u64)).unwrap();
+    (0..N).map(|_| rng.sample(distr) as u64).collect::<Vec<_>>()
+}
+
+/// Generate data to benchmark δ code.
+pub fn gen_exp_golomb_data(k: usize) -> Vec<u64> {
+    let mut rng = rand::thread_rng();
+    let mut data = gen_gamma_data().1;
+    data.iter_mut().for_each(|x| {
+        *x = *x * k as u64 + rng.gen_range(0..k as u64);
+    });
+    data
+}
+
+pub fn gen_pi_data(k: u64) -> Vec<u64> {
+    let mut rng = rand::thread_rng();
+
+    let distr = rand_distr::Zeta::new(1.0 + 1.0 / (1 << k) as f64).unwrap();
+    (0..N)
+        .map(|_| rng.sample(distr) as u64 - 1)
+        .collect::<Vec<_>>()
+}
+
+pub fn gen_pi_web_data(k: u64) -> Vec<u64> {
+    let mut rng = rand::thread_rng();
+
+    let distr = rand_distr::Zeta::new(1.0 + 1.0 / (1 << k) as f64).unwrap();
+    (0..N)
+        .map(|_| {
+            if rng.gen_bool(0.5) {
+                0
+            } else {
+                rng.sample(distr) as u64
+            }
+        })
+        .collect::<Vec<_>>()
 }

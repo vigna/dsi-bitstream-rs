@@ -32,8 +32,8 @@ use crate::traits::*;
 #[inline]
 pub fn len_delta_param<const USE_DELTA_TABLE: bool, const USE_GAMMA_TABLE: bool>(n: u64) -> usize {
     if USE_DELTA_TABLE {
-        if let Some(idx) = delta_tables::LEN.get(n as usize) {
-            return *idx as usize;
+        if let Some(idx) = delta_tables::len_table_be(n) {
+            return idx;
         }
     }
     let l = (n + 1).ilog2();

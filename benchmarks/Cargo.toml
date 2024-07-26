@@ -5,20 +5,32 @@ edition = "2021"
 
 [dependencies]
 rand = "0.8.5"
-random = "0.13.2"
+random = "0.14.0"
 dsi-bitstream = { path="../" }
 rand_distr = "0.4.3"
 once_cell = "1.19.0"
+anyhow = "1.0.86"
 
 [target.'cfg(unix)'.dependencies]
 libc = "0.2.141"
 
 [features]
-reads = []
+default = []
 u16 = []
 u32 = []
 u64 = []
+# benchmark reading, if disabled, benchmark write
+reads = []
+# benchmark delta with and without tables, also for the sub gamma code
 delta_gamma = []
+# benchmark the table version of codes
+tables = []
+# benchmark no table impl of codes
+no_tables = []
+# benchmark codes that doesn't have tables
+all = []
+# print the header of the csv
+print_header = []
 
 [profile.release]
 opt-level = 3             # like --release

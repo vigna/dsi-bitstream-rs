@@ -57,9 +57,6 @@ pub trait RiceWrite<E: Endianness>: BitWrite<E> {
     }
 }
 
-impl<E: Endianness, B: BitRead<E>> RiceRead<E> for B {}
-impl<E: Endianness, B: BitWrite<E>> RiceWrite<E> for B {}
-
 #[cfg(test)]
 #[test]
 fn test_log2_b() {

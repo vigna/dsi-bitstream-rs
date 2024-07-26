@@ -13,15 +13,12 @@
 //! Θ( 1 / N^(1 + 2^-k) )
 //! so it's optimal for Zipf distributions of exponent α ≈ 1 + 2^−k
 //!
-//! π web codes are a modified version of π-codes in which 0 is encoded
-//! by 1 and any other positive integer n is encoded with a 0 followed by
-//! the π-code of n.
-//!
 //! ## Reference
 //! Alberto Apostolico and Guido Drovandi.
 //! "Graph Compression by BFS,"
 //! Algorithms 2009, 2, 1031-1044; <https://doi.org/10.3390/a2031031>.
 
+use crate::codes::pi2_tables;
 use crate::traits::*;
 
 /// Returns the length of the π code for `n`.
@@ -71,7 +68,18 @@ use crate::traits::*;
 /// ```
 #[must_use]
 #[inline]
-pub fn len_pi(mut n: u64, k: u64) -> usize {
+pub fn len_pi(n: u64, k: u64) -> usize {
+    len_pi_param::<true>(n, k)
+}
+
+#[inline]
+pub fn len_pi_param<const USE_TABLE: bool>(mut n: u64, k: u64) -> usize {
+    if USE_TABLE && pi2_tables::K == 2 {
+        if let Some(idx) = pi2_tables::len_table_be(n) {
+            return idx;
+        }
+    }
+
     n += 1; // π codes are indexed from 1
     let rem = n.ilog2() as usize;
     let h = 1 + rem;
@@ -83,14 +91,66 @@ pub fn len_pi(mut n: u64, k: u64) -> usize {
 ///
 /// This is the trait you should usually pull in scope to read π codes.
 pub trait PiRead<E: Endianness>: BitRead<E> {
+    fn read_pi(&mut self, k: u64) -> Result<u64, Self::Error>;
+    fn read_pi2(&mut self) -> Result<u64, Self::Error>;
+}
+
+/// Parametric trait for reading π codes.
+///
+/// This trait is is more general than [`PiRead`], as it makes it possible
+/// to specify how to use tables using const parameters.
+///
+/// We provide an implementation of this trait for [`BitRead`]. An implementation
+/// of [`PiRead`] using default values is usually provided exploiting the
+/// [`crate::codes::params::ReadParams`] mechanism.
+pub trait PiReadParam<E: Endianness>: BitRead<E> {
+    fn read_pi_param(&mut self, k: u64) -> Result<u64, Self::Error>;
+    fn read_pi2_param<const USE_TABLE: bool>(&mut self) -> Result<u64, Self::Error>;
+}
+
+fn default_read_pi<BO: Endianness, B: BitRead<BO>>(
+    backend: &mut B,
+    k: u64,
+) -> Result<u64, B::Error> {
+    let l = backend.read_unary()? + 1;
+    let v = backend.read_bits(k as usize)?;
+    let h = l * (1 << k) - v;
+    let r = h - 1;
+    let rem = backend.read_bits(r as usize)?;
+    Ok((1 << r) + rem - 1)
+}
+
+impl<B: BitRead<BE>> PiReadParam<BE> for B {
     #[inline]
-    fn read_pi(&mut self, k: u64) -> Result<u64, Self::Error> {
-        let l = self.read_unary()? + 1;
-        let v = self.read_bits(k as usize)?;
-        let h = l * (1 << k) - v;
-        let r = h - 1;
-        let rem = self.read_bits(r as usize)?;
-        Ok((1 << r) + rem - 1)
+    fn read_pi_param(&mut self, k: u64) -> Result<u64, Self::Error> {
+        default_read_pi(self, k)
+    }
+
+    #[inline]
+    fn read_pi2_param<const USE_TABLE: bool>(&mut self) -> Result<u64, Self::Error> {
+        if USE_TABLE {
+            if let Some((res, _)) = pi2_tables::read_table_be(self) {
+                return Ok(res);
+            }
+        }
+        default_read_pi(self, pi2_tables::K)
+    }
+}
+
+impl<B: BitRead<LE>> PiReadParam<LE> for B {
+    #[inline]
+    fn read_pi_param(&mut self, k: u64) -> Result<u64, Self::Error> {
+        default_read_pi(self, k)
+    }
+
+    #[inline]
+    fn read_pi2_param<const USE_TABLE: bool>(&mut self) -> Result<u64, Self::Error> {
+        if USE_TABLE {
+            if let Some((res, _)) = pi2_tables::read_table_le(self) {
+                return Ok(res);
+            }
+        }
+        default_read_pi(self, pi2_tables::K)
     }
 }
 
@@ -98,63 +158,77 @@ pub trait PiRead<E: Endianness>: BitRead<E> {
 ///
 /// This is the trait you should usually pull in scope to write π codes.
 pub trait PiWrite<E: Endianness>: BitWrite<E> {
+    fn write_pi(&mut self, n: u64, k: u64) -> Result<usize, Self::Error>;
+    fn write_pi2(&mut self, n: u64) -> Result<usize, Self::Error>;
+}
+
+/// Parametric trait for writing π codes.
+///
+/// This trait is is more general than [`PiWrite`], as it makes it possible
+/// to specify how to use tables using const parameters.
+///
+/// We provide an implementation of this trait for [`BitWrite`]. An implementation
+/// of [`PiWrite`] using default values is usually provided exploiting the
+/// [`crate::codes::params::WriteParams`] mechanism.
+pub trait PiWriteParam<E: Endianness>: BitWrite<E> {
+    fn write_pi_param(&mut self, n: u64, k: u64) -> Result<usize, Self::Error>;
+    fn write_pi2_param<const USE_TABLE: bool>(&mut self, n: u64) -> Result<usize, Self::Error>;
+}
+
+impl<B: BitWrite<BE>> PiWriteParam<BE> for B {
     #[inline]
-    fn write_pi(&mut self, mut n: u64, k: u64) -> Result<usize, Self::Error> {
-        n += 1; // π codes are indexed from 1
-        let r = n.ilog2() as usize;
-        let h = 1 + r;
-        let l = h.div_ceil(1 << k);
-        let v = (l * (1 << k) - h) as u64;
-        let rem = n & !(u64::MAX << r);
+    fn write_pi_param(&mut self, n: u64, k: u64) -> Result<usize, Self::Error> {
+        default_write_pi(self, n, k)
+    }
 
-        let mut written_bits = 0;
-        written_bits += self.write_unary((l - 1) as u64)?;
-        written_bits += self.write_bits(v, k as usize)?;
-        written_bits += self.write_bits(rem, r)?;
-
-        Ok(written_bits)
+    #[inline]
+    fn write_pi2_param<const USE_TABLE: bool>(&mut self, n: u64) -> Result<usize, Self::Error> {
+        if USE_TABLE {
+            if let Some(len) = pi2_tables::write_table_be(self, n)? {
+                return Ok(len);
+            }
+        }
+        default_write_pi(self, n, pi2_tables::K)
     }
 }
 
-impl<E: Endianness, B: BitRead<E> + ?Sized> PiRead<E> for B {}
-impl<E: Endianness, B: BitWrite<E> + ?Sized> PiWrite<E> for B {}
+impl<B: BitWrite<LE>> PiWriteParam<LE> for B {
+    #[inline]
+    fn write_pi_param(&mut self, n: u64, k: u64) -> Result<usize, Self::Error> {
+        default_write_pi(self, n, k)
+    }
 
-/// Returns the length of the π web code for `n`.
-#[must_use]
+    #[inline]
+    fn write_pi2_param<const USE_TABLE: bool>(&mut self, n: u64) -> Result<usize, Self::Error> {
+        if USE_TABLE {
+            if let Some(len) = pi2_tables::write_table_le(self, n)? {
+                return Ok(len);
+            }
+        }
+        default_write_pi(self, n, pi2_tables::K)
+    }
+}
+
 #[inline(always)]
-pub fn len_pi_web(n: u64, k: u64) -> usize {
-    1 + if n == 0 { 0 } else { len_pi(n - 1, k) }
-}
+fn default_write_pi<E: Endianness, B: BitWrite<E>>(
+    backend: &mut B,
+    mut n: u64,
+    k: u64,
+) -> Result<usize, B::Error> {
+    n += 1; // π codes are indexed from 1
+    let r = n.ilog2() as usize;
+    let h = 1 + r;
+    let l = h.div_ceil(1 << k);
+    let v = (l * (1 << k) - h) as u64;
+    let rem = n & !(u64::MAX << r);
 
-/// Trait for reading π web codes.
-///
-/// This is the trait you should usually pull in scope to read π web codes.
-pub trait PiWebRead<E: Endianness>: BitRead<E> + PiRead<E> {
-    fn read_pi_web(&mut self, k: u64) -> Result<u64, Self::Error> {
-        if self.read_bits(1)? == 1 {
-            Ok(0)
-        } else {
-            Ok(self.read_pi(k)? + 1)
-        }
-    }
-}
+    let mut written_bits = 0;
+    written_bits += backend.write_unary((l - 1) as u64)?;
+    written_bits += backend.write_bits(v, k as usize)?;
+    written_bits += backend.write_bits(rem, r)?;
 
-/// Trait for writing π web codes.
-///
-/// This is the trait you should usually pull in scope to write π web codes.
-pub trait PiWebWrite<E: Endianness>: BitWrite<E> + PiWrite<E> {
-    #[inline(always)]
-    fn write_pi_web(&mut self, n: u64, k: u64) -> Result<usize, Self::Error> {
-        if n == 0 {
-            self.write_bits(1, 1)
-        } else {
-            Ok(self.write_bits(0, 1)? + self.write_pi(n - 1, k)?)
-        }
-    }
+    Ok(written_bits)
 }
-
-impl<E: Endianness, B: BitRead<E> + PiRead<E> + ?Sized> PiWebRead<E> for B {}
-impl<E: Endianness, B: BitWrite<E> + PiWrite<E> + ?Sized> PiWebWrite<E> for B {}
 
 #[cfg(test)]
 mod test {

@@ -10,7 +10,7 @@ use core::fmt::{Display, Formatter};
 use std::error::Error;
 
 use crate::{
-    prelude::{delta_tables, gamma_tables, zeta_tables},
+    prelude::{delta_tables, gamma_tables, zeta3_tables},
     traits::*,
 };
 use common_traits::CastableInto;
@@ -201,11 +201,11 @@ pub fn check_tables(peek_bits: usize) {
             delta_tables::READ_BITS
         );
     }
-    if peek_bits < zeta_tables::READ_BITS {
+    if peek_bits < zeta3_tables::READ_BITS {
         eprintln!(
             "DANGER: your BitRead can peek at {} bits, but the tables for ζ₃ codes use {} bits",
             peek_bits,
-            zeta_tables::READ_BITS
+            zeta3_tables::READ_BITS
         );
     }
 }

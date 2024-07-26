@@ -73,7 +73,10 @@ pub mod zeta;
 pub use zeta::{len_zeta, len_zeta_param, ZetaRead, ZetaReadParam, ZetaWrite, ZetaWriteParam};
 
 pub mod pi;
-pub use pi::{len_pi, len_pi_web, PiRead, PiWebRead, PiWebWrite, PiWrite};
+pub use pi::{len_pi, PiRead, PiReadParam, PiWrite, PiWriteParam};
+
+pub mod pi_web;
+pub use pi_web::{len_pi_web, PiWebRead, PiWebWrite};
 
 pub mod golomb;
 pub use golomb::{len_golomb, GolombRead, GolombWrite};
@@ -91,7 +94,9 @@ use crate::prelude::Endianness;
 
 pub mod delta_tables;
 pub mod gamma_tables;
-pub mod zeta_tables;
+pub mod pi2_tables;
+//pub mod pi_web2_tables;
+pub mod zeta3_tables;
 
 /// A collection trait for reading all the codes supported by this library.
 pub trait ReadCodes<E: Endianness>:

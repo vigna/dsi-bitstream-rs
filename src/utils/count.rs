@@ -6,8 +6,10 @@
 
 use crate::{
     prelude::{
-        len_delta, len_gamma, len_zeta, DeltaRead, DeltaWrite, GammaRead, GammaWrite, ZetaRead,
-        ZetaWrite,
+        len_delta, len_exp_golomb, len_gamma, len_golomb, len_omega, len_pi, len_pi_web, len_rice,
+        len_vbyte, len_zeta, DeltaRead, DeltaWrite, ExpGolombRead, ExpGolombWrite, GammaRead,
+        GammaWrite, GolombRead, GolombWrite, OmegaRead, OmegaWrite, PiRead, PiWebRead, PiWebWrite,
+        PiWrite, RiceRead, RiceWrite, VByteRead, VByteWrite, ZetaRead, ZetaWrite,
     },
     traits::*,
 };
@@ -41,38 +43,35 @@ impl<E: Endianness, BW: BitWrite<E>, const PRINT: bool> BitWrite<E>
     type Error = <BW as BitWrite<E>>::Error;
 
     fn write_bits(&mut self, value: u64, n_bits: usize) -> Result<usize, Self::Error> {
-        self.bit_write.write_bits(value, n_bits).map(|x| {
-            self.bits_written += x;
+        self.bit_write.write_bits(value, n_bits).inspect(|x| {
+            self.bits_written += *x;
             if PRINT {
                 eprintln!(
                     "write_bits({:#016x}, {}) = {} (total = {})",
                     value, n_bits, x, self.bits_written
                 );
             }
-            x
         })
     }
 
     fn write_unary(&mut self, value: u64) -> Result<usize, Self::Error> {
-        self.bit_write.write_unary(value).map(|x| {
-            self.bits_written += x;
+        self.bit_write.write_unary(value).inspect(|x| {
+            self.bits_written += *x;
             if PRINT {
                 eprintln!(
                     "write_unary({}) = {} (total = {})",
                     value, x, self.bits_written
                 );
             }
-            x
         })
     }
 
     fn flush(&mut self) -> Result<usize, Self::Error> {
-        self.bit_write.flush().map(|x| {
-            self.bits_written += x;
+        self.bit_write.flush().inspect(|x| {
+            self.bits_written += *x;
             if PRINT {
                 eprintln!("flush() = {} (total = {})", x, self.bits_written);
             }
-            x
         })
     }
 }
@@ -81,15 +80,14 @@ impl<E: Endianness, BW: BitWrite<E> + GammaWrite<E>, const PRINT: bool> GammaWri
     for CountBitWriter<E, BW, PRINT>
 {
     fn write_gamma(&mut self, value: u64) -> Result<usize, BW::Error> {
-        self.bit_write.write_gamma(value).map(|x| {
-            self.bits_written += x;
+        self.bit_write.write_gamma(value).inspect(|x| {
+            self.bits_written += *x;
             if PRINT {
                 eprintln!(
                     "write_gamma({}) = {} (total = {})",
                     value, x, self.bits_written
                 );
             }
-            x
         })
     }
 }
@@ -98,15 +96,58 @@ impl<E: Endianness, BW: BitWrite<E> + DeltaWrite<E>, const PRINT: bool> DeltaWri
     for CountBitWriter<E, BW, PRINT>
 {
     fn write_delta(&mut self, value: u64) -> Result<usize, BW::Error> {
-        self.bit_write.write_delta(value).map(|x| {
-            self.bits_written += x;
+        self.bit_write.write_delta(value).inspect(|x| {
+            self.bits_written += *x;
             if PRINT {
                 eprintln!(
                     "write_delta({}) = {} (total = {})",
                     value, x, self.bits_written
                 );
             }
-            x
+        })
+    }
+}
+
+impl<E: Endianness, BW: BitWrite<E> + PiWebWrite<E>, const PRINT: bool> PiWebWrite<E>
+    for CountBitWriter<E, BW, PRINT>
+{
+    fn write_pi_web(&mut self, value: u64, k: u64) -> Result<usize, BW::Error> {
+        self.bit_write.write_pi_web(value, k).inspect(|x| {
+            self.bits_written += *x;
+            if PRINT {
+                eprintln!(
+                    "write_pi_web({}, {}) = {} (total = {})",
+                    value, k, x, self.bits_written
+                );
+            }
+        })
+    }
+}
+
+impl<E: Endianness, BW: BitWrite<E> + PiWrite<E>, const PRINT: bool> PiWrite<E>
+    for CountBitWriter<E, BW, PRINT>
+{
+    fn write_pi(&mut self, value: u64, k: u64) -> Result<usize, BW::Error> {
+        self.bit_write.write_pi(value, k).inspect(|x| {
+            self.bits_written += *x;
+            if PRINT {
+                eprintln!(
+                    "write_pi({}, {}) = {} (total = {})",
+                    value, k, x, self.bits_written
+                );
+            }
+        })
+    }
+
+    fn write_pi2(&mut self, value: u64) -> Result<usize, BW::Error> {
+        self.bit_write.write_pi2(value).inspect(|x| {
+            self.bits_written += *x;
+            if PRINT {
+                eprintln!(
+                    "write_pi2({}) = {} (total = {})",
+                    value, x, self.bits_written
+                );
+            }
         })
     }
 }
@@ -115,28 +156,106 @@ impl<E: Endianness, BW: BitWrite<E> + ZetaWrite<E>, const PRINT: bool> ZetaWrite
     for CountBitWriter<E, BW, PRINT>
 {
     fn write_zeta(&mut self, value: u64, k: u64) -> Result<usize, BW::Error> {
-        self.bit_write.write_zeta(value, k).map(|x| {
-            self.bits_written += x;
+        self.bit_write.write_zeta(value, k).inspect(|x| {
+            self.bits_written += *x;
             if PRINT {
                 eprintln!(
                     "write_zeta({}, {}) = {} (total = {})",
                     value, x, k, self.bits_written
                 );
             }
-            x
         })
     }
 
     fn write_zeta3(&mut self, value: u64) -> Result<usize, BW::Error> {
-        self.bit_write.write_zeta3(value).map(|x| {
-            self.bits_written += x;
+        self.bit_write.write_zeta3(value).inspect(|x| {
+            self.bits_written += *x;
             if PRINT {
                 eprintln!(
                     "write_zeta({}) = {} (total = {})",
                     value, x, self.bits_written
                 );
             }
-            x
+        })
+    }
+}
+
+impl<E: Endianness, BW: BitWrite<E> + OmegaWrite<E>, const PRINT: bool> OmegaWrite<E>
+    for CountBitWriter<E, BW, PRINT>
+{
+    fn write_omega(&mut self, value: u64) -> Result<usize, BW::Error> {
+        self.bit_write.write_omega(value).inspect(|x| {
+            self.bits_written += *x;
+            if PRINT {
+                eprintln!(
+                    "write_omega({}) = {} (total = {})",
+                    value, x, self.bits_written
+                );
+            }
+        })
+    }
+}
+
+impl<E: Endianness, BW: BitWrite<E> + VByteWrite<E>, const PRINT: bool> VByteWrite<E>
+    for CountBitWriter<E, BW, PRINT>
+{
+    fn write_vbyte(&mut self, value: u64) -> Result<usize, BW::Error> {
+        self.bit_write.write_vbyte(value).inspect(|x| {
+            self.bits_written += *x;
+            if PRINT {
+                eprintln!(
+                    "write_vbyte({}) = {} (total = {})",
+                    value, x, self.bits_written
+                );
+            }
+        })
+    }
+}
+
+impl<E: Endianness, BW: BitWrite<E> + GolombWrite<E>, const PRINT: bool> GolombWrite<E>
+    for CountBitWriter<E, BW, PRINT>
+{
+    fn write_golomb(&mut self, value: u64, k: u64) -> Result<usize, BW::Error> {
+        self.bit_write.write_golomb(value, k).inspect(|x| {
+            self.bits_written += *x;
+            if PRINT {
+                eprintln!(
+                    "write_golomb({}, {}) = {} (total = {})",
+                    value, k, x, self.bits_written
+                );
+            }
+        })
+    }
+}
+
+impl<E: Endianness, BW: BitWrite<E> + ExpGolombWrite<E>, const PRINT: bool> ExpGolombWrite<E>
+    for CountBitWriter<E, BW, PRINT>
+{
+    fn write_exp_golomb(&mut self, value: u64, k: usize) -> Result<usize, BW::Error> {
+        self.bit_write.write_exp_golomb(value, k).inspect(|x| {
+            self.bits_written += *x;
+            if PRINT {
+                eprintln!(
+                    "write_exp_golomb({}, {}) = {} (total = {})",
+                    value, k, x, self.bits_written
+                );
+            }
+        })
+    }
+}
+
+impl<E: Endianness, BW: BitWrite<E> + RiceWrite<E>, const PRINT: bool> RiceWrite<E>
+    for CountBitWriter<E, BW, PRINT>
+{
+    fn write_rice(&mut self, value: u64, log2_b: usize) -> Result<usize, BW::Error> {
+        self.bit_write.write_rice(value, log2_b).inspect(|x| {
+            self.bits_written += *x;
+            if PRINT {
+                eprintln!(
+                    "write_rice({}, {}) = {} (total = {})",
+                    value, log2_b, x, self.bits_written
+                );
+            }
         })
     }
 }
@@ -181,7 +300,7 @@ impl<E: Endianness, BR: BitRead<E>, const PRINT: bool> BitRead<E> for CountBitRe
     type PeekWord = BR::PeekWord;
 
     fn read_bits(&mut self, n_bits: usize) -> Result<u64, Self::Error> {
-        self.bit_read.read_bits(n_bits).map(|x| {
+        self.bit_read.read_bits(n_bits).inspect(|x| {
             self.bits_read += n_bits;
             if PRINT {
                 eprintln!(
@@ -189,17 +308,15 @@ impl<E: Endianness, BR: BitRead<E>, const PRINT: bool> BitRead<E> for CountBitRe
                     n_bits, x, self.bits_read
                 );
             }
-            x
         })
     }
 
     fn read_unary(&mut self) -> Result<u64, Self::Error> {
-        self.bit_read.read_unary().map(|x| {
-            self.bits_read += x as usize + 1;
+        self.bit_read.read_unary().inspect(|x| {
+            self.bits_read += *x as usize + 1;
             if PRINT {
                 eprintln!("read_unary() = {} (total = {})", x, self.bits_read);
             }
-            x
         })
     }
 
@@ -224,12 +341,11 @@ impl<E: Endianness, BR: BitRead<E> + GammaRead<E>, const PRINT: bool> GammaRead<
     for CountBitReader<E, BR, PRINT>
 {
     fn read_gamma(&mut self) -> Result<u64, BR::Error> {
-        self.bit_read.read_gamma().map(|x| {
-            self.bits_read += len_gamma(x);
+        self.bit_read.read_gamma().inspect(|x| {
+            self.bits_read += len_gamma(*x);
             if PRINT {
                 eprintln!("read_gamma() = {} (total = {})", x, self.bits_read);
             }
-            x
         })
     }
 }
@@ -238,12 +354,46 @@ impl<E: Endianness, BR: BitRead<E> + DeltaRead<E>, const PRINT: bool> DeltaRead<
     for CountBitReader<E, BR, PRINT>
 {
     fn read_delta(&mut self) -> Result<u64, BR::Error> {
-        self.bit_read.read_delta().map(|x| {
-            self.bits_read += len_delta(x);
+        self.bit_read.read_delta().inspect(|x| {
+            self.bits_read += len_delta(*x);
             if PRINT {
                 eprintln!("read_delta() = {} (total = {})", x, self.bits_read);
             }
-            x
+        })
+    }
+}
+
+impl<E: Endianness, BR: BitRead<E> + PiWebRead<E>, const PRINT: bool> PiWebRead<E>
+    for CountBitReader<E, BR, PRINT>
+{
+    fn read_pi_web(&mut self, k: u64) -> Result<u64, BR::Error> {
+        self.bit_read.read_pi_web(k).inspect(|x| {
+            self.bits_read += len_pi_web(*x, k);
+            if PRINT {
+                eprintln!("len_pi_web({}) = {} (total = {})", k, x, self.bits_read);
+            }
+        })
+    }
+}
+
+impl<E: Endianness, BR: BitRead<E> + PiRead<E>, const PRINT: bool> PiRead<E>
+    for CountBitReader<E, BR, PRINT>
+{
+    fn read_pi(&mut self, k: u64) -> Result<u64, BR::Error> {
+        self.bit_read.read_pi(k).inspect(|x| {
+            self.bits_read += len_pi(*x, k);
+            if PRINT {
+                eprintln!("read_pi({}) = {} (total = {})", k, x, self.bits_read);
+            }
+        })
+    }
+
+    fn read_pi2(&mut self) -> Result<u64, BR::Error> {
+        self.bit_read.read_pi2().inspect(|x| {
+            self.bits_read += len_pi(*x, 2);
+            if PRINT {
+                eprintln!("read_pi2() = {} (total = {})", x, self.bits_read);
+            }
         })
     }
 }
@@ -252,22 +402,88 @@ impl<E: Endianness, BR: BitRead<E> + ZetaRead<E>, const PRINT: bool> ZetaRead<E>
     for CountBitReader<E, BR, PRINT>
 {
     fn read_zeta(&mut self, k: u64) -> Result<u64, BR::Error> {
-        self.bit_read.read_zeta(k).map(|x| {
-            self.bits_read += len_zeta(x, k);
+        self.bit_read.read_zeta(k).inspect(|x| {
+            self.bits_read += len_zeta(*x, k);
             if PRINT {
                 eprintln!("read_zeta({}) = {} (total = {})", k, x, self.bits_read);
             }
-            x
         })
     }
 
     fn read_zeta3(&mut self) -> Result<u64, BR::Error> {
-        self.bit_read.read_zeta3().map(|x| {
-            self.bits_read += len_zeta(x, 3);
+        self.bit_read.read_zeta3().inspect(|x| {
+            self.bits_read += len_zeta(*x, 3);
             if PRINT {
                 eprintln!("read_zeta3() = {} (total = {})", x, self.bits_read);
             }
-            x
+        })
+    }
+}
+
+impl<E: Endianness, BR: BitRead<E> + OmegaRead<E>, const PRINT: bool> OmegaRead<E>
+    for CountBitReader<E, BR, PRINT>
+{
+    fn read_omega(&mut self) -> Result<u64, BR::Error> {
+        self.bit_read.read_omega().inspect(|x| {
+            self.bits_read += len_omega(*x);
+            if PRINT {
+                eprintln!("read_omega() = {} (total = {})", x, self.bits_read);
+            }
+        })
+    }
+}
+
+impl<E: Endianness, BR: BitRead<E> + VByteRead<E>, const PRINT: bool> VByteRead<E>
+    for CountBitReader<E, BR, PRINT>
+{
+    fn read_vbyte(&mut self) -> Result<u64, BR::Error> {
+        self.bit_read.read_vbyte().inspect(|x| {
+            self.bits_read += len_vbyte(*x);
+            if PRINT {
+                eprintln!("read_vbyte() = {} (total = {})", x, self.bits_read);
+            }
+        })
+    }
+}
+
+impl<E: Endianness, BR: BitRead<E> + GolombRead<E>, const PRINT: bool> GolombRead<E>
+    for CountBitReader<E, BR, PRINT>
+{
+    fn read_golomb(&mut self, b: u64) -> Result<u64, BR::Error> {
+        self.bit_read.read_golomb(b).inspect(|x| {
+            self.bits_read += len_golomb(*x, b);
+            if PRINT {
+                eprintln!("read_golomb({}) = {} (total = {})", b, x, self.bits_read);
+            }
+        })
+    }
+}
+
+impl<E: Endianness, BR: BitRead<E> + ExpGolombRead<E>, const PRINT: bool> ExpGolombRead<E>
+    for CountBitReader<E, BR, PRINT>
+{
+    fn read_exp_golomb(&mut self, k: usize) -> Result<u64, BR::Error> {
+        self.bit_read.read_exp_golomb(k).inspect(|x| {
+            self.bits_read += len_exp_golomb(*x, k);
+            if PRINT {
+                eprintln!(
+                    "read_exp_golomb({}) = {} (total = {})",
+                    k, x, self.bits_read
+                );
+            }
+        })
+    }
+}
+
+impl<E: Endianness, BR: BitRead<E> + RiceRead<E>, const PRINT: bool> RiceRead<E>
+    for CountBitReader<E, BR, PRINT>
+{
+    fn read_rice(&mut self, log2_b: usize) -> Result<u64, BR::Error> {
+        self.bit_read.read_rice(log2_b).inspect(|x| {
+            self.bits_read += len_rice(*x, log2_b);
+            if PRINT {
+                eprintln!("read_rice({}) = {} (total = {})", log2_b, x, self.bits_read);
+            }
         })
     }
 }

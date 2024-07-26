@@ -62,6 +62,3 @@ pub trait GolombWrite<E: Endianness>: BitWrite<E> + MinimalBinaryWrite<E> {
         Ok(self.write_unary(n / b)? + self.write_minimal_binary(n % b, b)?)
     }
 }
-
-impl<E: Endianness, B: BitRead<E>> GolombRead<E> for B {}
-impl<E: Endianness, B: BitWrite<E>> GolombWrite<E> for B {}

@@ -15,6 +15,19 @@
 * Added `core::ops::Add`, `core::ops::AddAssign`, and `core::iter::Sum` to 
   CodeStats so they can be merged using iter's `.sum()`.
 
+### Changed
+
+* Now Rice and ExpGolomb are not implemented through a blanket because it would
+  make it impossible to inspect and forward the call, like it's done in the Count
+  and the Debug decorators.
+* Fixed blanket impl of non param codes for BufBitWriter where it had a generic
+  `WriteParam` instead of the concrete `DefaultWriteParams`
+
+### Removed
+
+* Removed `DbgBitReader` and `DbgBitWriter` as `CountBitReader` and 
+  `CountBitWriter` also allow to print all values. This way we don't have to
+  mantain two implementations of the same thing.
 
 ## [0.4.2] - 2024-04-07
 

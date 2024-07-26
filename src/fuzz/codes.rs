@@ -33,7 +33,7 @@ pub struct FuzzCase {
     commands: Vec<RandomCommand>,
 }
 
-#[derive(Arbitrary, Debug, Clone)]
+#[derive(Arbitrary, Clone)]
 enum RandomCommand {
     Bits(u64, usize),
     MinimalBinary(u64, u64),
@@ -51,10 +51,10 @@ enum RandomCommand {
     PiWeb(u64, u64),
 }
 
-pub fn harness(data: FuzzCase) {
-    let mut data = data;
-    for command in &mut data.commands {
-        match command {
+impl RandomCommand {
+    fn normalize(&self) -> Self {
+        let mut res = self.clone();
+        match &mut res {
             RandomCommand::Bits(value, n_bits) => {
                 *n_bits = 1 + (*n_bits % 63);
                 *value &= (1 << *n_bits) - 1;
@@ -102,6 +102,47 @@ pub fn harness(data: FuzzCase) {
                 *k = (*k).max(1).min(7);
             }
         };
+        res
+    }
+}
+
+impl std::fmt::Debug for RandomCommand {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
+        match self.normalize() {
+            RandomCommand::Bits(value, n_bits) => {
+                write!(f, "RandomCommand::Bits({}, {})", value, n_bits)
+            }
+            RandomCommand::MinimalBinary(value, max) => {
+                write!(f, "RandomCommand::MinimalBinary({}, {})", value, max)
+            }
+            RandomCommand::Unary(value) => write!(f, "RandomCommand::Unary({})", value),
+            RandomCommand::Gamma(value, v1, v2) => {
+                write!(f, "RandomCommand::Gamma({}, {}, {})", value, v1, v2)
+            }
+            RandomCommand::Delta(value, v1, v2) => {
+                write!(f, "RandomCommand::Delta({}, {}, {})", value, v1, v2)
+            }
+            RandomCommand::Zeta(value, k, v1, v2) => {
+                write!(f, "RandomCommand::Zeta({}, {}, {}, {})", value, k, v1, v2)
+            }
+            RandomCommand::Golomb(value, b) => write!(f, "RandomCommand::Golomb({}, {})", value, b),
+            RandomCommand::Rice(value, k) => write!(f, "RandomCommand::Rice({}, {})", value, k),
+            RandomCommand::ExpGolomb(value, k) => {
+                write!(f, "RandomCommand::ExpGolomb({}, {})", value, k)
+            }
+            RandomCommand::Bytes(bytes) => write!(f, "RandomCommand::Bytes({:?})", bytes),
+            RandomCommand::VByte(value) => write!(f, "RandomCommand::VByte({})", value),
+            RandomCommand::Omega(value) => write!(f, "RandomCommand::Omega({})", value),
+            RandomCommand::Pi(value, k) => write!(f, "RandomCommand::Pi({}, {})", value, k),
+            RandomCommand::PiWeb(value, k) => write!(f, "RandomCommand::PiWeb({}, {})", value, k),
+        }
+    }
+}
+
+pub fn harness(data: FuzzCase) {
+    let mut data = data;
+    for command in &mut data.commands {
+        *command = command.normalize();
     }
 
     debugln!("{:#4?}", data);
