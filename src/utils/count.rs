@@ -41,38 +41,35 @@ impl<E: Endianness, BW: BitWrite<E>, const PRINT: bool> BitWrite<E>
     type Error = <BW as BitWrite<E>>::Error;
 
     fn write_bits(&mut self, value: u64, n_bits: usize) -> Result<usize, Self::Error> {
-        self.bit_write.write_bits(value, n_bits).map(|x| {
-            self.bits_written += x;
+        self.bit_write.write_bits(value, n_bits).inspect(|x| {
+            self.bits_written += *x;
             if PRINT {
                 eprintln!(
                     "write_bits({:#016x}, {}) = {} (total = {})",
                     value, n_bits, x, self.bits_written
                 );
             }
-            x
         })
     }
 
     fn write_unary(&mut self, value: u64) -> Result<usize, Self::Error> {
-        self.bit_write.write_unary(value).map(|x| {
-            self.bits_written += x;
+        self.bit_write.write_unary(value).inspect(|x| {
+            self.bits_written += *x;
             if PRINT {
                 eprintln!(
                     "write_unary({}) = {} (total = {})",
                     value, x, self.bits_written
                 );
             }
-            x
         })
     }
 
     fn flush(&mut self) -> Result<usize, Self::Error> {
-        self.bit_write.flush().map(|x| {
-            self.bits_written += x;
+        self.bit_write.flush().inspect(|x| {
+            self.bits_written += *x;
             if PRINT {
                 eprintln!("flush() = {} (total = {})", x, self.bits_written);
             }
-            x
         })
     }
 }
@@ -81,15 +78,14 @@ impl<E: Endianness, BW: BitWrite<E> + GammaWrite<E>, const PRINT: bool> GammaWri
     for CountBitWriter<E, BW, PRINT>
 {
     fn write_gamma(&mut self, value: u64) -> Result<usize, BW::Error> {
-        self.bit_write.write_gamma(value).map(|x| {
-            self.bits_written += x;
+        self.bit_write.write_gamma(value).inspect(|x| {
+            self.bits_written += *x;
             if PRINT {
                 eprintln!(
                     "write_gamma({}) = {} (total = {})",
                     value, x, self.bits_written
                 );
             }
-            x
         })
     }
 }
@@ -98,15 +94,14 @@ impl<E: Endianness, BW: BitWrite<E> + DeltaWrite<E>, const PRINT: bool> DeltaWri
     for CountBitWriter<E, BW, PRINT>
 {
     fn write_delta(&mut self, value: u64) -> Result<usize, BW::Error> {
-        self.bit_write.write_delta(value).map(|x| {
-            self.bits_written += x;
+        self.bit_write.write_delta(value).inspect(|x| {
+            self.bits_written += *x;
             if PRINT {
                 eprintln!(
                     "write_delta({}) = {} (total = {})",
                     value, x, self.bits_written
                 );
             }
-            x
         })
     }
 }
@@ -115,28 +110,26 @@ impl<E: Endianness, BW: BitWrite<E> + ZetaWrite<E>, const PRINT: bool> ZetaWrite
     for CountBitWriter<E, BW, PRINT>
 {
     fn write_zeta(&mut self, value: u64, k: u64) -> Result<usize, BW::Error> {
-        self.bit_write.write_zeta(value, k).map(|x| {
-            self.bits_written += x;
+        self.bit_write.write_zeta(value, k).inspect(|x| {
+            self.bits_written += *x;
             if PRINT {
                 eprintln!(
                     "write_zeta({}, {}) = {} (total = {})",
                     value, x, k, self.bits_written
                 );
             }
-            x
         })
     }
 
     fn write_zeta3(&mut self, value: u64) -> Result<usize, BW::Error> {
-        self.bit_write.write_zeta3(value).map(|x| {
-            self.bits_written += x;
+        self.bit_write.write_zeta3(value).inspect(|x| {
+            self.bits_written += *x;
             if PRINT {
                 eprintln!(
                     "write_zeta({}) = {} (total = {})",
                     value, x, self.bits_written
                 );
             }
-            x
         })
     }
 }
@@ -181,7 +174,7 @@ impl<E: Endianness, BR: BitRead<E>, const PRINT: bool> BitRead<E> for CountBitRe
     type PeekWord = BR::PeekWord;
 
     fn read_bits(&mut self, n_bits: usize) -> Result<u64, Self::Error> {
-        self.bit_read.read_bits(n_bits).map(|x| {
+        self.bit_read.read_bits(n_bits).inspect(|x| {
             self.bits_read += n_bits;
             if PRINT {
                 eprintln!(
@@ -189,17 +182,15 @@ impl<E: Endianness, BR: BitRead<E>, const PRINT: bool> BitRead<E> for CountBitRe
                     n_bits, x, self.bits_read
                 );
             }
-            x
         })
     }
 
     fn read_unary(&mut self) -> Result<u64, Self::Error> {
-        self.bit_read.read_unary().map(|x| {
-            self.bits_read += x as usize + 1;
+        self.bit_read.read_unary().inspect(|x| {
+            self.bits_read += *x as usize + 1;
             if PRINT {
                 eprintln!("read_unary() = {} (total = {})", x, self.bits_read);
             }
-            x
         })
     }
 
@@ -224,12 +215,11 @@ impl<E: Endianness, BR: BitRead<E> + GammaRead<E>, const PRINT: bool> GammaRead<
     for CountBitReader<E, BR, PRINT>
 {
     fn read_gamma(&mut self) -> Result<u64, BR::Error> {
-        self.bit_read.read_gamma().map(|x| {
-            self.bits_read += len_gamma(x);
+        self.bit_read.read_gamma().inspect(|x| {
+            self.bits_read += len_gamma(*x);
             if PRINT {
                 eprintln!("read_gamma() = {} (total = {})", x, self.bits_read);
             }
-            x
         })
     }
 }
@@ -238,12 +228,11 @@ impl<E: Endianness, BR: BitRead<E> + DeltaRead<E>, const PRINT: bool> DeltaRead<
     for CountBitReader<E, BR, PRINT>
 {
     fn read_delta(&mut self) -> Result<u64, BR::Error> {
-        self.bit_read.read_delta().map(|x| {
-            self.bits_read += len_delta(x);
+        self.bit_read.read_delta().inspect(|x| {
+            self.bits_read += len_delta(*x);
             if PRINT {
                 eprintln!("read_delta() = {} (total = {})", x, self.bits_read);
             }
-            x
         })
     }
 }
@@ -252,22 +241,20 @@ impl<E: Endianness, BR: BitRead<E> + ZetaRead<E>, const PRINT: bool> ZetaRead<E>
     for CountBitReader<E, BR, PRINT>
 {
     fn read_zeta(&mut self, k: u64) -> Result<u64, BR::Error> {
-        self.bit_read.read_zeta(k).map(|x| {
-            self.bits_read += len_zeta(x, k);
+        self.bit_read.read_zeta(k).inspect(|x| {
+            self.bits_read += len_zeta(*x, k);
             if PRINT {
                 eprintln!("read_zeta({}) = {} (total = {})", k, x, self.bits_read);
             }
-            x
         })
     }
 
     fn read_zeta3(&mut self) -> Result<u64, BR::Error> {
-        self.bit_read.read_zeta3().map(|x| {
-            self.bits_read += len_zeta(x, 3);
+        self.bit_read.read_zeta3().inspect(|x| {
+            self.bits_read += len_zeta(*x, 3);
             if PRINT {
                 eprintln!("read_zeta3() = {} (total = {})", x, self.bits_read);
             }
-            x
         })
     }
 }
