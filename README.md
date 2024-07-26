@@ -7,6 +7,7 @@
 [![](https://tokei.rs/b1/github/vigna/dsi-bitstream-rs?type=Rust,Python)](https://github.com/vigna/dsi-bitstream-rs)
 [![Latest version](https://img.shields.io/crates/v/dsi-bitstream.svg)](https://crates.io/crates/dsi-bitstream)
 [![Documentation](https://docs.rs/dsi-bitstream/badge.svg)](https://docs.rs/dsi-bitstream)
+[![Coverage Status](https://coveralls.io/repos/github/vigna/dsi-bitstream-rs/badge.svg?branch=main)](https://coveralls.io/github/vigna/dsi-bitstream-rs?branch=main)
 
 A Rust implementation of bit streams supporting several types of instantaneous
 codes for compression.
