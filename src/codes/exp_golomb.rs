@@ -39,7 +39,18 @@ pub trait ExpGolombRead<E: Endianness>: BitRead<E> + GammaRead<E> {
 pub trait ExpGolombWrite<E: Endianness>: BitWrite<E> + GammaWrite<E> {
     #[inline]
     fn write_exp_golomb(&mut self, n: u64, k: usize) -> Result<usize, Self::Error> {
-        Ok(self.write_gamma(n >> k)? + self.write_bits(n, k)?)
+        let mut written_bits = self.write_gamma(n >> k)?;
+        #[cfg(feature = "checks")]
+        {
+            // Clean up n in case checks are enabled
+            let n = n & (1_u128 << k).wrapping_sub(1) as u64;
+            written_bits += self.write_bits(n, k)?;
+        }
+        #[cfg(not(feature = "checks"))]
+        {
+            written_bits += self.write_bits(n, k)?;
+        }
+        Ok(written_bits)
     }
 }
 

@@ -53,7 +53,18 @@ pub trait RiceRead<E: Endianness>: BitRead<E> {
 pub trait RiceWrite<E: Endianness>: BitWrite<E> {
     #[inline]
     fn write_rice(&mut self, n: u64, log2_b: usize) -> Result<usize, Self::Error> {
-        Ok(self.write_unary(n >> log2_b)? + self.write_bits(n, log2_b)?)
+        let mut written_bits = self.write_unary(n >> log2_b)?;
+        #[cfg(feature = "checks")]
+        {
+            // Clean up n in case checks are enabled
+            let n = n & (1_u128 << log2_b).wrapping_sub(1) as u64;
+            written_bits += self.write_bits(n, log2_b)?;
+        }
+        #[cfg(not(feature = "checks"))]
+        {
+            written_bits += self.write_bits(n, log2_b)?;
+        }
+        Ok(written_bits)
     }
 }
 

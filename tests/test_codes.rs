@@ -87,13 +87,13 @@ where
                 }
             }
             7 => {
-                let log2_b = r.gen_range(0..4);
+                let log2_b = r.gen_range(1..5);
                 for _ in 0..r.gen_range(1..10) {
                     written_bits += write.write_rice(v.gen_range(0..100), log2_b)?;
                 }
             }
             8 => {
-                let k = r.gen_range(0..4);
+                let k = r.gen_range(1..5);
                 for _ in 0..r.gen_range(1..10) {
                     written_bits += write.write_exp_golomb(v.gen_range(0..100), k)?;
                 }
@@ -168,13 +168,13 @@ where
                 }
             }
             7 => {
-                let log2_b = r.gen_range(0..4);
+                let log2_b = r.gen_range(1..5);
                 for _ in 0..r.gen_range(1..10) {
                     assert_eq!(v.gen_range(0..100), read.read_rice(log2_b)?);
                 }
             }
             8 => {
-                let k = r.gen_range(0..4);
+                let k = r.gen_range(1..5);
                 for _ in 0..r.gen_range(1..10) {
                     assert_eq!(v.gen_range(0..100), read.read_exp_golomb(k)?);
                 }
