@@ -15,6 +15,7 @@ use crate::prelude::{
     len_vbyte, len_zeta, Code, ReadCodes, WriteCodes,
 };
 use anyhow::Result;
+use core::error::Error;
 use std::sync::Mutex;
 
 /// Keeps track of the space needed to store a stream of integers using
@@ -303,7 +304,9 @@ impl<
 where
     W: CodeRead,
 {
-    type Error<CRE> = W::Error<CRE>;
+    type Error<CRE> = W::Error<CRE>
+    where
+        CRE: Error + Send + Sync + 'static;
     #[inline]
     fn read<E: Endianness, CR: ReadCodes<E> + ?Sized>(
         &self,
@@ -328,7 +331,9 @@ impl<
 where
     W: CodeReadDispatch<E, CR>,
 {
-    type Error<CRE> = W::Error<CRE>;
+    type Error<CRE> = W::Error<CRE>
+    where
+        CRE: Error + Send + Sync + 'static;
     #[inline]
     fn read_dispatch(&self, reader: &mut CR) -> Result<u64, Self::Error<CR::Error>> {
         let res = self.wrapped.read_dispatch(reader)?;
@@ -348,7 +353,9 @@ impl<
 where
     W: CodeWrite,
 {
-    type Error<CWE> = W::Error<CWE>;
+    type Error<CWE> = W::Error<CWE>
+    where
+        CWE: Error + Send + Sync + 'static;
     #[inline]
     fn write<E: Endianness, CW: WriteCodes<E> + ?Sized>(
         &self,
@@ -374,7 +381,9 @@ impl<
 where
     W: CodeWriteDispatch<E, CW>,
 {
-    type Error<CWE> = W::Error<CWE>;
+    type Error<CWE> = W::Error<CWE>
+    where
+        CWE: Error + Send + Sync + 'static;
     #[inline]
     fn write_dispatch(&self, writer: &mut CW, value: u64) -> Result<usize, Self::Error<CW::Error>> {
         let res = self.wrapped.write_dispatch(writer, value)?;
