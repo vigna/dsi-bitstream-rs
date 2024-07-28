@@ -8,10 +8,14 @@
 #[cfg(feature = "mem_dbg")]
 use mem_dbg::{MemDbg, MemSize};
 
+use crate::prelude::code::{CodeRead, CodeReadDispatch, CodeWrite, CodeWriteDispatch};
+use crate::prelude::Endianness;
 use crate::prelude::{
     len_delta, len_exp_golomb, len_gamma, len_golomb, len_omega, len_pi, len_pi_web, len_rice,
-    len_vbyte, len_zeta, Code,
+    len_vbyte, len_zeta, Code, ReadCodes, WriteCodes,
 };
+use anyhow::Result;
+use std::sync::Mutex;
 
 /// Keeps track of the space needed to store a stream of integers using
 /// different codes.
@@ -234,5 +238,147 @@ impl<
 {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
         iter.fold(Self::default(), |a, b| a + b)
+    }
+}
+
+#[derive(Debug)]
+#[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
+/// A struct that can wrap `Code` and compute `CodesStats` for a given stream.
+pub struct CodesStatsWrapper<
+    W,
+    // How many ζ codes to consider.
+    const ZETA: usize = 10,
+    // How many Golomb codes to consider.
+    const GOLOMB: usize = 20,
+    // How many Exponential Golomb codes to consider.
+    const EXP_GOLOMB: usize = 10,
+    // How many Rice codes to consider.
+    const RICE: usize = 10,
+    // How many Pi and Pi web codes to consider.
+    const PI: usize = 10,
+> {
+    // TODO!: figure out how we can do this without a lock.
+    // This is needed because the `CodeRead` and `CodeWrite` traits must have
+    // &self and not &mut self.
+    stats: Mutex<CodesStats<ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>>,
+    wrapped: W,
+}
+
+impl<
+        W,
+        const ZETA: usize,
+        const GOLOMB: usize,
+        const EXP_GOLOMB: usize,
+        const RICE: usize,
+        const PI: usize,
+    > CodesStatsWrapper<W, ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
+{
+    /// Create a new `CodesStatsWrapper` with the given wrapped value.
+    pub fn new(wrapped: W) -> Self {
+        Self {
+            stats: Mutex::new(CodesStats::default()),
+            wrapped,
+        }
+    }
+
+    /// Returns a reference to the stats.
+    pub fn stats(&self) -> &Mutex<CodesStats<ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>> {
+        &self.stats
+    }
+
+    /// Consumes the wrapper and returns the inner wrapped value and the stats.
+    pub fn into_inner(self) -> (W, CodesStats<ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>) {
+        (self.wrapped, self.stats.into_inner().unwrap())
+    }
+}
+
+impl<
+        W,
+        const ZETA: usize,
+        const GOLOMB: usize,
+        const EXP_GOLOMB: usize,
+        const RICE: usize,
+        const PI: usize,
+    > CodeRead for CodesStatsWrapper<W, ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
+where
+    W: CodeRead,
+{
+    type Error<CRE> = W::Error<CRE>;
+    #[inline]
+    fn read<E: Endianness, CR: ReadCodes<E> + ?Sized>(
+        &self,
+        reader: &mut CR,
+    ) -> Result<u64, Self::Error<CR::Error>> {
+        let res = self.wrapped.read(reader)?;
+        self.stats.lock().unwrap().update(res);
+        Ok(res)
+    }
+}
+
+impl<
+        W,
+        const ZETA: usize,
+        const GOLOMB: usize,
+        const EXP_GOLOMB: usize,
+        const RICE: usize,
+        const PI: usize,
+        E: Endianness,
+        CR: ReadCodes<E> + ?Sized,
+    > CodeReadDispatch<E, CR> for CodesStatsWrapper<W, ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
+where
+    W: CodeReadDispatch<E, CR>,
+{
+    type Error<CRE> = W::Error<CRE>;
+    #[inline]
+    fn read_dispatch(&self, reader: &mut CR) -> Result<u64, Self::Error<CR::Error>> {
+        let res = self.wrapped.read_dispatch(reader)?;
+        self.stats.lock().unwrap().update(res);
+        Ok(res)
+    }
+}
+
+impl<
+        W,
+        const ZETA: usize,
+        const GOLOMB: usize,
+        const EXP_GOLOMB: usize,
+        const RICE: usize,
+        const PI: usize,
+    > CodeWrite for CodesStatsWrapper<W, ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
+where
+    W: CodeWrite,
+{
+    type Error<CWE> = W::Error<CWE>;
+    #[inline]
+    fn write<E: Endianness, CW: WriteCodes<E> + ?Sized>(
+        &self,
+        writer: &mut CW,
+        value: u64,
+    ) -> Result<usize, Self::Error<CW::Error>> {
+        let res = self.wrapped.write(writer, value)?;
+        self.stats.lock().unwrap().update(value);
+        Ok(res)
+    }
+}
+
+impl<
+        W,
+        const ZETA: usize,
+        const GOLOMB: usize,
+        const EXP_GOLOMB: usize,
+        const RICE: usize,
+        const PI: usize,
+        E: Endianness,
+        CW: WriteCodes<E> + ?Sized,
+    > CodeWriteDispatch<E, CW> for CodesStatsWrapper<W, ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
+where
+    W: CodeWriteDispatch<E, CW>,
+{
+    type Error<CWE> = W::Error<CWE>;
+    #[inline]
+    fn write_dispatch(&self, writer: &mut CW, value: u64) -> Result<usize, Self::Error<CW::Error>> {
+        let res = self.wrapped.write_dispatch(writer, value)?;
+        self.stats.lock().unwrap().update(value);
+        Ok(res)
     }
 }
