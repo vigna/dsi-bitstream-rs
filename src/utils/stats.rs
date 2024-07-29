@@ -15,7 +15,7 @@ use crate::prelude::{
     len_vbyte, len_zeta, Code, ReadCodes, WriteCodes,
 };
 use anyhow::Result;
-use core::error::Error;
+use std::error::Error;
 use core::fmt::Debug;
 use std::sync::Mutex;
 

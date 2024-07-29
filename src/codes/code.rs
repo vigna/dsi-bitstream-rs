@@ -29,7 +29,7 @@
 //!
 
 use super::*;
-use core::error::Error;
+use std::error::Error;
 use core::fmt::Debug;
 use core::marker::PhantomData;
 
