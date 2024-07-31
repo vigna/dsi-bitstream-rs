@@ -15,8 +15,8 @@ use crate::prelude::{
     len_vbyte, len_zeta, Code, ReadCodes, WriteCodes,
 };
 use anyhow::Result;
-use std::error::Error;
 use core::fmt::Debug;
+use std::error::Error;
 use std::sync::Mutex;
 
 /// Keeps track of the space needed to store a stream of integers using

@@ -29,9 +29,9 @@
 //!
 
 use super::*;
-use std::error::Error;
 use core::fmt::Debug;
 use core::marker::PhantomData;
+use std::error::Error;
 
 /// Something that can decode a value form any bitstream.
 pub trait CodeRead {
