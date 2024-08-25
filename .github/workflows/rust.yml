@@ -1,10 +1,6 @@
 name: Rust
 
-on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+on: ["push", "pull_request"]
 
 env:
   CARGO_TERM_COLOR: always
@@ -31,6 +27,7 @@ jobs:
     needs: build
     name: coverage
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
     container:
       image: xd009642/tarpaulin:develop-nightly
       options: --security-opt seccomp=unconfined
