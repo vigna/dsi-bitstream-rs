@@ -41,16 +41,40 @@ pub struct CodesStats<
     // How many Pi and Pi web codes to consider.
     const PI: usize = 10,
 > {
+    /// The total number of elements observed.
+    pub total: u64,
+    /// The total space used to store the elements if
+    /// they were stored using the unary code.
     pub unary: u64,
+    /// The total space used to store the elements if
+    /// they were stored using the gamma code.
     pub gamma: u64,
+    /// The total space used to store the elements if
+    /// they were stored using the delta code.
     pub delta: u64,
+    /// The total space used to store the elements if
+    /// they were stored using the omega code.
     pub omega: u64,
+    /// The total space used to store the elements if
+    /// they were stored using the variable byte code.
     pub vbyte: u64,
+    /// The total space used to store the elements if
+    /// they were stored using the zeta code.
     pub zeta: [u64; ZETA],
+    /// The total space used to store the elements if
+    /// they were stored using the Golomb code.
     pub golomb: [u64; GOLOMB],
+    /// The total space used to store the elements if
+    /// they were stored using the exponential Golomb code.
     pub exp_golomb: [u64; EXP_GOLOMB],
+    /// The total space used to store the elements if
+    /// they were stored using the Rice code.
     pub rice: [u64; RICE],
+    /// The total space used to store the elements if
+    /// they were stored using the Pi code.
     pub pi: [u64; PI],
+    /// The total space used to store the elements if
+    /// they were stored using the Pi web code.
     pub pi_web: [u64; PI],
 }
 
@@ -64,6 +88,7 @@ impl<
 {
     fn default() -> Self {
         Self {
+            total: 0,
             unary: 0,
             gamma: 0,
             delta: 0,
@@ -95,6 +120,7 @@ impl<
 
     #[inline]
     pub fn update_many(&mut self, n: u64, count: u64) -> u64 {
+        self.total += count;
         self.unary += (n + 1) * count;
         self.gamma += len_gamma(n) as u64 * count;
         self.delta += len_delta(n) as u64 * count;
@@ -125,6 +151,7 @@ impl<
 
     // Combines additively this stats with another one.
     pub fn add(&mut self, rhs: &Self) {
+        self.total += rhs.total;
         self.unary += rhs.unary;
         self.gamma += rhs.gamma;
         self.delta += rhs.delta;
