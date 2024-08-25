@@ -22,19 +22,19 @@
 //! which are more efficient for multiple reads and writes because they do
 //! not need to do dynamic dispatch.
 //!
-//! While [`Code`] supports all the codes, [`ConstCode`] only supports a subset of 
+//! While [`Code`] supports all the codes, [`ConstCode`] only supports a subset of
 //! the most commonly used codes, because we have to manually write the dispatch  
 //! for every combination of code and parameters. If you need more codes, you can
 //! avoid this limitation by implementing your own version of it like this:
-//! 
+//!
 //! ```rust
 //! use dsi_bitstream::prelude::*;
 //! use std::error::Error;
 //! use std::fmt::Debug;
-//! 
+//!
 //! #[derive(Clone, Copy, Debug, Default)]
 //! pub struct Rice<const B: usize>;
-//! 
+//!
 //! impl<const B: usize> CodeRead for Rice<B> {
 //!     type Error<CRE> = CRE
 //!     where
@@ -46,7 +46,7 @@
 //!         reader.read_rice(B)
 //!     }
 //! }
-//! 
+//!
 //! impl<const B: usize> CodeWrite for Rice<B> {
 //!     type Error<CWE> = CWE
 //!     where
@@ -59,7 +59,7 @@
 //!         writer.write_rice(value, B)
 //!     }
 //! }
-//! 
+//!
 //! impl<const B: usize> CodeLen for Rice<B> {
 //!     #[inline]
 //!     fn len(&self, value: u64) -> usize {
@@ -672,12 +672,12 @@ where
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
 /// A zero-sized struct with a const generic parameter that can be used to
-/// select the code at compile time. 
-/// 
+/// select the code at compile time.
+///
 /// This only implements a subset of the most commonly used codes.
-/// If you need to use a code that is not implemented here, you can 
+/// If you need to use a code that is not implemented here, you can
 /// implement [`CodeRead`], [`CodeWrite`], and [`CodeLen`] for your own struct
-/// like in the example of the [`code`] module. 
+/// like in the example of the [`code`] module.
 pub struct ConstCode<const CODE: usize>;
 
 /// The constants ot use as generic parameter of the [`ConstCode`] struct.
