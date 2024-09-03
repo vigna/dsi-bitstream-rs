@@ -49,6 +49,8 @@ to use a read word of at least 16 bits.
 use anyhow::Result;
 #[cfg(feature = "mem_dbg")]
 use mem_dbg::{MemDbg, MemSize};
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
 
 use crate::prelude::{BitRead, BitWrite};
 pub mod params;

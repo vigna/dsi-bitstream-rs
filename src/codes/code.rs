@@ -155,6 +155,7 @@ impl From<core::num::ParseIntError> for CodeError {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[non_exhaustive]
 /// An enum of all the codes supported by this library, with their parameters.
 /// This can be used to test different codes in a generic way.
