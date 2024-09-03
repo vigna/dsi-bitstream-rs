@@ -22,10 +22,7 @@ use crate::traits::*;
 /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// use dsi_bitstream::prelude::*;
 ///
-/// let mut words: [u64; 2] = [
-///     0x0043b59fcdf16077,
-///     0x702863e6f9739b86,
-/// ];
+/// let mut words: [u64; 2] = [0x0043b59fcdf16077, 0x702863e6f9739b86];
 ///
 /// let mut word_writer = MemWordWriterSlice::new(&mut words);
 ///
@@ -99,9 +96,7 @@ impl<W: Word, B: AsMut<[W]> + AsRef<[W]>> MemWordWriterSlice<W, B> {
 /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// use dsi_bitstream::prelude::*;
 ///
-/// let mut words: Vec<u64> = vec![
-///     0x0043b59fcdf16077,
-/// ];
+/// let mut words: Vec<u64> = vec![0x0043b59fcdf16077];
 ///
 /// let mut word_writer = MemWordWriterVec::new(&mut words);
 ///
