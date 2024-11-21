@@ -44,8 +44,12 @@ let data = writer.into_inner()?.into_inner();
 
 // Reading back the data is similar, but since a reader has a bit buffer
 // twice as large as the read word size, it is more efficient to use a 
-// u32 as read word, so we need to transmute the data.
-let data = unsafe { std::mem::transmute::<_, Vec<u32>>(data) };
+// u32 as read word, so we need to recreate the vector from its pointer.
+let data = std::mem::ManuallyDrop::new(data);
+let data = unsafe {
+    let ptr = data.as_ptr() as *mut u32;
+    Vec::from_raw_parts(ptr, data.len() * 2, data.capacity() * 2)
+};
 let mut reader = BufBitReader::<LE, _>::new(MemWordReader::new(data));
 assert_eq!(reader.read_bits(10)?, 0);
 assert_eq!(reader.read_unary()?, 0);
@@ -76,7 +80,11 @@ writer.write_delta(2)?;
 writer.flush();
 drop(writer); // We must drop the writer release the borrow on data
 
-let data = unsafe { std::mem::transmute::<_, Vec<u32>>(data) };
+let data = std::mem::ManuallyDrop::new(data);
+let data = unsafe {
+    let ptr = data.as_ptr() as *mut u32;
+    Vec::from_raw_parts(ptr, data.len() * 2, data.capacity() * 2)
+};
 let mut reader = BufBitReader::<LE, _>::new(MemWordReader::new(&data));
 assert_eq!(reader.read_bits(10)?, 0);
 assert_eq!(reader.read_unary()?, 0);
