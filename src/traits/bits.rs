@@ -14,6 +14,7 @@ use crate::{
     traits::*,
 };
 use common_traits::CastableInto;
+use impl_tools::autoimpl;
 
 pub trait Peek<const N: usize> {}
 macro_rules! impl_peekable {
@@ -78,6 +79,7 @@ impl<RE: Error + Send + Sync + 'static, WE: Error + Send + Sync + 'static> Error
 ///
 /// Please see the documentation of the [`impls`](crate::impls) module for more
 /// details.
+
 pub trait BitRead<E: Endianness> {
     type Error: Error + Send + Sync + 'static;
 

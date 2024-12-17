@@ -33,6 +33,10 @@ impl<E: Endianness, BW: BitWrite<E>, const PRINT: bool> CountBitWriter<E, BW, PR
             _marker: core::marker::PhantomData,
         }
     }
+
+    pub fn into_inner(self) -> BW {
+        self.bit_write
+    }
 }
 
 impl<E: Endianness, BW: BitWrite<E>, const PRINT: bool> BitWrite<E>
@@ -166,6 +170,10 @@ impl<E: Endianness, BR: BitRead<E>, const PRINT: bool> CountBitReader<E, BR, PRI
             bits_read: 0,
             _marker: core::marker::PhantomData,
         }
+    }
+
+    pub fn into_inner(self) -> BR {
+        self.bit_read
     }
 }
 
