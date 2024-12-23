@@ -93,7 +93,7 @@ impl<W: UnsignedInt + ToBytes + FromBytes + FiniteRangeNumber, B: Seek> WordSeek
 
     #[inline(always)]
     fn word_pos(&mut self) -> Result<u64, std::io::Error> {
-        Ok(self.backend.stream_position()?.align_to(W::BYTES as u64) / W::BYTES as u64)
+        Ok(self.backend.stream_position()?.div_ceil(W::BYTES as u64))
     }
 
     #[inline(always)]
