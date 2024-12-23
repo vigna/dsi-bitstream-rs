@@ -173,9 +173,10 @@ pub enum Code {
 }
 
 impl CodeRead for Code {
-    type Error<CRE> = CRE
+    type Error<CRE>
+        = CRE
     where
-        CRE:  Debug + Send + Sync + 'static;
+        CRE: Debug + Send + Sync + 'static;
     #[inline]
     fn read<E: Endianness, CR: ReadCodes<E> + ?Sized>(
         &self,
@@ -203,9 +204,10 @@ where
     E: Endianness,
     CR: ReadCodes<E> + ?Sized,
 {
-    type Error<CRE> = CRE
+    type Error<CRE>
+        = CRE
     where
-        CRE:  Debug + Send + Sync + 'static;
+        CRE: Debug + Send + Sync + 'static;
     #[inline(always)]
     fn read_dispatch(&self, reader: &mut CR) -> Result<u64, Self::Error<CR::Error>> {
         <Self as CodeRead>::read(self, reader)
@@ -213,9 +215,10 @@ where
 }
 
 impl CodeWrite for Code {
-    type Error<CWE> = CWE
+    type Error<CWE>
+        = CWE
     where
-        CWE:  Debug + Send + Sync + 'static;
+        CWE: Debug + Send + Sync + 'static;
     #[inline]
     fn write<E: Endianness, CW: WriteCodes<E> + ?Sized>(
         &self,
@@ -244,9 +247,10 @@ where
     E: Endianness,
     CW: WriteCodes<E> + ?Sized,
 {
-    type Error<CWE> = CWE
+    type Error<CWE>
+        = CWE
     where
-        CWE:  Debug + Send + Sync + 'static;
+        CWE: Debug + Send + Sync + 'static;
     #[inline(always)]
     fn write_dispatch(&self, writer: &mut CW, value: u64) -> Result<usize, Self::Error<CW::Error>> {
         <Self as CodeWrite>::write(self, writer, value)
@@ -482,9 +486,10 @@ where
     E: Endianness,
     CR: ReadCodes<E> + ?Sized,
 {
-    type Error<CRE> = CRE
+    type Error<CRE>
+        = CRE
     where
-        CRE:  Debug + Send + Sync + 'static;
+        CRE: Debug + Send + Sync + 'static;
 
     #[inline(always)]
     fn read_dispatch(&self, reader: &mut CR) -> Result<u64, Self::Error<CR::Error>> {
@@ -659,9 +664,10 @@ where
     E: Endianness,
     CW: WriteCodes<E> + ?Sized,
 {
-    type Error<CWE> = CWE
+    type Error<CWE>
+        = CWE
     where
-        CWE:  Debug + Send + Sync + 'static;
+        CWE: Debug + Send + Sync + 'static;
     #[inline(always)]
     fn write_dispatch(&self, writer: &mut CW, value: u64) -> Result<usize, Self::Error<CW::Error>> {
         (self.write)(writer, value).map_err(Into::into)
@@ -758,9 +764,10 @@ pub mod const_codes {
 }
 
 impl<const CODE: usize> CodeRead for ConstCode<CODE> {
-    type Error<CRE> = CRE
+    type Error<CRE>
+        = CRE
     where
-        CRE:  Debug + Send + Sync + 'static;
+        CRE: Debug + Send + Sync + 'static;
     fn read<E: Endianness, CR: ReadCodes<E> + ?Sized>(
         &self,
         reader: &mut CR,
@@ -836,9 +843,10 @@ where
     E: Endianness,
     CR: ReadCodes<E> + ?Sized,
 {
-    type Error<CRE> = CRE
+    type Error<CRE>
+        = CRE
     where
-        CRE:  Debug + Send + Sync + 'static;
+        CRE: Debug + Send + Sync + 'static;
     #[inline(always)]
     fn read_dispatch(&self, reader: &mut CR) -> Result<u64, Self::Error<CR::Error>> {
         <Self as CodeRead>::read(self, reader)
@@ -846,9 +854,10 @@ where
 }
 
 impl<const CODE: usize> CodeWrite for ConstCode<CODE> {
-    type Error<CWE> = CWE
+    type Error<CWE>
+        = CWE
     where
-        CWE:  Debug + Send + Sync + 'static;
+        CWE: Debug + Send + Sync + 'static;
     fn write<E: Endianness, CW: WriteCodes<E> + ?Sized>(
         &self,
         writer: &mut CW,
@@ -925,9 +934,10 @@ where
     E: Endianness,
     CW: WriteCodes<E> + ?Sized,
 {
-    type Error<CWE> = CWE
+    type Error<CWE>
+        = CWE
     where
-        CWE:  Debug + Send + Sync + 'static;
+        CWE: Debug + Send + Sync + 'static;
     #[inline(always)]
     fn write_dispatch(&self, writer: &mut CW, value: u64) -> Result<usize, Self::Error<CW::Error>> {
         <Self as CodeWrite>::write(self, writer, value)

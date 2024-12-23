@@ -177,7 +177,7 @@ impl<W: Word, B: AsRef<[W]> + AsMut<[W]>> WordSeek for MemWordWriterSlice<W, B> 
 
     #[inline(always)]
     fn set_word_pos(&mut self, word_index: u64) -> Result<(), std::io::Error> {
-        return if word_index > self.data.as_ref().len() as u64 {
+        if word_index > self.data.as_ref().len() as u64 {
             Err(std::io::Error::new(
                 std::io::ErrorKind::UnexpectedEof,
                 format_args!(
@@ -190,7 +190,7 @@ impl<W: Word, B: AsRef<[W]> + AsMut<[W]>> WordSeek for MemWordWriterSlice<W, B> 
         } else {
             self.word_index = word_index as usize;
             Ok(())
-        };
+        }
     }
 }
 
@@ -271,7 +271,7 @@ impl<W: Word, B: AsMut<alloc::vec::Vec<W>> + AsRef<alloc::vec::Vec<W>>> WordSeek
 
     #[inline(always)]
     fn set_word_pos(&mut self, word_index: u64) -> Result<(), std::io::Error> {
-        return if word_index > self.data.as_ref().len() as u64 {
+        if word_index > self.data.as_ref().len() as u64 {
             Err(std::io::Error::new(
                 std::io::ErrorKind::UnexpectedEof,
                 format_args!(
@@ -284,6 +284,6 @@ impl<W: Word, B: AsMut<alloc::vec::Vec<W>> + AsRef<alloc::vec::Vec<W>>> WordSeek
         } else {
             self.word_index = word_index as usize;
             Ok(())
-        };
+        }
     }
 }

@@ -377,7 +377,6 @@ where
     }
 
     #[cfg(not(feature = "no_copy_impls"))]
-
     fn copy_from<F: Endianness, R: BitRead<F>>(
         &mut self,
         bit_read: &mut R,

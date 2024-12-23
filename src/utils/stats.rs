@@ -331,7 +331,8 @@ impl<
 where
     W: CodeRead,
 {
-    type Error<CRE> = W::Error<CRE>
+    type Error<CRE>
+        = W::Error<CRE>
     where
         CRE: Debug + Send + Sync + 'static;
     #[inline]
@@ -358,7 +359,8 @@ impl<
 where
     W: CodeReadDispatch<E, CR>,
 {
-    type Error<CRE> = W::Error<CRE>
+    type Error<CRE>
+        = W::Error<CRE>
     where
         CRE: Debug + Send + Sync + 'static;
     #[inline]
@@ -380,7 +382,8 @@ impl<
 where
     W: CodeWrite,
 {
-    type Error<CWE> = W::Error<CWE>
+    type Error<CWE>
+        = W::Error<CWE>
     where
         CWE: Debug + Send + Sync + 'static;
     #[inline]
@@ -408,7 +411,8 @@ impl<
 where
     W: CodeWriteDispatch<E, CW>,
 {
-    type Error<CWE> = W::Error<CWE>
+    type Error<CWE>
+        = W::Error<CWE>
     where
         CWE: Debug + Send + Sync + 'static;
     #[inline]

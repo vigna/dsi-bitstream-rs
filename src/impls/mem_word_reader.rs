@@ -146,7 +146,7 @@ impl<W: Word, B: AsRef<[W]>> WordSeek for MemWordReader<W, B, false> {
     }
     #[inline(always)]
     fn set_word_pos(&mut self, word_index: u64) -> Result<(), std::io::Error> {
-        return if word_index > self.data.as_ref().len() as u64 {
+        if word_index > self.data.as_ref().len() as u64 {
             Err(std::io::Error::new(
                 std::io::ErrorKind::UnexpectedEof,
                 format_args!(
@@ -159,7 +159,7 @@ impl<W: Word, B: AsRef<[W]>> WordSeek for MemWordReader<W, B, false> {
         } else {
             self.word_index = word_index as usize;
             Ok(())
-        };
+        }
     }
 }
 
