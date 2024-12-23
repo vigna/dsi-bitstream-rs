@@ -1,10 +1,7 @@
 use anyhow::Result;
 use dsi_bitstream::prelude::*;
 use std::io::Cursor;
-use std::{
-    fs::File,
-    io::{BufReader, BufWriter},
-};
+use std::io::{BufReader, BufWriter};
 
 #[test]
 fn test_word_pos() -> Result<()> {

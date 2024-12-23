@@ -91,3 +91,8 @@ impl_fuzz_repr!(
     fuzz_mem_word_writer_vec_zip,
     mem_word_writer_vec
 );
+impl_fuzz_repr!(
+    fuzz_word_adapter,
+    fuzz_word_adapter_zip,
+    word_adapter
+);

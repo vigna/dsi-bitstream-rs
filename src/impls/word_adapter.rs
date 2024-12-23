@@ -30,6 +30,25 @@ use std::io::{ErrorKind, Read, Seek, SeekFrom, Write};
 /// This approach, however, requires that if you adapt a [`Seek`], its current position must be
 /// a multiple of `W::Bytes`, or the results of [`word_pos`](WordAdapter::word_pos)
 /// will be shifted by the rounding.
+///
+/// Note that the zero extension introduces a corner case where we can read the
+/// last few bytes, but we cannot write them as a partial write would silently lose
+/// information.
+///
+/// ```rust
+/// use dsi_bitstream::prelude::*;
+/// use std::io::Cursor;
+///
+/// let mut data = [0x01, 0x02, 0x03];
+/// let mut adapter = WordAdapter::<u32, _>::new(Cursor::new(data.as_mut()));
+/// // we can read these bytes but they will be zero extended
+/// assert_eq!(adapter.read_word().unwrap(), u32::from_ne_bytes([0x01, 0x02, 0x03, 0x00]));
+/// // Reset the adapter to the start
+/// adapter.set_word_pos(0);
+/// // the write has to fail as we would try to write 4 bytes but there is only
+/// // space for 3
+/// assert!(adapter.write_word(u32::from_ne_bytes([0x02, 0x03, 0x04, 0x05])).is_err());
+/// ```
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
 pub struct WordAdapter<W: UnsignedInt + FromBytes + ToBytes, B> {
@@ -60,12 +79,19 @@ impl<W: UnsignedInt + ToBytes + FromBytes + FiniteRangeNumber, B: Read> WordRead
     #[inline(always)]
     fn read_word(&mut self) -> Result<W, std::io::Error> {
         let mut res: W::Bytes = Default::default();
-        match self.backend.read_exact(res.as_mut()) {
-            Ok(()) => Ok(W::from_ne_bytes(res)),
-            // We must guarantee zero-extension
-            Err(e) if e.kind() == ErrorKind::UnexpectedEof => Ok(W::from_ne_bytes(res)),
-            Err(e) => Err(e),
+        let mut buf = res.as_mut();
+        while !buf.is_empty() {
+            match self.backend.read(buf) {
+                Ok(0) => break,
+                Ok(n) => {
+                    buf = &mut buf[n..];
+                }
+                Err(ref e) if e.kind() == ErrorKind::Interrupted => {}
+                Err(e) => return Err(e),
+            }
         }
+
+        Ok(W::from_ne_bytes(res))
     }
 }
 
@@ -77,7 +103,7 @@ impl<W: UnsignedInt + ToBytes + FromBytes + FiniteRangeNumber, B: Write> WordWri
 
     #[inline]
     fn write_word(&mut self, word: W) -> Result<(), std::io::Error> {
-        let _ = self.backend.write(word.to_ne_bytes().as_ref())?;
+        self.backend.write_all(word.to_ne_bytes().as_ref())?;
         Ok(())
     }
 
