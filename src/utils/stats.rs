@@ -111,15 +111,38 @@ impl<
         const PI: usize,
     > CodesStats<ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
 {
-    /// Update the stats with the lengths of the codes for `n` and return
-    /// `n` for convenience.
-    pub fn update(&mut self, n: u64) -> u64 {
-        self.update_many(n, 1)
+    /// Inserts the provided integer in the stats.
+    ///
+    /// # Arguments
+    /// * `n` - The integer to insert.
+    ///
+    /// # Returns
+    /// The integer inserted, for convenience.
+    pub fn insert(&mut self, n: u64) -> u64 {
+        self.insert_many(n, 1)
+    }
+
+    /// Removes the provided integer from the stats.
+    ///
+    /// # Arguments
+    /// * `n` - The integer to remove.
+    ///
+    /// # Returns
+    /// The integer removed, for convenience.
+    pub fn remove(&mut self, n: u64) -> u64 {
+        self.remove_many(n, 1)
     }
 
     #[inline]
-    pub fn update_many(&mut self, n: u64, count: u64) -> u64 {
-        self.total += count;
+    /// Inserts the provided integer `count` times in the stats.
+    ///
+    /// # Arguments
+    /// * `n` - The integer to insert.
+    /// * `count` - The number of times to insert the integer.
+    ///
+    /// # Returns
+    /// The integer inserted, for convenience.
+    pub fn insert_many(&mut self, n: u64, count: u64) -> u64 {
         self.unary += (n + 1) * count;
         self.gamma += len_gamma(n) as u64 * count;
         self.delta += len_delta(n) as u64 * count;
@@ -144,6 +167,44 @@ impl<
         }
         for (k, val) in self.pi_web.iter_mut().enumerate() {
             *val += (len_pi_web(n, k as _) as u64) * count;
+        }
+        n
+    }
+
+    #[inline]
+    /// Removes the provided integer `count` times from the stats.
+    ///
+    /// # Arguments
+    /// * `n` - The integer to remove.
+    /// * `count` - The number of times to remove the integer.
+    ///
+    /// # Returns
+    /// The integer removed, for convenience.
+    pub fn remove_many(&mut self, n: u64, count: u64) -> u64 {
+        self.unary -= (n + 1) * count;
+        self.gamma -= len_gamma(n) as u64 * count;
+        self.delta -= len_delta(n) as u64 * count;
+        self.omega -= len_omega(n) as u64 * count;
+        self.vbyte -= len_vbyte(n) as u64 * count;
+
+        for (k, val) in self.zeta.iter_mut().enumerate() {
+            *val -= (len_zeta(n, (k + 1) as _) as u64) * count;
+        }
+        for (b, val) in self.golomb.iter_mut().enumerate() {
+            *val -= (len_golomb(n, (b + 1) as _) as u64) * count;
+        }
+        for (k, val) in self.exp_golomb.iter_mut().enumerate() {
+            *val -= (len_exp_golomb(n, k as _) as u64) * count;
+        }
+        for (log2_b, val) in self.rice.iter_mut().enumerate() {
+            *val -= (len_rice(n, log2_b as _) as u64) * count;
+        }
+        // +2 because π0 = gamma and π1 = zeta_2
+        for (k, val) in self.pi.iter_mut().enumerate() {
+            *val -= (len_pi(n, (k + 2) as _) as u64) * count;
+        }
+        for (k, val) in self.pi_web.iter_mut().enumerate() {
+            *val -= (len_pi_web(n, k as _) as u64) * count;
         }
         n
     }
@@ -341,7 +402,7 @@ where
         reader: &mut CR,
     ) -> Result<u64, Self::Error<CR::Error>> {
         let res = self.wrapped.read(reader)?;
-        self.stats.lock().unwrap().update(res);
+        self.stats.lock().unwrap().insert(res);
         Ok(res)
     }
 }
@@ -366,7 +427,7 @@ where
     #[inline]
     fn read_dispatch(&self, reader: &mut CR) -> Result<u64, Self::Error<CR::Error>> {
         let res = self.wrapped.read_dispatch(reader)?;
-        self.stats.lock().unwrap().update(res);
+        self.stats.lock().unwrap().insert(res);
         Ok(res)
     }
 }
@@ -393,7 +454,7 @@ where
         value: u64,
     ) -> Result<usize, Self::Error<CW::Error>> {
         let res = self.wrapped.write(writer, value)?;
-        self.stats.lock().unwrap().update(value);
+        self.stats.lock().unwrap().insert(value);
         Ok(res)
     }
 }
@@ -418,7 +479,7 @@ where
     #[inline]
     fn write_dispatch(&self, writer: &mut CW, value: u64) -> Result<usize, Self::Error<CW::Error>> {
         let res = self.wrapped.write_dispatch(writer, value)?;
-        self.stats.lock().unwrap().update(value);
+        self.stats.lock().unwrap().insert(value);
         Ok(res)
     }
 }

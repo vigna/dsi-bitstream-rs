@@ -23,7 +23,6 @@
 //! "Universal codeword sets and representations of the integers,"
 //! IEEE Transactions on Information Theory, vol. 21, no. 2, pp. 194-203, March
 //! 1975, doi:  <https://doi.org/10.1109/TIT.1975.1055349>.
-//!
 use super::{delta_tables, len_gamma_param, GammaReadParam, GammaWriteParam};
 use crate::traits::*;
 
