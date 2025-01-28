@@ -10,7 +10,7 @@ use crate::traits::*;
 use common_traits::*;
 #[cfg(feature = "mem_dbg")]
 use mem_dbg::{MemDbg, MemSize};
-use std::io::{ErrorKind, Read, Seek, SeekFrom, Write};
+use std::io::{Read, Seek, SeekFrom, Write};
 
 /// An adapter from [`Read`], [`Write`], and [`Seek`], to [`WordRead`],
 /// [`WordWrite`], and [`WordSeek`], respectively.
@@ -58,14 +58,25 @@ impl<W: UnsignedInt + ToBytes + FromBytes + FiniteRangeNumber, B: Read> WordRead
     type Word = W;
 
     #[inline(always)]
-    fn read_word(&mut self) -> Result<W, std::io::Error> {
+    fn read_word(&mut self) -> Result<W, Self::Error> {
         let mut res: W::Bytes = Default::default();
-        match self.backend.read_exact(res.as_mut()) {
-            Ok(()) => Ok(W::from_ne_bytes(res)),
-            // We must guarantee zero-extension
-            Err(e) if e.kind() == ErrorKind::UnexpectedEof => Ok(W::from_ne_bytes(res)),
-            Err(e) => Err(e),
-        }
+        self.backend
+            .read_exact(res.as_mut())
+            .map_err(|e|
+                match e.kind() {
+                std::io::ErrorKind::UnexpectedEof => {
+                    std::io::Error::new(
+                        e.kind(),
+                        format!(concat!(
+                            "Unexpected end of file. ",
+                            "This might happen because the file length is not a multiple of the Word size `{0}`. ",
+                            "In this case, please pad with zeros at the end of the file. ",
+                            "The io inner io-error was: `{1:?}`"), W::BYTES, e),
+                    )
+                }
+                _ => e,
+            })?;
+        Ok(W::from_ne_bytes(res))
     }
 }
 
