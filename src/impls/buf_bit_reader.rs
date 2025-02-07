@@ -275,8 +275,19 @@ where
         let from_buffer = Ord::min(n, self.bits_in_buffer as _);
         self.buffer = self.buffer.rotate_left(from_buffer as _);
 
+        #[allow(unused_mut)]
+        let mut self_buffer_u64: u64 = self.buffer.cast();
+
+        #[cfg(feature = "checks")]
+        {
+            // Clean up in case checks are enabled
+            if n < 64 {
+                self_buffer_u64 &= (1_u64 << n) - 1;
+            }
+        }
+
         bit_write
-            .write_bits(self.buffer.cast(), from_buffer as usize)
+            .write_bits(self_buffer_u64, from_buffer as usize)
             .map_err(CopyError::WriteError)?;
         n -= from_buffer;
 
@@ -505,8 +516,19 @@ where
     ) -> Result<(), CopyError<Self::Error, W::Error>> {
         let from_buffer = Ord::min(n, self.bits_in_buffer as _);
 
+        #[allow(unused_mut)]
+        let mut self_buffer_u64: u64 = self.buffer.cast();
+
+        #[cfg(feature = "checks")]
+        {
+            // Clean up in case checks are enabled
+            if n < 64 {
+                self_buffer_u64 &= (1_u64 << n) - 1;
+            }
+        }
+
         bit_write
-            .write_bits(self.buffer.cast(), from_buffer as usize)
+            .write_bits(self_buffer_u64, from_buffer as usize)
             .map_err(CopyError::WriteError)?;
 
         self.buffer >>= from_buffer;
@@ -538,8 +560,20 @@ where
             .map_err(CopyError::ReadError)?
             .to_le();
         self.bits_in_buffer = WR::Word::BITS - n as usize;
+
+        #[allow(unused_mut)]
+        let mut new_word_u64: u64 = new_word.upcast();
+
+        #[cfg(feature = "checks")]
+        {
+            // Clean up in case checks are enabled
+            if n < 64 {
+                new_word_u64 &= (1_u64 << n) - 1;
+            }
+        }
+
         bit_write
-            .write_bits(new_word.upcast(), n as usize)
+            .write_bits(new_word_u64, n as usize)
             .map_err(CopyError::WriteError)?;
         self.buffer = UpcastableInto::<BB<WR>>::upcast(new_word) >> n;
         Ok(())
