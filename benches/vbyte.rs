@@ -35,17 +35,17 @@ pub fn gen_gamma_data(n: usize) -> Vec<u64> {
 pub trait Format {
     const NAME: &'static str;
 }
-pub struct Sparse;
-impl Format for Sparse {
-    const NAME: &'static str = "sparse";
+pub struct NonGrouped;
+impl Format for NonGrouped {
+    const NAME: &'static str = "non_grouped";
 }
-pub struct DenseIfs;
-impl Format for DenseIfs {
-    const NAME: &'static str = "dense_ifs";
+pub struct GroupedIfs;
+impl Format for GroupedIfs {
+    const NAME: &'static str = "grouped_ifs";
 }
-pub struct DenseCLZ;
-impl Format for DenseCLZ {
-    const NAME: &'static str = "dense_clz";
+pub struct GroupedCLZ;
+impl Format for GroupedCLZ {
+    const NAME: &'static str = "grouped_clz";
 }
 
 pub trait ContinuationBit {
@@ -193,7 +193,7 @@ impl<E: Endianness, F: Format, B: IsComplete, C: ContinuationBit> WithName
     }
 }
 
-impl<E: Endianness> ByteCode for ByteStreamVByte<E, DenseIfs, Complete, One> {
+impl<E: Endianness> ByteCode for ByteStreamVByte<E, GroupedIfs, Complete, One> {
     fn read(r: &mut impl Read) -> Result<u64> {
         Ok(dsi_bitstream::codes::vbyte::vbyte_decode::<E, _>(r)?)
     }
@@ -203,7 +203,7 @@ impl<E: Endianness> ByteCode for ByteStreamVByte<E, DenseIfs, Complete, One> {
 }
 
 /// LLVM's implementation https://llvm.org/doxygen/LEB128_8h_source.html#l00080
-impl ByteCode for ByteStreamVByte<LittleEndian, Sparse, NonComplete, One> {
+impl ByteCode for ByteStreamVByte<LittleEndian, NonGrouped, NonComplete, One> {
     fn read(r: &mut impl Read) -> Result<u64> {
         let mut result = 0;
         let mut shift = 0;
@@ -237,7 +237,7 @@ impl ByteCode for ByteStreamVByte<LittleEndian, Sparse, NonComplete, One> {
 }
 
 /// Git implementation https://github.com/git/git/blob/7fb6aefd2aaffe66e614f7f7b83e5b7ab16d4806/varint.c#L4
-impl ByteCode for ByteStreamVByte<BigEndian, Sparse, Complete, One> {
+impl ByteCode for ByteStreamVByte<BigEndian, NonGrouped, Complete, One> {
     fn read(r: &mut impl Read) -> Result<u64> {
         let mut result = 0;
         let mut buffer = [0; 1];
@@ -268,7 +268,7 @@ impl ByteCode for ByteStreamVByte<BigEndian, Sparse, Complete, One> {
     }
 }
 
-impl ByteCode for ByteStreamVByte<BigEndian, Sparse, NonComplete, One> {
+impl ByteCode for ByteStreamVByte<BigEndian, NonGrouped, NonComplete, One> {
     fn read(r: &mut impl Read) -> Result<u64> {
         let mut result = 0;
         let mut buffer = [0; 1];
@@ -297,7 +297,7 @@ impl<F: Format, B: IsComplete, C: ContinuationBit> WithName for BitStreamVByte<F
     }
 }
 
-impl BitCode for BitStreamVByte<DenseIfs, Complete, One> {
+impl BitCode for BitStreamVByte<GroupedIfs, Complete, One> {
     #[inline(always)]
     fn read<E: Endianness>(r: &mut impl BitRead<E>) -> Result<u64> {
         Ok(r.read_vbyte()?)
@@ -308,7 +308,7 @@ impl BitCode for BitStreamVByte<DenseIfs, Complete, One> {
     }
 }
 
-impl BitCode for BitStreamVByte<DenseCLZ, NonComplete, Zero> {
+impl BitCode for BitStreamVByte<GroupedCLZ, NonComplete, Zero> {
     #[inline(always)]
     fn read<E: Endianness>(r: &mut impl BitRead<E>) -> Result<u64> {
         let len = r.read_unary()? as usize;
@@ -324,43 +324,43 @@ impl BitCode for BitStreamVByte<DenseCLZ, NonComplete, Zero> {
 }
 
 pub fn benchmark(c: &mut Criterion) {
-    //bench_bytestream::<ByteStreamVByte<BE, Sparse, Complete, One>>(c);
-    bench_bytestream::<ByteStreamVByte<LE, Sparse, NonComplete, One>>(c);
-    bench_bytestream::<ByteStreamVByte<LE, DenseIfs, Complete, One>>(c);
-    bench_bytestream::<ByteStreamVByte<BE, DenseIfs, Complete, One>>(c);
-    bench_bitstream::<BitStreamVByte<DenseIfs, Complete, One>>(c);
-    //bench_bitstream::<BitStreamVByte<DenseCLZ, NonComplete, Zero>>(c);
+    //bench_bytestream::<ByteStreamVByte<BE, NonGrouped, Complete, One>>(c);
+    bench_bytestream::<ByteStreamVByte<LE, NonGrouped, NonComplete, One>>(c);
+    bench_bytestream::<ByteStreamVByte<LE, GroupedIfs, Complete, One>>(c);
+    bench_bytestream::<ByteStreamVByte<BE, GroupedIfs, Complete, One>>(c);
+    bench_bitstream::<BitStreamVByte<GroupedIfs, Complete, One>>(c);
+    //bench_bitstream::<BitStreamVByte<GroupedCLZ, NonComplete, Zero>>(c);
 
-    //bench_bytestream::<ByteStreamVByte<BE, Sparse, Complete, Zero>>(c);
-    //bench_bytestream::<ByteStreamVByte<BE, Sparse, NonComplete, One>>(c);
-    //bench_bytestream::<ByteStreamVByte<BE, Sparse, NonComplete, Zero>>(c);
-    //bench_bytestream::<ByteStreamVByte<BE, DenseIfs, Complete, Zero>>(c);
-    //bench_bytestream::<ByteStreamVByte<BE, DenseIfs, NonComplete, One>>(c);
-    //bench_bytestream::<ByteStreamVByte<BE, DenseIfs, NonComplete, Zero>>(c);
-    //bench_bytestream::<ByteStreamVByte<BE, DenseCLZ, Complete, One>>(c);
-    //bench_bytestream::<ByteStreamVByte<BE, DenseCLZ, Complete, Zero>>(c);
-    //bench_bytestream::<ByteStreamVByte<BE, DenseCLZ, NonComplete, One>>(c);
-    //bench_bytestream::<ByteStreamVByte<BE, DenseCLZ, NonComplete, Zero>>(c);
-    //bench_bytestream::<ByteStreamVByte<LE, Sparse, Complete, One>>(c);
-    //bench_bytestream::<ByteStreamVByte<LE, Sparse, Complete, Zero>>(c);
-    //bench_bytestream::<ByteStreamVByte<LE, Sparse, NonComplete, Zero>>(c);
-    //bench_bytestream::<ByteStreamVByte<LE, DenseIfs, Complete, Zero>>(c);
-    //bench_bytestream::<ByteStreamVByte<LE, DenseIfs, NonComplete, One>>(c);
-    //bench_bytestream::<ByteStreamVByte<LE, DenseIfs, NonComplete, Zero>>(c);
-    //bench_bytestream::<ByteStreamVByte<LE, DenseCLZ, Complete, One>>(c);
-    //bench_bytestream::<ByteStreamVByte<LE, DenseCLZ, Complete, Zero>>(c);
-    //bench_bytestream::<ByteStreamVByte<LE, DenseCLZ, NonComplete, One>>(c);
-    //bench_bytestream::<ByteStreamVByte<LE, DenseCLZ, NonComplete, Zero>>(c);
-    //bench_bitstream::<BitStreamVByte<Sparse, Complete, One>>(c);
-    //bench_bitstream::<BitStreamVByte<Sparse, Complete, Zero>>(c);
-    //bench_bitstream::<BitStreamVByte<Sparse, NonComplete, One>>(c);
-    //bench_bitstream::<BitStreamVByte<Sparse, NonComplete, Zero>>(c);
-    //bench_bitstream::<BitStreamVByte<DenseIfs, Complete, Zero>>(c);
-    //bench_bitstream::<BitStreamVByte<DenseIfs, NonComplete, One>>(c);
-    //bench_bitstream::<BitStreamVByte<DenseIfs, NonComplete, Zero>>(c);
-    //bench_bitstream::<BitStreamVByte<DenseCLZ, Complete, One>>(c);
-    //bench_bitstream::<BitStreamVByte<DenseCLZ, Complete, Zero>>(c);
-    //bench_bitstream::<BitStreamVByte<DenseCLZ, NonComplete, One>>(c);
+    //bench_bytestream::<ByteStreamVByte<BE, NonGrouped, Complete, Zero>>(c);
+    //bench_bytestream::<ByteStreamVByte<BE, NonGrouped, NonComplete, One>>(c);
+    //bench_bytestream::<ByteStreamVByte<BE, NonGrouped, NonComplete, Zero>>(c);
+    //bench_bytestream::<ByteStreamVByte<BE, GroupedIfs, Complete, Zero>>(c);
+    //bench_bytestream::<ByteStreamVByte<BE, GroupedIfs, NonComplete, One>>(c);
+    //bench_bytestream::<ByteStreamVByte<BE, GroupedIfs, NonComplete, Zero>>(c);
+    //bench_bytestream::<ByteStreamVByte<BE, GroupedCLZ, Complete, One>>(c);
+    //bench_bytestream::<ByteStreamVByte<BE, GroupedCLZ, Complete, Zero>>(c);
+    //bench_bytestream::<ByteStreamVByte<BE, GroupedCLZ, NonComplete, One>>(c);
+    //bench_bytestream::<ByteStreamVByte<BE, GroupedCLZ, NonComplete, Zero>>(c);
+    //bench_bytestream::<ByteStreamVByte<LE, NonGrouped, Complete, One>>(c);
+    //bench_bytestream::<ByteStreamVByte<LE, NonGrouped, Complete, Zero>>(c);
+    //bench_bytestream::<ByteStreamVByte<LE, NonGrouped, NonComplete, Zero>>(c);
+    //bench_bytestream::<ByteStreamVByte<LE, GroupedIfs, Complete, Zero>>(c);
+    //bench_bytestream::<ByteStreamVByte<LE, GroupedIfs, NonComplete, One>>(c);
+    //bench_bytestream::<ByteStreamVByte<LE, GroupedIfs, NonComplete, Zero>>(c);
+    //bench_bytestream::<ByteStreamVByte<LE, GroupedCLZ, Complete, One>>(c);
+    //bench_bytestream::<ByteStreamVByte<LE, GroupedCLZ, Complete, Zero>>(c);
+    //bench_bytestream::<ByteStreamVByte<LE, GroupedCLZ, NonComplete, One>>(c);
+    //bench_bytestream::<ByteStreamVByte<LE, GroupedCLZ, NonComplete, Zero>>(c);
+    //bench_bitstream::<BitStreamVByte<NonGrouped, Complete, One>>(c);
+    //bench_bitstream::<BitStreamVByte<NonGrouped, Complete, Zero>>(c);
+    //bench_bitstream::<BitStreamVByte<NonGrouped, NonComplete, One>>(c);
+    //bench_bitstream::<BitStreamVByte<NonGrouped, NonComplete, Zero>>(c);
+    //bench_bitstream::<BitStreamVByte<GroupedIfs, Complete, Zero>>(c);
+    //bench_bitstream::<BitStreamVByte<GroupedIfs, NonComplete, One>>(c);
+    //bench_bitstream::<BitStreamVByte<GroupedIfs, NonComplete, Zero>>(c);
+    //bench_bitstream::<BitStreamVByte<GroupedCLZ, Complete, One>>(c);
+    //bench_bitstream::<BitStreamVByte<GroupedCLZ, Complete, Zero>>(c);
+    //bench_bitstream::<BitStreamVByte<GroupedCLZ, NonComplete, One>>(c);
 }
 
 criterion_group! {
