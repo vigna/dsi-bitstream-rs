@@ -10,7 +10,9 @@
 //! These codes represent a natural number as a sequence of bytes, the length of
 //! the sequence depends on the magnitude of the number. They are used in many
 //! contexts, and they are known under a plethora of different names such
-//! “varint”, “vbyte”, “variable-length quantity”, “LEB”, and so on.
+//! “vbyte”, “varint”, “[variable-length
+//! quantity](https://en.wikipedia.org/wiki/Variable-length_quantity)”, “LEB”,
+//! and so on.
 //! 
 //! # Definition
 //! 
@@ -80,7 +82,7 @@
 //! lexicographical comparisons. Otherwise, you might choose an endianness
 //! matching that of your hardware, which might increase performance.
 //! 
-//! Since this code is byte-aligned, we provide also convenience methods
+//! Since this code is byte-aligned, we provide also convenient, fast methods
 //! [`vbyte_encode`] and [`vbyte_decode`] that can be used on types implementing
 //! [`std::io::Read`] and [`std::io::Write`].
 //!
@@ -96,6 +98,10 @@
 //! - The [code used by
 //!   git](https://github.com/git/git/blob/7fb6aefd2aaffe66e614f7f7b83e5b7ab16d4806/varint.c)
 //!   is a big-endian complete ungrouped representation.
+//! 
+//! - [This implementation in
+//!   folly](https://github.com/facebook/folly/blob/dd4a5eb057afbc3c7c7da71801df2ee3c61c47d1/folly/Varint.h#L109)
+//!   is a little-endian incomplete ungrouped representation.
 
 use crate::traits::*;
 use common_traits::CastableInto;
