@@ -69,9 +69,9 @@ impl<W: UnsignedInt + ToBytes + FromBytes + FiniteRangeNumber, B: Read> WordRead
                         e.kind(),
                         format!(concat!(
                             "Unexpected end of file. ",
-                            "This might happen because the file length is not a multiple of the Word size `{0}`. ",
+                            "This might happen because the file length is not a multiple of the word size ({}). ",
                             "In this case, please pad with zeros at the end of the file. ",
-                            "The io inner io-error was: `{1:?}`"), W::BYTES, e),
+                            "The inner std::io::Error was {:?}"), W::BYTES, e),
                     )
                 }
                 _ => e,

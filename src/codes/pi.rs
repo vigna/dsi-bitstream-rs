@@ -7,7 +7,7 @@
 //! π codes
 //!
 //! π codes allow efficient encoding of Zipf distributions that have an
-//! exponent even closer to 1 compared to ζ codes.
+//! exponent even closer to 1 compared to [ζ codes](crate::codes:zeta}
 //!
 //! The intended distribution is:
 //! Θ( 1 / N^(1 + 2^-k) )

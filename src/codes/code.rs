@@ -78,7 +78,7 @@ pub trait CodeRead {
     where
         CRE: Debug + Send + Sync + 'static;
     /// Read a value
-    fn read<E: Endianness, CR: ReadCodes<E> + ?Sized>(
+    fn read<E: Endianness, CR: CodesRead<E> + ?Sized>(
         &self,
         reader: &mut CR,
     ) -> Result<u64, Self::Error<CR::Error>>;
@@ -90,7 +90,7 @@ pub trait CodeRead {
 pub trait CodeReadDispatch<E, CR>
 where
     E: Endianness,
-    CR: ReadCodes<E> + ?Sized,
+    CR: CodesRead<E> + ?Sized,
 {
     type Error<CRE>: Debug + Send + Sync + 'static
     where
@@ -104,7 +104,7 @@ pub trait CodeWrite {
     where
         CWE: Debug + Send + Sync + 'static;
     /// Write a value
-    fn write<E: Endianness, CW: WriteCodes<E> + ?Sized>(
+    fn write<E: Endianness, CW: CodesWrite<E> + ?Sized>(
         &self,
         writer: &mut CW,
         value: u64,
@@ -117,7 +117,7 @@ pub trait CodeWrite {
 pub trait CodeWriteDispatch<E, CW>
 where
     E: Endianness,
-    CW: WriteCodes<E> + ?Sized,
+    CW: CodesWrite<E> + ?Sized,
 {
     type Error<CWE>: Debug + Send + Sync + 'static
     where
@@ -178,7 +178,7 @@ impl CodeRead for Code {
     where
         CRE: Debug + Send + Sync + 'static;
     #[inline]
-    fn read<E: Endianness, CR: ReadCodes<E> + ?Sized>(
+    fn read<E: Endianness, CR: CodesRead<E> + ?Sized>(
         &self,
         reader: &mut CR,
     ) -> Result<u64, Self::Error<CR::Error>> {
@@ -202,7 +202,7 @@ impl CodeRead for Code {
 impl<E, CR> CodeReadDispatch<E, CR> for Code
 where
     E: Endianness,
-    CR: ReadCodes<E> + ?Sized,
+    CR: CodesRead<E> + ?Sized,
 {
     type Error<CRE>
         = CRE
@@ -220,7 +220,7 @@ impl CodeWrite for Code {
     where
         CWE: Debug + Send + Sync + 'static;
     #[inline]
-    fn write<E: Endianness, CW: WriteCodes<E> + ?Sized>(
+    fn write<E: Endianness, CW: CodesWrite<E> + ?Sized>(
         &self,
         writer: &mut CW,
         value: u64,
@@ -245,7 +245,7 @@ impl CodeWrite for Code {
 impl<E, CW> CodeWriteDispatch<E, CW> for Code
 where
     E: Endianness,
-    CW: WriteCodes<E> + ?Sized,
+    CW: CodesWrite<E> + ?Sized,
 {
     type Error<CWE>
         = CWE
@@ -339,7 +339,7 @@ type ReadFn<E, CR> = fn(&mut CR) -> Result<u64, <CR as BitRead<E>>::Error>;
 pub struct CodeReadDispatcher<E, CR>
 where
     E: Endianness,
-    CR: ReadCodes<E> + ?Sized,
+    CR: CodesRead<E> + ?Sized,
 {
     read: ReadFn<E, CR>,
     _marker: PhantomData<E>,
@@ -348,7 +348,7 @@ where
 impl<E, CR> CodeReadDispatcher<E, CR>
 where
     E: Endianness,
-    CR: ReadCodes<E> + ?Sized,
+    CR: CodesRead<E> + ?Sized,
 {
     pub const UNARY: ReadFn<E, CR> = |reader: &mut CR| reader.read_unary();
     pub const GAMMA: ReadFn<E, CR> = |reader: &mut CR| reader.read_gamma();
@@ -484,7 +484,7 @@ where
 impl<E, CR> CodeReadDispatch<E, CR> for CodeReadDispatcher<E, CR>
 where
     E: Endianness,
-    CR: ReadCodes<E> + ?Sized,
+    CR: CodesRead<E> + ?Sized,
 {
     type Error<CRE>
         = CRE
@@ -507,7 +507,7 @@ type WriteFn<E, CW> = fn(&mut CW, u64) -> Result<usize, <CW as BitWrite<E>>::Err
 pub struct CodeWriteDispatcher<E, CW>
 where
     E: Endianness,
-    CW: WriteCodes<E> + ?Sized,
+    CW: CodesWrite<E> + ?Sized,
 {
     write: WriteFn<E, CW>,
     _marker: PhantomData<E>,
@@ -516,7 +516,7 @@ where
 impl<E, CW> CodeWriteDispatcher<E, CW>
 where
     E: Endianness,
-    CW: WriteCodes<E> + ?Sized,
+    CW: CodesWrite<E> + ?Sized,
 {
     pub const UNARY: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_unary(value);
     pub const GAMMA: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_gamma(value);
@@ -662,7 +662,7 @@ where
 impl<E, CW> CodeWriteDispatch<E, CW> for CodeWriteDispatcher<E, CW>
 where
     E: Endianness,
-    CW: WriteCodes<E> + ?Sized,
+    CW: CodesWrite<E> + ?Sized,
 {
     type Error<CWE>
         = CWE
@@ -768,7 +768,7 @@ impl<const CODE: usize> CodeRead for ConstCode<CODE> {
         = CRE
     where
         CRE: Debug + Send + Sync + 'static;
-    fn read<E: Endianness, CR: ReadCodes<E> + ?Sized>(
+    fn read<E: Endianness, CR: CodesRead<E> + ?Sized>(
         &self,
         reader: &mut CR,
     ) -> Result<u64, Self::Error<CR::Error>> {
@@ -841,7 +841,7 @@ impl<const CODE: usize> CodeRead for ConstCode<CODE> {
 impl<E, CR, const CODE: usize> CodeReadDispatch<E, CR> for ConstCode<CODE>
 where
     E: Endianness,
-    CR: ReadCodes<E> + ?Sized,
+    CR: CodesRead<E> + ?Sized,
 {
     type Error<CRE>
         = CRE
@@ -858,7 +858,7 @@ impl<const CODE: usize> CodeWrite for ConstCode<CODE> {
         = CWE
     where
         CWE: Debug + Send + Sync + 'static;
-    fn write<E: Endianness, CW: WriteCodes<E> + ?Sized>(
+    fn write<E: Endianness, CW: CodesWrite<E> + ?Sized>(
         &self,
         writer: &mut CW,
         value: u64,
@@ -932,7 +932,7 @@ impl<const CODE: usize> CodeWrite for ConstCode<CODE> {
 impl<E, CW, const CODE: usize> CodeWriteDispatch<E, CW> for ConstCode<CODE>
 where
     E: Endianness,
-    CW: WriteCodes<E> + ?Sized,
+    CW: CodesWrite<E> + ?Sized,
 {
     type Error<CWE>
         = CWE

@@ -12,7 +12,7 @@ use crate::prelude::code::{CodeRead, CodeReadDispatch, CodeWrite, CodeWriteDispa
 use crate::prelude::Endianness;
 use crate::prelude::{
     len_delta, len_exp_golomb, len_gamma, len_golomb, len_omega, len_pi, len_pi_web, len_rice,
-    len_vbyte, len_zeta, Code, ReadCodes, WriteCodes,
+    len_vbyte, len_zeta, Code, CodesRead, CodesWrite,
 };
 use anyhow::Result;
 use core::fmt::Debug;
@@ -336,7 +336,7 @@ where
     where
         CRE: Debug + Send + Sync + 'static;
     #[inline]
-    fn read<E: Endianness, CR: ReadCodes<E> + ?Sized>(
+    fn read<E: Endianness, CR: CodesRead<E> + ?Sized>(
         &self,
         reader: &mut CR,
     ) -> Result<u64, Self::Error<CR::Error>> {
@@ -354,7 +354,7 @@ impl<
         const RICE: usize,
         const PI: usize,
         E: Endianness,
-        CR: ReadCodes<E> + ?Sized,
+        CR: CodesRead<E> + ?Sized,
     > CodeReadDispatch<E, CR> for CodesStatsWrapper<W, ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
 where
     W: CodeReadDispatch<E, CR>,
@@ -387,7 +387,7 @@ where
     where
         CWE: Debug + Send + Sync + 'static;
     #[inline]
-    fn write<E: Endianness, CW: WriteCodes<E> + ?Sized>(
+    fn write<E: Endianness, CW: CodesWrite<E> + ?Sized>(
         &self,
         writer: &mut CW,
         value: u64,
@@ -406,7 +406,7 @@ impl<
         const RICE: usize,
         const PI: usize,
         E: Endianness,
-        CW: WriteCodes<E> + ?Sized,
+        CW: CodesWrite<E> + ?Sized,
     > CodeWriteDispatch<E, CW> for CodesStatsWrapper<W, ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
 where
     W: CodeWriteDispatch<E, CW>,
