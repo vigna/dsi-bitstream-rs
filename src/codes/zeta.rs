@@ -8,18 +8,18 @@
 
 //! Boldi–Vigna ζ codes.
 //!
-//! The ζ code with parameter `k` of a natural number `n` is the concatenation of
-//! of the unary code of `h = ⌊⌊log₂(n + 1)⌋ / k⌋` and
-//! minimal binary code of `n + 1 - 2^(hk)` with `2^((h + 1)k) – 2^(hk)` as upper bound.
+//! The ζ code with parameter `k` of a natural number `n` is the concatenation
+//! of of the unary code of `h = ⌊⌊log₂(n + 1)⌋ / k⌋` and minimal binary code of
+//! `n + 1 - 2^(hk)` with `2^((h + 1)k) – 2^(hk)` as upper bound.
 //!
-//! Note that this module provides a generic implementation of ζ codes, and
-//! a specialized implementation for ζ₃ that may use tables.
+//! Note that this module provides a generic implementation of ζ codes, and a
+//! specialized implementation for ζ₃ that may use tables.
 //!
-//! ## Reference
-//! Boldi Paolo and Sebastiano Vigna,
-//! “The Webgraph framework II: codes for the World-Wide Web,”
-//! Data Compression Conference, 2004. Proceedings. DCC 2004
-//! (2004): 528-; <https://doi.org/10.1109/DCC.2004.1281504>.
+//! # References
+//!
+//! Boldi Paolo and Sebastiano Vigna, “The Webgraph framework II: codes for the
+//! World-Wide Web”, Data Compression Conference, 2004. Proceedings. DCC 2004
+//! (2004): 528-; doi: <https://doi.org/10.1109/DCC.2004.1281504>.
 
 use super::{len_minimal_binary, zeta_tables, MinimalBinaryRead, MinimalBinaryWrite};
 use crate::traits::*;
@@ -28,7 +28,7 @@ use crate::traits::*;
 #[must_use]
 #[inline]
 #[allow(clippy::collapsible_if)]
-pub fn len_zeta_param<const USE_TABLE: bool>(mut n: u64, k: u64) -> usize {
+pub fn len_zeta_param<const USE_TABLE: bool>(mut n: u64, k: usize) -> usize {
     if USE_TABLE {
         if k == zeta_tables::K {
             if let Some(idx) = zeta_tables::LEN.get(n as usize) {
@@ -37,16 +37,16 @@ pub fn len_zeta_param<const USE_TABLE: bool>(mut n: u64, k: u64) -> usize {
         }
     }
     n += 1;
-    let h = n.ilog2() as u64 / k;
+    let h = n.ilog2() as usize / k;
     let u = 1 << ((h + 1) * k);
     let l = 1 << (h * k);
-    h as usize + 1 + len_minimal_binary(n - l, u - l)
+    h + 1 + len_minimal_binary(n - l, u - l)
 }
 
 /// Returns the length of the ζ code with parameter `k` for `n` using
 /// a default value for `USE_TABLE`.
 #[inline(always)]
-pub fn len_zeta(n: u64, k: u64) -> usize {
+pub fn len_zeta(n: u64, k: usize) -> usize {
     len_zeta_param::<true>(n, k)
 }
 
@@ -54,7 +54,7 @@ pub fn len_zeta(n: u64, k: u64) -> usize {
 ///
 /// This is the trait you should usually pull in scope to read ζ codes.
 pub trait ZetaRead<E: Endianness>: BitRead<E> {
-    fn read_zeta(&mut self, k: u64) -> Result<u64, Self::Error>;
+    fn read_zeta(&mut self, k: usize) -> Result<u64, Self::Error>;
     fn read_zeta3(&mut self) -> Result<u64, Self::Error>;
 }
 
@@ -67,13 +67,13 @@ pub trait ZetaRead<E: Endianness>: BitRead<E> {
 /// of [`ZetaRead`] using default values is usually provided exploiting the
 /// [`crate::codes::params::ReadParams`] mechanism.
 pub trait ZetaReadParam<E: Endianness>: MinimalBinaryRead<E> {
-    fn read_zeta_param(&mut self, k: u64) -> Result<u64, Self::Error>;
+    fn read_zeta_param(&mut self, k: usize) -> Result<u64, Self::Error>;
     fn read_zeta3_param<const USE_TABLE: bool>(&mut self) -> Result<u64, Self::Error>;
 }
 
 impl<B: BitRead<BE>> ZetaReadParam<BE> for B {
     #[inline(always)]
-    fn read_zeta_param(&mut self, k: u64) -> Result<u64, B::Error> {
+    fn read_zeta_param(&mut self, k: usize) -> Result<u64, B::Error> {
         default_read_zeta(self, k)
     }
 
@@ -90,7 +90,7 @@ impl<B: BitRead<BE>> ZetaReadParam<BE> for B {
 
 impl<B: BitRead<LE>> ZetaReadParam<LE> for B {
     #[inline(always)]
-    fn read_zeta_param(&mut self, k: u64) -> Result<u64, B::Error> {
+    fn read_zeta_param(&mut self, k: usize) -> Result<u64, B::Error> {
         default_read_zeta(self, k)
     }
 
@@ -110,9 +110,9 @@ impl<B: BitRead<LE>> ZetaReadParam<LE> for B {
 #[inline(always)]
 fn default_read_zeta<BO: Endianness, B: BitRead<BO>>(
     backend: &mut B,
-    k: u64,
+    k: usize,
 ) -> Result<u64, B::Error> {
-    let h = backend.read_unary()?;
+    let h = backend.read_unary()? as usize;
     let u = 1 << ((h + 1) * k);
     let l = 1 << (h * k);
     let res = backend.read_minimal_binary(u - l)?;
@@ -123,7 +123,7 @@ fn default_read_zeta<BO: Endianness, B: BitRead<BO>>(
 ///
 /// This is the trait you should usually pull in scope to write ζ codes.
 pub trait ZetaWrite<E: Endianness>: BitWrite<E> {
-    fn write_zeta(&mut self, n: u64, k: u64) -> Result<usize, Self::Error>;
+    fn write_zeta(&mut self, n: u64, k: usize) -> Result<usize, Self::Error>;
     fn write_zeta3(&mut self, n: u64) -> Result<usize, Self::Error>;
 }
 
@@ -139,7 +139,7 @@ pub trait ZetaWriteParam<E: Endianness>: MinimalBinaryWrite<E> {
     fn write_zeta_param<const USE_TABLE: bool>(
         &mut self,
         n: u64,
-        k: u64,
+        k: usize,
     ) -> Result<usize, Self::Error>;
     fn write_zeta3_param<const USE_TABLE: bool>(&mut self, n: u64) -> Result<usize, Self::Error>;
 }
@@ -149,7 +149,7 @@ impl<B: BitWrite<BE>> ZetaWriteParam<BE> for B {
     fn write_zeta_param<const USE_TABLE: bool>(
         &mut self,
         n: u64,
-        k: u64,
+        k: usize,
     ) -> Result<usize, Self::Error> {
         default_write_zeta(self, n, k)
     }
@@ -171,7 +171,7 @@ impl<B: BitWrite<LE>> ZetaWriteParam<LE> for B {
     fn write_zeta_param<const USE_TABLE: bool>(
         &mut self,
         n: u64,
-        k: u64,
+        k: usize,
     ) -> Result<usize, Self::Error> {
         default_write_zeta(self, n, k)
     }
@@ -194,10 +194,10 @@ impl<B: BitWrite<LE>> ZetaWriteParam<LE> for B {
 fn default_write_zeta<E: Endianness, B: BitWrite<E>>(
     backend: &mut B,
     mut n: u64,
-    k: u64,
+    k: usize,
 ) -> Result<usize, B::Error> {
     n += 1;
-    let h = n.ilog2() as u64 / k;
+    let h = n.ilog2() as usize / k;
     let u = 1 << ((h + 1) * k);
     let l = 1 << (h * k);
 
@@ -205,5 +205,5 @@ fn default_write_zeta<E: Endianness, B: BitWrite<E>>(
     debug_assert!(n < u, "{} < {}", n, u);
 
     // Write the code
-    Ok(backend.write_unary(h)? + backend.write_minimal_binary(n - l, u - l)?)
+    Ok(backend.write_unary(h as u64)? + backend.write_minimal_binary(n - l, u - l)?)
 }

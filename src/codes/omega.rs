@@ -9,18 +9,18 @@
 //! Like Elias gamma coding and Elias delta coding, it works by prefixing the
 //! positive integer with a representation of its order of magnitude in a
 //! universal code. Unlike those other two codes, however, Elias omega
-//! recursively encodes that prefix; thus, they are sometimes known as
-//! recursive Elias codes.
+//! recursively encodes that prefix; thus, they are sometimes known as recursive
+//! Elias codes.
 //!
 //! The ω code is decodable in BigEndian order only. This is because the read
 //! algorithm requires to peek at the MSB bit of the next value, which is not
 //! possible in LittleEndian order. To write in LittleEndian order, we rotate by
-//! one the bits to the left, so that the MSB bit is the LSB bit, and we can peek
-//! at it.
+//! one the bits to the left, so that the MSB bit is the LSB bit, and we can
+//! peek at it.
 //!
-//! ## Reference
-//! Peter Elias.
-//! "Universal codeword sets and representations of the integers,"
+//! # References
+//!
+//! Peter Elias. “Universal codeword sets and representations of the integers”,
 //! IEEE Transactions on Information Theory, vol. 21, no. 2, pp. 194-203, March
 //! 1975, doi:  <https://doi.org/10.1109/TIT.1975.1055349>.
 
@@ -48,7 +48,7 @@ fn recursive_len(n: u64) -> usize {
 
 /// Trait for reading ω codes.
 ///
-/// This is the trait you should usually pull in scope to read ω codes.
+/// This is the trait you should pull in scope to read ω codes.
 pub trait OmegaRead<E: Endianness>: BitRead<E> {
     // omega codes are indexed from 1
     fn read_omega(&mut self) -> Result<u64, Self::Error> {
@@ -72,7 +72,7 @@ pub trait OmegaRead<E: Endianness>: BitRead<E> {
 
 /// Trait for writing ω codes.
 ///
-/// This is the trait you should usually pull in scope to write ω codes.
+/// This is the trait you should pull in scope to write ω codes.
 pub trait OmegaWrite<E: Endianness>: BitWrite<E> {
     fn write_omega(&mut self, n: u64) -> Result<usize, Self::Error> {
         // omega codes are indexed from 1
@@ -140,7 +140,7 @@ mod test {
                 data[0].to_be(),
                 expected_be,
             );
-            println!("");
+            println!();
 
             let mut data = vec![0_u64];
             let mut writer = <BufBitWriter<LE, _>>::new(MemWordWriterVec::new(&mut data));
@@ -154,7 +154,7 @@ mod test {
                 data[0].to_le(),
                 expected_le,
             );
-            println!("");
+            println!();
         }
     }
 }

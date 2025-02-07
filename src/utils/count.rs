@@ -113,7 +113,7 @@ impl<E: Endianness, BW: BitWrite<E> + DeltaWrite<E>, const PRINT: bool> DeltaWri
 impl<E: Endianness, BW: BitWrite<E> + ZetaWrite<E>, const PRINT: bool> ZetaWrite<E>
     for CountBitWriter<E, BW, PRINT>
 {
-    fn write_zeta(&mut self, value: u64, k: u64) -> Result<usize, BW::Error> {
+    fn write_zeta(&mut self, value: u64, k: usize) -> Result<usize, BW::Error> {
         self.bit_write.write_zeta(value, k).inspect(|x| {
             self.bits_written += *x;
             if PRINT {
@@ -248,7 +248,7 @@ impl<E: Endianness, BR: BitRead<E> + DeltaRead<E>, const PRINT: bool> DeltaRead<
 impl<E: Endianness, BR: BitRead<E> + ZetaRead<E>, const PRINT: bool> ZetaRead<E>
     for CountBitReader<E, BR, PRINT>
 {
-    fn read_zeta(&mut self, k: u64) -> Result<u64, BR::Error> {
+    fn read_zeta(&mut self, k: usize) -> Result<u64, BR::Error> {
         self.bit_read.read_zeta(k).inspect(|x| {
             self.bits_read += len_zeta(*x, k);
             if PRINT {

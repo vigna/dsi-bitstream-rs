@@ -283,7 +283,7 @@ impl ByteCode for ByteStreamVByte<BigEndian, NonGrouped, NonComplete, One> {
         Ok(result)
     }
 
-    fn write(mut value: u64, w: &mut impl Write) -> Result<usize> {
+    fn write(value: u64, w: &mut impl Write) -> Result<usize> {
         todo!();
     }
 }

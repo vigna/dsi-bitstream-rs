@@ -96,7 +96,7 @@ pub mod delta_tables;
 pub mod gamma_tables;
 pub mod zeta_tables;
 
-/// A collection trait for reading all the codes supported by this library.
+/// Convenience trait for reading all the codes supported by the library.
 pub trait CodesRead<E: Endianness>:
     BitRead<E>
     + GammaRead<E>
@@ -117,6 +117,7 @@ pub trait CodesRead<E: Endianness>:
         code.read::<E, Self>(self)
     }
 }
+
 impl<E: Endianness, B> CodesRead<E> for B where
     B: BitRead<E>
         + GammaRead<E>
@@ -135,7 +136,7 @@ impl<E: Endianness, B> CodesRead<E> for B where
 {
 }
 
-/// A collection trait for writing all the codes supported by this library.
+/// Convenience trait for writing all the codes supported by the library.
 pub trait CodesWrite<E: Endianness>:
     BitWrite<E>
     + GammaWrite<E>
@@ -153,6 +154,7 @@ pub trait CodesWrite<E: Endianness>:
         code.write::<E, Self>(self, value)
     }
 }
+
 impl<E: Endianness, B> CodesWrite<E> for B where
     B: BitWrite<E>
         + GammaWrite<E>

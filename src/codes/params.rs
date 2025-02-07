@@ -99,7 +99,7 @@ macro_rules! impl_default_read_codes {
             <WR::Word as DoubleType>::DoubleType: CastableInto<u64>,
         {
             #[inline(always)]
-            fn read_zeta(&mut self, k: u64) -> Result<u64, Self::Error> {
+            fn read_zeta(&mut self, k: usize) -> Result<u64, Self::Error> {
                 self.read_zeta_param(k)
             }
 
@@ -142,7 +142,7 @@ macro_rules! impl_default_read_codes {
             <WR::Word as DoubleType>::DoubleType: CastableInto<u64>,
         {
             #[inline(always)]
-            fn read_zeta(&mut self, k: u64) -> Result<u64, Self::Error> {
+            fn read_zeta(&mut self, k: usize) -> Result<u64, Self::Error> {
                 self.read_zeta_param(k)
             }
 
@@ -200,7 +200,7 @@ macro_rules! impl_default_write_codes {
             where u64: CastableInto<WR::Word>,
         {
             #[inline(always)]
-            fn write_zeta(&mut self, value: u64, k: u64) -> Result<usize, Self::Error> {
+            fn write_zeta(&mut self, value: u64, k: usize) -> Result<usize, Self::Error> {
                 self.write_zeta_param::<true>(value, k)
             }
 

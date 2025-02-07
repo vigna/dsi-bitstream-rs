@@ -971,4 +971,4 @@ pub const LEN: &[u8] = &[
     16,
 ];
 /// The K of the zeta codes for these tables
-pub const K: u64 = 3;
+pub const K: usize = 3;

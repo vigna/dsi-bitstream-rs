@@ -14,18 +14,19 @@
 //!
 //! For natural numbers distributed with a geometric distribution with base `p`,
 //! the base-2 logarithm of the optimal Rice code is [`⌈log₂(log((√5 + 1)/2) /
-//! log(1 - p))⌉`](log2_b). See [reference](https://tda.jpl.nasa.gov/progress_report/42-159/159E.pdf).
+//! log(1 - p))⌉`](log2_b). See
+//! [reference](https://tda.jpl.nasa.gov/progress_report/42-159/159E.pdf).
 //!
-//! ## Reference
-//! Aaron Kiely,
-//! "Selecting the Golomb parameter in Rice coding,"
-//! Interplanetary Network Progress report 42-159 (2004) Jet Propulsion Laboratory.
+//! # References
+//!
+//! Aaron Kiely, “Selecting the Golomb parameter in Rice coding”, Interplanetary
+//! Network Progress report 42-159 (2004), Jet Propulsion Laboratory.
 
 use crate::traits::*;
 
 /// Returns the length of the Rice code for `n` with parameter `log2_b`.
 #[must_use]
-#[inline]
+#[inline(always)]
 pub fn len_rice(n: u64, log2_b: usize) -> usize {
     (n >> log2_b) as usize + 1 + log2_b
 }
@@ -51,7 +52,7 @@ pub trait RiceRead<E: Endianness>: BitRead<E> {
 
 /// Trait for writing Rice codes.
 pub trait RiceWrite<E: Endianness>: BitWrite<E> {
-    #[inline]
+    #[inline(always)]
     fn write_rice(&mut self, n: u64, log2_b: usize) -> Result<usize, Self::Error> {
         let mut written_bits = self.write_unary(n >> log2_b)?;
         #[cfg(feature = "checks")]

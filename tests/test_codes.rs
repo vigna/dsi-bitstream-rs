@@ -190,3 +190,62 @@ where
 
     Ok(())
 }
+
+#[test]
+fn test_pi_roundtrip() {
+    let k = 3;
+    for value in 0..1_000_000 {
+        let mut data = vec![0_u64];
+        let mut writer = <BufBitWriter<BE, _>>::new(MemWordWriterVec::new(&mut data));
+        let code_len = writer.write_pi(value, k).unwrap();
+        assert_eq!(code_len, len_pi(value, k));
+        drop(writer);
+        let mut reader = <BufBitReader<BE, _>>::new(MemWordReader::new(&data));
+        assert_eq!(
+            reader.read_pi(k).unwrap(),
+            value,
+            "for value: {} with k {}",
+            value,
+            k
+        );
+    }
+}
+
+#[test]
+fn test_pi() {
+    for (k, value, expected) in [
+        (2, 20, 0b01_00_0101 << (64 - 8)),
+        (2, 0, 0b100 << (64 - 3)),
+        (2, 1, 0b1010 << (64 - 4)),
+        (2, 2, 0b1011 << (64 - 4)),
+        (2, 3, 0b1_1000 << (64 - 5)),
+        (2, 4, 0b1_1001 << (64 - 5)),
+        (2, 5, 0b1_1010 << (64 - 5)),
+        (2, 6, 0b1_1011 << (64 - 5)),
+        (2, 7, 0b11_1000 << (64 - 6)),
+        (3, 0, 0b1000 << (64 - 4)),
+        (3, 1, 0b1_0010 << (64 - 5)),
+        (3, 2, 0b1_0011 << (64 - 5)),
+        (3, 3, 0b1_01000 << (64 - 6)),
+        (3, 4, 0b1_01001 << (64 - 6)),
+        (3, 5, 0b1_01010 << (64 - 6)),
+        (3, 6, 0b1_01011 << (64 - 6)),
+        (3, 7, 0b101_1000 << (64 - 7)),
+    ] {
+        let mut data = vec![0_u64];
+        let mut writer = <BufBitWriter<BE, _>>::new(MemWordWriterVec::new(&mut data));
+        let code_len = writer.write_pi(value, k).unwrap();
+        drop(writer);
+        assert_eq!(
+            data[0].to_be(),
+            expected,
+            "\nfor value: {} with k {}\ngot: {:064b}\nexp: {:064b}\ngot_len: {} exp_len: {}\n",
+            value,
+            k,
+            data[0].to_be(),
+            expected,
+            code_len,
+            len_pi(value, k),
+        );
+    }
+}

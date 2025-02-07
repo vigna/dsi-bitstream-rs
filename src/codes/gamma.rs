@@ -9,18 +9,18 @@
 //! Elias γ code.
 //!
 //! The γ code of a natural number `n` is the concatenation of the unary code of
-//! `⌊log₂(n + 1)⌋` and the binary representation of `n + 1` with the most
+//! `⌊log₂(n + 1)⌋` and of the binary representation of `n + 1` with the most
 //! significant bit removed.
 //!
-//! The `USE_TABLE` parameter enables or disables the use of
-//! pre-computed tables for decoding.
+//! The `USE_TABLE` parameter enables or disables the use of pre-computed tables
+//! for decoding.
 //!
-//! ## Reference
-//! Peter Elias,
-//! "Universal codeword sets and representations of the integers,"
+//! # References
+//!
+//! Peter Elias, “Universal codeword sets and representations of the integers”,
 //! IEEE Transactions on Information Theory, vol. 21, no. 2, pp. 194-203, March
-//! 1975, doi:  <https://doi.org/10.1109/TIT.1975.1055349>.
-
+//! 1975, doi: <https://doi.org/10.1109/TIT.1975.1055349>.
+//!
 use super::gamma_tables;
 use crate::traits::*;
 
@@ -34,8 +34,8 @@ pub fn len_gamma_param<const USE_TABLE: bool>(mut n: u64) -> usize {
         }
     }
     n += 1;
-    let number_of_bits_to_write = n.ilog2();
-    2 * number_of_bits_to_write as usize + 1
+    let λ = n.ilog2();
+    2 * λ as usize + 1
 }
 
 /// Returns the length of the γ code for `n` using
@@ -152,14 +152,13 @@ fn default_write_gamma<E: Endianness, B: BitWrite<E>>(
     mut n: u64,
 ) -> Result<usize, B::Error> {
     n += 1;
-    let number_of_bits_to_write = n.ilog2();
+    let λ = n.ilog2();
 
     #[cfg(feature = "checks")]
     {
         // Clean up n in case checks are enabled
-        n ^= 1 << number_of_bits_to_write;
+        n ^= 1 << λ;
     }
 
-    Ok(backend.write_unary(number_of_bits_to_write as _)?
-        + backend.write_bits(n, number_of_bits_to_write as _)?)
+    Ok(backend.write_unary(λ as _)? + backend.write_bits(n, λ as _)?)
 }

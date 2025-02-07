@@ -95,7 +95,7 @@ where
         Ok(value)
     }
 
-    fn read_zeta(&mut self, k: u64) -> Result<u64, R::Error> {
+    fn read_zeta(&mut self, k: usize) -> Result<u64, R::Error> {
         let value = self.reader.read_zeta(k)?;
         eprintln!("{{z{}:{}}}", k, value);
         Ok(value)
@@ -153,7 +153,7 @@ impl<E: Endianness, W: DeltaWrite<E>> DeltaWrite<E> for DbgBitWriter<E, W> {
 }
 
 impl<E: Endianness, W: ZetaWrite<E>> ZetaWrite<E> for DbgBitWriter<E, W> {
-    fn write_zeta(&mut self, value: u64, k: u64) -> Result<usize, W::Error> {
+    fn write_zeta(&mut self, value: u64, k: usize) -> Result<usize, W::Error> {
         eprintln!("{{z{}:{}}}", value, k);
         self.writer.write_zeta(value, k)
     }

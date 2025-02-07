@@ -8,21 +8,20 @@
 
 //! Elias δ code.
 //!
-//! The δ code of a natural number `n` is the concatenation of the [γ](crate::codes::gamma)
-//! code of `⌊log₂(n + 1)⌋` and the binary representation of `n + 1` with the
-//! most significant bit removed.
+//! The δ code of a natural number `n` is the concatenation of the
+//! [γ](crate::codes::gamma) code of `⌊log₂(n + 1)⌋` and the binary
+//! representation of `n + 1` with the most significant bit removed.
 //!
-//! The `USE_DELTA_TABLE` parameter enables or disables the use of
-//! pre-computed tables for decoding δ codes, and the `USE_GAMMA_TABLE` parameter
-//! enables or disables the use of pre-computed tables for decoding the
-//! the initial γ code in case the whole δ code could not be decoded
-//! by tables.
+//! The `USE_DELTA_TABLE` parameter enables or disables the use of pre-computed
+//! tables for decoding δ codes, and the `USE_GAMMA_TABLE` parameter enables or
+//! disables the use of pre-computed tables for decoding the the initial γ code
+//! in case the whole δ code could not be decoded by tables.
 //!
-//! ## Reference
-//! Peter Elias,
-//! "Universal codeword sets and representations of the integers,"
+//! # References
+//!
+//! Peter Elias, “Universal codeword sets and representations of the integers”,
 //! IEEE Transactions on Information Theory, vol. 21, no. 2, pp. 194-203, March
-//! 1975, doi:  <https://doi.org/10.1109/TIT.1975.1055349>.
+//! 1975, doi: <https://doi.org/10.1109/TIT.1975.1055349>.
 //!
 use super::{delta_tables, len_gamma_param, GammaReadParam, GammaWriteParam};
 use crate::traits::*;
@@ -36,8 +35,8 @@ pub fn len_delta_param<const USE_DELTA_TABLE: bool, const USE_GAMMA_TABLE: bool>
             return *idx as usize;
         }
     }
-    let l = (n + 1).ilog2();
-    l as usize + len_gamma_param::<USE_GAMMA_TABLE>(l as _)
+    let λ = (n + 1).ilog2();
+    λ as usize + len_gamma_param::<USE_GAMMA_TABLE>(λ as _)
 }
 
 /// Returns the length of the δ code for `n` using
@@ -172,16 +171,13 @@ fn default_write_delta<E: Endianness, B: GammaWriteParam<E>, const USE_GAMMA_TAB
     mut n: u64,
 ) -> Result<usize, B::Error> {
     n += 1;
-    let number_of_bits_to_write = n.ilog2();
+    let λ = n.ilog2();
 
     #[cfg(feature = "checks")]
     {
         // Clean up n in case checks are enabled
-        n ^= 1 << number_of_bits_to_write;
+        n ^= 1 << λ;
     }
 
-    Ok(
-        backend.write_gamma_param::<USE_GAMMA_TABLE>(number_of_bits_to_write as _)?
-            + backend.write_bits(n, number_of_bits_to_write as _)?,
-    )
+    Ok(backend.write_gamma_param::<USE_GAMMA_TABLE>(λ as _)? + backend.write_bits(n, λ as _)?)
 }
