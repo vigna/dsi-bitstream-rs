@@ -6,14 +6,13 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
-
 //! Traits for reading and writing instantaneous codes.
-//! 
+//!
 //! This modules contains code for reading and writing instantaneous codes.
 //! Codewords are uniformely indexed from 0 for all codes. For example, the
 //! first few words of [unary](crate::traits::BitRead::read_unary), [γ](gamma),
 //! and [δ](delta) codes are:
-//! 
+//!
 //! | Arg |  unary   |    γ    |     δ    |
 //! |-----|---------:|--------:|---------:|
 //! | 0   |        1 |       1 |        1 |
@@ -24,21 +23,21 @@
 //! | 5   |   000001 |   00110 |    01110 |
 //! | 6   |  0000001 |   00111 |    01111 |
 //! | 7   | 00000001 | 0001000 | 00100000 |
-//! 
+//!
 //! If you need to encode signed integers, please use the
 //! [`ToInt`](crate::utils::ToInt) and [`ToNat`](crate::utils::ToNat) traits,
 //! which provide a bijection between signed integers and natural numbers.
-//! 
+//!
 //! Each code is implemented as a pair of traits for reading and writing (e.g.,
 //! [`GammaReadParam`] and [`GammaWriteParam`]). The traits for reading depend
 //! on [`BitRead`], whereas the traits for writing depend on [`BitWrite`].
-//! 
+//!
 //! The traits ending with `Param` make it possible to specify parameters—for
 //! example, whether to use decoding tables. Usually, one whould instead pull in
 //! scope non-parametric traits such as [`GammaRead`] and [`GammaWrite`], for
 //! which defaults are provided using the mechanism described in the [`params`]
 //! module.
-//! 
+//!
 //! Note that if you are using decoding tables, you must ensure that the
 //! [`peek_bits`](crate::traits::BitRead::peek_bits) method of your [`BitRead`]
 //! implementation returns a sufficient number of bits: if it does not, an

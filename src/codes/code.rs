@@ -90,7 +90,7 @@ pub trait CodeRead {
 pub trait CodeReadDispatch<E, CR>
 where
     E: Endianness,
-    CR: CodesRead<E> + ?Sized, 
+    CR: CodesRead<E> + ?Sized,
 {
     type Error<CRE>: Debug + Send + Sync + 'static
     where

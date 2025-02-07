@@ -121,8 +121,8 @@ impl<E: Endianness, B: BitWrite<E> + ?Sized> PiWrite<E> for B {}
 
 #[cfg(test)]
 mod test {
-    use crate::prelude::*;
     use crate::codes::PiWrite;
+    use crate::prelude::*;
     #[test]
     fn test_pi_roundtrip() {
         let k = 3;

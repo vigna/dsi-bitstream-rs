@@ -1,4 +1,4 @@
- /*
+/*
  * SPDX-FileCopyrightText: 2023 Tommaso Fontana
  * SPDX-FileCopyrightText: 2023 Sebastiano Vigna
  *
@@ -6,16 +6,16 @@
  */
 
 //! Variable-length byte codes.
-//! 
+//!
 //! These codes represent a natural number as a sequence of bytes, the length of
 //! the sequence depends on the magnitude of the number. They are used in many
 //! contexts, and they are known under a plethora of different names such
 //! “vbyte”, “varint”, “[variable-length
 //! quantity](https://en.wikipedia.org/wiki/Variable-length_quantity)”, “LEB”,
 //! and so on.
-//! 
+//!
 //! # Definition
-//! 
+//!
 //! Since there are a few slightly different variants used in production code
 //! and in the literature, before going into the details of this implementation
 //! we will try to define a clear taxonomy by explaining in detail the four
@@ -26,33 +26,33 @@
 //! is left-padded with zeros so to obtain exactly ⌈*k* / 7⌉ blocks of 7 bits.
 //! Each block is stored in a byte, prefixed with a continuation bit which is
 //! one for all blocks except for the last one.
-//! 
+//!
 //! ## Endianness
-//! 
+//!
 //! The first property is the endianness of the bytes: in big-endian codes, the
 //! first byte contains the highest (most significant) bits, whereas in
 //! little-endian codes, the first byte contains the lowest (less significant)
 //! bits.
-//! 
+//!
 //! The advantage of the big-endian variant is that is lexicographical, that is,
 //! comparing lexicographically a stream of encoded natural numbers will give
 //! the same results as comparing lexicographically the encoded numbers, much
 //! like it happens for [UTF-8 encoding](https://en.wikipedia.org/wiki/UTF-8).
-//! 
+//!
 //! ## Completeness
-//! 
+//!
 //! This basic representation discussed above is not *complete*, as there are
 //! sequences that are not used. For example, zero can be written in many ways
 //! (e.g., `0x00` or `0x80 0x00` ), but we are using only the single-byte
 //! representation. Uncompleteness leads to a (small) loss in compression.
-//! 
+//!
 //! To have completeness, one can offset the representation in *k* bits by the
 //! maximum number representable using *k* – 1 bits. That is, we represent the
 //! interval [0..2⁷) with one byte, then the interval [2⁷..2⁷ + 2¹⁴] with two
 //! bytes, the interval [2⁷ + 2¹⁴..2⁷ + 2¹⁴ + 2²¹] with three bytes, and so on.
 //!
 //! ## Grouping
-//! 
+//!
 //! In the basic representation, the continuation bit is the most significant
 //! bit of each byte. However, one can gather all continuation bits in the first
 //! byte ([as UTF-8 does](https://en.wikipedia.org/wiki/UTF-8)). This approach
@@ -60,45 +60,45 @@
 //! [`usize::leading_ones`] on the first negated byte, which usually maps to a
 //! negation and a call to a fast instruction for the detection of the most
 //! significant bit, improving branch prediction.
-//! 
+//!
 //! Note that if the code is grouped, choosing a code with the same endianness
 //! as your hardare can lead to a performance improvement, as after the first
 //! byte the rest of the code can be read with a
 //![`read_exact`](std::io::Read::read_exact). This is indeed the only reason why
 //! we provide both big-endian and little-endian codes.
-//! 
+//!
 //! ## Sign
-//! 
+//!
 //! It is possible to extend the codes to represent signed integers. Two
 //! possible approaches are using a [bijective mapping](crate::utils::ToInt)
 //! between the integers and the natural numbers, or defining a specialized
 //! code.
-//! 
+//!
 //! # Implementations
-//! 
+//!
 //! We provide two unsigned, grouped, complete representations, one big-endian
 //! and one little-endian. We recommend using the big-endian code if you need
 //! lexicographical comparisons. Otherwise, you might choose an endianness
 //! matching that of your hardware, which might increase performance.
-//! 
+//!
 //! Since this code is byte-aligned, we provide also convenient, fast methods
 //! [`vbyte_encode`] and [`vbyte_decode`] that can be used on types implementing
 //! [`std::io::Read`] and [`std::io::Write`].
 //!
 //! [`LEB128`]: https://en.wikipedia.org/wiki/LEB128
 //! [`VLQ`]: https://en.wikipedia.org/wiki/Variable-length_quantity
-//! 
+//!
 //! # Examples
-//! 
+//!
 //! - The [LEB128](https://en.wikipedia.org/wiki/LEB128) code used by LLVM is a
 //!   little-endian incomplete ungrouped representation. There is both a signed
 //!   and an unsigned version; the signed version represent negative numbers
 //!   using two's complement.
-//! 
+//!
 //! - The [code used by
 //!   git](https://github.com/git/git/blob/7fb6aefd2aaffe66e614f7f7b83e5b7ab16d4806/varint.c)
 //!   is a big-endian complete ungrouped representation.
-//! 
+//!
 //! - [This implementation in
 //!   folly](https://github.com/facebook/folly/blob/dd4a5eb057afbc3c7c7da71801df2ee3c61c47d1/folly/Varint.h#L109)
 //!   is a little-endian incomplete ungrouped representation.
@@ -252,7 +252,7 @@ impl<E: Endianness, B: BitWrite<E>> VByteWrite<E> for B {}
 
 /// Encode an integer to a byte stream using variable-length byte codes and
 /// return the number of bytes written.
-/// 
+///
 /// This method just delegates to the correct endianness-specific method.
 #[inline(always)]
 pub fn vbyte_encode<E: Endianness, W: std::io::Write>(
@@ -474,7 +474,7 @@ pub fn vbyte_encode_be<W: std::io::Write>(
 
 #[inline(always)]
 /// Decode an integer from a byte stream using variable-length byte codes.
-/// 
+///
 /// This method just delegates to the correct endianness-specific method.
 pub fn vbyte_decode<E: Endianness, R: std::io::Read>(reader: &mut R) -> std::io::Result<u64> {
     if core::any::TypeId::of::<E>() == core::any::TypeId::of::<BigEndian>() {

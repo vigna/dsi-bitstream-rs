@@ -11,8 +11,8 @@ use mem_dbg::{MemDbg, MemSize};
 use crate::prelude::code::{CodeRead, CodeReadDispatch, CodeWrite, CodeWriteDispatch};
 use crate::prelude::Endianness;
 use crate::prelude::{
-    len_delta, len_exp_golomb, len_gamma, len_golomb, len_omega, len_pi, len_rice,
-    vbyte_bit_len, len_zeta, Code, CodesRead, CodesWrite,
+    len_delta, len_exp_golomb, len_gamma, len_golomb, len_omega, len_pi, len_rice, len_zeta,
+    vbyte_bit_len, Code, CodesRead, CodesWrite,
 };
 use anyhow::Result;
 use core::fmt::Debug;
