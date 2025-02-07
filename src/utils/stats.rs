@@ -11,8 +11,8 @@ use mem_dbg::{MemDbg, MemSize};
 use crate::prelude::code::{CodeRead, CodeReadDispatch, CodeWrite, CodeWriteDispatch};
 use crate::prelude::Endianness;
 use crate::prelude::{
-    len_delta, len_exp_golomb, len_gamma, len_golomb, len_omega, len_pi, len_pi_web, len_rice,
-    len_vbyte, len_zeta, Code, CodesRead, CodesWrite,
+    len_delta, len_exp_golomb, len_gamma, len_golomb, len_omega, len_pi, len_rice,
+    vbyte_bit_len, len_zeta, Code, CodesRead, CodesWrite,
 };
 use anyhow::Result;
 use core::fmt::Debug;
@@ -72,9 +72,6 @@ pub struct CodesStats<
     /// The total space used to store the elements if
     /// they were stored using the Pi code.
     pub pi: [u64; PI],
-    /// The total space used to store the elements if
-    /// they were stored using the Pi web code.
-    pub pi_web: [u64; PI],
 }
 
 impl<
@@ -98,7 +95,6 @@ impl<
             exp_golomb: [0; EXP_GOLOMB],
             rice: [0; RICE],
             pi: [0; PI],
-            pi_web: [0; PI],
         }
     }
 }
@@ -124,7 +120,7 @@ impl<
         self.gamma += len_gamma(n) as u64 * count;
         self.delta += len_delta(n) as u64 * count;
         self.omega += len_omega(n) as u64 * count;
-        self.vbyte += len_vbyte(n) as u64 * count;
+        self.vbyte += vbyte_bit_len(n) as u64 * count;
 
         for (k, val) in self.zeta.iter_mut().enumerate() {
             *val += (len_zeta(n, (k + 1) as _) as u64) * count;
@@ -141,9 +137,6 @@ impl<
         // +2 because π0 = gamma and π1 = zeta_2
         for (k, val) in self.pi.iter_mut().enumerate() {
             *val += (len_pi(n, (k + 2) as _) as u64) * count;
-        }
-        for (k, val) in self.pi_web.iter_mut().enumerate() {
-            *val += (len_pi_web(n, k as _) as u64) * count;
         }
         n
     }
@@ -169,9 +162,6 @@ impl<
             *a += *b;
         }
         for (a, b) in self.pi.iter_mut().zip(rhs.pi.iter()) {
-            *a += *b;
-        }
-        for (a, b) in self.pi_web.iter_mut().zip(rhs.pi_web.iter()) {
             *a += *b;
         }
     }
@@ -214,9 +204,6 @@ impl<
         }
         for (k, val) in self.pi.iter().enumerate() {
             check!(Code::Pi { k: (k + 2) as _ }, *val);
-        }
-        for (k, val) in self.pi_web.iter().enumerate() {
-            check!(Code::PiWeb { k: k as _ }, *val);
         }
 
         (best_code, best)

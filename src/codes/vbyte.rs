@@ -1,4 +1,4 @@
-/*
+ /*
  * SPDX-FileCopyrightText: 2023 Tommaso Fontana
  * SPDX-FileCopyrightText: 2023 Sebastiano Vigna
  *
@@ -70,8 +70,7 @@
 //! ## Sign
 //! 
 //! It is possible to extend the codes to represent signed integers. Two
-//! possible approaches are using a [bijective
-//! mapping](https://docs.rs/webgraph/latest/webgraph/utils/fn.int2nat.html)
+//! possible approaches are using a [bijective mapping](crate::utils::ToInt)
 //! between the integers and the natural numbers, or defining a specialized
 //! code.
 //! 
@@ -93,7 +92,8 @@
 //! 
 //! - The [LEB128](https://en.wikipedia.org/wiki/LEB128) code used by LLVM is a
 //!   little-endian incomplete ungrouped representation. There is both a signed
-//!   and an unsigned version.
+//!   and an unsigned version; the signed version represent negative numbers
+//!   using two's complement.
 //! 
 //! - The [code used by
 //!   git](https://github.com/git/git/blob/7fb6aefd2aaffe66e614f7f7b83e5b7ab16d4806/varint.c)
@@ -115,12 +115,10 @@ const UPPER_BOUND_6: u64 = 128_u64.pow(6) + UPPER_BOUND_5;
 const UPPER_BOUND_7: u64 = 128_u64.pow(7) + UPPER_BOUND_6;
 const UPPER_BOUND_8: u64 = 128_u64.pow(8) + UPPER_BOUND_7;
 
-// TODO: is this slow?
-
-/// Returns the length of the VByte code for `value` in bytes.
+/// Return the length of the variable-length byte code for `value` in bytes.
 #[must_use]
 #[inline]
-pub fn len_vbyte_bytes(value: u64) -> usize {
+pub fn vbyte_byte_len(value: u64) -> usize {
     if value < UPPER_BOUND_1 {
         return 1;
     }
@@ -148,16 +146,14 @@ pub fn len_vbyte_bytes(value: u64) -> usize {
     9
 }
 
-/// Returns the length of the VByte code for `value` in bits.
+/// Return the length of the variable-length byte code for `value` in bits.
 #[must_use]
 #[inline]
-pub fn len_vbyte(value: u64) -> usize {
-    8 * len_vbyte_bytes(value)
+pub fn vbyte_bit_len(value: u64) -> usize {
+    8 * vbyte_byte_len(value)
 }
 
-// TODO: signed-unsigned functions?
-
-/// Trait for reading VByte codes.
+/// Trait for reading variable-length byte codes.
 pub trait VByteRead<E: Endianness>: BitRead<E> {
     #[inline(always)]
     fn read_vbyte(&mut self) -> Result<u64, Self::Error> {
@@ -184,7 +180,7 @@ pub trait VByteRead<E: Endianness>: BitRead<E> {
     }
 }
 
-/// Trait for writing VByte codes.
+/// Trait for writing variable-length byte codes.
 pub trait VByteWrite<E: Endianness>: BitWrite<E> {
     #[inline]
     fn write_vbyte(&mut self, mut value: u64) -> Result<usize, Self::Error> {
@@ -244,8 +240,8 @@ pub trait VByteWrite<E: Endianness>: BitWrite<E> {
             self.write_bits(edc!(0b11111110, 0b01111111), 8)?;
             return self.write_bits(value, 64 - 8);
         }
-        // TODO!: we can save the last bit of the unary code here and
-        // just write 8 ones
+        // Note that we save one byte by using 0xFF as the first byte.
+        // TODO: sometimes we subtract UPPER_BOUND_8, sometimes not.
         self.write_bits(0b11111111, 8)?;
         self.write_bits(value - UPPER_BOUND_8, 64)
     }
@@ -254,10 +250,10 @@ pub trait VByteWrite<E: Endianness>: BitWrite<E> {
 impl<E: Endianness, B: BitRead<E>> VByteRead<E> for B {}
 impl<E: Endianness, B: BitWrite<E>> VByteWrite<E> for B {}
 
-// TODO: Endianness?
-
-/// Encodes an integer to a byte stream using VByte codes and return the
-/// number of bytes written.
+/// Encode an integer to a byte stream using variable-length byte codes and
+/// return the number of bytes written.
+/// 
+/// This method just delegates to the correct endianness-specific method.
 #[inline(always)]
 pub fn vbyte_encode<E: Endianness, W: std::io::Write>(
     value: u64,
@@ -270,18 +266,8 @@ pub fn vbyte_encode<E: Endianness, W: std::io::Write>(
     }
 }
 
-#[inline(always)]
-/// Decodes an integer from a byte stream using VByte codes.
-pub fn vbyte_decode<E: Endianness, R: std::io::Read>(reader: &mut R) -> std::io::Result<u64> {
-    if core::any::TypeId::of::<E>() == core::any::TypeId::of::<BigEndian>() {
-        vbyte_decode_be(reader)
-    } else {
-        vbyte_decode_le(reader)
-    }
-}
-
-/// Encodes an integer to a little endian byte stream using VByte codes and
-/// return the number of bytes written.
+/// Encode an integer to a little-endian byte stream using variable-length byte
+/// codes and return the number of bytes written.
 pub fn vbyte_encode_le<W: std::io::Write>(
     mut value: u64,
     writer: &mut W,
@@ -385,8 +371,8 @@ pub fn vbyte_encode_le<W: std::io::Write>(
     Ok(9)
 }
 
-/// Encodes an integer to a big endian byte stream using VByte codes and return
-/// the number of bytes written.
+/// Encode an integer to a big-endian byte stream using variable-length byte
+/// codes and return the number of bytes written.
 pub fn vbyte_encode_be<W: std::io::Write>(
     mut value: u64,
     writer: &mut W,
@@ -486,7 +472,20 @@ pub fn vbyte_encode_be<W: std::io::Write>(
     Ok(9)
 }
 
-/// Decodes an integer from a little endian byte stream using VByte codes.
+#[inline(always)]
+/// Decode an integer from a byte stream using variable-length byte codes.
+/// 
+/// This method just delegates to the correct endianness-specific method.
+pub fn vbyte_decode<E: Endianness, R: std::io::Read>(reader: &mut R) -> std::io::Result<u64> {
+    if core::any::TypeId::of::<E>() == core::any::TypeId::of::<BigEndian>() {
+        vbyte_decode_be(reader)
+    } else {
+        vbyte_decode_le(reader)
+    }
+}
+
+/// Decode an integer from a little-endian byte stream using variable-length
+/// byte codes.
 pub fn vbyte_decode_le<R: std::io::Read>(reader: &mut R) -> std::io::Result<u64> {
     let mut data = [0; 9];
     reader.read_exact(&mut data[..1])?;
@@ -566,7 +565,8 @@ pub fn vbyte_decode_le<R: std::io::Read>(reader: &mut R) -> std::io::Result<u64>
     Ok(x)
 }
 
-/// Decodes an integer from a big endian byte stream using VByte codes.
+/// Decode an integer from a big-endian byte stream using variable-length byte
+/// codes.
 pub fn vbyte_decode_be<R: std::io::Read>(reader: &mut R) -> std::io::Result<u64> {
     let mut data = [0; 9];
     reader.read_exact(&mut data[..1])?;
@@ -665,7 +665,7 @@ mod test {
                 buffer.set_position(0);
                 for (i, l) in (MIN..MAX).zip(lens.iter()) {
                     let j = vbyte_decode::<$E, _>(&mut buffer).unwrap();
-                    assert_eq!(*l, len_vbyte_bytes(i as _));
+                    assert_eq!(*l, vbyte_byte_len(i as _));
                     assert_eq!(i as u64, j);
                 }
 

@@ -48,7 +48,6 @@ enum RandomCommand {
     VByte(u64),
     Omega(u64),
     Pi(u64, u64),
-    PiWeb(u64, u64),
 }
 
 pub fn harness(data: FuzzCase) {
@@ -94,10 +93,6 @@ pub fn harness(data: FuzzCase) {
                 *value = (*value).min(u64::MAX - 1);
             }
             RandomCommand::Pi(value, k) => {
-                *value = (*value).min(u32::MAX as u64 - 1);
-                *k = (*k).max(1).min(7);
-            }
-            RandomCommand::PiWeb(value, k) => {
                 *value = (*value).min(u32::MAX as u64 - 1);
                 *k = (*k).max(1).min(7);
             }
@@ -231,14 +226,6 @@ pub fn harness(data: FuzzCase) {
                     let (big_success, little_success) = (
                         big.write_pi(*value, *k).is_ok(),
                         little.write_pi(*value, *k).is_ok(),
-                    );
-                    assert_eq!(big_success, little_success);
-                    writes.push(big_success);
-                }
-                RandomCommand::PiWeb(value, k) => {
-                    let (big_success, little_success) = (
-                        big.write_pi_web(*value, *k).is_ok(),
-                        little.write_pi_web(*value, *k).is_ok(),
                     );
                     assert_eq!(big_success, little_success);
                     writes.push(big_success);
@@ -954,50 +941,6 @@ pub fn harness(data: FuzzCase) {
                         assert_eq!(pos + len_pi(value, k) as u64, big_buff.bit_pos().unwrap());
                         assert_eq!(
                             pos + len_pi(value, k) as u64,
-                            little_buff.bit_pos().unwrap()
-                        );
-                    } else {
-                        assert!(b.is_err());
-                        assert!(l.is_err());
-                        assert!(bb.is_err());
-                        assert!(lb.is_err());
-                        assert_eq!(pos, big.bit_pos().unwrap());
-                        assert_eq!(pos, little.bit_pos().unwrap());
-                        assert_eq!(pos, big_buff.bit_pos().unwrap());
-                        assert_eq!(pos, little_buff.bit_pos().unwrap());
-                    }
-                }
-                RandomCommand::PiWeb(value, k) => {
-                    let (b, l, bb, lb) = (
-                        big.read_pi_web(k),
-                        little.read_pi_web(k),
-                        big_buff.read_pi_web(k),
-                        little_buff.read_pi_web(k),
-                    );
-                    if succ {
-                        assert_eq!(b.unwrap(), value as u64);
-                        assert_eq!(l.unwrap(), value as u64);
-                        assert_eq!(bb.unwrap(), value as u64);
-                        assert_eq!(lb.unwrap(), value as u64);
-                        assert_eq!(pos + len_pi_web(value, k) as u64, big.bit_pos().unwrap());
-                        assert_eq!(pos + len_pi_web(value, k) as u64, little.bit_pos().unwrap());
-                        assert_eq!(
-                            pos + len_pi_web(value, k) as u64,
-                            big_buff.bit_pos().unwrap()
-                        );
-                        assert_eq!(
-                            pos + len_pi_web(value, k) as u64,
-                            little_buff.bit_pos().unwrap()
-                        );
-
-                        assert_eq!(pos + len_pi_web(value, k) as u64, big.bit_pos().unwrap());
-                        assert_eq!(pos + len_pi_web(value, k) as u64, little.bit_pos().unwrap());
-                        assert_eq!(
-                            pos + len_pi_web(value, k) as u64,
-                            big_buff.bit_pos().unwrap()
-                        );
-                        assert_eq!(
-                            pos + len_pi_web(value, k) as u64,
                             little_buff.bit_pos().unwrap()
                         );
                     } else {

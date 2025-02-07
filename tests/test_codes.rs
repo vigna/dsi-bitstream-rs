@@ -47,7 +47,7 @@ where
 
     for _ in 0..N {
         let mut written_bits = 0;
-        match r.gen_range(0..12) {
+        match r.gen_range(0..11) {
             0 => {
                 for _ in 0..r.gen_range(1..10) {
                     written_bits += write.write_unary(v.gen_range(0..100))?;
@@ -109,12 +109,6 @@ where
                     written_bits += write.write_pi(v.gen_range(0..100), k)?;
                 }
             }
-            11 => {
-                let k = r.gen_range(1..4);
-                for _ in 0..r.gen_range(1..10) {
-                    written_bits += write.write_pi_web(v.gen_range(0..100), k)?;
-                }
-            }
             _ => unreachable!(),
         }
         pos.push(written_bits);
@@ -128,7 +122,7 @@ where
     let mut v = SmallRng::seed_from_u64(1);
 
     for _ in 0..N {
-        match r.gen_range(0..12) {
+        match r.gen_range(0..11) {
             0 => {
                 for _ in 0..r.gen_range(1..10) {
                     assert_eq!(v.gen_range(0..100), read.read_unary()?);
@@ -188,12 +182,6 @@ where
                 let k = r.gen_range(1..4);
                 for _ in 0..r.gen_range(1..10) {
                     assert_eq!(v.gen_range(0..100), read.read_pi(k)?);
-                }
-            }
-            11 => {
-                let k = r.gen_range(1..4);
-                for _ in 0..r.gen_range(1..10) {
-                    assert_eq!(v.gen_range(0..100), read.read_pi_web(k)?);
                 }
             }
             _ => unreachable!(),

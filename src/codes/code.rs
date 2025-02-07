@@ -39,7 +39,7 @@
 //!     type Error<CRE> = CRE
 //!     where
 //!         CRE:  Debug + Send + Sync + 'static;
-//!     fn read<E: Endianness, CR: ReadCodes<E> + ?Sized>(
+//!     fn read<E: Endianness, CR: CodesRead<E> + ?Sized>(
 //!         &self,
 //!         reader: &mut CR,
 //!     ) -> Result<u64, Self::Error<CR::Error>> {
@@ -51,7 +51,7 @@
 //!     type Error<CWE> = CWE
 //!     where
 //!         CWE:  Debug + Send + Sync + 'static;
-//!     fn write<E: Endianness, CW: WriteCodes<E> + ?Sized>(
+//!     fn write<E: Endianness, CW: CodesWrite<E> + ?Sized>(
 //!         &self,
 //!         writer: &mut CW,
 //!         value: u64,
@@ -90,7 +90,7 @@ pub trait CodeRead {
 pub trait CodeReadDispatch<E, CR>
 where
     E: Endianness,
-    CR: CodesRead<E> + ?Sized,
+    CR: CodesRead<E> + ?Sized, 
 {
     type Error<CRE>: Debug + Send + Sync + 'static
     where
@@ -166,7 +166,6 @@ pub enum Code {
     VByte,
     Zeta { k: usize },
     Pi { k: usize },
-    PiWeb { k: usize },
     Golomb { b: usize },
     ExpGolomb { k: usize },
     Rice { log2_b: usize },
@@ -191,7 +190,6 @@ impl CodeRead for Code {
             Code::Zeta { k: 3 } => reader.read_zeta3()?,
             Code::Zeta { k } => reader.read_zeta(*k as u64)?,
             Code::Pi { k } => reader.read_pi(*k as u64)?,
-            Code::PiWeb { k } => reader.read_pi_web(*k as u64)?,
             Code::Golomb { b } => reader.read_golomb(*b as u64)?,
             Code::ExpGolomb { k } => reader.read_exp_golomb(*k)?,
             Code::Rice { log2_b } => reader.read_rice(*log2_b)?,
@@ -234,7 +232,6 @@ impl CodeWrite for Code {
             Code::Zeta { k: 3 } => writer.write_zeta3(value)?,
             Code::Zeta { k } => writer.write_zeta(value, *k as u64)?,
             Code::Pi { k } => writer.write_pi(value, *k as u64)?,
-            Code::PiWeb { k } => writer.write_pi_web(value, *k as u64)?,
             Code::Golomb { b } => writer.write_golomb(value, *b as u64)?,
             Code::ExpGolomb { k } => writer.write_exp_golomb(value, *k)?,
             Code::Rice { log2_b } => writer.write_rice(value, *log2_b)?,
@@ -265,10 +262,9 @@ impl CodeLen for Code {
             Code::Gamma => len_gamma(value),
             Code::Delta => len_delta(value),
             Code::Omega => len_omega(value),
-            Code::VByte => len_vbyte(value),
+            Code::VByte => vbyte_bit_len(value),
             Code::Zeta { k } => len_zeta(value, *k as u64),
             Code::Pi { k } => len_pi(value, *k as u64),
-            Code::PiWeb { k } => len_pi_web(value, *k as u64),
             Code::Golomb { b } => len_golomb(value, *b as u64),
             Code::ExpGolomb { k } => len_exp_golomb(value, *k),
             Code::Rice { log2_b } => len_rice(value, *log2_b),
@@ -286,7 +282,6 @@ impl core::fmt::Display for Code {
             Code::VByte => write!(f, "VByte"),
             Code::Zeta { k } => write!(f, "Zeta({})", k),
             Code::Pi { k } => write!(f, "Pi({})", k),
-            Code::PiWeb { k } => write!(f, "PiWeb({})", k),
             Code::Golomb { b } => write!(f, "Golomb({})", b),
             Code::ExpGolomb { k } => write!(f, "ExpGolomb({})", k),
             Code::Rice { log2_b } => write!(f, "Rice({})", log2_b),
@@ -318,7 +313,6 @@ impl std::str::FromStr for Code {
                 match name {
                     "Zeta" => Ok(Code::Zeta { k: k.parse()? }),
                     "Pi" => Ok(Code::Pi { k: k.parse()? }),
-                    "PiWeb" => Ok(Code::PiWeb { k: k.parse()? }),
                     "Golomb" => Ok(Code::Golomb { b: k.parse()? }),
                     "ExpGolomb" => Ok(Code::ExpGolomb { k: k.parse()? }),
                     "Rice" => Ok(Code::Rice { log2_b: k.parse()? }),
@@ -373,15 +367,6 @@ where
     pub const PI8: ReadFn<E, CR> = |reader: &mut CR| reader.read_pi(8);
     pub const PI9: ReadFn<E, CR> = |reader: &mut CR| reader.read_pi(9);
     pub const PI10: ReadFn<E, CR> = |reader: &mut CR| reader.read_pi(10);
-    pub const PI_WEB2: ReadFn<E, CR> = |reader: &mut CR| reader.read_pi_web(2);
-    pub const PI_WEB3: ReadFn<E, CR> = |reader: &mut CR| reader.read_pi_web(3);
-    pub const PI_WEB4: ReadFn<E, CR> = |reader: &mut CR| reader.read_pi_web(4);
-    pub const PI_WEB5: ReadFn<E, CR> = |reader: &mut CR| reader.read_pi_web(5);
-    pub const PI_WEB6: ReadFn<E, CR> = |reader: &mut CR| reader.read_pi_web(6);
-    pub const PI_WEB7: ReadFn<E, CR> = |reader: &mut CR| reader.read_pi_web(7);
-    pub const PI_WEB8: ReadFn<E, CR> = |reader: &mut CR| reader.read_pi_web(8);
-    pub const PI_WEB9: ReadFn<E, CR> = |reader: &mut CR| reader.read_pi_web(9);
-    pub const PI_WEB10: ReadFn<E, CR> = |reader: &mut CR| reader.read_pi_web(10);
     pub const GOLOMB2: ReadFn<E, CR> = |reader: &mut CR| reader.read_golomb(2);
     pub const GOLOMB3: ReadFn<E, CR> = |reader: &mut CR| reader.read_golomb(3);
     pub const GOLOMB4: ReadFn<E, CR> = |reader: &mut CR| reader.read_golomb(4);
@@ -436,15 +421,6 @@ where
             Code::Pi { k: 8 } => Self::PI8,
             Code::Pi { k: 9 } => Self::PI9,
             Code::Pi { k: 10 } => Self::PI10,
-            Code::PiWeb { k: 2 } => Self::PI_WEB2,
-            Code::PiWeb { k: 3 } => Self::PI_WEB3,
-            Code::PiWeb { k: 4 } => Self::PI_WEB4,
-            Code::PiWeb { k: 5 } => Self::PI_WEB5,
-            Code::PiWeb { k: 6 } => Self::PI_WEB6,
-            Code::PiWeb { k: 7 } => Self::PI_WEB7,
-            Code::PiWeb { k: 8 } => Self::PI_WEB8,
-            Code::PiWeb { k: 9 } => Self::PI_WEB9,
-            Code::PiWeb { k: 10 } => Self::PI_WEB10,
             Code::Golomb { b: 2 } => Self::GOLOMB2,
             Code::Golomb { b: 3 } => Self::GOLOMB3,
             Code::Golomb { b: 4 } => Self::GOLOMB4,
@@ -541,16 +517,6 @@ where
     pub const PI8: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_pi(value, 8);
     pub const PI9: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_pi(value, 9);
     pub const PI10: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_pi(value, 10);
-    pub const PI_WEB2: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_pi_web(value, 2);
-    pub const PI_WEB3: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_pi_web(value, 3);
-    pub const PI_WEB4: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_pi_web(value, 4);
-    pub const PI_WEB5: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_pi_web(value, 5);
-    pub const PI_WEB6: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_pi_web(value, 6);
-    pub const PI_WEB7: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_pi_web(value, 7);
-    pub const PI_WEB8: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_pi_web(value, 8);
-    pub const PI_WEB9: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_pi_web(value, 9);
-    pub const PI_WEB10: WriteFn<E, CW> =
-        |writer: &mut CW, value: u64| writer.write_pi_web(value, 10);
     pub const GOLOMB2: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_golomb(value, 2);
     pub const GOLOMB3: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_golomb(value, 3);
     pub const GOLOMB4: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_golomb(value, 4);
@@ -614,15 +580,6 @@ where
             Code::Pi { k: 8 } => Self::PI8,
             Code::Pi { k: 9 } => Self::PI9,
             Code::Pi { k: 10 } => Self::PI10,
-            Code::PiWeb { k: 2 } => Self::PI_WEB2,
-            Code::PiWeb { k: 3 } => Self::PI_WEB3,
-            Code::PiWeb { k: 4 } => Self::PI_WEB4,
-            Code::PiWeb { k: 5 } => Self::PI_WEB5,
-            Code::PiWeb { k: 6 } => Self::PI_WEB6,
-            Code::PiWeb { k: 7 } => Self::PI_WEB7,
-            Code::PiWeb { k: 8 } => Self::PI_WEB8,
-            Code::PiWeb { k: 9 } => Self::PI_WEB9,
-            Code::PiWeb { k: 10 } => Self::PI_WEB10,
             Code::Golomb { b: 2 } => Self::GOLOMB2,
             Code::Golomb { b: 3 } => Self::GOLOMB3,
             Code::Golomb { b: 4 } => Self::GOLOMB4,
@@ -797,15 +754,6 @@ impl<const CODE: usize> CodeRead for ConstCode<CODE> {
             const_codes::PI8 => reader.read_pi(8),
             const_codes::PI9 => reader.read_pi(9),
             const_codes::PI10 => reader.read_pi(10),
-            const_codes::PI_WEB2 => reader.read_pi_web(2),
-            const_codes::PI_WEB3 => reader.read_pi_web(3),
-            const_codes::PI_WEB4 => reader.read_pi_web(4),
-            const_codes::PI_WEB5 => reader.read_pi_web(5),
-            const_codes::PI_WEB6 => reader.read_pi_web(6),
-            const_codes::PI_WEB7 => reader.read_pi_web(7),
-            const_codes::PI_WEB8 => reader.read_pi_web(8),
-            const_codes::PI_WEB9 => reader.read_pi_web(9),
-            const_codes::PI_WEB10 => reader.read_pi_web(10),
             const_codes::GOLOMB2 => reader.read_golomb(2),
             const_codes::GOLOMB3 => reader.read_golomb(3),
             const_codes::GOLOMB4 => reader.read_golomb(4),
@@ -888,15 +836,6 @@ impl<const CODE: usize> CodeWrite for ConstCode<CODE> {
             const_codes::PI8 => writer.write_pi(value, 8),
             const_codes::PI9 => writer.write_pi(value, 9),
             const_codes::PI10 => writer.write_pi(value, 10),
-            const_codes::PI_WEB2 => writer.write_pi_web(value, 2),
-            const_codes::PI_WEB3 => writer.write_pi_web(value, 3),
-            const_codes::PI_WEB4 => writer.write_pi_web(value, 4),
-            const_codes::PI_WEB5 => writer.write_pi_web(value, 5),
-            const_codes::PI_WEB6 => writer.write_pi_web(value, 6),
-            const_codes::PI_WEB7 => writer.write_pi_web(value, 7),
-            const_codes::PI_WEB8 => writer.write_pi_web(value, 8),
-            const_codes::PI_WEB9 => writer.write_pi_web(value, 9),
-            const_codes::PI_WEB10 => writer.write_pi_web(value, 10),
             const_codes::GOLOMB2 => writer.write_golomb(value, 2),
             const_codes::GOLOMB3 => writer.write_golomb(value, 3),
             const_codes::GOLOMB4 => writer.write_golomb(value, 4),
@@ -952,7 +891,7 @@ impl<const CODE: usize> CodeLen for ConstCode<CODE> {
             const_codes::GAMMA => len_gamma(value),
             const_codes::DELTA => len_delta(value),
             const_codes::OMEGA => len_omega(value),
-            const_codes::VBYTE => len_vbyte(value),
+            const_codes::VBYTE => vbyte_bit_len(value),
             const_codes::ZETA1 => len_zeta(value, 1),
             const_codes::ZETA2 => len_zeta(value, 2),
             const_codes::ZETA3 => len_zeta(value, 3),
@@ -972,15 +911,6 @@ impl<const CODE: usize> CodeLen for ConstCode<CODE> {
             const_codes::PI8 => len_pi(value, 8),
             const_codes::PI9 => len_pi(value, 9),
             const_codes::PI10 => len_pi(value, 10),
-            const_codes::PI_WEB2 => len_pi_web(value, 2),
-            const_codes::PI_WEB3 => len_pi_web(value, 3),
-            const_codes::PI_WEB4 => len_pi_web(value, 4),
-            const_codes::PI_WEB5 => len_pi_web(value, 5),
-            const_codes::PI_WEB6 => len_pi_web(value, 6),
-            const_codes::PI_WEB7 => len_pi_web(value, 7),
-            const_codes::PI_WEB8 => len_pi_web(value, 8),
-            const_codes::PI_WEB9 => len_pi_web(value, 9),
-            const_codes::PI_WEB10 => len_pi_web(value, 10),
             const_codes::GOLOMB2 => len_golomb(value, 2),
             const_codes::GOLOMB3 => len_golomb(value, 3),
             const_codes::GOLOMB4 => len_golomb(value, 4),

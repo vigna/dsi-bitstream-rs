@@ -77,7 +77,7 @@ pub mod zeta;
 pub use zeta::{len_zeta, len_zeta_param, ZetaRead, ZetaReadParam, ZetaWrite, ZetaWriteParam};
 
 pub mod pi;
-pub use pi::{len_pi, len_pi_web, PiRead, PiWebRead, PiWebWrite, PiWrite};
+pub use pi::{len_pi, PiRead, PiWrite};
 
 pub mod golomb;
 pub use golomb::{len_golomb, GolombRead, GolombWrite};
@@ -89,7 +89,7 @@ pub mod exp_golomb;
 pub use exp_golomb::{len_exp_golomb, ExpGolombRead, ExpGolombWrite};
 
 pub mod vbyte;
-pub use vbyte::{len_vbyte, VByteRead, VByteWrite};
+pub use vbyte::{vbyte_bit_len, VByteRead, VByteWrite};
 
 use crate::prelude::Endianness;
 
@@ -109,7 +109,6 @@ pub trait CodesRead<E: Endianness>:
     + OmegaRead<E>
     + MinimalBinaryRead<E>
     + PiRead<E>
-    + PiWebRead<E>
     + GolombRead<E>
     + RiceRead<E>
     + ExpGolombRead<E>
@@ -130,7 +129,6 @@ impl<E: Endianness, B> CodesRead<E> for B where
         + OmegaRead<E>
         + MinimalBinaryRead<E>
         + PiRead<E>
-        + PiWebRead<E>
         + GolombRead<E>
         + RiceRead<E>
         + ExpGolombRead<E>
@@ -147,7 +145,6 @@ pub trait CodesWrite<E: Endianness>:
     + OmegaWrite<E>
     + MinimalBinaryWrite<E>
     + PiWrite<E>
-    + PiWebWrite<E>
     + GolombWrite<E>
     + RiceWrite<E>
     + ExpGolombWrite<E>
@@ -165,7 +162,6 @@ impl<E: Endianness, B> CodesWrite<E> for B where
         + OmegaWrite<E>
         + MinimalBinaryWrite<E>
         + PiWrite<E>
-        + PiWebWrite<E>
         + GolombWrite<E>
         + RiceWrite<E>
         + ExpGolombWrite<E>
