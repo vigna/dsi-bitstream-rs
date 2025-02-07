@@ -38,3 +38,7 @@ harness = false
 [[bench]]
 name = "write_gamma"
 harness = false
+
+[[bench]]
+name = "vbyte"
+harness = false
