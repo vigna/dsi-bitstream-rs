@@ -12,7 +12,7 @@ use crate::prelude::code::{CodeRead, CodeReadDispatch, CodeWrite, CodeWriteDispa
 use crate::prelude::Endianness;
 use crate::prelude::{
     len_delta, len_exp_golomb, len_gamma, len_golomb, len_omega, len_pi, len_rice, len_zeta,
-    vbyte_bit_len, Code, CodesRead, CodesWrite,
+    bit_len_vbyte, Code, CodesRead, CodesWrite,
 };
 use anyhow::Result;
 use core::fmt::Debug;
@@ -120,7 +120,7 @@ impl<
         self.gamma += len_gamma(n) as u64 * count;
         self.delta += len_delta(n) as u64 * count;
         self.omega += len_omega(n) as u64 * count;
-        self.vbyte += vbyte_bit_len(n) as u64 * count;
+        self.vbyte += bit_len_vbyte(n) as u64 * count;
 
         for (k, val) in self.zeta.iter_mut().enumerate() {
             *val += (len_zeta(n, (k + 1) as _) as u64) * count;

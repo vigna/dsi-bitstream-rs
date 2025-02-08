@@ -118,7 +118,7 @@ const UPPER_BOUND_8: u64 = 128_u64.pow(8) + UPPER_BOUND_7;
 /// Return the length of the variable-length byte code for `value` in bytes.
 #[must_use]
 #[inline]
-pub fn vbyte_byte_len(value: u64) -> usize {
+pub fn byte_len_vbyte(value: u64) -> usize {
     if value < UPPER_BOUND_1 {
         return 1;
     }
@@ -149,8 +149,8 @@ pub fn vbyte_byte_len(value: u64) -> usize {
 /// Return the length of the variable-length byte code for `value` in bits.
 #[must_use]
 #[inline]
-pub fn vbyte_bit_len(value: u64) -> usize {
-    8 * vbyte_byte_len(value)
+pub fn bit_len_vbyte(value: u64) -> usize {
+    8 * byte_len_vbyte(value)
 }
 
 /// Trait for reading variable-length byte codes.
@@ -665,7 +665,7 @@ mod test {
                 buffer.set_position(0);
                 for (i, l) in (MIN..MAX).zip(lens.iter()) {
                     let j = vbyte_decode::<$E, _>(&mut buffer).unwrap();
-                    assert_eq!(*l, vbyte_byte_len(i as _));
+                    assert_eq!(*l, byte_len_vbyte(i as _));
                     assert_eq!(i as u64, j);
                 }
 

@@ -124,13 +124,15 @@ pub mod exp_golomb;
 pub use exp_golomb::{len_exp_golomb, ExpGolombRead, ExpGolombWrite};
 
 pub mod vbyte;
-pub use vbyte::{vbyte_bit_len, VByteRead, VByteWrite};
+pub use vbyte::{bit_len_vbyte, VByteRead, VByteWrite};
 
 use crate::prelude::Endianness;
 
 pub mod delta_tables;
 pub mod gamma_tables;
 pub mod zeta_tables;
+
+
 
 /// Convenience trait for reading all the codes supported by the library.
 ///
