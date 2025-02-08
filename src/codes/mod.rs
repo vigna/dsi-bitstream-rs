@@ -132,6 +132,8 @@ pub mod delta_tables;
 pub mod gamma_tables;
 pub mod zeta_tables;
 
+pub mod levenshtein;
+pub use levenshtein::{len_levenshtein, LevenshteinRead, LevenshteinWrite};
 
 
 /// Convenience trait for reading all the codes supported by the library.
