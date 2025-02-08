@@ -192,7 +192,7 @@ impl<E: Endianness, F: Format, B: IsComplete, C: ContinuationBit> WithName
     for ByteStreamVByte<E, F, B, C>
 {
     fn name() -> String {
-        format!("{},{},{},{}", F::NAME, B::NAME, C::NAME, E::NAME)
+        format!("{},{},{},{}_endian", F::NAME, B::NAME, C::NAME, E::NAME)
     }
 }
 
