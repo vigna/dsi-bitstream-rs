@@ -45,6 +45,42 @@
 //! otherwise. This is unfortunately difficult to check statically. To stay on
 //! the safe side, we recommend to use a an implementation that is able to peek
 //! at least at 16 bits.
+//! 
+//! # Big-endian vs. little-endian
+//! 
+//! As discussed in the [traits module](crate::traits), in general reversing the
+//! bits of a big-endian bit stream will not yield a little-endian bit stream
+//! containing the same sequence of fixed-width integers. The same is true for
+//! codes, albeit the situation is more complex.
+//! 
+//! The only code that can be safely reversed is the unary code. All other codes
+//! contain some value, and that value is written without reversing its bits.
+//! Thus, reversing the bits of a big-endian bit stream containing a sequence of
+//! instantaneous codes will not yield a little-endian bit stream containing the
+//! same sequence of codes (again, with the exception of unary codes).
+//! Technically, the codes written for the little-endian case are different than
+//! those written for the big-endian case.
+//! 
+//! For example, the [γ code](gamma) of 4 is `00101` in big-endian order, but it
+//! is `01100` in little-endian order, so that upon reading the unary code for 2
+//! we can read the `01` part without a bit reversal.
+//! 
+//! The case of [minimal binary codes](minimal_binary) is even more convoluted:
+//! for examples, the code with upper bound 7 has code words `00`, `010`, `011`,
+//! `100`, `101`, `110`, and `111`. To decode such a code without peeking at
+//! more bits than necessary, one first reads two bits, and then decides, based
+//! on their value, whether to read a further bit and add it on the right. But
+//! this means that we have to encode 2 as `011` in the big-endian case, and as
+//! `101` in the little-endian case, because we need to read the first two bits
+//! to decide whether to read the third.
+//! 
+//! In some cases, we resort to completely *ad hoc* solutions: for example, in
+//! the case of the [ω code](omega), for the little-endian case instead of
+//! reversing the bits written at each recursive call (which in principle would
+//! be necessary), we simply rotate them to the left by one position, exposing
+//! the most significant bit as first bit. This is sufficient to make the
+//! decoding possible, and is much faster than reversing the bits.
+
 use anyhow::Result;
 #[cfg(feature = "mem_dbg")]
 use mem_dbg::{MemDbg, MemSize};

@@ -8,11 +8,12 @@
 
 //! Boldi–Vigna ζ codes.
 //!
-//! The ζ code with parameter `k` of a natural number `n` is the concatenation
-//! of of the unary code of `h = ⌊⌊log₂(n + 1)⌋ / k⌋` and minimal binary code of
-//! `n + 1 - 2^(hk)` with `2^((h + 1)k) – 2^(hk)` as upper bound.
+//! The ζ code with parameter *k* of a natural number *n* is the concatenation
+//! of of the unary code of *h* = ⌊⌊log₂(*n* + 1)⌋ / *k*⌋ and of the [minimal
+//! binary code](crate::codes::minimal_binary) of *n* + 1 – 2*ʰᵏ* with
+//! 2⁽*ʰ* ⁺ ¹⁾*ᵏ* – 2*ʰᵏ* as upper bound.
 //!
-//! Note that this module provides a generic implementation of ζ codes, and a
+//! This module provides a generic implementation of ζ codes, and a
 //! specialized implementation for ζ₃ that may use tables.
 //!
 //! # References

@@ -43,12 +43,6 @@ pub fn b(p: f64) -> u64 {
     (-(2.0 - p).ln() / (1.0 - p).ln()).ceil() as u64
 }
 
-/// Returns the intended geometric distribution with base `p` for golomb codes
-/// with value `b`.
-pub fn p(b: u64) -> f64 {
-    1.0 / 2.0_f64.powf(1.0 / b as f64)
-}
-
 /// Trait for reading Golomb codes.
 pub trait GolombRead<E: Endianness>: BitRead<E> + MinimalBinaryRead<E> {
     #[inline(always)]

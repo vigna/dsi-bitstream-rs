@@ -6,17 +6,39 @@
 
 //! Elias ω code.
 //!
-//! Like Elias gamma coding and Elias delta coding, it works by prefixing the
-//! positive integer with a representation of its order of magnitude in a
-//! universal code. Unlike those other two codes, however, Elias omega
-//! recursively encodes that prefix; thus, they are sometimes known as recursive
-//! Elias codes.
+//! Elias [γ](super::gamma) and [δ](super::delta) codes encode a number *n* by
+//! storing the binary representation of *n* + 1, with the most significant bit
+//! removed, prefixed by its length in unary or [γ](super::gamma) code,
+//! respectively. Thus, [δ](super::delta) can be seen as adding one level of
+//! recursion in the length representation with respect to [γ](super::gamma).
+//! 
+//! Elias ω code pushes the recursion in the representation of the length to its
+//! limit; it is easier to describe the format of a code, rather than the
+//! encoding algorithm.
+//! 
+//! A codeword is given by the concatenation of blocks *b*₀ *b*₁ …  *b*ₙ `0`,
+//! where each block *b*ᵢ is a binary string starting with `1` and *b*₀ = `10`
+//! or `11`. One can interpret the highest bit of each block as a continuation
+//! bit, and the last `0` as a terminator of the code.
 //!
-//! The ω code is decodable in BigEndian order only. This is because the read
-//! algorithm requires to peek at the MSB bit of the next value, which is not
-//! possible in LittleEndian order. To write in LittleEndian order, we rotate by
-//! one the bits to the left, so that the MSB bit is the LSB bit, and we can
-//! peek at it.
+//! The *result* of each block is the value represented by the block in binary
+//! representation, minus one. The condition for a valid codeword is that the
+//! result of each block is the length of the following block, except for the
+//! last block.
+//! 
+//! The value associated with a codeword is 0 if the code is `0`, and otherwise
+//! the result of the last block.
+//! 
+//! For example, `1110010`, which is formed by the blocks `11`, `1011`, and `0`,
+//! represents 10.
+//! 
+//! As discussed in the [codes module documentation](crate::codes), to make the
+//! code readable in the little-endian case, rather than reversing the bits of
+//! blocks, which would be expensive, we simply rotate by one on the left each
+//! block, with the result that the most significant bit of the block is now the
+//! first bit in the stream, making it possible to check for the end of the
+//! codeword. For example, in the little-endian case, the code for 10 is
+//! `0011111`, which is formed by the blocks `11`, `0111`, and `0`.
 //!
 //! # References
 //!
