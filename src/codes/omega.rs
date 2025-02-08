@@ -126,6 +126,26 @@ mod test {
     use crate::prelude::*;
 
     #[test]
+    fn test_roundtrip() {
+        for value in (0..64).map(|i| 1 << i).chain(0..1024).chain([u64::MAX]) {
+            let mut data = vec![0_u64];
+            let mut writer = <BufBitWriter<BE, _>>::new(MemWordWriterVec::new(&mut data));
+            let code_len = writer.write_omega(value).unwrap();
+            assert_eq!(code_len, len_omega(value));
+            drop(writer);
+            let mut reader = <BufBitReader<BE, _>>::new(MemWordReader::new(&data));
+            assert_eq!(reader.read_omega().unwrap(), value);
+
+            let mut writer = <BufBitWriter<LE, _>>::new(MemWordWriterVec::new(&mut data));
+            let code_len = writer.write_omega(value).unwrap();
+            assert_eq!(code_len, len_omega(value));
+            drop(writer);
+            let mut reader = <BufBitReader<LE, _>>::new(MemWordReader::new(&data));
+            assert_eq!(reader.read_omega().unwrap(), value,);
+        }
+    }
+
+    #[test]
     fn test_omega() {
         for (value, expected_be, expected_le) in [
             (0, 0, 0),
