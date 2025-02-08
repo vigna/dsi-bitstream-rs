@@ -173,14 +173,17 @@ where
 
     let v = unsafe { v.align_to::<u32>().1 };
 
-    c.bench_function(&format!("vbyte,bits,{},{}_endian,read", C::name(), E::NAME), |b| {
-        b.iter(|| {
-            let mut r = BufBitReader::<E, _>::new(MemWordReader::new(v));
-            for _ in &s {
-                black_box(C::read(&mut r).unwrap());
-            }
-        })
-    });
+    c.bench_function(
+        &format!("vbyte,bits,{},{}_endian,read", C::name(), E::NAME),
+        |b| {
+            b.iter(|| {
+                let mut r = BufBitReader::<E, _>::new(MemWordReader::new(v));
+                for _ in &s {
+                    black_box(C::read(&mut r).unwrap());
+                }
+            })
+        },
+    );
 }
 
 #[derive(Debug, Default, Clone, Copy)]
@@ -206,7 +209,9 @@ impl<E: Endianness> ByteCode for ByteStreamVByte<E, GroupedIfs, Complete, OneCon
 }
 
 /// LLVM's implementation https://llvm.org/doxygen/LEB128_8h_source.html#l00080
-impl<B: IsComplete + 'static, C: ContinuationBit> ByteCode for ByteStreamVByte<LittleEndian, NonGrouped, B, C> {
+impl<B: IsComplete + 'static, C: ContinuationBit> ByteCode
+    for ByteStreamVByte<LittleEndian, NonGrouped, B, C>
+{
     fn read(r: &mut impl Read) -> Result<u64> {
         let mut result = 0;
         let mut shift = 0;
@@ -246,7 +251,9 @@ impl<B: IsComplete + 'static, C: ContinuationBit> ByteCode for ByteStreamVByte<L
 }
 
 /// Git implementation https://github.com/git/git/blob/7fb6aefd2aaffe66e614f7f7b83e5b7ab16d4806/varint.c#L4
-impl<B: IsComplete + 'static, C: ContinuationBit> ByteCode for ByteStreamVByte<BigEndian, NonGrouped, B, C> {
+impl<B: IsComplete + 'static, C: ContinuationBit> ByteCode
+    for ByteStreamVByte<BigEndian, NonGrouped, B, C>
+{
     fn read(r: &mut impl Read) -> Result<u64> {
         let mut buf = [0u8; 1];
         let mut value: u64;
@@ -301,22 +308,20 @@ impl BitCode for BitStreamVByte<GroupedIfs, Complete, OneCont> {
     }
 }
 
-
 pub fn benchmark(c: &mut Criterion) {
     bench_bytestream::<ByteStreamVByte<BE, NonGrouped, Complete, OneCont>>(c);
     bench_bytestream::<ByteStreamVByte<BE, NonGrouped, Complete, ZeroCont>>(c);
     bench_bytestream::<ByteStreamVByte<BE, NonGrouped, NonComplete, OneCont>>(c);
     bench_bytestream::<ByteStreamVByte<BE, NonGrouped, NonComplete, ZeroCont>>(c);
-    
+
     bench_bytestream::<ByteStreamVByte<LE, NonGrouped, NonComplete, OneCont>>(c);
     bench_bytestream::<ByteStreamVByte<LE, NonGrouped, NonComplete, ZeroCont>>(c);
 
     bench_bytestream::<ByteStreamVByte<LE, GroupedIfs, Complete, OneCont>>(c);
     bench_bytestream::<ByteStreamVByte<BE, GroupedIfs, Complete, OneCont>>(c);
-    
+
     bench_bitstream::<BitStreamVByte<GroupedIfs, Complete, OneCont>>(c);
 
-    
     //bench_bytestream::<ByteStreamVByte<BE, GroupedIfs, Complete, Zero>>(c);
     //bench_bytestream::<ByteStreamVByte<BE, GroupedIfs, NonComplete, One>>(c);
     //bench_bytestream::<ByteStreamVByte<BE, GroupedIfs, NonComplete, Zero>>(c);
