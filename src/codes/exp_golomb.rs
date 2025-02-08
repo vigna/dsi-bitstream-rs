@@ -12,9 +12,9 @@
 //! the exponential Golomb code with parameter *k* of a natural number *n* is
 //! given ⌊*x* / 2*ᵏ*⌋ in [γ code](super::gamma) followed by *x* mod 2*ᵏ*
 //! in binary *k*-bit representations.
-//! 
+//!
 //! The exponential Golomb code for *k* = 1 is [γ code](super::gamma).
-//! 
+//!
 //! Exponential Golomb codes are used in [H.264
 //! (MPEG-4)](https://en.wikipedia.org/wiki/Advanced_Video_Coding) and
 //! [H.265](https://en.wikipedia.org/wiki/High_Efficiency_Video_Coding).

@@ -8,13 +8,16 @@ license = "Apache-2.0 OR LGPL-2.1-or-later"
 readme = "README.md"
 keywords = ["bitstream", "codes", "compression"]
 categories = ["compression"]
-authors = ["Tommaso Fontana <tommaso.fontana.96@gmail.com>", "Sebastiano Vigna <sebastiano.vigna@unimi.it>"]
+authors = [
+	"Tommaso Fontana <tommaso.fontana.96@gmail.com>",
+	"Sebastiano Vigna <sebastiano.vigna@unimi.it>",
+]
 
 [dependencies]
 rand = { version = "0.8.5", features = ["small_rng"] }
 arbitrary = { version = "1", features = ["derive"], optional = true }
 common_traits = ">=0.10.2"
-mem_dbg = {version="0.2.2", optional = true}
+mem_dbg = { version = "0.2.2", optional = true }
 anyhow = "1.0.86"
 impl-tools = "0.10.2"
 
@@ -29,7 +32,8 @@ std = ["alloc"]
 alloc = []
 fuzz = ["dep:arbitrary"]
 checks = []
-no_copy_impls = [] # Disable copy_from/copy_to implementations so to test the default methods
+no_copy_impls = [
+] # Disable copy_from/copy_to implementations so to test the default methods
 
 [[bench]]
 name = "write_unary"
@@ -41,4 +45,8 @@ harness = false
 
 [[bench]]
 name = "vbyte"
+harness = false
+
+[[bench]]
+name = "universal"
 harness = false

@@ -37,7 +37,7 @@ pub fn len_golomb(n: u64, b: u64) -> usize {
     (n / b) as usize + 1 + len_minimal_binary(n % b, b)
 }
 
-/// Returns the optimal value of *b* for a geometric distribution of base *p*, 
+/// Returns the optimal value of *b* for a geometric distribution of base *p*,
 /// that is, ⌈–log(2 – *p*) / log(1 – *p*)⌉.
 pub fn b(p: f64) -> u64 {
     (-(2.0 - p).ln() / (1.0 - p).ln()).ceil() as u64

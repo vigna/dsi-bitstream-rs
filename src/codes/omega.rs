@@ -11,11 +11,11 @@
 //! removed, prefixed by its length in unary or [γ](super::gamma) code,
 //! respectively. Thus, [δ](super::delta) can be seen as adding one level of
 //! recursion in the length representation with respect to [γ](super::gamma).
-//! 
+//!
 //! Elias ω code pushes the recursion in the representation of the length to its
 //! limit; it is easier to describe the format of a code, rather than the
 //! encoding algorithm.
-//! 
+//!
 //! A codeword is given by the concatenation of blocks *b*₀ *b*₁ …  *b*ₙ `0`,
 //! where each block *b*ᵢ is a binary string starting with `1` and *b*₀ = `10`
 //! or `11`. One can interpret the highest bit of each block as a continuation
@@ -24,13 +24,13 @@
 //! The condition for a valid codeword is that the value represented by each
 //! block, incremented by one, is the length of the following block, except for
 //! the last block.
-//! 
+//!
 //! The value associated with a codeword is 0 if the code is `0`, and otherwise
 //! the value of the last block, decremented by one.
-//! 
+//!
 //! For example, `1110010`, which is formed by the blocks `11`, `1011`, and `0`,
 //! represents 10.
-//! 
+//!
 //! As discussed in the [codes module documentation](crate::codes), to make the
 //! code readable in the little-endian case, rather than reversing the bits of
 //! blocks, which would be expensive, we simply rotate by one on the left each

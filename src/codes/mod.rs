@@ -28,9 +28,12 @@
 //! [`ToInt`](crate::utils::ToInt) and [`ToNat`](crate::utils::ToNat) traits,
 //! which provide a bijection between signed integers and natural numbers.
 //!
+//!
 //! Each code is implemented as a pair of traits for reading and writing (e.g.,
 //! [`GammaReadParam`] and [`GammaWriteParam`]). The traits for reading depend
-//! on [`BitRead`], whereas the traits for writing depend on [`BitWrite`].
+//! on [`BitRead`], whereas the traits for writing depend on [`BitWrite`]. Note
+//! that most codes cannot write the number [`u64::MAX`] because of
+//! overflow issues.
 //!
 //! The traits ending with `Param` make it possible to specify parameters—for
 //! example, whether to use decoding tables. Usually, one whould instead pull in
@@ -45,14 +48,14 @@
 //! otherwise. This is unfortunately difficult to check statically. To stay on
 //! the safe side, we recommend to use a an implementation that is able to peek
 //! at least at 16 bits.
-//! 
+//!
 //! # Big-endian vs. little-endian
-//! 
+//!
 //! As discussed in the [traits module](crate::traits), in general reversing the
 //! bits of a big-endian bit stream will not yield a little-endian bit stream
 //! containing the same sequence of fixed-width integers. The same is true for
 //! codes, albeit the situation is more complex.
-//! 
+//!
 //! The only code that can be safely reversed is the unary code. All other codes
 //! contain some value, and that value is written without reversing its bits.
 //! Thus, reversing the bits of a big-endian bit stream containing a sequence of
@@ -60,11 +63,11 @@
 //! same sequence of codes (again, with the exception of unary codes).
 //! Technically, the codes written for the little-endian case are different than
 //! those written for the big-endian case.
-//! 
+//!
 //! For example, the [γ code](gamma) of 4 is `00101` in big-endian order, but it
 //! is `01100` in little-endian order, so that upon reading the unary code for 2
 //! we can read the `01` part without a bit reversal.
-//! 
+//!
 //! The case of [minimal binary codes](minimal_binary) is even more convoluted:
 //! for examples, the code with upper bound 7 has code words `00`, `010`, `011`,
 //! `100`, `101`, `110`, and `111`. To decode such a code without peeking at
@@ -73,7 +76,7 @@
 //! this means that we have to encode 2 as `011` in the big-endian case, and as
 //! `101` in the little-endian case, because we need to read the first two bits
 //! to decide whether to read the third.
-//! 
+//!
 //! In some cases, we resort to completely *ad hoc* solutions: for example, in
 //! the case of the [ω code](omega), for the little-endian case instead of
 //! reversing the bits written at each recursive call (which in principle would
@@ -134,7 +137,6 @@ pub mod zeta_tables;
 
 pub mod levenshtein;
 pub use levenshtein::{len_levenshtein, LevenshteinRead, LevenshteinWrite};
-
 
 /// Convenience trait for reading all the codes supported by the library.
 ///
