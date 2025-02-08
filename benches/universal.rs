@@ -156,7 +156,7 @@ mod test {
 
 fn gen_data(n: usize) -> Vec<u64> {
     let mut rng = SmallRng::seed_from_u64(0);
-    let distr = rand_distr::Zeta::new(1.1).unwrap();
+    let distr = rand_distr::Zipf::new(usize::MAX as f64, 1.0).unwrap();
 
     (0..n)
         .map(|_| rng.sample(distr) as u64 - 1)

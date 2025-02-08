@@ -33,11 +33,12 @@
 //!
 //! As discussed in the [codes module documentation](crate::codes), to make the
 //! code readable in the little-endian case, rather than reversing the bits of
-//! blocks, which would be expensive, we simply rotate by one on the left each
-//! block, with the result that the most significant bit of the block is now the
-//! first bit in the stream, making it possible to check for the end of the
-//! codeword. For example, in the little-endian case, the code for 10 is
-//! `0011111`, which is formed by the blocks `11`, `0111`, and `0`.
+//! the blocks, which would be expensive, we simply rotate by one on the left
+//! each block, with the result that the most significant bit of the block is
+//! now the first bit in the stream, making it possible to check for the
+//! presence of a continuation bit. For example, in the little-endian case, the
+//! code for 10 is `0011111`, which is formed by the blocks `11`, `0111`, and
+//! `0`.
 //!
 //! # References
 //!
@@ -48,14 +49,9 @@
 use crate::traits::*;
 use common_traits::CastableInto;
 
-fn ceil_log(n: u64) -> u64 {
-    n.ilog2() as u64 + (!n.is_power_of_two()) as u64
-}
-
 /// Returns the length of the ω code for `n`.
 #[inline(always)]
 pub fn len_omega(n: u64) -> usize {
-    // omega codes are indexed from 1
     recursive_len(n + 1)
 }
 
@@ -63,15 +59,14 @@ fn recursive_len(n: u64) -> usize {
     if n <= 1 {
         return 1;
     }
-    let l = n.ilog2() as u64;
-    recursive_len(l) + l as usize + 1
+    let λ = n.ilog2() as u64;
+    recursive_len(λ) + λ as usize + 1
 }
 
 /// Trait for reading ω codes.
 ///
 /// This is the trait you should pull in scope to read ω codes.
 pub trait OmegaRead<E: Endianness>: BitRead<E> {
-    // omega codes are indexed from 1
     fn read_omega(&mut self) -> Result<u64, Self::Error> {
         let mut n = 1;
         loop {
@@ -82,7 +77,7 @@ pub trait OmegaRead<E: Endianness>: BitRead<E> {
             }
 
             let old_n = n;
-            n = self.read_bits(1 + n as usize)?;
+            n = self.read_bits(n as usize + 1)?;
 
             if core::any::TypeId::of::<E>() == core::any::TypeId::of::<LE>() {
                 n = (n >> 1) | (1 << old_n);
@@ -108,14 +103,17 @@ fn recursive_write<E: Endianness, B: BitWrite<E> + ?Sized>(
     if n <= 1 {
         return Ok(0);
     }
-    let l = n.ilog2();
+    let λ = n.ilog2();
     if core::any::TypeId::of::<E>() == core::any::TypeId::of::<LE>() {
         // move the front 1 to the back so we can peek it
         n = (n << 1) | 1;
-        // clean the highest 1
-        n &= u64::MAX >> (u64::BITS - 1 - l);
+        #[cfg(feature = "checks")]
+        {
+            // Clean up n in case checks are enabled
+            n &= u64::MAX >> (u64::BITS - 1 - λ);
+        }
     }
-    Ok(recursive_write(l as u64, writer)? + writer.write_bits(n, l as usize + 1)?)
+    Ok(recursive_write(λ as u64, writer)? + writer.write_bits(n, λ as usize + 1)?)
 }
 
 impl<E: Endianness, B: BitRead<E>> OmegaRead<E> for B {}
@@ -181,7 +179,6 @@ mod test {
                 data[0].to_be(),
                 expected_be,
             );
-            println!();
 
             let mut data = vec![0_u64];
             let mut writer = <BufBitWriter<LE, _>>::new(MemWordWriterVec::new(&mut data));
@@ -195,7 +192,6 @@ mod test {
                 data[0].to_le(),
                 expected_le,
             );
-            println!();
         }
     }
 }

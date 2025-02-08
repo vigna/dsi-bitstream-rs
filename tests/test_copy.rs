@@ -33,11 +33,11 @@ fn verify_read<E: Endianness>(
     let mut r = SmallRng::seed_from_u64(0);
 
     for _ in 0..len {
-        let _ = r.gen_range(0..2);
+        let _ = r.random_range(0..2);
     }
 
     for _ in len..MAX_LEN {
-        assert_eq!(read.read_bits(1)?, r.gen_range(0..2));
+        assert_eq!(read.read_bits(1)?, r.random_range(0..2));
     }
 
     Ok(())
@@ -57,19 +57,19 @@ where
     if skip_read {
         len -= skip as u64;
         for _ in 0..skip {
-            r.gen_range(0..2);
+            r.random_range(0..2);
         }
     } else {
         read.skip_bits(skip)?;
     }
 
     for b in 0..len {
-        assert_eq!(read.read_bits(1)?, r.gen_range(0..2), "@ {b}/{len}");
+        assert_eq!(read.read_bits(1)?, r.random_range(0..2), "@ {b}/{len}");
     }
 
     let mut r = SmallRng::seed_from_u64(1);
     for _ in 0..100 {
-        assert_eq!(read.read_bits(1)?, r.gen_range(0..2));
+        assert_eq!(read.read_bits(1)?, r.random_range(0..2));
     }
 
     Ok(())
@@ -86,7 +86,7 @@ where
     let mut write = BufBitWriter::<E, _>::new(MemWordWriterVec::new(Vec::<W>::new()));
     let mut r = SmallRng::seed_from_u64(0);
     for _ in 0..MAX_LEN {
-        write.write_bits(r.gen_range(0..2), 1)?;
+        write.write_bits(r.random_range(0..2), 1)?;
     }
     let buffer = write.into_inner()?.into_inner();
 
@@ -101,7 +101,7 @@ where
 
             let mut r = SmallRng::seed_from_u64(1);
             for _ in 0..100 {
-                copy_write.write_bits(r.gen_range(0..2), 1)?;
+                copy_write.write_bits(r.random_range(0..2), 1)?;
             }
 
             verify_write(copy_write.into_inner()?.into_inner(), len, skip, true)?;
@@ -120,7 +120,7 @@ where
 
             let mut r = SmallRng::seed_from_u64(1);
             for _ in 0..100 {
-                copy_write.write_bits(r.gen_range(0..2), 1)?;
+                copy_write.write_bits(r.random_range(0..2), 1)?;
             }
 
             verify_write(copy_write.into_inner()?.into_inner(), len, skip, false)?;

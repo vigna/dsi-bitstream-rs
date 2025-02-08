@@ -47,66 +47,66 @@ where
 
     for _ in 0..N {
         let mut written_bits = 0;
-        match r.gen_range(0..11) {
+        match r.random_range(0..11) {
             0 => {
-                for _ in 0..r.gen_range(1..10) {
-                    written_bits += write.write_unary(v.gen_range(0..100))?;
+                for _ in 0..r.random_range(1..10) {
+                    written_bits += write.write_unary(v.random_range(0..100))?;
                 }
             }
             1 => {
-                for _ in 0..r.gen_range(1..10) {
-                    written_bits += write.write_gamma(v.gen_range(0..100))?;
+                for _ in 0..r.random_range(1..10) {
+                    written_bits += write.write_gamma(v.random_range(0..100))?;
                 }
             }
             2 => {
-                for _ in 0..r.gen_range(1..10) {
-                    written_bits += write.write_delta(v.gen_range(0..100))?;
+                for _ in 0..r.random_range(1..10) {
+                    written_bits += write.write_delta(v.random_range(0..100))?;
                 }
             }
             3 => {
-                let k = r.gen_range(2..4);
-                for _ in 0..r.gen_range(1..10) {
-                    written_bits += write.write_zeta(v.gen_range(0..100), k)?;
+                let k = r.random_range(2..4);
+                for _ in 0..r.random_range(1..10) {
+                    written_bits += write.write_zeta(v.random_range(0..100), k)?;
                 }
             }
             4 => {
-                for _ in 0..r.gen_range(1..10) {
-                    written_bits += write.write_zeta3(v.gen_range(0..100))?;
+                for _ in 0..r.random_range(1..10) {
+                    written_bits += write.write_zeta3(v.random_range(0..100))?;
                 }
             }
             5 => {
-                let max = r.gen_range(1..17);
-                for _ in 0..r.gen_range(1..10) {
-                    written_bits += write.write_minimal_binary(v.gen_range(0..max), max)?;
+                let max = r.random_range(1..17);
+                for _ in 0..r.random_range(1..10) {
+                    written_bits += write.write_minimal_binary(v.random_range(0..max), max)?;
                 }
             }
             6 => {
-                let b = r.gen_range(1..10);
-                for _ in 0..r.gen_range(1..10) {
-                    written_bits += write.write_golomb(v.gen_range(0..100), b)?;
+                let b = r.random_range(1..10);
+                for _ in 0..r.random_range(1..10) {
+                    written_bits += write.write_golomb(v.random_range(0..100), b)?;
                 }
             }
             7 => {
-                let log2_b = r.gen_range(1..5);
-                for _ in 0..r.gen_range(1..10) {
-                    written_bits += write.write_rice(v.gen_range(0..100), log2_b)?;
+                let log2_b = r.random_range(1..5);
+                for _ in 0..r.random_range(1..10) {
+                    written_bits += write.write_rice(v.random_range(0..100), log2_b)?;
                 }
             }
             8 => {
-                let k = r.gen_range(1..5);
-                for _ in 0..r.gen_range(1..10) {
-                    written_bits += write.write_exp_golomb(v.gen_range(0..100), k)?;
+                let k = r.random_range(1..5);
+                for _ in 0..r.random_range(1..10) {
+                    written_bits += write.write_exp_golomb(v.random_range(0..100), k)?;
                 }
             }
             9 => {
-                for _ in 0..r.gen_range(1..10) {
-                    written_bits += write.write_omega(v.gen_range(0..100))?;
+                for _ in 0..r.random_range(1..10) {
+                    written_bits += write.write_omega(v.random_range(0..100))?;
                 }
             }
             10 => {
-                let k = r.gen_range(1..4);
-                for _ in 0..r.gen_range(1..10) {
-                    written_bits += write.write_pi(v.gen_range(0..100), k)?;
+                let k = r.random_range(1..4);
+                for _ in 0..r.random_range(1..10) {
+                    written_bits += write.write_pi(v.random_range(0..100), k)?;
                 }
             }
             _ => unreachable!(),
@@ -122,66 +122,66 @@ where
     let mut v = SmallRng::seed_from_u64(1);
 
     for _ in 0..N {
-        match r.gen_range(0..11) {
+        match r.random_range(0..11) {
             0 => {
-                for _ in 0..r.gen_range(1..10) {
-                    assert_eq!(v.gen_range(0..100), read.read_unary()?);
+                for _ in 0..r.random_range(1..10) {
+                    assert_eq!(v.random_range(0..100), read.read_unary()?);
                 }
             }
             1 => {
-                for _ in 0..r.gen_range(1..10) {
-                    assert_eq!(v.gen_range(0..100), read.read_gamma()?);
+                for _ in 0..r.random_range(1..10) {
+                    assert_eq!(v.random_range(0..100), read.read_gamma()?);
                 }
             }
             2 => {
-                for _ in 0..r.gen_range(1..10) {
-                    assert_eq!(v.gen_range(0..100), read.read_delta()?);
+                for _ in 0..r.random_range(1..10) {
+                    assert_eq!(v.random_range(0..100), read.read_delta()?);
                 }
             }
             3 => {
-                let k = r.gen_range(2..4);
-                for _ in 0..r.gen_range(1..10) {
-                    assert_eq!(v.gen_range(0..100), read.read_zeta(k)?);
+                let k = r.random_range(2..4);
+                for _ in 0..r.random_range(1..10) {
+                    assert_eq!(v.random_range(0..100), read.read_zeta(k)?);
                 }
             }
             4 => {
-                for _ in 0..r.gen_range(1..10) {
-                    assert_eq!(v.gen_range(0..100), read.read_zeta3()?);
+                for _ in 0..r.random_range(1..10) {
+                    assert_eq!(v.random_range(0..100), read.read_zeta3()?);
                 }
             }
             5 => {
-                let max = r.gen_range(1..17);
-                for _ in 0..r.gen_range(1..10) {
-                    assert_eq!(v.gen_range(0..max), read.read_minimal_binary(max)?);
+                let max = r.random_range(1..17);
+                for _ in 0..r.random_range(1..10) {
+                    assert_eq!(v.random_range(0..max), read.read_minimal_binary(max)?);
                 }
             }
             6 => {
-                let b = r.gen_range(1..10);
-                for _ in 0..r.gen_range(1..10) {
-                    assert_eq!(v.gen_range(0..100), read.read_golomb(b)?);
+                let b = r.random_range(1..10);
+                for _ in 0..r.random_range(1..10) {
+                    assert_eq!(v.random_range(0..100), read.read_golomb(b)?);
                 }
             }
             7 => {
-                let log2_b = r.gen_range(1..5);
-                for _ in 0..r.gen_range(1..10) {
-                    assert_eq!(v.gen_range(0..100), read.read_rice(log2_b)?);
+                let log2_b = r.random_range(1..5);
+                for _ in 0..r.random_range(1..10) {
+                    assert_eq!(v.random_range(0..100), read.read_rice(log2_b)?);
                 }
             }
             8 => {
-                let k = r.gen_range(1..5);
-                for _ in 0..r.gen_range(1..10) {
-                    assert_eq!(v.gen_range(0..100), read.read_exp_golomb(k)?);
+                let k = r.random_range(1..5);
+                for _ in 0..r.random_range(1..10) {
+                    assert_eq!(v.random_range(0..100), read.read_exp_golomb(k)?);
                 }
             }
             9 => {
-                for _ in 0..r.gen_range(1..10) {
-                    assert_eq!(v.gen_range(0..100), read.read_omega()?);
+                for _ in 0..r.random_range(1..10) {
+                    assert_eq!(v.random_range(0..100), read.read_omega()?);
                 }
             }
             10 => {
-                let k = r.gen_range(1..4);
-                for _ in 0..r.gen_range(1..10) {
-                    assert_eq!(v.gen_range(0..100), read.read_pi(k)?);
+                let k = r.random_range(1..4);
+                for _ in 0..r.random_range(1..10) {
+                    assert_eq!(v.random_range(0..100), read.read_pi(k)?);
                 }
             }
             _ => unreachable!(),

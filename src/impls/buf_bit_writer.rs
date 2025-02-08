@@ -572,37 +572,37 @@ mod test {
                 const ITER: usize = 1_000_000;
 
                 for _ in 0..ITER {
-                    let value = r.gen_range(0..128);
+                    let value = r.random_range(0..128);
                     assert_eq!(big.write_gamma(value)?, len_gamma(value));
-                    let value = r.gen_range(0..128);
+                    let value = r.random_range(0..128);
                     assert_eq!(little.write_gamma(value)?, len_gamma(value));
-                    let value = r.gen_range(0..128);
+                    let value = r.random_range(0..128);
                     assert_eq!(big.write_gamma(value)?, len_gamma(value));
-                    let value = r.gen_range(0..128);
+                    let value = r.random_range(0..128);
                     assert_eq!(little.write_gamma(value)?, len_gamma(value));
-                    let value = r.gen_range(0..128);
+                    let value = r.random_range(0..128);
                     assert_eq!(big.write_delta(value)?, len_delta(value));
-                    let value = r.gen_range(0..128);
+                    let value = r.random_range(0..128);
                     assert_eq!(little.write_delta(value)?, len_delta(value));
-                    let value = r.gen_range(0..128);
+                    let value = r.random_range(0..128);
                     assert_eq!(big.write_delta(value)?, len_delta(value));
-                    let value = r.gen_range(0..128);
+                    let value = r.random_range(0..128);
                     assert_eq!(little.write_delta(value)?, len_delta(value));
-                    let n_bits = r.gen_range(0..=64);
+                    let n_bits = r.random_range(0..=64);
                     if n_bits == 0 {
                         big.write_bits(0, 0)?;
                     } else {
-                        big.write_bits(r.gen::<u64>() & u64::MAX >> 64 - n_bits, n_bits)?;
+                        big.write_bits(r.random::<u64>() & u64::MAX >> 64 - n_bits, n_bits)?;
                     }
-                    let n_bits = r.gen_range(0..=64);
+                    let n_bits = r.random_range(0..=64);
                     if n_bits == 0 {
                         little.write_bits(0, 0)?;
                     } else {
-                        little.write_bits(r.gen::<u64>() & u64::MAX >> 64 - n_bits, n_bits)?;
+                        little.write_bits(r.random::<u64>() & u64::MAX >> 64 - n_bits, n_bits)?;
                     }
-                    let value = r.gen_range(0..128);
+                    let value = r.random_range(0..128);
                     assert_eq!(big.write_unary(value)?, value as usize + 1);
-                    let value = r.gen_range(0..128);
+                    let value = r.random_range(0..128);
                     assert_eq!(little.write_unary(value)?, value as usize + 1);
                 }
 
@@ -631,35 +631,35 @@ mod test {
                 let mut r = SmallRng::seed_from_u64(0);
 
                 for _ in 0..ITER {
-                    assert_eq!(big_buff.read_gamma()?, r.gen_range(0..128));
-                    assert_eq!(little_buff.read_gamma()?, r.gen_range(0..128));
-                    assert_eq!(big_buff.read_gamma()?, r.gen_range(0..128));
-                    assert_eq!(little_buff.read_gamma()?, r.gen_range(0..128));
-                    assert_eq!(big_buff.read_delta()?, r.gen_range(0..128));
-                    assert_eq!(little_buff.read_delta()?, r.gen_range(0..128));
-                    assert_eq!(big_buff.read_delta()?, r.gen_range(0..128));
-                    assert_eq!(little_buff.read_delta()?, r.gen_range(0..128));
-                    let n_bits = r.gen_range(0..=64);
+                    assert_eq!(big_buff.read_gamma()?, r.random_range(0..128));
+                    assert_eq!(little_buff.read_gamma()?, r.random_range(0..128));
+                    assert_eq!(big_buff.read_gamma()?, r.random_range(0..128));
+                    assert_eq!(little_buff.read_gamma()?, r.random_range(0..128));
+                    assert_eq!(big_buff.read_delta()?, r.random_range(0..128));
+                    assert_eq!(little_buff.read_delta()?, r.random_range(0..128));
+                    assert_eq!(big_buff.read_delta()?, r.random_range(0..128));
+                    assert_eq!(little_buff.read_delta()?, r.random_range(0..128));
+                    let n_bits = r.random_range(0..=64);
                     if n_bits == 0 {
                         assert_eq!(big_buff.read_bits(0)?, 0);
                     } else {
                         assert_eq!(
                             big_buff.read_bits(n_bits)?,
-                            r.gen::<u64>() & u64::MAX >> 64 - n_bits
+                            r.random::<u64>() & u64::MAX >> 64 - n_bits
                         );
                     }
-                    let n_bits = r.gen_range(0..=64);
+                    let n_bits = r.random_range(0..=64);
                     if n_bits == 0 {
                         assert_eq!(little_buff.read_bits(0)?, 0);
                     } else {
                         assert_eq!(
                             little_buff.read_bits(n_bits)?,
-                            r.gen::<u64>() & u64::MAX >> 64 - n_bits
+                            r.random::<u64>() & u64::MAX >> 64 - n_bits
                         );
                     }
 
-                    assert_eq!(big_buff.read_unary()?, r.gen_range(0..128));
-                    assert_eq!(little_buff.read_unary()?, r.gen_range(0..128));
+                    assert_eq!(big_buff.read_unary()?, r.random_range(0..128));
+                    assert_eq!(little_buff.read_unary()?, r.random_range(0..128));
                 }
 
                 Ok(())
