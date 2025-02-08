@@ -19,7 +19,7 @@ pub fn read_table_le<B: BitRead<LE>>(backend: &mut B) -> Option<(u64, usize)> {
         let idx: u64 = idx.cast();
         let len = READ_LEN_LE[idx as usize];
         if len != MISSING_VALUE_LEN_LE {
-            backend.skip_bits_after_table_lookup(len as usize);
+            backend.skip_bits_after_peek(len as usize);
             return Some((READ_LE[idx as usize] as u64, len as usize));
         }
     }
@@ -35,7 +35,7 @@ pub fn len_table_le<B: BitRead<LE>>(backend: &mut B) -> Option<usize> {
         let idx: u64 = idx.cast();
         let len = READ_LEN_LE[idx as usize];
         if len != MISSING_VALUE_LEN_LE {
-            backend.skip_bits_after_table_lookup(len as usize);
+            backend.skip_bits_after_peek(len as usize);
             return Some(len as usize);
         }
     }
@@ -70,7 +70,7 @@ pub fn read_table_be<B: BitRead<BE>>(backend: &mut B) -> Option<(u64, usize)> {
         let idx: u64 = idx.cast();
         let len = READ_LEN_BE[idx as usize];
         if len != MISSING_VALUE_LEN_BE {
-            backend.skip_bits_after_table_lookup(len as usize);
+            backend.skip_bits_after_peek(len as usize);
             return Some((READ_BE[idx as usize] as u64, len as usize));
         }
     }
@@ -86,7 +86,7 @@ pub fn len_table_be<B: BitRead<BE>>(backend: &mut B) -> Option<usize> {
         let idx: u64 = idx.cast();
         let len = READ_LEN_BE[idx as usize];
         if len != MISSING_VALUE_LEN_BE {
-            backend.skip_bits_after_table_lookup(len as usize);
+            backend.skip_bits_after_peek(len as usize);
             return Some(len as usize);
         }
     }

@@ -144,7 +144,7 @@ impl<
         }
     }
 
-    fn skip_bits_after_table_lookup(&mut self, n: usize) {
+    fn skip_bits_after_peek(&mut self, n: usize) {
         self.bit_index += n as u64;
     }
 }
@@ -268,7 +268,7 @@ impl<
         }
     }
 
-    fn skip_bits_after_table_lookup(&mut self, n: usize) {
+    fn skip_bits_after_peek(&mut self, n: usize) {
         self.bit_index += n as u64;
     }
 }

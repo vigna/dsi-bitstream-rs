@@ -106,7 +106,7 @@ pub trait BitRead<E: Endianness> {
     /// This is an internal optimization used to skip bits we know
     /// are already in some internal buffer as we [peeked](BitRead::peek_bits)
     /// at them. Please don't use.
-    fn skip_bits_after_table_lookup(&mut self, n: usize);
+    fn skip_bits_after_peek(&mut self, n: usize);
 
     /// Read a unary code.
     fn read_unary(&mut self) -> Result<u64, Self::Error>;

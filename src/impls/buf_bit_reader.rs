@@ -159,7 +159,7 @@ where
     }
 
     #[inline(always)]
-    fn skip_bits_after_table_lookup(&mut self, n_bits: usize) {
+    fn skip_bits_after_peek(&mut self, n_bits: usize) {
         self.bits_in_buffer -= n_bits;
         self.buffer <<= n_bits;
     }
@@ -406,7 +406,7 @@ where
     }
 
     #[inline(always)]
-    fn skip_bits_after_table_lookup(&mut self, n_bits: usize) {
+    fn skip_bits_after_peek(&mut self, n_bits: usize) {
         self.bits_in_buffer -= n_bits;
         self.buffer >>= n_bits;
     }

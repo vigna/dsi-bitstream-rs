@@ -63,8 +63,8 @@ fn recursive_len(n: u64) -> usize {
     if n <= 1 {
         return 1;
     }
-    let l = ceil_log(n.saturating_add(1));
-    recursive_len(l - 1) + l as usize
+    let l = n.ilog2() as u64;
+    recursive_len(l) + l as usize + 1
 }
 
 /// Trait for reading ω codes.
@@ -77,7 +77,7 @@ pub trait OmegaRead<E: Endianness>: BitRead<E> {
         loop {
             let bit = self.peek_bits(1)?.cast();
             if bit == 0 {
-                self.skip_bits(1)?;
+                self.skip_bits_after_peek(1);
                 return Ok(n - 1);
             }
 
@@ -108,14 +108,14 @@ fn recursive_write<E: Endianness, B: BitWrite<E> + ?Sized>(
     if n <= 1 {
         return Ok(0);
     }
-    let l = ceil_log(n.saturating_add(1));
+    let l = n.ilog2();
     if core::any::TypeId::of::<E>() == core::any::TypeId::of::<LE>() {
         // move the front 1 to the back so we can peek it
         n = (n << 1) | 1;
         // clean the highest 1
-        n &= u64::MAX >> (64 - l);
+        n &= u64::MAX >> (u64::BITS - 1 - l);
     }
-    Ok(recursive_write(l - 1, writer)? + writer.write_bits(n, l as usize)?)
+    Ok(recursive_write(l as u64, writer)? + writer.write_bits(n, l as usize + 1)?)
 }
 
 impl<E: Endianness, B: BitRead<E>> OmegaRead<E> for B {}
@@ -127,7 +127,7 @@ mod test {
 
     #[test]
     fn test_roundtrip() {
-        for value in (0..64).map(|i| 1 << i).chain(0..1024).chain([u64::MAX]) {
+        for value in (0..64).map(|i| 1 << i).chain(0..1024).chain([u64::MAX - 1]) {
             let mut data = vec![0_u64];
             let mut writer = <BufBitWriter<BE, _>>::new(MemWordWriterVec::new(&mut data));
             let code_len = writer.write_omega(value).unwrap();

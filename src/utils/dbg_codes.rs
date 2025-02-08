@@ -58,8 +58,8 @@ where
         Ok(value)
     }
 
-    fn skip_bits_after_table_lookup(&mut self, n: usize) {
-        self.reader.skip_bits_after_table_lookup(n)
+    fn skip_bits_after_peek(&mut self, n: usize) {
+        self.reader.skip_bits_after_peek(n)
     }
 }
 
