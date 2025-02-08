@@ -51,14 +51,14 @@ pub trait ContinuationBit {
     const NAME: &'static str;
     const INT: u8;
 }
-pub struct Zero;
-impl ContinuationBit for Zero {
-    const NAME: &'static str = "zero";
+pub struct ZeroCont;
+impl ContinuationBit for ZeroCont {
+    const NAME: &'static str = "zero_cont";
     const INT: u8 = 0;
 }
-pub struct One;
-impl ContinuationBit for One {
-    const NAME: &'static str = "one";
+pub struct OneCont;
+impl ContinuationBit for OneCont {
+    const NAME: &'static str = "one_cont";
     const INT: u8 = 1;
 }
 
@@ -160,7 +160,7 @@ where
     let s = gen_gamma_data(GAMMA_DATA);
 
     c.bench_function(
-        &format!("vbyte,bits,{},{},write", C::name(), E::NAME),
+        &format!("vbyte,bits,{},{}_endian,write", C::name(), E::NAME),
         |b| {
             b.iter(|| {
                 let mut w = <BufBitWriter<E, _>>::new(MemWordWriterVec::new(&mut v));
@@ -173,7 +173,7 @@ where
 
     let v = unsafe { v.align_to::<u32>().1 };
 
-    c.bench_function(&format!("vbyte,bits,{},{},read", C::name(), E::NAME), |b| {
+    c.bench_function(&format!("vbyte,bits,{},{}_endian,read", C::name(), E::NAME), |b| {
         b.iter(|| {
             let mut r = BufBitReader::<E, _>::new(MemWordReader::new(v));
             for _ in &s {
@@ -196,7 +196,7 @@ impl<E: Endianness, F: Format, B: IsComplete, C: ContinuationBit> WithName
     }
 }
 
-impl<E: Endianness> ByteCode for ByteStreamVByte<E, GroupedIfs, Complete, One> {
+impl<E: Endianness> ByteCode for ByteStreamVByte<E, GroupedIfs, Complete, OneCont> {
     fn read(r: &mut impl Read) -> Result<u64> {
         Ok(dsi_bitstream::codes::vbyte::vbyte_decode::<E, _>(r)?)
     }
@@ -290,7 +290,7 @@ impl<F: Format, B: IsComplete, C: ContinuationBit> WithName for BitStreamVByte<F
     }
 }
 
-impl BitCode for BitStreamVByte<GroupedIfs, Complete, One> {
+impl BitCode for BitStreamVByte<GroupedIfs, Complete, OneCont> {
     #[inline(always)]
     fn read<E: Endianness>(r: &mut impl BitRead<E>) -> Result<u64> {
         Ok(r.read_vbyte()?)
@@ -303,18 +303,18 @@ impl BitCode for BitStreamVByte<GroupedIfs, Complete, One> {
 
 
 pub fn benchmark(c: &mut Criterion) {
-    bench_bytestream::<ByteStreamVByte<BE, NonGrouped, Complete, One>>(c);
-    bench_bytestream::<ByteStreamVByte<BE, NonGrouped, Complete, Zero>>(c);
-    bench_bytestream::<ByteStreamVByte<BE, NonGrouped, NonComplete, One>>(c);
-    bench_bytestream::<ByteStreamVByte<BE, NonGrouped, NonComplete, Zero>>(c);
+    bench_bytestream::<ByteStreamVByte<BE, NonGrouped, Complete, OneCont>>(c);
+    bench_bytestream::<ByteStreamVByte<BE, NonGrouped, Complete, ZeroCont>>(c);
+    bench_bytestream::<ByteStreamVByte<BE, NonGrouped, NonComplete, OneCont>>(c);
+    bench_bytestream::<ByteStreamVByte<BE, NonGrouped, NonComplete, ZeroCont>>(c);
     
-    bench_bytestream::<ByteStreamVByte<LE, NonGrouped, NonComplete, One>>(c);
-    bench_bytestream::<ByteStreamVByte<LE, NonGrouped, NonComplete, Zero>>(c);
+    bench_bytestream::<ByteStreamVByte<LE, NonGrouped, NonComplete, OneCont>>(c);
+    bench_bytestream::<ByteStreamVByte<LE, NonGrouped, NonComplete, ZeroCont>>(c);
 
-    bench_bytestream::<ByteStreamVByte<LE, GroupedIfs, Complete, One>>(c);
-    bench_bytestream::<ByteStreamVByte<BE, GroupedIfs, Complete, One>>(c);
+    bench_bytestream::<ByteStreamVByte<LE, GroupedIfs, Complete, OneCont>>(c);
+    bench_bytestream::<ByteStreamVByte<BE, GroupedIfs, Complete, OneCont>>(c);
     
-    bench_bitstream::<BitStreamVByte<GroupedIfs, Complete, One>>(c);
+    bench_bitstream::<BitStreamVByte<GroupedIfs, Complete, OneCont>>(c);
 
     
     //bench_bytestream::<ByteStreamVByte<BE, GroupedIfs, Complete, Zero>>(c);
