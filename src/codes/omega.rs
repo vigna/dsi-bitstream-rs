@@ -21,13 +21,12 @@
 //! or `11`. One can interpret the highest bit of each block as a continuation
 //! bit, and the last `0` as a terminator of the code.
 //!
-//! The *result* of each block is the value represented by the block in binary
-//! representation, minus one. The condition for a valid codeword is that the
-//! result of each block is the length of the following block, except for the
-//! last block.
+//! The condition for a valid codeword is that the value represented by each
+//! block, incremented by one, is the length of the following block, except for
+//! the last block.
 //! 
 //! The value associated with a codeword is 0 if the code is `0`, and otherwise
-//! the result of the last block.
+//! the value of the last block, decremented by one.
 //! 
 //! For example, `1110010`, which is formed by the blocks `11`, `1011`, and `0`,
 //! represents 10.
