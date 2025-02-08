@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2024 Tommaso Fontana
+ * SPDX-FileCopyrightText: 2025 Sebastiano Vigna
  *
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
@@ -81,7 +82,9 @@ pub trait OmegaRead<E: Endianness>: BitRead<E> {
             n = self.read_bits(λ as usize + 1)?;
 
             if core::any::TypeId::of::<E>() == core::any::TypeId::of::<LE>() {
-                // rotate right (the lowest bit is a one)
+                // Little-endian case: rotate right the lower λ + 1 bits (the
+                // lowest bit is a one) to reverse the rotation performed when
+                // writing
                 n = (n >> 1) | (1 << λ);
             }
         }
@@ -107,8 +110,11 @@ fn recursive_write<E: Endianness, B: BitWrite<E> + ?Sized>(
         return Ok(0);
     }
     let λ = n.ilog2();
+
     if core::any::TypeId::of::<E>() == core::any::TypeId::of::<LE>() {
-        // rotate left (the bit in position λ is a one)
+        // Little-endian case: rotate left the lower λ + 1 bits (the bit in
+        // position λ is a one) so that the lowest bit can be peeked to find the
+        // block.
         n = (n << 1) | 1;
         #[cfg(feature = "checks")]
         {
