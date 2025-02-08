@@ -24,7 +24,7 @@ pub const CAPACITY: usize = 4 * GAMMA_DATA;
 
 pub fn gen_gamma_data(n: usize) -> Vec<u64> {
     let mut rng = SmallRng::seed_from_u64(0);
-    let distr = rand_distr::Zeta::new(2.0).unwrap();
+    let distr = rand_distr::Zeta::new(8.0 / 7.0).unwrap();
 
     (0..n)
         .map(|_| rng.sample(distr) as u64 - 1)
