@@ -8,14 +8,16 @@
 
 //! Minimal binary codes.
 //!
-//! A minimal binary code with upper bound `u > 0` (AKA [truncated binary
+//! A minimal binary code with upper bound *u* > 0 (AKA [truncated binary
 //! encoding](https://en.wikipedia.org/wiki/Truncated_binary_encoding)) is an
-//! optimal prefix-free code for the first `u` natural numbers with uniform distribution.
+//! optimal prefix-free code for the first *u* natural numbers with uniform
+//! distribution.
 //!
-//! There are several such prefix-free codes, and the one implemented here is
-//! defined as follows: if `s = ⌊log₂u⌋`, then the first `2^(s+1) - u` codewords are
-//! the first binary numbers of length `s – 1`, and the remaining codewords
-//! are the last `2u - 2^(s+1)` binary numbers of length `s`.
+//! There are several such codes, and the one implemented here is defined as
+//! follows: let *s* = ⌈log₂*u*⌉; then, given *x* < *u*, if *x* <
+//! 2*ˢ* – *u* then *x* is coded as the binary representation of *x*
+//! in *s* – 1 bits; otherwise, *x* is coded as the binary representation of *x*
+//! – *u* + 2*ˢ* in *s* bits.
 
 use crate::traits::*;
 

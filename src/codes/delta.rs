@@ -8,9 +8,9 @@
 
 //! Elias δ code.
 //!
-//! The δ code of a natural number `n` is the concatenation of the
-//! [γ](crate::codes::gamma) code of `⌊log₂(n + 1)⌋` and the binary
-//! representation of `n + 1` with the most significant bit removed.
+//! The δ code of a natural number *n* is the concatenation of the
+//! [γ](crate::codes::gamma) code of ⌊log₂(*n* + 1)⌋ and the binary
+//! representation of *n* + 1 with the most significant bit removed.
 //!
 //! The `USE_DELTA_TABLE` parameter enables or disables the use of pre-computed
 //! tables for decoding δ codes, and the `USE_GAMMA_TABLE` parameter enables or

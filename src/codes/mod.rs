@@ -97,6 +97,10 @@ pub mod gamma_tables;
 pub mod zeta_tables;
 
 /// Convenience trait for reading all the codes supported by the library.
+///
+/// This trait is mainly useful internally to implement [different types of
+/// code-based dispatch](crate::codes::code). The user might find more useful to
+/// define its own convenience trait that includes only the codes they need.
 pub trait CodesRead<E: Endianness>:
     BitRead<E>
     + GammaRead<E>
@@ -137,6 +141,10 @@ impl<E: Endianness, B> CodesRead<E> for B where
 }
 
 /// Convenience trait for writing all the codes supported by the library.
+///
+/// This trait is mainly useful internally to implement [different types of
+/// code-based dispatch](crate::codes::code). The user might find more useful to
+/// define its own convenience trait that includes only the codes they need.
 pub trait CodesWrite<E: Endianness>:
     BitWrite<E>
     + GammaWrite<E>

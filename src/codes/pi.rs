@@ -7,9 +7,10 @@
 
 //! Streamlined Apostolico–Drovandi π codes
 //!
-//! The π code with parameter `k` of a natural number `n` is the concatenation
-//! of the [Rice code](super::rice) with parameter `k` of `⌊log₂(n + 1)⌋` and of
-//! the binary representation of `n + 1` with the most significant bit removed.
+//! The streamlined π code with parameter `k` of a natural number `n` is the
+//! concatenation of the [Rice code](super::rice) with parameter `k` of `⌊log₂(n
+//! + 1)⌋` and of the binary representation of `n + 1` with the most significant
+//! bit removed.
 //!
 //! Note that π₀ = [ζ₁](super::zeta) = [γ](super::gamma) and π₁ =
 //! [ζ₂](super::zeta).
@@ -18,7 +19,8 @@
 //! authors appear to have missed the connection with [Rice codes](super::rice).
 //! The codewords implemented by this module are equivalent to the ones in the
 //! paper, in the sense that corresponding codewords have the same length, but
-//! the codewords for `k` ≥ 2 are different.
+//! the codewords for `k` ≥ 2 are different, and encoding/decoding is
+//! faster—hence the name “streamlined π codes”.
 //!
 //! # References
 //!
@@ -29,7 +31,7 @@ use crate::traits::*;
 
 use super::{len_rice, RiceRead, RiceWrite};
 
-/// Return the length of the π code for `n`.
+/// Return the length of the π code for `n` with parameter `k`.
 ///
 /// ```rust
 /// use dsi_bitstream::codes::len_pi;

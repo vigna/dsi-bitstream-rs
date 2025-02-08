@@ -9,13 +9,15 @@
 //! Exponential Golomb codes are a variant of Golomb codes with power-of-2
 //! modulus (i.e., [Rice codes](super::rice)) in which the prefix is written
 //! using [Elias γ code](super::gamma) instead of unary code. More precisely,
-//! the exponential Golomb code with parameter `k` of an integer `n` is given
-//! `⌊x / 2^k⌋` in [γ code](super::gamma) followed by `x mod 2^k` as  a `k`-bit
-//! number. They are used in [H.264
+//! the exponential Golomb code with parameter *k* of a natural number *n* is
+//! given ⌊*x* / 2*ᵏ*⌋ in [γ code](super::gamma) followed by *x* mod 2*ᵏ*
+//! in binary *k*-bit representations.
+//! 
+//! The exponential Golomb code for *k* = 1 is [γ code](super::gamma).
+//! 
+//! Exponential Golomb codes are used in [H.264
 //! (MPEG-4)](https://en.wikipedia.org/wiki/Advanced_Video_Coding) and
 //! [H.265](https://en.wikipedia.org/wiki/High_Efficiency_Video_Coding).
-//!
-//! The exponential Golomb code for `k = 1` is exactly [γ code](super::gamma).
 
 use super::gamma::{len_gamma, GammaRead, GammaWrite};
 use crate::traits::*;

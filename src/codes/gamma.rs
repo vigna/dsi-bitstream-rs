@@ -8,8 +8,8 @@
 
 //! Elias γ code.
 //!
-//! The γ code of a natural number `n` is the concatenation of the unary code of
-//! `⌊log₂(n + 1)⌋` and of the binary representation of `n + 1` with the most
+//! The γ code of a natural number *n* is the concatenation of the unary code of
+//! ⌊log₂(*n* + 1)⌋ and of the binary representation of *n* + 1 with the most
 //! significant bit removed.
 //!
 //! The `USE_TABLE` parameter enables or disables the use of pre-computed tables

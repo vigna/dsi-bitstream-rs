@@ -6,13 +6,13 @@
 
 //! Golomb codes.
 //!
-//! Given a modulo `b`, the Golomb code of `x` is given by `⌊x / v⌋` in [unary
-//! code](BitRead::read_unary) followed by the [minimal binary
-//! code](super::minimal_binary) of `x mod v`.
+//! Given a modulo *b*, the Golomb code of a natural number *x* is given by ⌊*x*
+//! / *b*⌋ in [unary code](BitRead::read_unary) followed by the [minimal binary
+//! code](super::minimal_binary) of *x* mod *b*.
 //!
-//! For natural numbers distributed with a geometric distribution with base `p`,
-//! the optimal code is a Golomb code with [`b = ⌈-log(2 – p) / log(1 –
-//! p)⌉`](b).
+//! For natural numbers distributed with a geometric distribution with base *p*,
+//! the optimal code is a Golomb code with [*b* = ⌈–log(2 – *p*) / log(1 –
+//! *p*)⌉](b).
 //!
 //! For a faster, less precise alternative, see [Rice codes](super::rice).
 //!
@@ -37,7 +37,8 @@ pub fn len_golomb(n: u64, b: u64) -> usize {
     (n / b) as usize + 1 + len_minimal_binary(n % b, b)
 }
 
-/// Returns the optimal value of `b` for a geometric distribution of base `p`.
+/// Returns the optimal value of *b* for a geometric distribution of base *p*, 
+/// that is, ⌈–log(2 – *p*) / log(1 – *p*)⌉.
 pub fn b(p: f64) -> u64 {
     (-(2.0 - p).ln() / (1.0 - p).ln()).ceil() as u64
 }
