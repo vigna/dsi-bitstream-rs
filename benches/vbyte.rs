@@ -15,12 +15,12 @@ use rand::rngs::SmallRng;
 use rand::Rng;
 use rand::SeedableRng;
 use std::hint::black_box;
-use std::io::{Read, Seek, SeekFrom, Write};
+use std::io::{Read, Write};
 use std::marker::PhantomData;
 use std::time::Duration;
 
-pub const GAMMA_DATA: usize = 1 << 20;
-pub const CAPACITY: usize = GAMMA_DATA;
+pub const GAMMA_DATA: usize = 1_000_000;
+pub const CAPACITY: usize = 4 * GAMMA_DATA;
 
 pub fn gen_gamma_data(n: usize) -> Vec<u64> {
     let mut rng = SmallRng::seed_from_u64(0);
@@ -103,19 +103,21 @@ pub fn bench_bytestream<C: ByteCode + WithName>(c: &mut Criterion) {
     }
 
     let s = gen_gamma_data(GAMMA_DATA);
-    let mut i = 0;
     c.bench_function(&format!("vbyte,bytes,{},write", C::name()), |b| {
-        let mut w = std::io::Cursor::new(&mut v);
         b.iter(|| {
-            black_box(C::write(s[i % (GAMMA_DATA)], &mut w).unwrap());
-            i += 1;
+            let mut w = std::io::Cursor::new(&mut v);
+            for &v in &s {
+                black_box(C::write(v, &mut w).unwrap());
+            }
         })
     });
 
     c.bench_function(&format!("vbyte,bytes,{},read", C::name()), |b| {
-        let mut r = std::io::Cursor::new(v.as_slice());
         b.iter(|| {
-            black_box(C::read(&mut r).unwrap_or_else(|_| r.seek(SeekFrom::Start(0)).unwrap() as _));
+            let mut r = std::io::Cursor::new(v.as_slice());
+            for _ in &s {
+                black_box(C::read(&mut r).unwrap());
+            }
         });
     });
 }
@@ -156,15 +158,15 @@ where
     }
 
     let s = gen_gamma_data(GAMMA_DATA);
-    let mut i = 0;
 
     c.bench_function(
         &format!("vbyte,bits,{},{},write", C::name(), E::NAME),
         |b| {
-            let mut w = <BufBitWriter<E, _>>::new(MemWordWriterVec::new(&mut v));
             b.iter(|| {
-                black_box(C::write(s[i % (GAMMA_DATA)], &mut w).unwrap());
-                i += 1;
+                let mut w = <BufBitWriter<E, _>>::new(MemWordWriterVec::new(&mut v));
+                for &v in &s {
+                    black_box(C::write(v, &mut w).unwrap());
+                }
             })
         },
     );
@@ -172,12 +174,11 @@ where
     let v = unsafe { v.align_to::<u32>().1 };
 
     c.bench_function(&format!("vbyte,bits,{},{},read", C::name(), E::NAME), |b| {
-        let mut r = BufBitReader::<E, _>::new(MemWordReader::new(v));
         b.iter(|| {
-            black_box(C::read(&mut r).unwrap_or_else(|_| {
-                r = BufBitReader::<E, _>::new(MemWordReader::new(v));
-                0
-            }));
+            let mut r = BufBitReader::<E, _>::new(MemWordReader::new(v));
+            for _ in &s {
+                black_box(C::read(&mut r).unwrap());
+            }
         })
     });
 }
