@@ -144,6 +144,7 @@ impl<
         }
     }
 
+    #[inline(always)]
     fn skip_bits_after_peek(&mut self, n: usize) {
         self.bit_index += n as u64;
     }
@@ -268,6 +269,7 @@ impl<
         }
     }
 
+    #[inline(always)]
     fn skip_bits_after_peek(&mut self, n: usize) {
         self.bit_index += n as u64;
     }
