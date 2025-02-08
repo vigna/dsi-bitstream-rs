@@ -8,7 +8,6 @@
 //! - if continuation bits at start, test if chains vs leading_ones and jump table
 //!
 use anyhow::Result;
-use common_traits::UnsignedInt;
 use criterion::{criterion_group, criterion_main, Criterion};
 use dsi_bitstream::prelude::*;
 use dsi_bitstream::traits::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
@@ -50,14 +49,17 @@ impl Format for GroupedCLZ {
 
 pub trait ContinuationBit {
     const NAME: &'static str;
+    const INT: u8;
 }
 pub struct Zero;
 impl ContinuationBit for Zero {
     const NAME: &'static str = "zero";
+    const INT: u8 = 0;
 }
 pub struct One;
 impl ContinuationBit for One {
     const NAME: &'static str = "one";
+    const INT: u8 = 1;
 }
 
 pub trait IsComplete {
@@ -87,8 +89,8 @@ pub fn bench_bytestream<C: ByteCode + WithName>(c: &mut Criterion) {
     {
         let vals = (0..64)
             .map(|i| 1 << i)
-            .chain(0..1024)
-            .chain([u64::MAX])
+            //.chain(0..1024)
+            .chain([0, u64::MAX])
             .collect::<Vec<_>>();
         let mut w = std::io::Cursor::new(&mut v);
         for v in &vals {
@@ -203,7 +205,7 @@ impl<E: Endianness> ByteCode for ByteStreamVByte<E, GroupedIfs, Complete, One> {
 }
 
 /// LLVM's implementation https://llvm.org/doxygen/LEB128_8h_source.html#l00080
-impl ByteCode for ByteStreamVByte<LittleEndian, NonGrouped, NonComplete, One> {
+impl<B: IsComplete + 'static, C: ContinuationBit> ByteCode for ByteStreamVByte<LittleEndian, NonGrouped, B, C> {
     fn read(r: &mut impl Read) -> Result<u64> {
         let mut result = 0;
         let mut shift = 0;
@@ -212,8 +214,11 @@ impl ByteCode for ByteStreamVByte<LittleEndian, NonGrouped, NonComplete, One> {
             r.read_exact(&mut buffer)?;
             let byte = buffer[0];
             result |= ((byte & 0x7F) as u64) << shift;
-            if (byte & 0x80) == 0 {
+            if (byte >> 7) == (1 - C::INT) {
                 break;
+            }
+            if core::any::TypeId::of::<B>() == core::any::TypeId::of::<Complete>() {
+                result += 1;
             }
             shift += 7;
         }
@@ -225,10 +230,13 @@ impl ByteCode for ByteStreamVByte<LittleEndian, NonGrouped, NonComplete, One> {
             let byte = (value & 0x7F) as u8;
             value >>= 7;
             if value != 0 {
-                w.write_all(&[byte | 0x80])?;
+                w.write_all(&[byte | (0x80 * C::INT)])?;
             } else {
-                w.write_all(&[byte])?;
+                w.write_all(&[byte | (0x80 * (1 - C::INT))])?;
                 break;
+            }
+            if core::any::TypeId::of::<B>() == core::any::TypeId::of::<Complete>() {
+                value -= 1;
             }
             len += 1;
         }
@@ -237,54 +245,38 @@ impl ByteCode for ByteStreamVByte<LittleEndian, NonGrouped, NonComplete, One> {
 }
 
 /// Git implementation https://github.com/git/git/blob/7fb6aefd2aaffe66e614f7f7b83e5b7ab16d4806/varint.c#L4
-impl ByteCode for ByteStreamVByte<BigEndian, NonGrouped, Complete, One> {
+impl<B: IsComplete + 'static, C: ContinuationBit> ByteCode for ByteStreamVByte<BigEndian, NonGrouped, B, C> {
     fn read(r: &mut impl Read) -> Result<u64> {
-        let mut result = 0;
-        let mut buffer = [0; 1];
-        loop {
-            r.read_exact(&mut buffer)?;
-            let byte = buffer[0];
-            result = (result << 7) | ((byte & 0x7F) as u64);
-            if (byte & 0x80) == 0 {
-                break;
+        let mut buf = [0u8; 1];
+        let mut value: u64;
+        r.read_exact(&mut buf)?;
+        value = (buf[0] & 0x7F) as u64;
+        while (buf[0] >> 7) == C::INT {
+            if core::any::TypeId::of::<B>() == core::any::TypeId::of::<Complete>() {
+                value += 1;
             }
+            r.read_exact(&mut buf)?;
+            value = (value << 7) | ((buf[0] & 0x7F) as u64);
         }
-        Ok(result)
+        Ok(value)
     }
 
     fn write(mut value: u64, w: &mut impl Write) -> Result<usize> {
-        let mut pos = 8;
-        let mut buffer = [0; 9];
-        let mut byte = (value & 0x7F) as u8;
-        buffer[pos] = byte;
-        while byte != 0 {
-            value >>= 7;
-            byte = (value & 0x7F) as u8;
-            buffer[pos - 1] = byte | 0x80;
-            pos -= 1;
-        }
-        w.write_all(&buffer[pos..])?;
-        Ok(9 - pos)
-    }
-}
-
-impl ByteCode for ByteStreamVByte<BigEndian, NonGrouped, NonComplete, One> {
-    fn read(r: &mut impl Read) -> Result<u64> {
-        let mut result = 0;
-        let mut buffer = [0; 1];
-        loop {
-            r.read_exact(&mut buffer)?;
-            let byte = buffer[0];
-            result = (result << 7) | ((byte & 0x7F) as u64);
-            if (byte & 0x80) == 0 {
-                break;
+        let mut buf = [0u8; 10];
+        let mut pos = buf.len() - 1;
+        buf[pos] = (0x80 * (1 - C::INT)) | (value & 0x7F) as u8;
+        value >>= 7;
+        while value != 0 {
+            if core::any::TypeId::of::<B>() == core::any::TypeId::of::<Complete>() {
+                value -= 1;
             }
+            pos -= 1;
+            buf[pos] = (0x80 * C::INT) | ((value & 0x7F) as u8);
+            value >>= 7;
         }
-        Ok(result)
-    }
-
-    fn write(value: u64, w: &mut impl Write) -> Result<usize> {
-        todo!();
+        let bytes_to_write = buf.len() - pos;
+        w.write_all(&buf[pos..])?;
+        Ok(bytes_to_write)
     }
 }
 
@@ -308,32 +300,22 @@ impl BitCode for BitStreamVByte<GroupedIfs, Complete, One> {
     }
 }
 
-impl BitCode for BitStreamVByte<GroupedCLZ, NonComplete, Zero> {
-    #[inline(always)]
-    fn read<E: Endianness>(r: &mut impl BitRead<E>) -> Result<u64> {
-        let len = r.read_unary()? as usize;
-        Ok(r.read_bits(len * 7)?)
-    }
-    #[inline(always)]
-    fn write<E: Endianness>(value: u64, w: &mut impl BitWrite<E>) -> Result<usize> {
-        let len = value.ilog2_ceil().div_ceil(7) as usize;
-        w.write_unary(len as u64)?;
-        w.write_bits(value, len * 7)?;
-        Ok(len + 1)
-    }
-}
 
 pub fn benchmark(c: &mut Criterion) {
-    //bench_bytestream::<ByteStreamVByte<BE, NonGrouped, Complete, One>>(c);
+    bench_bytestream::<ByteStreamVByte<BE, NonGrouped, Complete, One>>(c);
+    bench_bytestream::<ByteStreamVByte<BE, NonGrouped, Complete, Zero>>(c);
+    bench_bytestream::<ByteStreamVByte<BE, NonGrouped, NonComplete, One>>(c);
+    bench_bytestream::<ByteStreamVByte<BE, NonGrouped, NonComplete, Zero>>(c);
+    
     bench_bytestream::<ByteStreamVByte<LE, NonGrouped, NonComplete, One>>(c);
+    bench_bytestream::<ByteStreamVByte<LE, NonGrouped, NonComplete, Zero>>(c);
+
     bench_bytestream::<ByteStreamVByte<LE, GroupedIfs, Complete, One>>(c);
     bench_bytestream::<ByteStreamVByte<BE, GroupedIfs, Complete, One>>(c);
+    
     bench_bitstream::<BitStreamVByte<GroupedIfs, Complete, One>>(c);
-    //bench_bitstream::<BitStreamVByte<GroupedCLZ, NonComplete, Zero>>(c);
 
-    //bench_bytestream::<ByteStreamVByte<BE, NonGrouped, Complete, Zero>>(c);
-    //bench_bytestream::<ByteStreamVByte<BE, NonGrouped, NonComplete, One>>(c);
-    //bench_bytestream::<ByteStreamVByte<BE, NonGrouped, NonComplete, Zero>>(c);
+    
     //bench_bytestream::<ByteStreamVByte<BE, GroupedIfs, Complete, Zero>>(c);
     //bench_bytestream::<ByteStreamVByte<BE, GroupedIfs, NonComplete, One>>(c);
     //bench_bytestream::<ByteStreamVByte<BE, GroupedIfs, NonComplete, Zero>>(c);
@@ -343,7 +325,6 @@ pub fn benchmark(c: &mut Criterion) {
     //bench_bytestream::<ByteStreamVByte<BE, GroupedCLZ, NonComplete, Zero>>(c);
     //bench_bytestream::<ByteStreamVByte<LE, NonGrouped, Complete, One>>(c);
     //bench_bytestream::<ByteStreamVByte<LE, NonGrouped, Complete, Zero>>(c);
-    //bench_bytestream::<ByteStreamVByte<LE, NonGrouped, NonComplete, Zero>>(c);
     //bench_bytestream::<ByteStreamVByte<LE, GroupedIfs, Complete, Zero>>(c);
     //bench_bytestream::<ByteStreamVByte<LE, GroupedIfs, NonComplete, One>>(c);
     //bench_bytestream::<ByteStreamVByte<LE, GroupedIfs, NonComplete, Zero>>(c);
@@ -361,13 +342,15 @@ pub fn benchmark(c: &mut Criterion) {
     //bench_bitstream::<BitStreamVByte<GroupedCLZ, Complete, One>>(c);
     //bench_bitstream::<BitStreamVByte<GroupedCLZ, Complete, Zero>>(c);
     //bench_bitstream::<BitStreamVByte<GroupedCLZ, NonComplete, One>>(c);
+    //bench_bitstream::<BitStreamVByte<GroupedCLZ, NonComplete, Zero>>(c);
 }
 
 criterion_group! {
     name = vbyte_benches;
     config = Criterion::default()
         .warm_up_time(Duration::from_secs(1))
-        .measurement_time(Duration::from_secs(3));
+        .measurement_time(Duration::from_secs(5))
+        .sample_size(100);
     targets = benchmark
 }
 criterion_main!(vbyte_benches);
