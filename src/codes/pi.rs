@@ -88,7 +88,7 @@ pub fn len_pi(mut n: u64, k: usize) -> usize {
 ///
 /// This is the trait you should pull in scope to read π codes.
 pub trait PiRead<E: Endianness>: BitRead<E> + RiceRead<E> {
-    #[inline]
+    #[inline(always)]
     fn read_pi(&mut self, k: usize) -> Result<u64, Self::Error> {
         let λ = self.read_rice(k)?;
         Ok((1 << λ) + self.read_bits(λ as usize)? - 1)
@@ -99,7 +99,7 @@ pub trait PiRead<E: Endianness>: BitRead<E> + RiceRead<E> {
 ///
 /// This is the trait you should pull in scope to write π codes.
 pub trait PiWrite<E: Endianness>: BitWrite<E> + RiceWrite<E> {
-    #[inline]
+    #[inline(always)]
     fn write_pi(&mut self, mut n: u64, k: usize) -> Result<usize, Self::Error> {
         n += 1;
         let λ = n.ilog2() as usize;

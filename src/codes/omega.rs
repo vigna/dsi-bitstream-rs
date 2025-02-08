@@ -67,6 +67,7 @@ fn recursive_len(n: u64) -> usize {
 ///
 /// This is the trait you should pull in scope to read ω codes.
 pub trait OmegaRead<E: Endianness>: BitRead<E> {
+    #[inline(always)]
     fn read_omega(&mut self) -> Result<u64, Self::Error> {
         let mut n = 1;
         loop {
@@ -76,11 +77,12 @@ pub trait OmegaRead<E: Endianness>: BitRead<E> {
                 return Ok(n - 1);
             }
 
-            let old_n = n;
-            n = self.read_bits(n as usize + 1)?;
+            let λ = n;
+            n = self.read_bits(λ as usize + 1)?;
 
             if core::any::TypeId::of::<E>() == core::any::TypeId::of::<LE>() {
-                n = (n >> 1) | (1 << old_n);
+                // rotate right (the lowest bit is a one)
+                n = (n >> 1) | (1 << λ);
             }
         }
     }
@@ -90,6 +92,7 @@ pub trait OmegaRead<E: Endianness>: BitRead<E> {
 ///
 /// This is the trait you should pull in scope to write ω codes.
 pub trait OmegaWrite<E: Endianness>: BitWrite<E> {
+    #[inline(always)]
     fn write_omega(&mut self, n: u64) -> Result<usize, Self::Error> {
         // omega codes are indexed from 1
         Ok(recursive_write::<E, Self>(n + 1, self)? + self.write_bits(0, 1)?)
@@ -105,7 +108,7 @@ fn recursive_write<E: Endianness, B: BitWrite<E> + ?Sized>(
     }
     let λ = n.ilog2();
     if core::any::TypeId::of::<E>() == core::any::TypeId::of::<LE>() {
-        // move the front 1 to the back so we can peek it
+        // rotate left (the bit in position λ is a one)
         n = (n << 1) | 1;
         #[cfg(feature = "checks")]
         {

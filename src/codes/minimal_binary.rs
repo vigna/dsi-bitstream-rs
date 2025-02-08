@@ -43,7 +43,7 @@ pub fn len_minimal_binary(n: u64, max: u64) -> usize {
 
 /// Trait for reading minimal binary codes.
 pub trait MinimalBinaryRead<E: Endianness>: BitRead<E> {
-    #[inline(always)]
+    #[inline]
     fn read_minimal_binary(&mut self, max: u64) -> Result<u64, Self::Error> {
         let l = max.ilog2();
         let mut prefix = self.read_bits(l as _)?;

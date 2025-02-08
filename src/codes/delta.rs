@@ -82,7 +82,7 @@ fn default_read_delta<E: Endianness, B: GammaReadParam<E>, const USE_GAMMA_TABLE
 }
 
 impl<B: GammaReadParam<BE>> DeltaReadParam<BE> for B {
-    #[inline]
+    #[inline(always)]
     fn read_delta_param<const USE_DELTA_TABLE: bool, const USE_GAMMA_TABLE: bool>(
         &mut self,
     ) -> Result<u64, B::Error> {
@@ -96,7 +96,7 @@ impl<B: GammaReadParam<BE>> DeltaReadParam<BE> for B {
 }
 
 impl<B: GammaReadParam<LE>> DeltaReadParam<LE> for B {
-    #[inline]
+    #[inline(always)]
     fn read_delta_param<const USE_DELTA_TABLE: bool, const USE_GAMMA_TABLE: bool>(
         &mut self,
     ) -> Result<u64, B::Error> {
@@ -132,7 +132,7 @@ pub trait DeltaWriteParam<E: Endianness>: GammaWriteParam<E> {
 }
 
 impl<B: GammaWriteParam<BE>> DeltaWriteParam<BE> for B {
-    #[inline]
+    #[inline(always)]
     #[allow(clippy::collapsible_if)]
     fn write_delta_param<const USE_DELTA_TABLE: bool, const USE_GAMMA_TABLE: bool>(
         &mut self,
@@ -148,7 +148,7 @@ impl<B: GammaWriteParam<BE>> DeltaWriteParam<BE> for B {
 }
 
 impl<B: GammaWriteParam<LE>> DeltaWriteParam<LE> for B {
-    #[inline]
+    #[inline(always)]
     #[allow(clippy::collapsible_if)]
     fn write_delta_param<const USE_DELTA_TABLE: bool, const USE_GAMMA_TABLE: bool>(
         &mut self,

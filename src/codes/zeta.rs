@@ -146,7 +146,7 @@ pub trait ZetaWriteParam<E: Endianness>: MinimalBinaryWrite<E> {
 }
 
 impl<B: BitWrite<BE>> ZetaWriteParam<BE> for B {
-    #[inline]
+    #[inline(always)]
     fn write_zeta_param<const USE_TABLE: bool>(
         &mut self,
         n: u64,
@@ -155,7 +155,7 @@ impl<B: BitWrite<BE>> ZetaWriteParam<BE> for B {
         default_write_zeta(self, n, k)
     }
 
-    #[inline]
+    #[inline(always)]
     #[allow(clippy::collapsible_if)]
     fn write_zeta3_param<const USE_TABLE: bool>(&mut self, n: u64) -> Result<usize, Self::Error> {
         if USE_TABLE {
@@ -168,7 +168,7 @@ impl<B: BitWrite<BE>> ZetaWriteParam<BE> for B {
 }
 
 impl<B: BitWrite<LE>> ZetaWriteParam<LE> for B {
-    #[inline]
+    #[inline(always)]
     fn write_zeta_param<const USE_TABLE: bool>(
         &mut self,
         n: u64,
@@ -177,7 +177,7 @@ impl<B: BitWrite<LE>> ZetaWriteParam<LE> for B {
         default_write_zeta(self, n, k)
     }
 
-    #[inline]
+    #[inline(always)]
     #[allow(clippy::collapsible_if)]
     fn write_zeta3_param<const USE_TABLE: bool>(&mut self, n: u64) -> Result<usize, Self::Error> {
         if USE_TABLE {

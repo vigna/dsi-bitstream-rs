@@ -45,7 +45,7 @@ pub fn b(p: f64) -> u64 {
 
 /// Trait for reading Golomb codes.
 pub trait GolombRead<E: Endianness>: BitRead<E> + MinimalBinaryRead<E> {
-    #[inline(always)]
+    #[inline]
     fn read_golomb(&mut self, b: u64) -> Result<u64, Self::Error> {
         Ok(self.read_unary()? * b + self.read_minimal_binary(b)?)
     }

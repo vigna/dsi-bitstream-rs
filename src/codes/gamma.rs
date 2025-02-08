@@ -76,7 +76,7 @@ fn default_read_gamma<E: Endianness, B: BitRead<E>>(backend: &mut B) -> Result<u
 }
 
 impl<B: BitRead<BE>> GammaReadParam<BE> for B {
-    #[inline]
+    #[inline(always)]
     fn read_gamma_param<const USE_TABLE: bool>(&mut self) -> Result<u64, Self::Error> {
         if USE_TABLE {
             if let Some((res, _)) = gamma_tables::read_table_be(self) {
@@ -88,7 +88,7 @@ impl<B: BitRead<BE>> GammaReadParam<BE> for B {
 }
 
 impl<B: BitRead<LE>> GammaReadParam<LE> for B {
-    #[inline]
+    #[inline(always)]
     fn read_gamma_param<const USE_TABLE: bool>(&mut self) -> Result<u64, Self::Error> {
         if USE_TABLE {
             if let Some((res, _)) = gamma_tables::read_table_le(self) {
@@ -119,7 +119,7 @@ pub trait GammaWriteParam<E: Endianness>: BitWrite<E> {
 }
 
 impl<B: BitWrite<BE>> GammaWriteParam<BE> for B {
-    #[inline]
+    #[inline(always)]
     #[allow(clippy::collapsible_if)]
     fn write_gamma_param<const USE_TABLE: bool>(&mut self, n: u64) -> Result<usize, Self::Error> {
         if USE_TABLE {
@@ -132,7 +132,7 @@ impl<B: BitWrite<BE>> GammaWriteParam<BE> for B {
 }
 
 impl<B: BitWrite<LE>> GammaWriteParam<LE> for B {
-    #[inline]
+    #[inline(always)]
     #[allow(clippy::collapsible_if)]
     fn write_gamma_param<const USE_TABLE: bool>(&mut self, n: u64) -> Result<usize, Self::Error> {
         if USE_TABLE {

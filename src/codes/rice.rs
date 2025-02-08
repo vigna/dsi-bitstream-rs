@@ -40,7 +40,7 @@ pub fn log2_b(p: f64) -> usize {
 
 /// Trait for reading Rice codes.
 pub trait RiceRead<E: Endianness>: BitRead<E> {
-    #[inline(always)]
+    #[inline]
     fn read_rice(&mut self, log2_b: usize) -> Result<u64, Self::Error> {
         Ok((self.read_unary()? << log2_b) + self.read_bits(log2_b)?)
     }

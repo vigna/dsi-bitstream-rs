@@ -31,7 +31,7 @@ pub fn len_exp_golomb(n: u64, k: usize) -> usize {
 
 /// Trait for reading exponential Golomb codes.
 pub trait ExpGolombRead<E: Endianness>: BitRead<E> + GammaRead<E> {
-    #[inline(always)]
+    #[inline]
     fn read_exp_golomb(&mut self, k: usize) -> Result<u64, Self::Error> {
         Ok((self.read_gamma()? << k) + self.read_bits(k)?)
     }
