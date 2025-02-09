@@ -12,7 +12,7 @@
 //! ⌊log₂(*n* + 1)⌋ and of the binary representation of *n* + 1 with the most
 //! significant bit removed.
 //!
-//! The implied distribution of a π code with parameter *k* code is ∝ 1/*x*^(1 +
+//! The implied distribution of a π code with parameter *k* code is ≈ 1/*x*^(1 +
 //! 1/2*ᵏ*).
 //!
 //! Note that π₀ = [ζ₁](super::zeta) = [γ](super::gamma) and π₁ =

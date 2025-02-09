@@ -112,7 +112,7 @@
 //!
 //! Working with [`ConstCode`] is very efficient, but it forces the choice of a
 //! code at compile time. If you need to read or write a code multiple times on
-//! the same type of bitstream, you can use the types [`FuncReader`] and
+//! the same type of bitstream, you can use the structs [`FuncReader`] and
 //! [`FuncWriter`], which implement [`SpecificCodeRead`] and
 //! [`SpecificCodeWrite`] by storing a function pointer.
 //!

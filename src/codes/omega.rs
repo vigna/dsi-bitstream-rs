@@ -16,7 +16,7 @@
 //! recursively.
 //!
 //! The implied distribution for the ω code is difficult to write analytically,
-//! but essentially it is as close as possible to ∝ 1/*x* (as there is no code
+//! but essentially it is as close as possible to ≈ 1/*x* (as there is no code
 //! for that distribution).
 //!
 //! The ω code is easier to describe the format of a code, rather than the

@@ -13,7 +13,7 @@
 //! binary code](crate::codes::minimal_binary) of *n* + 1 – 2*ʰᵏ* with 2⁽*ʰ* ⁺
 //! ¹⁾*ᵏ* – 2*ʰᵏ* as upper bound.
 //!
-//! The implied distribution of a ζ code with parameter *k* is ∝ 1/*x*^(1 +
+//! The implied distribution of a ζ code with parameter *k* is ≈ 1/*x*^(1 +
 //! 1/*k*).
 //!
 //! This module provides a generic implementation of ζ codes, and a specialized

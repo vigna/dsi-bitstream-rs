@@ -14,7 +14,7 @@
 //! binary *k*-bit representations.
 //!
 //! The implied distribution of an exponential Golomb code with parameter *k* is
-//! ∝ 1/2(*x*/2*ᵏ*)².
+//! ≈ 2²*ᵏ*/2*x*².
 //!
 //! Note that the exponential Golomb code for *k* = 0 is exactly the [γ
 //! code](super::gamma).
