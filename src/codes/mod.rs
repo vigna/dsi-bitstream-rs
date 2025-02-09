@@ -92,9 +92,9 @@ use mem_dbg::{MemDbg, MemSize};
 use crate::prelude::{BitRead, BitWrite};
 pub mod params;
 
-pub mod code;
-pub use code::{const_codes, Code, CodeReadDispatcher, CodeWriteDispatcher, ConstCode};
-pub use code::{CodeLen, CodeRead, CodeReadDispatch, CodeWrite, CodeWriteDispatch};
+pub mod dispatch;
+pub use dispatch::{const_codes, Code, CodeReadDispatcher, CodeWriteDispatcher, ConstCode};
+pub use dispatch::{CodeLen, CodeRead, CodeReadDispatch, CodeWrite, CodeWriteDispatch};
 
 pub mod gamma;
 pub use gamma::{

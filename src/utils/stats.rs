@@ -8,7 +8,7 @@
 #[cfg(feature = "mem_dbg")]
 use mem_dbg::{MemDbg, MemSize};
 
-use crate::prelude::code::{CodeRead, CodeReadDispatch, CodeWrite, CodeWriteDispatch};
+use crate::prelude::dispatch::{CodeRead, CodeReadDispatch, CodeWrite, CodeWriteDispatch};
 use crate::prelude::Endianness;
 use crate::prelude::{
     bit_len_vbyte, len_delta, len_exp_golomb, len_gamma, len_golomb, len_omega, len_pi, len_rice,
