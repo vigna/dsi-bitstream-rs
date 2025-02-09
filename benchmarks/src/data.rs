@@ -43,7 +43,7 @@ macro_rules! compute_hit_ratio {
 
 /// Generate data to benchmark γ code.
 pub fn gen_gamma_data() -> (f64, Vec<u64>) {
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
 
     let distr = rand_distr::Zeta::new(2.0).unwrap();
     let gamma_data = (0..N)
@@ -79,9 +79,9 @@ pub static DELTA_CUM_DISTR: Lazy<Vec<f64>> = Lazy::new(|| {
 
 /// Generate data to benchmark δ code.
 pub fn gen_delta_data() -> (f64, Vec<u64>) {
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
 
-    let distr = rand_distr::Uniform::new(0.0, 1.0);
+    let distr = rand::distr::Uniform::new(0.0, 1.0).unwrap();
     let delta_data = (0..N)
         .map(|_| {
             let p = rng.sample(distr);
@@ -100,7 +100,7 @@ pub fn gen_delta_data() -> (f64, Vec<u64>) {
 
 /// Generate data to benchmark ζ₃ code.
 pub fn gen_zeta3_data() -> (f64, Vec<u64>) {
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
 
     let distr = rand_distr::Zeta::new(1.2).unwrap();
     let zeta3_data = (0..N)

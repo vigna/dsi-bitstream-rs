@@ -39,7 +39,6 @@ type WriteWord = u32;
 #[cfg(all(not(feature = "reads"), feature = "u64"))]
 type WriteWord = u64;
 
-#[cfg(not(feature = "rtdsc"))]
 use std::time::Instant;
 
 pub mod metrics;
