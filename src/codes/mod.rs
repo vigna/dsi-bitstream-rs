@@ -28,12 +28,12 @@
 //! [`ToInt`](crate::utils::ToInt) and [`ToNat`](crate::utils::ToNat) traits,
 //! which provide a bijection between signed integers and natural numbers.
 //!
-//!
 //! Each code is implemented as a pair of traits for reading and writing (e.g.,
 //! [`GammaReadParam`] and [`GammaWriteParam`]). The traits for reading depend
 //! on [`BitRead`], whereas the traits for writing depend on [`BitWrite`]. Note
-//! that most codes cannot write the number [`u64::MAX`] because of
-//! overflow issues.
+//! that most codes cannot write the number [`u64::MAX`] because of overflow
+//! issues, which could be avoided with tests, but at the price of a significant
+//! performance drop.
 //!
 //! The traits ending with `Param` make it possible to specify parameters—for
 //! example, whether to use decoding tables. Usually, one whould instead pull in
@@ -69,20 +69,21 @@
 //! we can read the `01` part without a bit reversal.
 //!
 //! The case of [minimal binary codes](minimal_binary) is even more convoluted:
-//! for examples, the code with upper bound 7 has code words `00`, `010`, `011`,
+//! for example, the code with upper bound 7 has codewords `00`, `010`, `011`,
 //! `100`, `101`, `110`, and `111`. To decode such a code without peeking at
 //! more bits than necessary, one first reads two bits, and then decides, based
 //! on their value, whether to read a further bit and add it on the right. But
 //! this means that we have to encode 2 as `011` in the big-endian case, and as
 //! `101` in the little-endian case, because we need to read the first two bits
-//! to decide whether to read the third.
+//! to decide whether to read the third one.
 //!
 //! In some cases, we resort to completely *ad hoc* solutions: for example, in
 //! the case of the [ω code](omega), for the little-endian case instead of
 //! reversing the bits written at each recursive call (which in principle would
 //! be necessary), we simply rotate them to the left by one position, exposing
 //! the most significant bit as first bit. This is sufficient to make the
-//! decoding possible, and is much faster than reversing the bits.
+//! decoding possible, and the rotation is a much faster operation than bit
+//! reversal.
 
 use anyhow::Result;
 #[cfg(feature = "mem_dbg")]

@@ -13,7 +13,7 @@
 Generation functions for data used in benchmarks.
 
 For each code, this module provides a function to generate data with
-a distribution similar to the intended distribution of the code, that is,
+a distribution similar to the implied distribution of the code, that is,
 p(w) = 2<sup>–|w|</sup>. Moreover, the function returns the
 hit ratio, that is, the ratio of values that is decodable using tables.
 
@@ -58,7 +58,7 @@ pub fn gen_gamma_data() -> (f64, Vec<u64>) {
 /// The size of [`DELTA_CUM_DISTR`].
 pub const DELTA_DISTR_SIZE: usize = 1_000_000;
 
-/// A slightly tweaked finite cumulative distribution similar to the intended
+/// A slightly tweaked finite cumulative distribution similar to the implied
 /// cumulative distribution of δ code.
 pub static DELTA_CUM_DISTR: Lazy<Vec<f64>> = Lazy::new(|| {
     let mut delta_distr = vec![0.];

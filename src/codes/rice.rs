@@ -12,6 +12,9 @@
 //! geometric distribution, but encoding and decoding can be performed without
 //! any integer arithmetic, and thus much more quickly.
 //!
+//! The implied distribution of a Rice code is [the same as that of a Golomb
+//! code with the same parameter](crate::codes::golomb).
+//!
 //! For natural numbers distributed with a geometric distribution with base *p*,
 //! the base-2 logarithm of the optimal *b* is [⌈log₂(ln((√5 + 1)/2) / ln(1 -
 //! *p*))⌉](log2_b).

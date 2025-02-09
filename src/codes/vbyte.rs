@@ -14,6 +14,9 @@
 //! quantity](https://en.wikipedia.org/wiki/Variable-length_quantity)”, “LEB”,
 //! and so on.
 //!
+//! There are several variants of their definition, but their implied
+//! distribution is always ∝ 1/*x*^(8/7).
+//!
 //! # Definition
 //!
 //! Since there are a few slightly different variants used in production code

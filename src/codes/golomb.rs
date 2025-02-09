@@ -10,6 +10,11 @@
 //! / *b*⌋ in [unary code](BitRead::read_unary) followed by the [minimal binary
 //! code](super::minimal_binary) of *x* mod *b*.
 //!
+//! Let *r* be the root of order *b* of 2: then, the implied distribution of
+//! the Golomb code of modulo *b* is ∝ 1/*rˣ*.
+//!
+//! Note that the Golomb code for *b* = 1 is exactly the unary code.
+//!
 //! For natural numbers distributed with a geometric distribution with base *p*,
 //! the optimal code is a Golomb code with [*b* = ⌈–log(2 – *p*) / log(1 –
 //! *p*)⌉](b).

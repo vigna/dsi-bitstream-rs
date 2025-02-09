@@ -12,6 +12,8 @@
 //! ⌊log₂(*n* + 1)⌋ and of the binary representation of *n* + 1 with the most
 //! significant bit removed.
 //!
+//! The implied distribution of the γ code is ∝ 1/2*x*².
+//!
 //! The `USE_TABLE` parameter enables or disables the use of pre-computed tables
 //! for decoding.
 //!

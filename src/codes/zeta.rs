@@ -10,17 +10,20 @@
 //!
 //! The ζ code with parameter *k* of a natural number *n* is the concatenation
 //! of of the unary code of *h* = ⌊⌊log₂(*n* + 1)⌋ / *k*⌋ and of the [minimal
-//! binary code](crate::codes::minimal_binary) of *n* + 1 – 2*ʰᵏ* with
-//! 2⁽*ʰ* ⁺ ¹⁾*ᵏ* – 2*ʰᵏ* as upper bound.
+//! binary code](crate::codes::minimal_binary) of *n* + 1 – 2*ʰᵏ* with 2⁽*ʰ* ⁺
+//! ¹⁾*ᵏ* – 2*ʰᵏ* as upper bound.
 //!
-//! This module provides a generic implementation of ζ codes, and a
-//! specialized implementation for ζ₃ that may use tables.
+//! The implied distribution of a ζ code with parameter *k* is ∝ 1/*x*^(1 +
+//! 1/*k*).
+//!
+//! This module provides a generic implementation of ζ codes, and a specialized
+//! implementation for ζ₃ that may use tables.
 //!
 //! # References
 //!
-//! Boldi Paolo and Sebastiano Vigna, “The Webgraph framework II: codes for the
-//! World-Wide Web”, Data Compression Conference, 2004. Proceedings. DCC 2004
-//! (2004): 528-; doi: <https://doi.org/10.1109/DCC.2004.1281504>.
+//! Paolo Boldi and Sebastiano Vigna. “[Codes for the World−Wide
+//! Web](https://doi.org/10.1080/15427951.2005.10129113)”. Internet Math.,
+//! 2(4):405−427, 2005.
 
 use super::{len_minimal_binary, zeta_tables, MinimalBinaryRead, MinimalBinaryWrite};
 use crate::traits::*;

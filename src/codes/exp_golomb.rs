@@ -6,14 +6,18 @@
 
 //! Exponential Golomb codes.
 //!
-//! Exponential Golomb codes are a variant of Golomb codes with power-of-2
+//! Exponential Golomb codes are a variant of Golomb codes with power-of-two
 //! modulus (i.e., [Rice codes](super::rice)) in which the prefix is written
 //! using [Elias γ code](super::gamma) instead of unary code. More precisely,
 //! the exponential Golomb code with parameter *k* of a natural number *n* is
-//! given ⌊*x* / 2*ᵏ*⌋ in [γ code](super::gamma) followed by *x* mod 2*ᵏ*
-//! in binary *k*-bit representations.
+//! given ⌊*x* / 2*ᵏ*⌋ in [γ code](super::gamma) followed by *x* mod 2*ᵏ* in
+//! binary *k*-bit representations.
 //!
-//! The exponential Golomb code for *k* = 1 is [γ code](super::gamma).
+//! The implied distribution of an exponential Golomb code with parameter *k* is
+//! ∝ 1/2(*x*/2*ᵏ*)².
+//!
+//! Note that the exponential Golomb code for *k* = 0 is exactly the [γ
+//! code](super::gamma).
 //!
 //! Exponential Golomb codes are used in [H.264
 //! (MPEG-4)](https://en.wikipedia.org/wiki/Advanced_Video_Coding) and

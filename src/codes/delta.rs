@@ -12,6 +12,8 @@
 //! [γ](crate::codes::gamma) code of ⌊log₂(*n* + 1)⌋ and the binary
 //! representation of *n* + 1 with the most significant bit removed.
 //!
+//! The implied distribution of the δ code is ∝ 1/2*x*(log *x*)².
+//!
 //! The `USE_DELTA_TABLE` parameter enables or disables the use of pre-computed
 //! tables for decoding δ codes, and the `USE_GAMMA_TABLE` parameter enables or
 //! disables the use of pre-computed tables for decoding the the initial γ code

@@ -13,7 +13,11 @@
 //! respectively. Thus, [δ](super::delta) can be seen as adding one level of
 //! recursion in the length representation with respect to [γ](super::gamma).
 //!
-//! Elias ω code pushes the recursion in the representation of the length to its
+//! The implied distribution for the ω code is difficult to write analytically,
+//! but essentially it is as close as possible to ∝ 1/*x* (as there is no code for
+//! that distribution).
+//!
+//! The ω code pushes the recursion in the representation of the length to its
 //! limit; it is easier to describe the format of a code, rather than the
 //! encoding algorithm.
 //!
