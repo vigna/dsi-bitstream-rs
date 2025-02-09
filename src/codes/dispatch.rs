@@ -76,7 +76,7 @@
 //! implements all the dispatch traits and [`CodeLen`], and can be
 //! used to select the code at compile time. The parameter must be taken from
 //! the [`code_consts`] module, which contains constants for all parameterless
-//! codes, and for the codes with parameters up to 10. For example, here the at
+//! codes, and for the codes with parameters up to 10. For example, here at
 //! execution time there will be no test to select a code, even if
 //! `read_two_codes_and_sum` is generic:
 //!```rust
@@ -212,9 +212,9 @@ use core::marker::PhantomData;
 /// This enum is kept in sync with implementations in the
 /// [`codes`](crate::codes) module.
 ///
-/// Both [`Display`] and [`FromStr`] are implemented for this enum
-/// in a dual way, which makes it possible to store a code as a string
-/// in a configuration file, and then parse it back.
+/// Both [`Display`](std::fmt::Display) and [`FromStr`](std::str::FromStr) are
+/// implemented for this enum in a dual way, which makes it possible to store a
+/// code as a string in a configuration file, and then parse it back.
 pub enum Codes {
     Unary,
     Gamma,
@@ -316,9 +316,10 @@ impl From<core::num::ParseIntError> for CodeError {
 /// A blanket implementation is provided for all types that implement the
 /// necessary traits.
 ///
-/// This trait is mainly useful internally to implement [different types of
-/// code-based dispatch](crate::codes::code). The user might find more useful to
-/// define its own convenience trait that includes only the codes they need.
+/// This trait is mainly useful internally to implement the dispatch
+/// traits [`GenericRead`], [`SpecificRead`], [`GenericWrite`], and
+/// [`SpecificWrite`]. The user might find more useful to define its own
+/// convenience trait that includes only the codes they need.
 pub trait CodesRead<E: Endianness>:
     BitRead<E>
     + GammaRead<E>
@@ -355,14 +356,16 @@ impl<E: Endianness, B> CodesRead<E> for B where
 {
 }
 
-/// Convenience extension trait for writing all the codes supported by the library.
+/// Convenience extension trait for writing all the codes supported by the
+/// library.
 ///
 /// A blanket implementation is provided for all types that implement the
 /// necessary traits.
 ///
-/// This trait is mainly useful internally to implement [different types of
-/// code-based dispatch](crate::codes::code). The user might find more useful to
-/// define its own convenience trait that includes only the codes they need.
+/// This trait is mainly useful internally to implement the dispatch
+/// traits [`GenericRead`], [`SpecificRead`], [`GenericWrite`], and
+/// [`SpecificWrite`]. The user might find more useful to define its own
+/// convenience trait that includes only the codes they need.
 pub trait CodesWrite<E: Endianness>:
     BitWrite<E>
     + GammaWrite<E>
