@@ -36,7 +36,11 @@
 //! use dsi_bitstream::codes::dispatch::{CodesRead, GenericCodeRead};
 //! use std::fmt::Debug;
 //!
-//! fn read_two_codes_and_sum<E: Endianness, R: CodesRead<E> + ?Sized, GR: GenericCodeRead>(
+//! fn read_two_codes_and_sum<
+//!     E: Endianness,
+//!     R: CodesRead<E> + ?Sized,
+//!     GR: GenericCodeRead
+//! >(
 //!     reader: &mut R,
 //!     code: GR,
 //! ) -> Result<u64, GR::Error<R::Error>> {
@@ -52,7 +56,11 @@
 //! use dsi_bitstream::codes::dispatch::{CodesRead, SpecificCodeRead};
 //! use std::fmt::Debug;
 //!
-//! fn read_two_codes_and_sum<E: Endianness, R: CodesRead<E> + ?Sized, SR: SpecificCodeRead<E, R>>(
+//! fn read_two_codes_and_sum<
+//!     E: Endianness,
+//!     R: CodesRead<E> + ?Sized,
+//!     SR: SpecificCodeRead<E, R>
+//! >(
 //!     reader: &mut R,
 //!     code: SR,
 //! ) -> Result<u64, SR::Error<R::Error>> {
