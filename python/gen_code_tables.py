@@ -49,7 +49,7 @@ pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> Option<(u64, us
         let idx: u64 = idx.cast();
         let (value, len) = READ_%(BO)s[idx as usize];
         if len != MISSING_VALUE_LEN_%(BO)s {
-            backend.skip_bits_after_table_lookup(len as usize);
+            backend.skip_bits_after_peek(len as usize);
             return Some((value as u64, len as usize));
         }
     }
@@ -68,7 +68,7 @@ pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> Option<(u64, us
         let idx: u64 = idx.cast();
         let len = READ_LEN_%(BO)s[idx as usize];
         if len != MISSING_VALUE_LEN_%(BO)s {
-            backend.skip_bits_after_table_lookup(len as usize);
+            backend.skip_bits_after_peek(len as usize);
             return Some((READ_%(BO)s[idx as usize] as u64, len as usize));
         }
     }
@@ -84,7 +84,7 @@ pub fn len_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> Option<usize> {
         let idx: u64 = idx.cast();
         let len = READ_LEN_%(BO)s[idx as usize];
         if len != MISSING_VALUE_LEN_%(BO)s {
-            backend.skip_bits_after_table_lookup(len as usize);
+            backend.skip_bits_after_peek(len as usize);
             return Some(len as usize);
         }
     }
@@ -699,7 +699,7 @@ def gen_zeta(read_bits, write_max_val, len_max_val=None, k=3, merged_table=False
     )
     with open(os.path.join(ROOT, "zeta_tables.rs"), "a") as f:
         f.write("/// The K of the zeta codes for these tables\n")
-        f.write("pub const K: u64 = {};".format(k))
+        f.write("pub const K: usize = {};".format(k))
 
 ################################################################################
 
