@@ -89,8 +89,8 @@ pub fn bench_bytestream<C: ByteCode + WithName>(c: &mut Criterion) {
     {
         let vals = (0..64)
             .map(|i| 1 << i)
-            //.chain(0..1024)
-            .chain([0, u64::MAX])
+            .chain(0..1024)
+            .chain([u64::MAX])
             .collect::<Vec<_>>();
         let mut w = std::io::Cursor::new(&mut v);
         for v in &vals {
@@ -205,6 +205,121 @@ impl<E: Endianness> ByteCode for ByteStreamVByte<E, GroupedIfs, Complete, OneCon
     }
     fn write(value: u64, w: &mut impl Write) -> Result<usize> {
         Ok(dsi_bitstream::codes::vbyte::vbyte_encode::<E, _>(value, w)?)
+    }
+}
+
+const UPPER_BOUND_1: u64 = 128;
+const UPPER_BOUND_2: u64 = 128_u64.pow(2);
+const UPPER_BOUND_3: u64 = 128_u64.pow(3);
+const UPPER_BOUND_4: u64 = 128_u64.pow(4);
+const UPPER_BOUND_5: u64 = 128_u64.pow(5);
+const UPPER_BOUND_6: u64 = 128_u64.pow(6);
+const UPPER_BOUND_7: u64 = 128_u64.pow(7);
+const UPPER_BOUND_8: u64 = 128_u64.pow(8);
+
+impl ByteCode for ByteStreamVByte<BE, GroupedCLZ, NonComplete, OneCont> {
+    fn read(r: &mut impl Read) -> Result<u64> {
+        let mut buffer = [0; 8];
+        r.read_exact(&mut buffer[..1])?;
+
+        if buffer[0] == 0xFF {
+            r.read_exact(&mut buffer)?;
+            return Ok(u64::from_be_bytes(buffer).into());
+        }
+
+        let len = buffer[0].leading_ones() as usize;
+        let result = buffer[0] as u64 & (0xFF >> len + 1);
+        buffer[0] = 0;
+        r.read_exact(&mut buffer[8 - len..])?;
+        Ok(result << len * 8 | u64::from_be_bytes(buffer))
+    }
+    fn write(value: u64, w: &mut impl Write) -> Result<usize> {
+        if value < UPPER_BOUND_1 {
+            w.write_all(&[value as u8])?;
+            return Ok(1);
+        }
+        if value < UPPER_BOUND_2 {
+            debug_assert!((value >> 8) < (1 << 6));
+            w.write_all(&[0x80 | (value >> 8) as u8, value as u8])?;
+            return Ok(2);
+        }
+        if value < UPPER_BOUND_3 {
+            debug_assert!((value >> 16) < (1 << 5));
+            w.write_all(&[0xC0 | (value >> 16) as u8, (value >> 8) as u8, value as u8])?;
+            return Ok(3);
+        }
+        if value < UPPER_BOUND_4 {
+            debug_assert!((value >> 24) < (1 << 4));
+            w.write_all(&[
+                0xE0 | (value >> 24) as u8,
+                (value >> 16) as u8,
+                (value >> 8) as u8,
+                value as u8,
+            ])?;
+            return Ok(4);
+        }
+        if value < UPPER_BOUND_5 {
+            debug_assert!((value >> 32) < (1 << 3));
+            w.write_all(&[
+                0xF0 | (value >> 32) as u8,
+                (value >> 24) as u8,
+                (value >> 16) as u8,
+                (value >> 8) as u8,
+                value as u8,
+            ])?;
+            return Ok(5);
+        }
+        if value < UPPER_BOUND_6 {
+            debug_assert!((value >> 40) < (1 << 2));
+            w.write_all(&[
+                0xF8 | (value >> 40) as u8,
+                (value >> 32) as u8,
+                (value >> 24) as u8,
+                (value >> 16) as u8,
+                (value >> 8) as u8,
+                value as u8,
+            ])?;
+            return Ok(6);
+        }
+        if value < UPPER_BOUND_7 {
+            debug_assert!((value >> 48) < (1 << 1));
+            w.write_all(&[
+                0xFC | (value >> 48) as u8,
+                (value >> 40) as u8,
+                (value >> 32) as u8,
+                (value >> 24) as u8,
+                (value >> 16) as u8,
+                (value >> 8) as u8,
+                value as u8,
+            ])?;
+            return Ok(7);
+        }
+        if value < UPPER_BOUND_8 {
+            w.write_all(&[
+                0xFE,
+                (value >> 48) as u8,
+                (value >> 40) as u8,
+                (value >> 32) as u8,
+                (value >> 24) as u8,
+                (value >> 16) as u8,
+                (value >> 8) as u8,
+                value as u8,
+            ])?;
+            return Ok(8);
+        }
+
+        w.write_all(&[
+            0xFF,
+            (value >> 56) as u8,
+            (value >> 48) as u8,
+            (value >> 40) as u8,
+            (value >> 32) as u8,
+            (value >> 24) as u8,
+            (value >> 16) as u8,
+            (value >> 8) as u8,
+            value as u8,
+        ])?;
+        Ok(9)
     }
 }
 
@@ -325,7 +440,7 @@ pub fn benchmark(c: &mut Criterion) {
     //bench_bytestream::<ByteStreamVByte<BE, GroupedIfs, Complete, Zero>>(c);
     //bench_bytestream::<ByteStreamVByte<BE, GroupedIfs, NonComplete, One>>(c);
     //bench_bytestream::<ByteStreamVByte<BE, GroupedIfs, NonComplete, Zero>>(c);
-    //bench_bytestream::<ByteStreamVByte<BE, GroupedCLZ, Complete, One>>(c);
+    bench_bytestream::<ByteStreamVByte<BE, GroupedCLZ, NonComplete, OneCont>>(c);
     //bench_bytestream::<ByteStreamVByte<BE, GroupedCLZ, Complete, Zero>>(c);
     //bench_bytestream::<ByteStreamVByte<BE, GroupedCLZ, NonComplete, One>>(c);
     //bench_bytestream::<ByteStreamVByte<BE, GroupedCLZ, NonComplete, Zero>>(c);
