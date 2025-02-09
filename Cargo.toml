@@ -31,9 +31,14 @@ default = ["std", "mem_dbg"]
 std = ["alloc"]
 alloc = []
 fuzz = ["dep:arbitrary"]
+# Enable additional checks on the argument of some methods; in particular, the
+# value of words to be written must fit the provided bit width
 checks = []
-no_copy_impls = [
-] # Disable copy_from/copy_to implementations so to test the default methods
+# Disable copy_from/copy_to implementations so to test the default methods
+no_copy_impls = []
+# This is necessary to avoid warnings from MemDbg and to use the 
+# offset_of_enum MemDbg feature gate if needed
+offset_of_enum = []
 
 [[bench]]
 name = "write_unary"
