@@ -93,8 +93,10 @@ use crate::prelude::{BitRead, BitWrite};
 pub mod params;
 
 pub mod dispatch;
-pub use dispatch::{code_consts, Codes, ConstCode, ReadFunc, WriteFunc};
-pub use dispatch::{CodeLen, GenericRead, GenericWrite, SpecificRead, SpecificWrite};
+pub use dispatch::{code_consts, Codes, ConstCode, FuncReader, FuncWriter};
+pub use dispatch::{
+    CodeLen, GenericCodeRead, GenericCodeWrite, SpecificCodeRead, SpecificCodeWrite,
+};
 
 pub mod gamma;
 pub use gamma::{

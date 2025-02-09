@@ -9,7 +9,9 @@
 use mem_dbg::{MemDbg, MemSize};
 
 use crate::codes::dispatch::{CodesRead, CodesWrite};
-use crate::prelude::dispatch::{GenericRead, GenericWrite, SpecificRead, SpecificWrite};
+use crate::prelude::dispatch::{
+    GenericCodeRead, GenericCodeWrite, SpecificCodeRead, SpecificCodeWrite,
+};
 use crate::prelude::Endianness;
 use crate::prelude::{
     bit_len_vbyte, len_delta, len_exp_golomb, len_gamma, len_golomb, len_omega, len_pi, len_rice,
@@ -274,7 +276,7 @@ pub struct CodesStatsWrapper<
     const PI: usize = 10,
 > {
     // TODO!: figure out how we can do this without a lock.
-    // This is needed because the `CodeRead` and `CodeWrite` traits must have
+    // This is needed because the [`GenericCodeRead`] and [`GenericCodeWrite`] traits must have
     // &self and not &mut self.
     stats: Mutex<CodesStats<ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>>,
     wrapped: W,
@@ -309,13 +311,13 @@ impl<
 }
 
 impl<
-        W: GenericRead,
+        W: GenericCodeRead,
         const ZETA: usize,
         const GOLOMB: usize,
         const EXP_GOLOMB: usize,
         const RICE: usize,
         const PI: usize,
-    > GenericRead for CodesStatsWrapper<W, ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
+    > GenericCodeRead for CodesStatsWrapper<W, ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
 {
     type Error<CRE: Debug + Send + Sync + 'static> = W::Error<CRE>;
 
@@ -331,7 +333,7 @@ impl<
 }
 
 impl<
-        W: SpecificRead<E, CR>,
+        W: SpecificCodeRead<E, CR>,
         const ZETA: usize,
         const GOLOMB: usize,
         const EXP_GOLOMB: usize,
@@ -339,7 +341,7 @@ impl<
         const PI: usize,
         E: Endianness,
         CR: CodesRead<E> + ?Sized,
-    > SpecificRead<E, CR> for CodesStatsWrapper<W, ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
+    > SpecificCodeRead<E, CR> for CodesStatsWrapper<W, ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
 {
     type Error<CRE: Debug + Send + Sync + 'static> = W::Error<CRE>;
 
@@ -352,13 +354,13 @@ impl<
 }
 
 impl<
-        W: GenericWrite,
+        W: GenericCodeWrite,
         const ZETA: usize,
         const GOLOMB: usize,
         const EXP_GOLOMB: usize,
         const RICE: usize,
         const PI: usize,
-    > GenericWrite for CodesStatsWrapper<W, ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
+    > GenericCodeWrite for CodesStatsWrapper<W, ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
 {
     type Error<CWE: Debug + Send + Sync + 'static> = W::Error<CWE>;
 
@@ -375,7 +377,7 @@ impl<
 }
 
 impl<
-        W: SpecificWrite<E, CW>,
+        W: SpecificCodeWrite<E, CW>,
         const ZETA: usize,
         const GOLOMB: usize,
         const EXP_GOLOMB: usize,
@@ -383,7 +385,7 @@ impl<
         const PI: usize,
         E: Endianness,
         CW: CodesWrite<E> + ?Sized,
-    > SpecificWrite<E, CW> for CodesStatsWrapper<W, ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
+    > SpecificCodeWrite<E, CW> for CodesStatsWrapper<W, ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
 {
     type Error<CWE: Debug + Send + Sync + 'static> = W::Error<CWE>;
 
