@@ -21,10 +21,15 @@
 //!
 //! # References
 //!
-//! Aaron Kiely, “[Selecting the Golomb parameter in Rice
-//! coding](https://tda.jpl.nasa.gov/progress_report/42-159/159E.pdf)”,
-//! Interplanetary Network Progress report 42-159 (2004), Jet Propulsion
-//! Laboratory.
+//! Robert F. Rice, “[Some practical universal noiseless coding
+//! techniques](https://ntrs.nasa.gov/api/citations/19790014634/downloads/19790014634.pdf)”.
+//! Jet Propulsion Laboratory, Pasadena, CA, Tech. Rep. JPL-79-22, JPL-83-17,
+//! and JPL-91-3, March 1979.
+//!
+//! Aaron Kiely. “[Selecting the Golomb parameter in Rice
+//! coding](https://tda.jpl.nasa.gov/progress_report/42-159/159E.pdf)”.
+//! Interplanetary Network Progress report 42-159, Jet Propulsion Laboratory,
+//! 2004.
 
 use crate::traits::*;
 

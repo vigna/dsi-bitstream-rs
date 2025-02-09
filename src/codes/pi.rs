@@ -27,8 +27,8 @@
 //!
 //! # References
 //!
-//! Alberto Apostolico and Guido Drovandi. “Graph Compression by BFS”,
-//! Algorithms, 2009, 2, 1031-1044; <https://doi.org/10.3390/a2031031>.
+//! Alberto Apostolico and Guido Drovandi. “[Graph Compression by
+//! BFS](https://doi.org/10.3390/a2031031)”, Algorithms, 2:1031-1044, 2009.
 
 use crate::traits::*;
 

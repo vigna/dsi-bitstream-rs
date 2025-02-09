@@ -19,9 +19,10 @@
 //! Note that the exponential Golomb code for *k* = 0 is exactly the [γ
 //! code](super::gamma).
 //!
-//! Exponential Golomb codes are used in [H.264
+//! Exponential Golomb codes are used in the [H.264
 //! (MPEG-4)](https://en.wikipedia.org/wiki/Advanced_Video_Coding) and
-//! [H.265](https://en.wikipedia.org/wiki/High_Efficiency_Video_Coding).
+//! [H.265](https://en.wikipedia.org/wiki/High_Efficiency_Video_Coding)
+//! standards.
 
 use super::gamma::{len_gamma, GammaRead, GammaWrite};
 use crate::traits::*;

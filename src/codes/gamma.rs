@@ -19,10 +19,10 @@
 //!
 //! # References
 //!
-//! Peter Elias, “Universal codeword sets and representations of the integers”,
-//! IEEE Transactions on Information Theory, vol. 21, no. 2, pp. 194-203, March
-//! 1975, doi: <https://doi.org/10.1109/TIT.1975.1055349>.
-//!
+//! Peter Elias, “[Universal codeword sets and representations of the
+//! integers](https://doi.org/10.1109/TIT.1975.1055349)”. IEEE Transactions on
+//! Information Theory, 21(2):194–203, March 1975.
+
 use super::gamma_tables;
 use crate::traits::*;
 

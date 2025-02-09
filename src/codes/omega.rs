@@ -14,8 +14,8 @@
 //! recursion in the length representation with respect to [γ](super::gamma).
 //!
 //! The implied distribution for the ω code is difficult to write analytically,
-//! but essentially it is as close as possible to ∝ 1/*x* (as there is no code for
-//! that distribution).
+//! but essentially it is as close as possible to ∝ 1/*x* (as there is no code
+//! for that distribution).
 //!
 //! The ω code pushes the recursion in the representation of the length to its
 //! limit; it is easier to describe the format of a code, rather than the
@@ -47,9 +47,9 @@
 //!
 //! # References
 //!
-//! Peter Elias. “Universal codeword sets and representations of the integers”,
-//! IEEE Transactions on Information Theory, vol. 21, no. 2, pp. 194-203, March
-//! 1975, doi:  <https://doi.org/10.1109/TIT.1975.1055349>.
+//! Peter Elias. “[Universal codeword sets and representations of the
+//! integers](https://doi.org/10.1109/TIT.1975.1055349)”. IEEE Transactions on
+//! Information Theory, 21(2):194–203, March 1975.
 
 use crate::traits::*;
 use common_traits::CastableInto;

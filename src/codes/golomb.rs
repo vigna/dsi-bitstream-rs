@@ -10,8 +10,8 @@
 //! / *b*⌋ in [unary code](BitRead::read_unary) followed by the [minimal binary
 //! code](super::minimal_binary) of *x* mod *b*.
 //!
-//! Let *r* be the root of order *b* of 2: then, the implied distribution of
-//! the Golomb code of modulo *b* is ∝ 1/*rˣ*.
+//! Let *r* be the root of order *b* of 2: then, the implied distribution of the
+//! Golomb code of modulo *b* is ∝ 1/*rˣ*.
 //!
 //! Note that the Golomb code for *b* = 1 is exactly the unary code.
 //!
@@ -23,14 +23,14 @@
 //!
 //! # References
 //!
-//! S. Golomb, “Run-length encodings (Corresp.)”, IEEE Transactions on
-//! Information Theory, vol. 12, no. 3, pp. 399-401, July 1966, doi:
-//! <https://doi.org/10.1109/TIT.1966.1053907>.
+//! Solomon W. Golomb, “[Run-length encodings
+//! (Corresp.)](https://doi.org/10.1109/TIT.1966.1053907)”. IEEE Transactions on
+//! Information Theory, 12(3):399–401, July 1966.
 //!
-//! R. Gallager and D. van Voorhis, “Optimal source codes for geometrically
-//! distributed integer alphabets (Corresp.)”, IEEE Transactions on Information
-//! Theory, vol. 21, no. 2, pp. 228-230, March 1975, doi:
-//! <https://doi.org/10.1109/TIT.1975.1055357>.
+//! Robert G. Gallager and David C. Van Voorhis, “[Optimal source codes for
+//! geometrically distributed integer alphabets
+//! (Corresp.)](https://doi.org/10.1109/TIT.1975.1055357)”. IEEE Transactions on
+//! Information Theory, 21(2):228–230, March 1975.
 
 use super::minimal_binary::{len_minimal_binary, MinimalBinaryRead, MinimalBinaryWrite};
 use crate::traits::*;
