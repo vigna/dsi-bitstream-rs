@@ -8,11 +8,12 @@
 #[cfg(feature = "mem_dbg")]
 use mem_dbg::{MemDbg, MemSize};
 
-use crate::prelude::dispatch::{CodeRead, CodeReadDispatch, CodeWrite, CodeWriteDispatch};
+use crate::codes::dispatch::{CodesRead, CodesWrite};
+use crate::prelude::dispatch::{GenericRead, GenericWrite, SpecificRead, SpecificWrite};
 use crate::prelude::Endianness;
 use crate::prelude::{
     bit_len_vbyte, len_delta, len_exp_golomb, len_gamma, len_golomb, len_omega, len_pi, len_rice,
-    len_zeta, Code, CodesRead, CodesWrite,
+    len_zeta, Codes,
 };
 use anyhow::Result;
 use core::fmt::Debug;
@@ -167,9 +168,9 @@ impl<
     }
 
     /// Return the best code for the stream and its space usage.
-    pub fn best_code(&self) -> (Code, u64) {
+    pub fn best_code(&self) -> (Codes, u64) {
         let mut best = self.unary;
-        let mut best_code = Code::Unary;
+        let mut best_code = Codes::Unary;
 
         macro_rules! check {
             ($code:expr, $len:expr) => {
@@ -180,30 +181,30 @@ impl<
             };
         }
 
-        check!(Code::Gamma, self.gamma);
-        check!(Code::Delta, self.delta);
-        check!(Code::Omega, self.omega);
-        check!(Code::VByte, self.vbyte);
+        check!(Codes::Gamma, self.gamma);
+        check!(Codes::Delta, self.delta);
+        check!(Codes::Omega, self.omega);
+        check!(Codes::VByte, self.vbyte);
 
         for (k, val) in self.zeta.iter().enumerate() {
-            check!(Code::Zeta { k: (k + 1) as _ }, *val);
+            check!(Codes::Zeta { k: (k + 1) as _ }, *val);
         }
         for (b, val) in self.golomb.iter().enumerate() {
-            check!(Code::Golomb { b: (b + 1) as _ }, *val);
+            check!(Codes::Golomb { b: (b + 1) as _ }, *val);
         }
         for (k, val) in self.exp_golomb.iter().enumerate() {
-            check!(Code::ExpGolomb { k: k as _ }, *val);
+            check!(Codes::ExpGolomb { k: k as _ }, *val);
         }
         for (log2_b, val) in self.rice.iter().enumerate() {
             check!(
-                Code::Rice {
+                Codes::Rice {
                     log2_b: log2_b as _
                 },
                 *val
             );
         }
         for (k, val) in self.pi.iter().enumerate() {
-            check!(Code::Pi { k: (k + 2) as _ }, *val);
+            check!(Codes::Pi { k: (k + 2) as _ }, *val);
         }
 
         (best_code, best)
@@ -308,33 +309,29 @@ impl<
 }
 
 impl<
-        W,
+        W: GenericRead,
         const ZETA: usize,
         const GOLOMB: usize,
         const EXP_GOLOMB: usize,
         const RICE: usize,
         const PI: usize,
-    > CodeRead for CodesStatsWrapper<W, ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
-where
-    W: CodeRead,
+    > GenericRead for CodesStatsWrapper<W, ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
 {
-    type Error<CRE>
-        = W::Error<CRE>
-    where
-        CRE: Debug + Send + Sync + 'static;
+    type Error<CRE: Debug + Send + Sync + 'static> = W::Error<CRE>;
+
     #[inline]
-    fn read<E: Endianness, CR: CodesRead<E> + ?Sized>(
+    fn generic_read<E: Endianness, CR: CodesRead<E> + ?Sized>(
         &self,
         reader: &mut CR,
     ) -> Result<u64, Self::Error<CR::Error>> {
-        let res = self.wrapped.read(reader)?;
+        let res = self.wrapped.generic_read(reader)?;
         self.stats.lock().unwrap().update(res);
         Ok(res)
     }
 }
 
 impl<
-        W,
+        W: SpecificRead<E, CR>,
         const ZETA: usize,
         const GOLOMB: usize,
         const EXP_GOLOMB: usize,
@@ -342,51 +339,43 @@ impl<
         const PI: usize,
         E: Endianness,
         CR: CodesRead<E> + ?Sized,
-    > CodeReadDispatch<E, CR> for CodesStatsWrapper<W, ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
-where
-    W: CodeReadDispatch<E, CR>,
+    > SpecificRead<E, CR> for CodesStatsWrapper<W, ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
 {
-    type Error<CRE>
-        = W::Error<CRE>
-    where
-        CRE: Debug + Send + Sync + 'static;
+    type Error<CRE: Debug + Send + Sync + 'static> = W::Error<CRE>;
+
     #[inline]
-    fn read_dispatch(&self, reader: &mut CR) -> Result<u64, Self::Error<CR::Error>> {
-        let res = self.wrapped.read_dispatch(reader)?;
+    fn specific_read(&self, reader: &mut CR) -> Result<u64, Self::Error<CR::Error>> {
+        let res = self.wrapped.specific_read(reader)?;
         self.stats.lock().unwrap().update(res);
         Ok(res)
     }
 }
 
 impl<
-        W,
+        W: GenericWrite,
         const ZETA: usize,
         const GOLOMB: usize,
         const EXP_GOLOMB: usize,
         const RICE: usize,
         const PI: usize,
-    > CodeWrite for CodesStatsWrapper<W, ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
-where
-    W: CodeWrite,
+    > GenericWrite for CodesStatsWrapper<W, ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
 {
-    type Error<CWE>
-        = W::Error<CWE>
-    where
-        CWE: Debug + Send + Sync + 'static;
+    type Error<CWE: Debug + Send + Sync + 'static> = W::Error<CWE>;
+
     #[inline]
-    fn write<E: Endianness, CW: CodesWrite<E> + ?Sized>(
+    fn generic_write<E: Endianness, CW: CodesWrite<E> + ?Sized>(
         &self,
         writer: &mut CW,
         value: u64,
     ) -> Result<usize, Self::Error<CW::Error>> {
-        let res = self.wrapped.write(writer, value)?;
+        let res = self.wrapped.generic_write(writer, value)?;
         self.stats.lock().unwrap().update(value);
         Ok(res)
     }
 }
 
 impl<
-        W,
+        W: SpecificWrite<E, CW>,
         const ZETA: usize,
         const GOLOMB: usize,
         const EXP_GOLOMB: usize,
@@ -394,17 +383,13 @@ impl<
         const PI: usize,
         E: Endianness,
         CW: CodesWrite<E> + ?Sized,
-    > CodeWriteDispatch<E, CW> for CodesStatsWrapper<W, ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
-where
-    W: CodeWriteDispatch<E, CW>,
+    > SpecificWrite<E, CW> for CodesStatsWrapper<W, ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
 {
-    type Error<CWE>
-        = W::Error<CWE>
-    where
-        CWE: Debug + Send + Sync + 'static;
+    type Error<CWE: Debug + Send + Sync + 'static> = W::Error<CWE>;
+
     #[inline]
-    fn write_dispatch(&self, writer: &mut CW, value: u64) -> Result<usize, Self::Error<CW::Error>> {
-        let res = self.wrapped.write_dispatch(writer, value)?;
+    fn specific_write(&self, writer: &mut CW, value: u64) -> Result<usize, Self::Error<CW::Error>> {
+        let res = self.wrapped.specific_write(writer, value)?;
         self.stats.lock().unwrap().update(value);
         Ok(res)
     }

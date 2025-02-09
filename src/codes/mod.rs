@@ -93,8 +93,8 @@ use crate::prelude::{BitRead, BitWrite};
 pub mod params;
 
 pub mod dispatch;
-pub use dispatch::{const_codes, Code, CodeReadDispatcher, CodeWriteDispatcher, ConstCode};
-pub use dispatch::{CodeLen, CodeRead, CodeReadDispatch, CodeWrite, CodeWriteDispatch};
+pub use dispatch::{code_consts, Codes, ConstCode, ReadFunc, WriteFunc};
+pub use dispatch::{CodeLen, GenericRead, GenericWrite, SpecificRead, SpecificWrite};
 
 pub mod gamma;
 pub use gamma::{
@@ -135,85 +135,3 @@ use crate::prelude::Endianness;
 pub mod delta_tables;
 pub mod gamma_tables;
 pub mod zeta_tables;
-
-/// Convenience trait for reading all the codes supported by the library.
-///
-/// This trait is mainly useful internally to implement [different types of
-/// code-based dispatch](crate::codes::code). The user might find more useful to
-/// define its own convenience trait that includes only the codes they need.
-pub trait CodesRead<E: Endianness>:
-    BitRead<E>
-    + GammaRead<E>
-    + GammaReadParam<E>
-    + DeltaRead<E>
-    + DeltaReadParam<E>
-    + ZetaRead<E>
-    + ZetaReadParam<E>
-    + OmegaRead<E>
-    + MinimalBinaryRead<E>
-    + PiRead<E>
-    + GolombRead<E>
-    + RiceRead<E>
-    + ExpGolombRead<E>
-    + VByteRead<E>
-{
-    fn read_code(&mut self, code: Code) -> Result<u64, Self::Error> {
-        code.read::<E, Self>(self)
-    }
-}
-
-impl<E: Endianness, B> CodesRead<E> for B where
-    B: BitRead<E>
-        + GammaRead<E>
-        + GammaReadParam<E>
-        + DeltaRead<E>
-        + DeltaReadParam<E>
-        + ZetaRead<E>
-        + ZetaReadParam<E>
-        + OmegaRead<E>
-        + MinimalBinaryRead<E>
-        + PiRead<E>
-        + GolombRead<E>
-        + RiceRead<E>
-        + ExpGolombRead<E>
-        + VByteRead<E>
-{
-}
-
-/// Convenience trait for writing all the codes supported by the library.
-///
-/// This trait is mainly useful internally to implement [different types of
-/// code-based dispatch](crate::codes::code). The user might find more useful to
-/// define its own convenience trait that includes only the codes they need.
-pub trait CodesWrite<E: Endianness>:
-    BitWrite<E>
-    + GammaWrite<E>
-    + DeltaWrite<E>
-    + ZetaWrite<E>
-    + OmegaWrite<E>
-    + MinimalBinaryWrite<E>
-    + PiWrite<E>
-    + GolombWrite<E>
-    + RiceWrite<E>
-    + ExpGolombWrite<E>
-    + VByteWrite<E>
-{
-    fn write_code(&mut self, code: Code, value: u64) -> Result<usize, Self::Error> {
-        code.write::<E, Self>(self, value)
-    }
-}
-
-impl<E: Endianness, B> CodesWrite<E> for B where
-    B: BitWrite<E>
-        + GammaWrite<E>
-        + DeltaWrite<E>
-        + ZetaWrite<E>
-        + OmegaWrite<E>
-        + MinimalBinaryWrite<E>
-        + PiWrite<E>
-        + GolombWrite<E>
-        + RiceWrite<E>
-        + ExpGolombWrite<E>
-        + VByteWrite<E>
-{
-}
