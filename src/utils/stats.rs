@@ -322,11 +322,11 @@ impl<
     type Error<CRE: Debug + Send + Sync + 'static> = W::Error<CRE>;
 
     #[inline]
-    fn generic_read<E: Endianness, CR: CodesRead<E> + ?Sized>(
+    fn read<E: Endianness, CR: CodesRead<E> + ?Sized>(
         &self,
         reader: &mut CR,
     ) -> Result<u64, Self::Error<CR::Error>> {
-        let res = self.wrapped.generic_read(reader)?;
+        let res = self.wrapped.read(reader)?;
         self.stats.lock().unwrap().update(res);
         Ok(res)
     }
@@ -346,8 +346,8 @@ impl<
     type Error<CRE: Debug + Send + Sync + 'static> = W::Error<CRE>;
 
     #[inline]
-    fn specific_read(&self, reader: &mut CR) -> Result<u64, Self::Error<CR::Error>> {
-        let res = self.wrapped.specific_read(reader)?;
+    fn read(&self, reader: &mut CR) -> Result<u64, Self::Error<CR::Error>> {
+        let res = self.wrapped.read(reader)?;
         self.stats.lock().unwrap().update(res);
         Ok(res)
     }
@@ -365,12 +365,12 @@ impl<
     type Error<CWE: Debug + Send + Sync + 'static> = W::Error<CWE>;
 
     #[inline]
-    fn generic_write<E: Endianness, CW: CodesWrite<E> + ?Sized>(
+    fn write<E: Endianness, CW: CodesWrite<E> + ?Sized>(
         &self,
         writer: &mut CW,
         value: u64,
     ) -> Result<usize, Self::Error<CW::Error>> {
-        let res = self.wrapped.generic_write(writer, value)?;
+        let res = self.wrapped.write(writer, value)?;
         self.stats.lock().unwrap().update(value);
         Ok(res)
     }
@@ -390,8 +390,8 @@ impl<
     type Error<CWE: Debug + Send + Sync + 'static> = W::Error<CWE>;
 
     #[inline]
-    fn specific_write(&self, writer: &mut CW, value: u64) -> Result<usize, Self::Error<CW::Error>> {
-        let res = self.wrapped.specific_write(writer, value)?;
+    fn write(&self, writer: &mut CW, value: u64) -> Result<usize, Self::Error<CW::Error>> {
+        let res = self.wrapped.write(writer, value)?;
         self.stats.lock().unwrap().update(value);
         Ok(res)
     }

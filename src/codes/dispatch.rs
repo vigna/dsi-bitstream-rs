@@ -44,7 +44,7 @@
 //!     reader: &mut R,
 //!     code: GR,
 //! ) -> Result<u64, GR::Error<R::Error>> {
-//!     Ok(code.generic_read(reader)? + code.generic_read(reader)?)
+//!     Ok(code.read(reader)? + code.read(reader)?)
 //! }
 //!```
 //! On the other hand, the traits [`SpecificCodeRead`] and [`SpecificCodeWrite`]
@@ -64,7 +64,7 @@
 //!     reader: &mut R,
 //!     code: SR,
 //! ) -> Result<u64, SR::Error<R::Error>> {
-//!     Ok(code.specific_read(reader)? + code.specific_read(reader)?)
+//!     Ok(code.read(reader)? + code.read(reader)?)
 //! }
 //!```
 //!
@@ -100,7 +100,7 @@
 //!     reader: &mut R,
 //!     code: GR,
 //! ) -> Result<u64, GR::Error<R::Error>> {
-//!     Ok(code.generic_read(reader)? + code.generic_read(reader)?)
+//!     Ok(code.read(reader)? + code.read(reader)?)
 //! }
 //!
 //! fn call_read_two_codes_and_sum<E: Endianness, R: CodesRead<E> + ?Sized>(
@@ -136,7 +136,7 @@
 //!     reader: &mut R,
 //!     code: SR,
 //! ) -> Result<u64, SR::Error<R::Error>> {
-//!     Ok(code.specific_read(reader)? + code.specific_read(reader)?)
+//!     Ok(code.read(reader)? + code.read(reader)?)
 //! }
 //!
 //! fn call_read_two_codes_and_sum<E: Endianness, R: CodesRead<E> + ?Sized>(
@@ -168,7 +168,7 @@
 //! impl<const LOG2_B: usize> GenericCodeRead for Rice<LOG2_B> {
 //!     type Error<CRE:  Debug + Send + Sync + 'static> = CRE;
 //!
-//!     fn generic_read<E: Endianness, CR: CodesRead<E> + ?Sized>(
+//!     fn read<E: Endianness, CR: CodesRead<E> + ?Sized>(
 //!         &self,
 //!         reader: &mut CR,
 //!     ) -> Result<u64, Self::Error<CR::Error>> {
@@ -179,7 +179,7 @@
 //! impl<const LOG2_B: usize> GenericCodeWrite for Rice<LOG2_B> {
 //!     type Error<CWE:  Debug + Send + Sync + 'static> = CWE;
 //!
-//!     fn generic_write<E: Endianness, CW: CodesWrite<E> + ?Sized>(
+//!     fn write<E: Endianness, CW: CodesWrite<E> + ?Sized>(
 //!         &self,
 //!         writer: &mut CW,
 //!         value: u64,
@@ -212,7 +212,7 @@
 //!     reader: &mut R,
 //!     code: SR,
 //! ) -> Result<u64, SR::Error<R::Error>> {
-//!     Ok(code.specific_read(reader)? + code.specific_read(reader)?)
+//!     Ok(code.read(reader)? + code.read(reader)?)
 //! }
 //!
 //! fn call_read_two_codes_and_sum<E: Endianness, R: CodesRead<E> + ?Sized>(
@@ -250,6 +250,42 @@ pub enum Codes {
     Rice { log2_b: usize },
 }
 
+impl Codes {
+    /// Delegate to the [`GenericCodeRead`] implementation.
+    ///
+    /// This inherent method is provided to reduce ambiguity in method
+    /// resolution.
+    #[inline(always)]
+    pub fn read<E: Endianness, CR: CodesRead<E> + ?Sized>(
+        &self,
+        reader: &mut CR,
+    ) -> Result<u64, <Self as GenericCodeRead>::Error<CR::Error>> {
+        GenericCodeRead::read(self, reader)
+    }
+
+    /// Delegate to the [`GenericCodeWrite`] implementation.
+    ///
+    /// This inherent method is provided to reduce ambiguity in method
+    /// resolution.
+    #[inline(always)]
+    pub fn write<E: Endianness, CW: CodesWrite<E> + ?Sized>(
+        &self,
+        writer: &mut CW,
+        value: u64,
+    ) -> Result<usize, <Self as GenericCodeWrite>::Error<CW::Error>> {
+        GenericCodeWrite::write(self, writer, value)
+    }
+
+    /// Delegate to the [`CodeLen`] implementation.
+    ///
+    /// This inherent method is provided to reduce ambiguity in method
+    /// resolution.
+    #[inline(always)]
+    pub fn len(&self, value: u64) -> usize {
+        CodeLen::len(self, value)
+    }
+}
+
 /// A trait providing a method to read a code from a generic [`CodesRead`].
 ///
 /// The difference with [`SpecificCodeRead`] is that this trait is more generic,
@@ -257,8 +293,7 @@ pub enum Codes {
 pub trait GenericCodeRead {
     type Error<CRE: Debug + Send + Sync + 'static>: Debug + Send + Sync + 'static;
 
-    /// Read a value
-    fn generic_read<E: Endianness, CR: CodesRead<E> + ?Sized>(
+    fn read<E: Endianness, CR: CodesRead<E> + ?Sized>(
         &self,
         reader: &mut CR,
     ) -> Result<u64, Self::Error<CR::Error>>;
@@ -275,7 +310,7 @@ pub trait GenericCodeRead {
 pub trait SpecificCodeRead<E: Endianness, CR: CodesRead<E> + ?Sized> {
     type Error<CRE: Debug + Send + Sync + 'static>: Debug + Send + Sync + 'static;
 
-    fn specific_read(&self, reader: &mut CR) -> Result<u64, Self::Error<CR::Error>>;
+    fn read(&self, reader: &mut CR) -> Result<u64, Self::Error<CR::Error>>;
 }
 
 /// A trait providing a method to write a code to a generic [`CodesWrite`].
@@ -285,7 +320,7 @@ pub trait SpecificCodeRead<E: Endianness, CR: CodesRead<E> + ?Sized> {
 pub trait GenericCodeWrite {
     type Error<CWE: Debug + Send + Sync + 'static>: Debug + Send + Sync + 'static;
 
-    fn generic_write<E: Endianness, CW: CodesWrite<E> + ?Sized>(
+    fn write<E: Endianness, CW: CodesWrite<E> + ?Sized>(
         &self,
         writer: &mut CW,
         value: u64,
@@ -303,7 +338,7 @@ pub trait GenericCodeWrite {
 pub trait SpecificCodeWrite<E: Endianness, CW: CodesWrite<E> + ?Sized> {
     type Error<CWE: Debug + Send + Sync + 'static>: Debug + Send + Sync + 'static;
 
-    fn specific_write(&self, writer: &mut CW, value: u64) -> Result<usize, Self::Error<CW::Error>>;
+    fn write(&self, writer: &mut CW, value: u64) -> Result<usize, Self::Error<CW::Error>>;
 }
 
 /// A trait providing a generic method to compute the length of a codeword.
@@ -424,7 +459,7 @@ impl GenericCodeRead for Codes {
     type Error<CRE: Debug + Send + Sync + 'static> = CRE;
 
     #[inline]
-    fn generic_read<E: Endianness, CR: CodesRead<E> + ?Sized>(
+    fn read<E: Endianness, CR: CodesRead<E> + ?Sized>(
         &self,
         reader: &mut CR,
     ) -> Result<u64, Self::Error<CR::Error>> {
@@ -448,8 +483,8 @@ impl<E: Endianness, CR: CodesRead<E> + ?Sized> SpecificCodeRead<E, CR> for Codes
     type Error<CRE: Debug + Send + Sync + 'static> = CRE;
 
     #[inline(always)]
-    fn specific_read(&self, reader: &mut CR) -> Result<u64, Self::Error<CR::Error>> {
-        <Self as GenericCodeRead>::generic_read(self, reader)
+    fn read(&self, reader: &mut CR) -> Result<u64, Self::Error<CR::Error>> {
+        <Self as GenericCodeRead>::read(self, reader)
     }
 }
 
@@ -457,7 +492,7 @@ impl GenericCodeWrite for Codes {
     type Error<CWE: Debug + Send + Sync + 'static> = CWE;
 
     #[inline]
-    fn generic_write<E: Endianness, CW: CodesWrite<E> + ?Sized>(
+    fn write<E: Endianness, CW: CodesWrite<E> + ?Sized>(
         &self,
         writer: &mut CW,
         value: u64,
@@ -482,8 +517,8 @@ impl<E: Endianness, CW: CodesWrite<E> + ?Sized> SpecificCodeWrite<E, CW> for Cod
     type Error<CWE: Debug + Send + Sync + 'static> = CWE;
 
     #[inline(always)]
-    fn specific_write(&self, writer: &mut CW, value: u64) -> Result<usize, Self::Error<CW::Error>> {
-        <Self as GenericCodeWrite>::generic_write(self, writer, value)
+    fn write(&self, writer: &mut CW, value: u64) -> Result<usize, Self::Error<CW::Error>> {
+        <Self as GenericCodeWrite>::write(self, writer, value)
     }
 }
 
@@ -703,7 +738,7 @@ impl<E: Endianness, CR: CodesRead<E> + ?Sized> SpecificCodeRead<E, CR> for FuncR
     type Error<CRE: Debug + Send + Sync + 'static> = CRE;
 
     #[inline(always)]
-    fn specific_read(&self, reader: &mut CR) -> Result<u64, Self::Error<CR::Error>> {
+    fn read(&self, reader: &mut CR) -> Result<u64, Self::Error<CR::Error>> {
         (self.0)(reader).map_err(Into::into)
     }
 }
@@ -866,7 +901,7 @@ impl<E: Endianness, CW: CodesWrite<E> + ?Sized> SpecificCodeWrite<E, CW> for Fun
     type Error<CWE: Debug + Send + Sync + 'static> = CWE;
 
     #[inline(always)]
-    fn specific_write(&self, writer: &mut CW, value: u64) -> Result<usize, Self::Error<CW::Error>> {
+    fn write(&self, writer: &mut CW, value: u64) -> Result<usize, Self::Error<CW::Error>> {
         (self.0)(writer, value).map_err(Into::into)
     }
 }
@@ -887,6 +922,42 @@ impl<E: Endianness, CW: CodesWrite<E> + ?Sized> SpecificCodeWrite<E, CW> for Fun
 ///
 /// See the [module documentation](crate::codes::dispatch) for more information.
 pub struct ConstCode<const CODE: usize>;
+
+impl<const CODE: usize> ConstCode<CODE> {
+    /// Delegate the read method to the [`GenericCodeRead`] implementation.
+    ///
+    /// This inherent method is provided to reduce ambiguity in method
+    /// resolution.
+    #[inline(always)]
+    pub fn read<E: Endianness, CR: CodesRead<E> + ?Sized>(
+        &self,
+        reader: &mut CR,
+    ) -> Result<u64, <Self as GenericCodeRead>::Error<CR::Error>> {
+        GenericCodeRead::read(self, reader)
+    }
+
+    /// Delegate to the [`GenericCodeWrite`] implementation.
+    ///
+    /// This inherent method is provided to reduce ambiguity in method
+    /// resolution.
+    #[inline(always)]
+    pub fn write<E: Endianness, CW: CodesWrite<E> + ?Sized>(
+        &self,
+        writer: &mut CW,
+        value: u64,
+    ) -> Result<usize, <Self as GenericCodeWrite>::Error<CW::Error>> {
+        GenericCodeWrite::write(self, writer, value)
+    }
+
+    /// Delegate to the [`CodeLen`] implementation.
+    ///
+    /// This inherent method is provided to reduce ambiguity in method
+    /// resolution.
+    #[inline(always)]
+    pub fn len(&self, value: u64) -> usize {
+        CodeLen::len(self, value)
+    }
+}
 
 /// The constants to use as generic parameter for the [`ConstCode`] struct.
 pub mod code_consts {
@@ -953,7 +1024,7 @@ pub mod code_consts {
 impl<const CODE: usize> GenericCodeRead for ConstCode<CODE> {
     type Error<CRE: Debug + Send + Sync + 'static> = CRE;
 
-    fn generic_read<E: Endianness, CR: CodesRead<E> + ?Sized>(
+    fn read<E: Endianness, CR: CodesRead<E> + ?Sized>(
         &self,
         reader: &mut CR,
     ) -> Result<u64, Self::Error<CR::Error>> {
@@ -1018,15 +1089,15 @@ impl<E: Endianness, CR: CodesRead<E> + ?Sized, const CODE: usize> SpecificCodeRe
     type Error<CRE: Debug + Send + Sync + 'static> = CRE;
 
     #[inline(always)]
-    fn specific_read(&self, reader: &mut CR) -> Result<u64, Self::Error<CR::Error>> {
-        <Self as GenericCodeRead>::generic_read(self, reader)
+    fn read(&self, reader: &mut CR) -> Result<u64, Self::Error<CR::Error>> {
+        <Self as GenericCodeRead>::read(self, reader)
     }
 }
 
 impl<const CODE: usize> GenericCodeWrite for ConstCode<CODE> {
     type Error<CWE: Debug + Send + Sync + 'static> = CWE;
 
-    fn generic_write<E: Endianness, CW: CodesWrite<E> + ?Sized>(
+    fn write<E: Endianness, CW: CodesWrite<E> + ?Sized>(
         &self,
         writer: &mut CW,
         value: u64,
@@ -1092,8 +1163,8 @@ impl<E: Endianness, CW: CodesWrite<E> + ?Sized, const CODE: usize> SpecificCodeW
     type Error<CWE: Debug + Send + Sync + 'static> = CWE;
 
     #[inline(always)]
-    fn specific_write(&self, writer: &mut CW, value: u64) -> Result<usize, Self::Error<CW::Error>> {
-        <Self as GenericCodeWrite>::generic_write(self, writer, value)
+    fn write(&self, writer: &mut CW, value: u64) -> Result<usize, Self::Error<CW::Error>> {
+        <Self as GenericCodeWrite>::write(self, writer, value)
     }
 }
 
