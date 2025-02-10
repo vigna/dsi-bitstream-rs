@@ -225,9 +225,8 @@
 use super::*;
 use anyhow::Result;
 use core::fmt::Debug;
-use core::marker::PhantomData;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
 #[non_exhaustive]
 /// An enum whose variants represent all the available codes.
@@ -559,7 +558,7 @@ impl std::str::FromStr for Codes {
 
 type ReadFn<E, CR> = fn(&mut CR) -> Result<u64, <CR as BitRead<E>>::Error>;
 
-/// A structure containing a function pointer dispatching the read method for a
+/// A newtype containing a function pointer dispatching the read method for a
 /// code.
 ///
 /// This is a more efficient way to pass a [`SpecificCodeRead`] to a method, as
@@ -571,9 +570,7 @@ type ReadFn<E, CR> = fn(&mut CR) -> Result<u64, <CR as BitRead<E>>::Error>;
 /// [`new_with_func`](FuncReader::new_with_func) method with a function pointer.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
-pub struct FuncReader<E: Endianness, CR: CodesRead<E> + ?Sized> {
-    read_func: ReadFn<E, CR>,
-}
+pub struct FuncReader<E: Endianness, CR: CodesRead<E> + ?Sized>(ReadFn<E, CR>);
 
 impl<E: Endianness, CR: CodesRead<E> + ?Sized> FuncReader<E, CR> {
     const UNARY: ReadFn<E, CR> = |reader: &mut CR| reader.read_unary();
@@ -696,12 +693,12 @@ impl<E: Endianness, CR: CodesRead<E> + ?Sized> FuncReader<E, CR> {
             Codes::ExpGolomb { k: 10 } => Self::EXP_GOLOMB10,
             _ => anyhow::bail!("Unsupported read dispatch for code {:?}", code),
         };
-        Ok(Self { read_func })
+        Ok(Self(read_func))
     }
 
     /// Return a new [`FuncReader`] for the given function.
     pub fn new_with_func(read_func: ReadFn<E, CR>) -> Self {
-        Self { read_func }
+        Self(read_func)
     }
 }
 
@@ -710,13 +707,13 @@ impl<E: Endianness, CR: CodesRead<E> + ?Sized> SpecificCodeRead<E, CR> for FuncR
 
     #[inline(always)]
     fn specific_read(&self, reader: &mut CR) -> Result<u64, Self::Error<CR::Error>> {
-        (self.read_func)(reader).map_err(Into::into)
+        (self.0)(reader).map_err(Into::into)
     }
 }
 
 type WriteFn<E, CW> = fn(&mut CW, u64) -> Result<usize, <CW as BitWrite<E>>::Error>;
 
-/// A structure containing a function pointer dispatching the write method for a
+/// A newtype containing a function pointer dispatching the write method for a
 /// code.
 ///
 /// This is a more efficient way to pass a [`SpecificCodeWrite`] to a method, as a
@@ -728,9 +725,7 @@ type WriteFn<E, CW> = fn(&mut CW, u64) -> Result<usize, <CW as BitWrite<E>>::Err
 /// [`new_with_func`](FuncWriter::new_with_func) method with a function pointer.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
-pub struct FuncWriter<E: Endianness, CW: CodesWrite<E> + ?Sized> {
-    write_func: WriteFn<E, CW>,
-}
+pub struct FuncWriter<E: Endianness, CW: CodesWrite<E> + ?Sized>(WriteFn<E, CW>);
 
 impl<E: Endianness, CW: CodesWrite<E> + ?Sized> FuncWriter<E, CW> {
     const UNARY: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_unary(value);
@@ -803,7 +798,7 @@ impl<E: Endianness, CW: CodesWrite<E> + ?Sized> FuncWriter<E, CW> {
     /// The method will return an error if there is no constant
     /// for the given code in [`FuncWriter`].
     pub fn new(code: Codes) -> anyhow::Result<Self> {
-        let write = match code {
+        let write_func = match code {
             Codes::Unary => Self::UNARY,
             Codes::Gamma => Self::GAMMA,
             Codes::Delta => Self::DELTA,
@@ -864,12 +859,12 @@ impl<E: Endianness, CW: CodesWrite<E> + ?Sized> FuncWriter<E, CW> {
             Codes::ExpGolomb { k: 10 } => Self::EXP_GOLOMB10,
             _ => anyhow::bail!("Unsupported write dispatch for code {:?}", code),
         };
-        Ok(Self { write_func: write })
+        Ok(Self(write_func))
     }
 
     /// Return a new [`FuncWriter`] for the given function.
     pub fn new_with_func(write_func: WriteFn<E, CW>) -> Self {
-        Self { write_func }
+        Self(write_func)
     }
 }
 
@@ -878,7 +873,7 @@ impl<E: Endianness, CW: CodesWrite<E> + ?Sized> SpecificCodeWrite<E, CW> for Fun
 
     #[inline(always)]
     fn specific_write(&self, writer: &mut CW, value: u64) -> Result<usize, Self::Error<CW::Error>> {
-        (self.write_func)(writer, value).map_err(Into::into)
+        (self.0)(writer, value).map_err(Into::into)
     }
 }
 
