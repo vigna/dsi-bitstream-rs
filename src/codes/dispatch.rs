@@ -112,11 +112,11 @@
 //!
 //! Working with [`ConstCode`] is very efficient, but it forces the choice of a
 //! code at compile time. If you need to read or write a code multiple times on
-//! the same type of bitstream, you can use the structs [`FuncReader`] and
-//! [`FuncWriter`], which implement [`SpecificCodeRead`] and
+//! the same type of bitstream, you can use the structs [`FuncCodeReader`] and
+//! [`FuncCodeWriter`], which implement [`SpecificCodeRead`] and
 //! [`SpecificCodeWrite`] by storing a function pointer.
 //!
-//! A value of type [`FuncReader`] or [`FuncWriter`] can be created by calling
+//! A value of type [`FuncCodeReader`] or [`FuncCodeWriter`] can be created by calling
 //! their `new` method with a variant of the [`Codes`] enum. As in the case of
 //! [`ConstCode`], there are pointers for all parameterless codes, and for the
 //! codes with parameters up to 10, and the method will return an error if the
@@ -125,7 +125,7 @@
 //! For example:
 //!```rust
 //! use dsi_bitstream::prelude::*;
-//! use dsi_bitstream::codes::dispatch::{CodesRead, SpecificCodeRead, FuncReader};
+//! use dsi_bitstream::codes::dispatch::{CodesRead, SpecificCodeRead, FuncCodeReader};
 //! use std::fmt::Debug;
 //!
 //! fn read_two_codes_and_sum<
@@ -142,16 +142,16 @@
 //! fn call_read_two_codes_and_sum<E: Endianness, R: CodesRead<E> + ?Sized>(
 //!     reader: &mut R,
 //! ) -> Result<u64, R::Error> {
-//!     read_two_codes_and_sum(reader, FuncReader::new(Codes::Gamma).unwrap())
+//!     read_two_codes_and_sum(reader, FuncCodeReader::new(Codes::Gamma).unwrap())
 //! }
 //!```
 //! Note that we [`unwrap`](core::result::Result::unwrap) the result of the
-//! [`new`](FuncReader::new) method, as we know that a function pointer exists
+//! [`new`](FuncCodeReader::new) method, as we know that a function pointer exists
 //! for the γ code.
 //!
 //! # Workaround to Limitations
 //!
-//! Both [`ConstCode`] and [`FuncReader`] / [`FuncWriter`] are limited to a
+//! Both [`ConstCode`] and [`FuncCodeReader`] / [`FuncCodeWriter`] are limited to a
 //! fixed set of codes. If you need to work with a code that is not supported by
 //! them, you can implement your own version. For example, here we define a
 //! zero-sized struct that represent a Rice code with a fixed parameter
@@ -197,11 +197,11 @@
 //! ```
 //!
 //! Suppose instead you need to pass a [`SpecificCodeRead`] to a method using a
-//! code that is not supported directly by [`FuncReader`]. You can create a new
-//! [`FuncReader`] using a provided function:
+//! code that is not supported directly by [`FuncCodeReader`]. You can create a new
+//! [`FuncCodeReader`] using a provided function:
 //!```rust
 //! use dsi_bitstream::prelude::*;
-//! use dsi_bitstream::codes::dispatch::{CodesRead, SpecificCodeRead, FuncReader};
+//! use dsi_bitstream::codes::dispatch::{CodesRead, SpecificCodeRead, FuncCodeReader};
 //! use std::fmt::Debug;
 //!
 //! fn read_two_codes_and_sum<
@@ -218,7 +218,7 @@
 //! fn call_read_two_codes_and_sum<E: Endianness, R: CodesRead<E> + ?Sized>(
 //!     reader: &mut R,
 //! ) -> Result<u64, R::Error> {
-//!     read_two_codes_and_sum(reader, FuncReader::new_with_func(|r: &mut R| r.read_rice(20)))
+//!     read_two_codes_and_sum(reader, FuncCodeReader::new_with_func(|r: &mut R| r.read_rice(20)))
 //! }
 //!```
 
@@ -588,17 +588,17 @@ type ReadFn<E, CR> = fn(&mut CR) -> Result<u64, <CR as BitRead<E>>::Error>;
 /// code.
 ///
 /// This is a more efficient way to pass a [`SpecificCodeRead`] to a method, as
-/// a [`FuncReader`] does not need to do a runtime test to dispatch the correct
+/// a [`FuncCodeReader`] does not need to do a runtime test to dispatch the correct
 /// code.
 ///
-/// Instances can be obtained by calling the [`new`](FuncReader::new) method with
+/// Instances can be obtained by calling the [`new`](FuncCodeReader::new) method with
 ///  method with a variant of the [`Codes`] enum, or by calling the
-/// [`new_with_func`](FuncReader::new_with_func) method with a function pointer.
+/// [`new_with_func`](FuncCodeReader::new_with_func) method with a function pointer.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
-pub struct FuncReader<E: Endianness, CR: CodesRead<E> + ?Sized>(ReadFn<E, CR>);
+pub struct FuncCodeReader<E: Endianness, CR: CodesRead<E> + ?Sized>(ReadFn<E, CR>);
 
-impl<E: Endianness, CR: CodesRead<E> + ?Sized> FuncReader<E, CR> {
+impl<E: Endianness, CR: CodesRead<E> + ?Sized> FuncCodeReader<E, CR> {
     const UNARY: ReadFn<E, CR> = |reader: &mut CR| reader.read_unary();
     const GAMMA: ReadFn<E, CR> = |reader: &mut CR| reader.read_gamma();
     const DELTA: ReadFn<E, CR> = |reader: &mut CR| reader.read_delta();
@@ -648,12 +648,12 @@ impl<E: Endianness, CR: CodesRead<E> + ?Sized> FuncReader<E, CR> {
     const EXP_GOLOMB8: ReadFn<E, CR> = |reader: &mut CR| reader.read_exp_golomb(8);
     const EXP_GOLOMB9: ReadFn<E, CR> = |reader: &mut CR| reader.read_exp_golomb(9);
     const EXP_GOLOMB10: ReadFn<E, CR> = |reader: &mut CR| reader.read_exp_golomb(10);
-    /// Return a new [`FuncReader`] for the given code.
+    /// Return a new [`FuncCodeReader`] for the given code.
     ///
     /// # Errors
     ///
     /// The method will return an error if there is no constant
-    /// for the given code in [`FuncReader`].
+    /// for the given code in [`FuncCodeReader`].
     pub fn new(code: Codes) -> anyhow::Result<Self> {
         let read_func = match code {
             Codes::Unary => Self::UNARY,
@@ -719,13 +719,13 @@ impl<E: Endianness, CR: CodesRead<E> + ?Sized> FuncReader<E, CR> {
         Ok(Self(read_func))
     }
 
-    /// Return a new [`FuncReader`] for the given function.
+    /// Return a new [`FuncCodeReader`] for the given function.
     pub fn new_with_func(read_func: ReadFn<E, CR>) -> Self {
         Self(read_func)
     }
 }
 
-impl<E: Endianness, CR: CodesRead<E> + ?Sized> SpecificCodeRead<E, CR> for FuncReader<E, CR> {
+impl<E: Endianness, CR: CodesRead<E> + ?Sized> SpecificCodeRead<E, CR> for FuncCodeReader<E, CR> {
     type Error<CRE: Debug + Send + Sync + 'static> = CRE;
 
     #[inline(always)]
@@ -740,17 +740,17 @@ type WriteFn<E, CW> = fn(&mut CW, u64) -> Result<usize, <CW as BitWrite<E>>::Err
 /// code.
 ///
 /// This is a more efficient way to pass a [`SpecificCodeWrite`] to a method, as a
-/// [`FuncWriter`] does not need to do a runtime test to dispatch the correct
+/// [`FuncCodeWriter`] does not need to do a runtime test to dispatch the correct
 /// code.
 ///
-/// Instances can be obtained by calling the [`new`](FuncWriter::new) method with
+/// Instances can be obtained by calling the [`new`](FuncCodeWriter::new) method with
 ///  method with a variant of the [`Codes`] enum, or by calling the
-/// [`new_with_func`](FuncWriter::new_with_func) method with a function pointer.
+/// [`new_with_func`](FuncCodeWriter::new_with_func) method with a function pointer.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
-pub struct FuncWriter<E: Endianness, CW: CodesWrite<E> + ?Sized>(WriteFn<E, CW>);
+pub struct FuncCodeWriter<E: Endianness, CW: CodesWrite<E> + ?Sized>(WriteFn<E, CW>);
 
-impl<E: Endianness, CW: CodesWrite<E> + ?Sized> FuncWriter<E, CW> {
+impl<E: Endianness, CW: CodesWrite<E> + ?Sized> FuncCodeWriter<E, CW> {
     const UNARY: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_unary(value);
     const GAMMA: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_gamma(value);
     const DELTA: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_delta(value);
@@ -811,12 +811,12 @@ impl<E: Endianness, CW: CodesWrite<E> + ?Sized> FuncWriter<E, CW> {
     const EXP_GOLOMB10: WriteFn<E, CW> =
         |writer: &mut CW, value: u64| writer.write_exp_golomb(value, 10);
 
-    /// Return a new [`FuncWriter`] for the given code.
+    /// Return a new [`FuncCodeWriter`] for the given code.
     ///
     /// # Errors
     ///
     /// The method will return an error if there is no constant
-    /// for the given code in [`FuncWriter`].
+    /// for the given code in [`FuncCodeWriter`].
     pub fn new(code: Codes) -> anyhow::Result<Self> {
         let write_func = match code {
             Codes::Unary => Self::UNARY,
@@ -882,13 +882,13 @@ impl<E: Endianness, CW: CodesWrite<E> + ?Sized> FuncWriter<E, CW> {
         Ok(Self(write_func))
     }
 
-    /// Return a new [`FuncWriter`] for the given function.
+    /// Return a new [`FuncCodeWriter`] for the given function.
     pub fn new_with_func(write_func: WriteFn<E, CW>) -> Self {
         Self(write_func)
     }
 }
 
-impl<E: Endianness, CW: CodesWrite<E> + ?Sized> SpecificCodeWrite<E, CW> for FuncWriter<E, CW> {
+impl<E: Endianness, CW: CodesWrite<E> + ?Sized> SpecificCodeWrite<E, CW> for FuncCodeWriter<E, CW> {
     type Error<CWE: Debug + Send + Sync + 'static> = CWE;
 
     #[inline(always)]
