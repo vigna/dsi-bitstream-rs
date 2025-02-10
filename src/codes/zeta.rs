@@ -17,7 +17,9 @@
 //! 1/*k*</sup>.
 //!
 //! Note that ζ₁ = [π₀](crate::codes::pi) = [γ](crate::codes::gamma) and ζ₂ =
-//! [π₁](crate::codes::pi).
+//! [π₁](crate::codes::pi). However, due to [subtle problems with
+//! endianness](crate::codes), in the little-endian case ζ₂ and π₁ have the same
+//! codeword lengths but slightly permuted bits.
 //!
 //! This module provides a generic implementation of ζ codes, and a specialized
 //! implementation for ζ₃ that may use tables.

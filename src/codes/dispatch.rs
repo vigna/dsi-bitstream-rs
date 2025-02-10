@@ -900,16 +900,14 @@ impl<E: Endianness, CW: CodesWrite<E> + ?Sized> SpecificCodeWrite<E, CW> for Fun
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
 /// A zero-sized struct with a const generic parameter representing a code using
-/// the values exported by the
-/// [`code_consts`](crate::codes::dispatch::code_consts) module.
+/// the values exported by the [`code_consts`] module.
 ///
 /// Methods for all traits are implemented for this struct using a match on the
 /// value of the const type parameter. Since the parameter is a constant, the
 /// match is resolved at compile time, so there will be no runtime overhead.
 ///
-/// If the value is not among those defined in the
-/// [`code_consts`](crate::codes::dispatch::code_consts) module, the methods
-/// will panic.
+/// If the value is not among those defined in the [`code_consts`] module, the
+/// methods will panic.
 ///
 /// See the [module documentation](crate::codes::dispatch) for more information.
 pub struct ConstCode<const CODE: usize>;

@@ -16,7 +16,9 @@
 //! 1/*x*<sup>1 + 1/2*ᵏ*</sup>.
 //!
 //! Note that π₀ = [ζ₁](super::zeta) = [γ](super::gamma) and π₁ =
-//! [ζ₂](super::zeta).
+//! [ζ₂](super::zeta). However, due to [subtle problems with
+//! endianness](crate::codes), in the little-endian case π₁ and ζ₂ have the same
+//! codeword lengths but slightly permuted bits.
 //!
 //! In the original paper the definition of the code is very convoluted, as the
 //! authors appear to have missed the connection with [Rice codes](super::rice).
@@ -181,6 +183,51 @@ mod test {
                 code_len,
                 len_pi(value, k),
             );
+        }
+    }
+
+    #[test]
+    fn test_against_zeta() {
+        // BE: π₀ = ζ₁ and π₁ = ζ₂
+        for k in 0..2 {
+            for value in 0..100 {
+                let mut data_pi = vec![0_u64];
+                let mut data_zeta = vec![0_u64];
+
+                let mut writer = <BufBitWriter<BE, _>>::new(MemWordWriterVec::new(&mut data_pi));
+                let code_len = writer.write_pi(value, k).unwrap();
+                assert_eq!(code_len, len_pi(value, k));
+                drop(writer);
+
+                let mut writer = <BufBitWriter<BE, _>>::new(MemWordWriterVec::new(&mut data_zeta));
+                let code_len = writer.write_zeta(value, 1 << k).unwrap();
+                assert_eq!(code_len, len_zeta(value, 1 << k));
+                drop(writer);
+
+                assert_eq!(data_pi[0], data_zeta[0]);
+            }
+        }
+
+        // LE: π₀ = ζ₁; π₁ and ζ₂ have the same lengths but permuted bits
+        for value in 0..100 {
+            let mut data_pi = vec![0_u64];
+            let mut data_zeta = vec![0_u64];
+
+            let mut writer = <BufBitWriter<LE, _>>::new(MemWordWriterVec::new(&mut data_pi));
+            let code_len = writer.write_pi(value, 0).unwrap();
+            assert_eq!(code_len, len_pi(value, 0));
+            drop(writer);
+
+            let mut writer = <BufBitWriter<LE, _>>::new(MemWordWriterVec::new(&mut data_zeta));
+            let code_len = writer.write_zeta(value, 1).unwrap();
+            assert_eq!(code_len, len_zeta(value, 1));
+            drop(writer);
+
+            assert_eq!(data_pi[0], data_zeta[0]);
+        }
+
+        for value in 0..100 {
+            assert_eq!(len_pi(value, 1), len_zeta(value, 2));
         }
     }
 }
