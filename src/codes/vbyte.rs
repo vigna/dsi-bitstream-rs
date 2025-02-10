@@ -15,7 +15,7 @@
 //! and so on.
 //!
 //! There are several variants of their definition, but their implied
-//! distribution is always ≈ 1/*x*^(8/7).
+//! distribution is always ≈ 1/*x*<sup>8/7</sup>
 //!
 //! # Definition
 //!

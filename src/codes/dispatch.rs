@@ -223,6 +223,7 @@
 //!```
 
 use super::*;
+use anyhow::Result;
 use core::fmt::Debug;
 use core::marker::PhantomData;
 
@@ -572,7 +573,6 @@ type ReadFn<E, CR> = fn(&mut CR) -> Result<u64, <CR as BitRead<E>>::Error>;
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
 pub struct FuncReader<E: Endianness, CR: CodesRead<E> + ?Sized> {
     read_func: ReadFn<E, CR>,
-    _marker: PhantomData<E>,
 }
 
 impl<E: Endianness, CR: CodesRead<E> + ?Sized> FuncReader<E, CR> {
@@ -590,6 +590,16 @@ impl<E: Endianness, CR: CodesRead<E> + ?Sized> FuncReader<E, CR> {
     const ZETA8: ReadFn<E, CR> = |reader: &mut CR| reader.read_zeta(8);
     const ZETA9: ReadFn<E, CR> = |reader: &mut CR| reader.read_zeta(9);
     const ZETA10: ReadFn<E, CR> = |reader: &mut CR| reader.read_zeta(10);
+    const RICE1: ReadFn<E, CR> = |reader: &mut CR| reader.read_rice(1);
+    const RICE2: ReadFn<E, CR> = |reader: &mut CR| reader.read_rice(2);
+    const RICE3: ReadFn<E, CR> = |reader: &mut CR| reader.read_rice(3);
+    const RICE4: ReadFn<E, CR> = |reader: &mut CR| reader.read_rice(4);
+    const RICE5: ReadFn<E, CR> = |reader: &mut CR| reader.read_rice(5);
+    const RICE6: ReadFn<E, CR> = |reader: &mut CR| reader.read_rice(6);
+    const RICE7: ReadFn<E, CR> = |reader: &mut CR| reader.read_rice(7);
+    const RICE8: ReadFn<E, CR> = |reader: &mut CR| reader.read_rice(8);
+    const RICE9: ReadFn<E, CR> = |reader: &mut CR| reader.read_rice(9);
+    const RICE10: ReadFn<E, CR> = |reader: &mut CR| reader.read_rice(10);
     const PI2: ReadFn<E, CR> = |reader: &mut CR| reader.read_pi(2);
     const PI3: ReadFn<E, CR> = |reader: &mut CR| reader.read_pi(3);
     const PI4: ReadFn<E, CR> = |reader: &mut CR| reader.read_pi(4);
@@ -608,6 +618,7 @@ impl<E: Endianness, CR: CodesRead<E> + ?Sized> FuncReader<E, CR> {
     const GOLOMB8: ReadFn<E, CR> = |reader: &mut CR| reader.read_golomb(8);
     const GOLOMB9: ReadFn<E, CR> = |reader: &mut CR| reader.read_golomb(9);
     const GOLOMB10: ReadFn<E, CR> = |reader: &mut CR| reader.read_golomb(10);
+    const EXP_GOLOMB1: ReadFn<E, CR> = |reader: &mut CR| reader.read_exp_golomb(1);
     const EXP_GOLOMB2: ReadFn<E, CR> = |reader: &mut CR| reader.read_exp_golomb(2);
     const EXP_GOLOMB3: ReadFn<E, CR> = |reader: &mut CR| reader.read_exp_golomb(3);
     const EXP_GOLOMB4: ReadFn<E, CR> = |reader: &mut CR| reader.read_exp_golomb(4);
@@ -617,29 +628,20 @@ impl<E: Endianness, CR: CodesRead<E> + ?Sized> FuncReader<E, CR> {
     const EXP_GOLOMB8: ReadFn<E, CR> = |reader: &mut CR| reader.read_exp_golomb(8);
     const EXP_GOLOMB9: ReadFn<E, CR> = |reader: &mut CR| reader.read_exp_golomb(9);
     const EXP_GOLOMB10: ReadFn<E, CR> = |reader: &mut CR| reader.read_exp_golomb(10);
-    const RICE2: ReadFn<E, CR> = |reader: &mut CR| reader.read_rice(2);
-    const RICE3: ReadFn<E, CR> = |reader: &mut CR| reader.read_rice(3);
-    const RICE4: ReadFn<E, CR> = |reader: &mut CR| reader.read_rice(4);
-    const RICE5: ReadFn<E, CR> = |reader: &mut CR| reader.read_rice(5);
-    const RICE6: ReadFn<E, CR> = |reader: &mut CR| reader.read_rice(6);
-    const RICE7: ReadFn<E, CR> = |reader: &mut CR| reader.read_rice(7);
-    const RICE8: ReadFn<E, CR> = |reader: &mut CR| reader.read_rice(8);
-    const RICE9: ReadFn<E, CR> = |reader: &mut CR| reader.read_rice(9);
-    const RICE10: ReadFn<E, CR> = |reader: &mut CR| reader.read_rice(10);
-
     /// Return a new [`FuncReader`] for the given code.
     ///
     /// # Errors
     ///
     /// The method will return an error if there is no constant
     /// for the given code in [`FuncReader`].
-    pub fn new(code: Codes) -> Result<Self> {
+    pub fn new(code: Codes) -> anyhow::Result<Self> {
         let read_func = match code {
             Codes::Unary => Self::UNARY,
             Codes::Gamma => Self::GAMMA,
             Codes::Delta => Self::DELTA,
             Codes::Omega => Self::OMEGA,
             Codes::VByte => Self::VBYTE,
+            Codes::Zeta { k: 1 } => Self::GAMMA,
             Codes::Zeta { k: 2 } => Self::ZETA2,
             Codes::Zeta { k: 3 } => Self::ZETA3,
             Codes::Zeta { k: 4 } => Self::ZETA4,
@@ -649,33 +651,8 @@ impl<E: Endianness, CR: CodesRead<E> + ?Sized> FuncReader<E, CR> {
             Codes::Zeta { k: 8 } => Self::ZETA8,
             Codes::Zeta { k: 9 } => Self::ZETA9,
             Codes::Zeta { k: 10 } => Self::ZETA10,
-            Codes::Pi { k: 2 } => Self::PI2,
-            Codes::Pi { k: 3 } => Self::PI3,
-            Codes::Pi { k: 4 } => Self::PI4,
-            Codes::Pi { k: 5 } => Self::PI5,
-            Codes::Pi { k: 6 } => Self::PI6,
-            Codes::Pi { k: 7 } => Self::PI7,
-            Codes::Pi { k: 8 } => Self::PI8,
-            Codes::Pi { k: 9 } => Self::PI9,
-            Codes::Pi { k: 10 } => Self::PI10,
-            Codes::Golomb { b: 2 } => Self::GOLOMB2,
-            Codes::Golomb { b: 3 } => Self::GOLOMB3,
-            Codes::Golomb { b: 4 } => Self::GOLOMB4,
-            Codes::Golomb { b: 5 } => Self::GOLOMB5,
-            Codes::Golomb { b: 6 } => Self::GOLOMB6,
-            Codes::Golomb { b: 7 } => Self::GOLOMB7,
-            Codes::Golomb { b: 8 } => Self::GOLOMB8,
-            Codes::Golomb { b: 9 } => Self::GOLOMB9,
-            Codes::Golomb { b: 10 } => Self::GOLOMB10,
-            Codes::ExpGolomb { k: 2 } => Self::EXP_GOLOMB2,
-            Codes::ExpGolomb { k: 3 } => Self::EXP_GOLOMB3,
-            Codes::ExpGolomb { k: 4 } => Self::EXP_GOLOMB4,
-            Codes::ExpGolomb { k: 5 } => Self::EXP_GOLOMB5,
-            Codes::ExpGolomb { k: 6 } => Self::EXP_GOLOMB6,
-            Codes::ExpGolomb { k: 7 } => Self::EXP_GOLOMB7,
-            Codes::ExpGolomb { k: 8 } => Self::EXP_GOLOMB8,
-            Codes::ExpGolomb { k: 9 } => Self::EXP_GOLOMB9,
-            Codes::ExpGolomb { k: 10 } => Self::EXP_GOLOMB10,
+            Codes::Rice { log2_b: 0 } => Self::UNARY,
+            Codes::Rice { log2_b: 1 } => Self::RICE1,
             Codes::Rice { log2_b: 2 } => Self::RICE2,
             Codes::Rice { log2_b: 3 } => Self::RICE3,
             Codes::Rice { log2_b: 4 } => Self::RICE4,
@@ -685,20 +662,46 @@ impl<E: Endianness, CR: CodesRead<E> + ?Sized> FuncReader<E, CR> {
             Codes::Rice { log2_b: 8 } => Self::RICE8,
             Codes::Rice { log2_b: 9 } => Self::RICE9,
             Codes::Rice { log2_b: 10 } => Self::RICE10,
+            Codes::Pi { k: 0 } => Self::GAMMA,
+            Codes::Pi { k: 1 } => Self::ZETA2,
+            Codes::Pi { k: 2 } => Self::PI2,
+            Codes::Pi { k: 3 } => Self::PI3,
+            Codes::Pi { k: 4 } => Self::PI4,
+            Codes::Pi { k: 5 } => Self::PI5,
+            Codes::Pi { k: 6 } => Self::PI6,
+            Codes::Pi { k: 7 } => Self::PI7,
+            Codes::Pi { k: 8 } => Self::PI8,
+            Codes::Pi { k: 9 } => Self::PI9,
+            Codes::Pi { k: 10 } => Self::PI10,
+            Codes::Golomb { b: 1 } => Self::UNARY,
+            Codes::Golomb { b: 2 } => Self::GOLOMB2,
+            Codes::Golomb { b: 3 } => Self::GOLOMB3,
+            Codes::Golomb { b: 4 } => Self::GOLOMB4,
+            Codes::Golomb { b: 5 } => Self::GOLOMB5,
+            Codes::Golomb { b: 6 } => Self::GOLOMB6,
+            Codes::Golomb { b: 7 } => Self::GOLOMB7,
+            Codes::Golomb { b: 8 } => Self::GOLOMB8,
+            Codes::Golomb { b: 9 } => Self::GOLOMB9,
+            Codes::Golomb { b: 10 } => Self::GOLOMB10,
+            Codes::ExpGolomb { k: 0 } => Self::GAMMA,
+            Codes::ExpGolomb { k: 1 } => Self::EXP_GOLOMB1,
+            Codes::ExpGolomb { k: 2 } => Self::EXP_GOLOMB2,
+            Codes::ExpGolomb { k: 3 } => Self::EXP_GOLOMB3,
+            Codes::ExpGolomb { k: 4 } => Self::EXP_GOLOMB4,
+            Codes::ExpGolomb { k: 5 } => Self::EXP_GOLOMB5,
+            Codes::ExpGolomb { k: 6 } => Self::EXP_GOLOMB6,
+            Codes::ExpGolomb { k: 7 } => Self::EXP_GOLOMB7,
+            Codes::ExpGolomb { k: 8 } => Self::EXP_GOLOMB8,
+            Codes::ExpGolomb { k: 9 } => Self::EXP_GOLOMB9,
+            Codes::ExpGolomb { k: 10 } => Self::EXP_GOLOMB10,
             _ => anyhow::bail!("Unsupported read dispatch for code {:?}", code),
         };
-        Ok(Self {
-            read_func,
-            _marker: PhantomData,
-        })
+        Ok(Self { read_func })
     }
 
     /// Return a new [`FuncReader`] for the given function.
     pub fn new_with_func(read_func: ReadFn<E, CR>) -> Self {
-        Self {
-            read_func,
-            _marker: PhantomData,
-        }
+        Self { read_func }
     }
 }
 
@@ -727,7 +730,6 @@ type WriteFn<E, CW> = fn(&mut CW, u64) -> Result<usize, <CW as BitWrite<E>>::Err
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
 pub struct FuncWriter<E: Endianness, CW: CodesWrite<E> + ?Sized> {
     write_func: WriteFn<E, CW>,
-    _marker: PhantomData<E>,
 }
 
 impl<E: Endianness, CW: CodesWrite<E> + ?Sized> FuncWriter<E, CW> {
@@ -745,6 +747,16 @@ impl<E: Endianness, CW: CodesWrite<E> + ?Sized> FuncWriter<E, CW> {
     const ZETA8: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_zeta(value, 8);
     const ZETA9: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_zeta(value, 9);
     const ZETA10: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_zeta(value, 10);
+    const RICE1: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_rice(value, 1);
+    const RICE2: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_rice(value, 2);
+    const RICE3: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_rice(value, 3);
+    const RICE4: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_rice(value, 4);
+    const RICE5: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_rice(value, 5);
+    const RICE6: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_rice(value, 6);
+    const RICE7: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_rice(value, 7);
+    const RICE8: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_rice(value, 8);
+    const RICE9: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_rice(value, 9);
+    const RICE10: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_rice(value, 10);
     const PI2: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_pi(value, 2);
     const PI3: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_pi(value, 3);
     const PI4: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_pi(value, 4);
@@ -763,6 +775,8 @@ impl<E: Endianness, CW: CodesWrite<E> + ?Sized> FuncWriter<E, CW> {
     const GOLOMB8: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_golomb(value, 8);
     const GOLOMB9: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_golomb(value, 9);
     const GOLOMB10: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_golomb(value, 10);
+    const EXP_GOLOMB1: WriteFn<E, CW> =
+        |writer: &mut CW, value: u64| writer.write_exp_golomb(value, 1);
     const EXP_GOLOMB2: WriteFn<E, CW> =
         |writer: &mut CW, value: u64| writer.write_exp_golomb(value, 2);
     const EXP_GOLOMB3: WriteFn<E, CW> =
@@ -781,15 +795,6 @@ impl<E: Endianness, CW: CodesWrite<E> + ?Sized> FuncWriter<E, CW> {
         |writer: &mut CW, value: u64| writer.write_exp_golomb(value, 9);
     const EXP_GOLOMB10: WriteFn<E, CW> =
         |writer: &mut CW, value: u64| writer.write_exp_golomb(value, 10);
-    const RICE2: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_rice(value, 2);
-    const RICE3: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_rice(value, 3);
-    const RICE4: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_rice(value, 4);
-    const RICE5: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_rice(value, 5);
-    const RICE6: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_rice(value, 6);
-    const RICE7: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_rice(value, 7);
-    const RICE8: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_rice(value, 8);
-    const RICE9: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_rice(value, 9);
-    const RICE10: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_rice(value, 10);
 
     /// Return a new [`FuncWriter`] for the given code.
     ///
@@ -797,13 +802,14 @@ impl<E: Endianness, CW: CodesWrite<E> + ?Sized> FuncWriter<E, CW> {
     ///
     /// The method will return an error if there is no constant
     /// for the given code in [`FuncWriter`].
-    pub fn new(code: Codes) -> Result<Self> {
+    pub fn new(code: Codes) -> anyhow::Result<Self> {
         let write = match code {
             Codes::Unary => Self::UNARY,
             Codes::Gamma => Self::GAMMA,
             Codes::Delta => Self::DELTA,
             Codes::Omega => Self::OMEGA,
             Codes::VByte => Self::VBYTE,
+            Codes::Zeta { k: 1 } => Self::GAMMA,
             Codes::Zeta { k: 2 } => Self::ZETA2,
             Codes::Zeta { k: 3 } => Self::ZETA3,
             Codes::Zeta { k: 4 } => Self::ZETA4,
@@ -813,33 +819,8 @@ impl<E: Endianness, CW: CodesWrite<E> + ?Sized> FuncWriter<E, CW> {
             Codes::Zeta { k: 8 } => Self::ZETA8,
             Codes::Zeta { k: 9 } => Self::ZETA9,
             Codes::Zeta { k: 10 } => Self::ZETA10,
-            Codes::Pi { k: 2 } => Self::PI2,
-            Codes::Pi { k: 3 } => Self::PI3,
-            Codes::Pi { k: 4 } => Self::PI4,
-            Codes::Pi { k: 5 } => Self::PI5,
-            Codes::Pi { k: 6 } => Self::PI6,
-            Codes::Pi { k: 7 } => Self::PI7,
-            Codes::Pi { k: 8 } => Self::PI8,
-            Codes::Pi { k: 9 } => Self::PI9,
-            Codes::Pi { k: 10 } => Self::PI10,
-            Codes::Golomb { b: 2 } => Self::GOLOMB2,
-            Codes::Golomb { b: 3 } => Self::GOLOMB3,
-            Codes::Golomb { b: 4 } => Self::GOLOMB4,
-            Codes::Golomb { b: 5 } => Self::GOLOMB5,
-            Codes::Golomb { b: 6 } => Self::GOLOMB6,
-            Codes::Golomb { b: 7 } => Self::GOLOMB7,
-            Codes::Golomb { b: 8 } => Self::GOLOMB8,
-            Codes::Golomb { b: 9 } => Self::GOLOMB9,
-            Codes::Golomb { b: 10 } => Self::GOLOMB10,
-            Codes::ExpGolomb { k: 2 } => Self::EXP_GOLOMB2,
-            Codes::ExpGolomb { k: 3 } => Self::EXP_GOLOMB3,
-            Codes::ExpGolomb { k: 4 } => Self::EXP_GOLOMB4,
-            Codes::ExpGolomb { k: 5 } => Self::EXP_GOLOMB5,
-            Codes::ExpGolomb { k: 6 } => Self::EXP_GOLOMB6,
-            Codes::ExpGolomb { k: 7 } => Self::EXP_GOLOMB7,
-            Codes::ExpGolomb { k: 8 } => Self::EXP_GOLOMB8,
-            Codes::ExpGolomb { k: 9 } => Self::EXP_GOLOMB9,
-            Codes::ExpGolomb { k: 10 } => Self::EXP_GOLOMB10,
+            Codes::Rice { log2_b: 0 } => Self::UNARY,
+            Codes::Rice { log2_b: 1 } => Self::RICE1,
             Codes::Rice { log2_b: 2 } => Self::RICE2,
             Codes::Rice { log2_b: 3 } => Self::RICE3,
             Codes::Rice { log2_b: 4 } => Self::RICE4,
@@ -849,20 +830,46 @@ impl<E: Endianness, CW: CodesWrite<E> + ?Sized> FuncWriter<E, CW> {
             Codes::Rice { log2_b: 8 } => Self::RICE8,
             Codes::Rice { log2_b: 9 } => Self::RICE9,
             Codes::Rice { log2_b: 10 } => Self::RICE10,
+            Codes::Pi { k: 0 } => Self::GAMMA,
+            Codes::Pi { k: 1 } => Self::ZETA2,
+            Codes::Pi { k: 2 } => Self::PI2,
+            Codes::Pi { k: 3 } => Self::PI3,
+            Codes::Pi { k: 4 } => Self::PI4,
+            Codes::Pi { k: 5 } => Self::PI5,
+            Codes::Pi { k: 6 } => Self::PI6,
+            Codes::Pi { k: 7 } => Self::PI7,
+            Codes::Pi { k: 8 } => Self::PI8,
+            Codes::Pi { k: 9 } => Self::PI9,
+            Codes::Pi { k: 10 } => Self::PI10,
+            Codes::Golomb { b: 1 } => Self::UNARY,
+            Codes::Golomb { b: 2 } => Self::GOLOMB2,
+            Codes::Golomb { b: 3 } => Self::GOLOMB3,
+            Codes::Golomb { b: 4 } => Self::GOLOMB4,
+            Codes::Golomb { b: 5 } => Self::GOLOMB5,
+            Codes::Golomb { b: 6 } => Self::GOLOMB6,
+            Codes::Golomb { b: 7 } => Self::GOLOMB7,
+            Codes::Golomb { b: 8 } => Self::GOLOMB8,
+            Codes::Golomb { b: 9 } => Self::GOLOMB9,
+            Codes::Golomb { b: 10 } => Self::GOLOMB10,
+            Codes::ExpGolomb { k: 0 } => Self::GAMMA,
+            Codes::ExpGolomb { k: 1 } => Self::EXP_GOLOMB1,
+            Codes::ExpGolomb { k: 2 } => Self::EXP_GOLOMB2,
+            Codes::ExpGolomb { k: 3 } => Self::EXP_GOLOMB3,
+            Codes::ExpGolomb { k: 4 } => Self::EXP_GOLOMB4,
+            Codes::ExpGolomb { k: 5 } => Self::EXP_GOLOMB5,
+            Codes::ExpGolomb { k: 6 } => Self::EXP_GOLOMB6,
+            Codes::ExpGolomb { k: 7 } => Self::EXP_GOLOMB7,
+            Codes::ExpGolomb { k: 8 } => Self::EXP_GOLOMB8,
+            Codes::ExpGolomb { k: 9 } => Self::EXP_GOLOMB9,
+            Codes::ExpGolomb { k: 10 } => Self::EXP_GOLOMB10,
             _ => anyhow::bail!("Unsupported write dispatch for code {:?}", code),
         };
-        Ok(Self {
-            write_func: write,
-            _marker: PhantomData,
-        })
+        Ok(Self { write_func: write })
     }
 
     /// Return a new [`FuncWriter`] for the given function.
     pub fn new_with_func(write_func: WriteFn<E, CW>) -> Self {
-        Self {
-            write_func,
-            _marker: PhantomData,
-        }
+        Self { write_func }
     }
 }
 
@@ -877,29 +884,40 @@ impl<E: Endianness, CW: CodesWrite<E> + ?Sized> SpecificCodeWrite<E, CW> for Fun
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
-/// A zero-sized struct with a const generic parameter that can be used to
-/// select a code at compile time.
+/// A zero-sized struct with a const generic parameter representing a code using
+/// the values exported by the
+/// [`code_consts`](crate::codes::dispatch::code_consts) module.
+///
+/// Methods for all traits are implemented for this struct using a match on the
+/// value of the const type parameter. Since the parameter is a constant, the
+/// match is resolved at compile time, so there will be no runtime overhead.
+///
+/// If the value is not among those defined in the
+/// [`code_consts`](crate::codes::dispatch::code_consts) module, the methods
+/// will panic.
 ///
 /// See the [module documentation](crate::codes::dispatch) for more information.
 pub struct ConstCode<const CODE: usize>;
 
-/// The constants to use as generic parameter of the [`ConstCode`] struct.
+/// The constants to use as generic parameter for the [`ConstCode`] struct.
 pub mod code_consts {
     pub const UNARY: usize = 0;
     pub const GAMMA: usize = 1;
     pub const DELTA: usize = 2;
     pub const OMEGA: usize = 3;
     pub const VBYTE: usize = 4;
-    pub const ZETA1: usize = 5;
-    pub const ZETA2: usize = 6;
-    pub const ZETA3: usize = 7;
-    pub const ZETA4: usize = 8;
-    pub const ZETA5: usize = 9;
-    pub const ZETA6: usize = 10;
-    pub const ZETA7: usize = 11;
-    pub const ZETA8: usize = 12;
-    pub const ZETA9: usize = 13;
-    pub const ZETA10: usize = 14;
+    pub const ZETA1: usize = GAMMA;
+    pub const ZETA2: usize = 5;
+    pub const ZETA3: usize = 6;
+    pub const ZETA4: usize = 7;
+    pub const ZETA5: usize = 8;
+    pub const ZETA6: usize = 9;
+    pub const ZETA7: usize = 10;
+    pub const ZETA8: usize = 11;
+    pub const ZETA9: usize = 12;
+    pub const ZETA10: usize = 13;
+    pub const RICE0: usize = UNARY;
+    pub const RICE1: usize = 14;
     pub const RICE2: usize = 15;
     pub const RICE3: usize = 16;
     pub const RICE4: usize = 17;
@@ -909,6 +927,8 @@ pub mod code_consts {
     pub const RICE8: usize = 21;
     pub const RICE9: usize = 22;
     pub const RICE10: usize = 23;
+    pub const PI0: usize = GAMMA;
+    pub const PI1: usize = ZETA2;
     pub const PI2: usize = 24;
     pub const PI3: usize = 25;
     pub const PI4: usize = 26;
@@ -918,6 +938,7 @@ pub mod code_consts {
     pub const PI8: usize = 30;
     pub const PI9: usize = 31;
     pub const PI10: usize = 32;
+    pub const GOLOMB1: usize = UNARY;
     pub const GOLOMB2: usize = 33;
     pub const GOLOMB3: usize = 34;
     pub const GOLOMB4: usize = 35;
@@ -927,15 +948,17 @@ pub mod code_consts {
     pub const GOLOMB8: usize = 39;
     pub const GOLOMB9: usize = 40;
     pub const GOLOMB10: usize = 41;
-    pub const EXP_GOLOMB2: usize = 42;
-    pub const EXP_GOLOMB3: usize = 43;
-    pub const EXP_GOLOMB4: usize = 44;
-    pub const EXP_GOLOMB5: usize = 45;
-    pub const EXP_GOLOMB6: usize = 46;
-    pub const EXP_GOLOMB7: usize = 47;
-    pub const EXP_GOLOMB8: usize = 48;
-    pub const EXP_GOLOMB9: usize = 49;
-    pub const EXP_GOLOMB10: usize = 50;
+    pub const EXP_GOLOMB0: usize = GAMMA;
+    pub const EXP_GOLOMB1: usize = 42;
+    pub const EXP_GOLOMB2: usize = 43;
+    pub const EXP_GOLOMB3: usize = 44;
+    pub const EXP_GOLOMB4: usize = 45;
+    pub const EXP_GOLOMB5: usize = 46;
+    pub const EXP_GOLOMB6: usize = 47;
+    pub const EXP_GOLOMB7: usize = 48;
+    pub const EXP_GOLOMB8: usize = 49;
+    pub const EXP_GOLOMB9: usize = 50;
+    pub const EXP_GOLOMB10: usize = 51;
 }
 
 impl<const CODE: usize> GenericCodeRead for ConstCode<CODE> {
@@ -951,7 +974,6 @@ impl<const CODE: usize> GenericCodeRead for ConstCode<CODE> {
             code_consts::DELTA => reader.read_delta(),
             code_consts::OMEGA => reader.read_omega(),
             code_consts::VBYTE => reader.read_vbyte(),
-            code_consts::ZETA1 => reader.read_zeta(1),
             code_consts::ZETA2 => reader.read_zeta(2),
             code_consts::ZETA3 => reader.read_zeta3(),
             code_consts::ZETA4 => reader.read_zeta(4),
@@ -961,6 +983,16 @@ impl<const CODE: usize> GenericCodeRead for ConstCode<CODE> {
             code_consts::ZETA8 => reader.read_zeta(8),
             code_consts::ZETA9 => reader.read_zeta(9),
             code_consts::ZETA10 => reader.read_zeta(10),
+            code_consts::RICE1 => reader.read_rice(1),
+            code_consts::RICE2 => reader.read_rice(2),
+            code_consts::RICE3 => reader.read_rice(3),
+            code_consts::RICE4 => reader.read_rice(4),
+            code_consts::RICE5 => reader.read_rice(5),
+            code_consts::RICE6 => reader.read_rice(6),
+            code_consts::RICE7 => reader.read_rice(7),
+            code_consts::RICE8 => reader.read_rice(8),
+            code_consts::RICE9 => reader.read_rice(9),
+            code_consts::RICE10 => reader.read_rice(10),
             code_consts::PI2 => reader.read_pi(2),
             code_consts::PI3 => reader.read_pi(3),
             code_consts::PI4 => reader.read_pi(4),
@@ -979,6 +1011,7 @@ impl<const CODE: usize> GenericCodeRead for ConstCode<CODE> {
             code_consts::GOLOMB8 => reader.read_golomb(8),
             code_consts::GOLOMB9 => reader.read_golomb(9),
             code_consts::GOLOMB10 => reader.read_golomb(10),
+            code_consts::EXP_GOLOMB1 => reader.read_exp_golomb(1),
             code_consts::EXP_GOLOMB2 => reader.read_exp_golomb(2),
             code_consts::EXP_GOLOMB3 => reader.read_exp_golomb(3),
             code_consts::EXP_GOLOMB4 => reader.read_exp_golomb(4),
@@ -988,16 +1021,7 @@ impl<const CODE: usize> GenericCodeRead for ConstCode<CODE> {
             code_consts::EXP_GOLOMB8 => reader.read_exp_golomb(8),
             code_consts::EXP_GOLOMB9 => reader.read_exp_golomb(9),
             code_consts::EXP_GOLOMB10 => reader.read_exp_golomb(10),
-            code_consts::RICE2 => reader.read_rice(2),
-            code_consts::RICE3 => reader.read_rice(3),
-            code_consts::RICE4 => reader.read_rice(4),
-            code_consts::RICE5 => reader.read_rice(5),
-            code_consts::RICE6 => reader.read_rice(6),
-            code_consts::RICE7 => reader.read_rice(7),
-            code_consts::RICE8 => reader.read_rice(8),
-            code_consts::RICE9 => reader.read_rice(9),
-            code_consts::RICE10 => reader.read_rice(10),
-            _ => panic!("Unknown code: {}", CODE),
+            _ => panic!("Unknown code index: {}", CODE),
         }
     }
 }
@@ -1027,7 +1051,6 @@ impl<const CODE: usize> GenericCodeWrite for ConstCode<CODE> {
             code_consts::DELTA => writer.write_delta(value),
             code_consts::OMEGA => writer.write_omega(value),
             code_consts::VBYTE => writer.write_vbyte(value),
-            code_consts::ZETA1 => writer.write_zeta(value, 1),
             code_consts::ZETA2 => writer.write_zeta(value, 2),
             code_consts::ZETA3 => writer.write_zeta3(value),
             code_consts::ZETA4 => writer.write_zeta(value, 4),
@@ -1037,6 +1060,16 @@ impl<const CODE: usize> GenericCodeWrite for ConstCode<CODE> {
             code_consts::ZETA8 => writer.write_zeta(value, 8),
             code_consts::ZETA9 => writer.write_zeta(value, 9),
             code_consts::ZETA10 => writer.write_zeta(value, 10),
+            code_consts::RICE1 => writer.write_rice(value, 1),
+            code_consts::RICE2 => writer.write_rice(value, 2),
+            code_consts::RICE3 => writer.write_rice(value, 3),
+            code_consts::RICE4 => writer.write_rice(value, 4),
+            code_consts::RICE5 => writer.write_rice(value, 5),
+            code_consts::RICE6 => writer.write_rice(value, 6),
+            code_consts::RICE7 => writer.write_rice(value, 7),
+            code_consts::RICE8 => writer.write_rice(value, 8),
+            code_consts::RICE9 => writer.write_rice(value, 9),
+            code_consts::RICE10 => writer.write_rice(value, 10),
             code_consts::PI2 => writer.write_pi(value, 2),
             code_consts::PI3 => writer.write_pi(value, 3),
             code_consts::PI4 => writer.write_pi(value, 4),
@@ -1055,6 +1088,7 @@ impl<const CODE: usize> GenericCodeWrite for ConstCode<CODE> {
             code_consts::GOLOMB8 => writer.write_golomb(value, 8),
             code_consts::GOLOMB9 => writer.write_golomb(value, 9),
             code_consts::GOLOMB10 => writer.write_golomb(value, 10),
+            code_consts::EXP_GOLOMB1 => writer.write_exp_golomb(value, 1),
             code_consts::EXP_GOLOMB2 => writer.write_exp_golomb(value, 2),
             code_consts::EXP_GOLOMB3 => writer.write_exp_golomb(value, 3),
             code_consts::EXP_GOLOMB4 => writer.write_exp_golomb(value, 4),
@@ -1064,15 +1098,6 @@ impl<const CODE: usize> GenericCodeWrite for ConstCode<CODE> {
             code_consts::EXP_GOLOMB8 => writer.write_exp_golomb(value, 8),
             code_consts::EXP_GOLOMB9 => writer.write_exp_golomb(value, 9),
             code_consts::EXP_GOLOMB10 => writer.write_exp_golomb(value, 10),
-            code_consts::RICE2 => writer.write_rice(value, 2),
-            code_consts::RICE3 => writer.write_rice(value, 3),
-            code_consts::RICE4 => writer.write_rice(value, 4),
-            code_consts::RICE5 => writer.write_rice(value, 5),
-            code_consts::RICE6 => writer.write_rice(value, 6),
-            code_consts::RICE7 => writer.write_rice(value, 7),
-            code_consts::RICE8 => writer.write_rice(value, 8),
-            code_consts::RICE9 => writer.write_rice(value, 9),
-            code_consts::RICE10 => writer.write_rice(value, 10),
             _ => panic!("Unknown code: {}", CODE),
         }
     }
@@ -1093,13 +1118,11 @@ impl<const CODE: usize> CodeLen for ConstCode<CODE> {
     #[inline]
     fn len(&self, value: u64) -> usize {
         match CODE {
-            // TODO: Reduce ranges
             code_consts::UNARY => value as usize + 1,
             code_consts::GAMMA => len_gamma(value),
             code_consts::DELTA => len_delta(value),
             code_consts::OMEGA => len_omega(value),
             code_consts::VBYTE => bit_len_vbyte(value),
-            code_consts::ZETA1 => len_zeta(value, 1),
             code_consts::ZETA2 => len_zeta(value, 2),
             code_consts::ZETA3 => len_zeta(value, 3),
             code_consts::ZETA4 => len_zeta(value, 4),
@@ -1109,6 +1132,16 @@ impl<const CODE: usize> CodeLen for ConstCode<CODE> {
             code_consts::ZETA8 => len_zeta(value, 8),
             code_consts::ZETA9 => len_zeta(value, 9),
             code_consts::ZETA10 => len_zeta(value, 10),
+            code_consts::RICE1 => len_rice(value, 1),
+            code_consts::RICE2 => len_rice(value, 2),
+            code_consts::RICE3 => len_rice(value, 3),
+            code_consts::RICE4 => len_rice(value, 4),
+            code_consts::RICE5 => len_rice(value, 5),
+            code_consts::RICE6 => len_rice(value, 6),
+            code_consts::RICE7 => len_rice(value, 7),
+            code_consts::RICE8 => len_rice(value, 8),
+            code_consts::RICE9 => len_rice(value, 9),
+            code_consts::RICE10 => len_rice(value, 10),
             code_consts::PI2 => len_pi(value, 2),
             code_consts::PI3 => len_pi(value, 3),
             code_consts::PI4 => len_pi(value, 4),
@@ -1127,6 +1160,7 @@ impl<const CODE: usize> CodeLen for ConstCode<CODE> {
             code_consts::GOLOMB8 => len_golomb(value, 8),
             code_consts::GOLOMB9 => len_golomb(value, 9),
             code_consts::GOLOMB10 => len_golomb(value, 10),
+            code_consts::EXP_GOLOMB1 => len_exp_golomb(value, 1),
             code_consts::EXP_GOLOMB2 => len_exp_golomb(value, 2),
             code_consts::EXP_GOLOMB3 => len_exp_golomb(value, 3),
             code_consts::EXP_GOLOMB4 => len_exp_golomb(value, 4),
@@ -1136,15 +1170,6 @@ impl<const CODE: usize> CodeLen for ConstCode<CODE> {
             code_consts::EXP_GOLOMB8 => len_exp_golomb(value, 8),
             code_consts::EXP_GOLOMB9 => len_exp_golomb(value, 9),
             code_consts::EXP_GOLOMB10 => len_exp_golomb(value, 10),
-            code_consts::RICE2 => len_rice(value, 2),
-            code_consts::RICE3 => len_rice(value, 3),
-            code_consts::RICE4 => len_rice(value, 4),
-            code_consts::RICE5 => len_rice(value, 5),
-            code_consts::RICE6 => len_rice(value, 6),
-            code_consts::RICE7 => len_rice(value, 7),
-            code_consts::RICE8 => len_rice(value, 8),
-            code_consts::RICE9 => len_rice(value, 9),
-            code_consts::RICE10 => len_rice(value, 10),
             _ => panic!("Unknown code: {}", CODE),
         }
     }

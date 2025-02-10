@@ -6,7 +6,7 @@
 
 //! Golomb codes.
 //!
-//! Given a modulo *b*, the Golomb code of a natural number *x* is given by ⌊*x*
+//! Given a modulo *b* ≥ 1, the Golomb code of a natural number *x* is given by ⌊*x*
 //! / *b*⌋ in [unary code](BitRead::read_unary) followed by the [minimal binary
 //! code](super::minimal_binary) of *x* mod *b*.
 //!

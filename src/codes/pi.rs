@@ -7,13 +7,13 @@
 
 //! Streamlined Apostolico–Drovandi π codes
 //!
-//! The streamlined π code with parameter *k* of a natural number *n* is the
+//! The streamlined π code with parameter *k* ≥ 0 of a natural number *n* is the
 //! concatenation of the [Rice code](super::rice) with parameter *k* of
 //! ⌊log₂(*n* + 1)⌋ and of the binary representation of *n* + 1 with the most
 //! significant bit removed.
 //!
-//! The implied distribution of a π code with parameter *k* code is ≈ 1/*x*^(1 +
-//! 1/2*ᵏ*).
+//! The implied distribution of a π code with parameter *k* code is ≈
+//! 1/*x*<sup>1 + 1/2*ᵏ*</sup>.
 //!
 //! Note that π₀ = [ζ₁](super::zeta) = [γ](super::gamma) and π₁ =
 //! [ζ₂](super::zeta).
