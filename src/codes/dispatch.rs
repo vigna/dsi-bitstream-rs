@@ -422,15 +422,6 @@ impl Codes {
     ) -> Result<usize, <Self as GenericCodeWrite>::Error<CW::Error>> {
         GenericCodeWrite::write(self, writer, value)
     }
-
-    /// Delegate to the [`CodeLen`] implementation.
-    ///
-    /// This inherent method is provided to reduce ambiguity in method
-    /// resolution.
-    #[inline(always)]
-    pub fn len(&self, value: u64) -> usize {
-        CodeLen::len(self, value)
-    }
 }
 
 impl GenericCodeRead for Codes {
@@ -947,15 +938,6 @@ impl<const CODE: usize> ConstCode<CODE> {
         value: u64,
     ) -> Result<usize, <Self as GenericCodeWrite>::Error<CW::Error>> {
         GenericCodeWrite::write(self, writer, value)
-    }
-
-    /// Delegate to the [`CodeLen`] implementation.
-    ///
-    /// This inherent method is provided to reduce ambiguity in method
-    /// resolution.
-    #[inline(always)]
-    pub fn len(&self, value: u64) -> usize {
-        CodeLen::len(self, value)
     }
 }
 
