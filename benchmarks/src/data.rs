@@ -14,7 +14,7 @@ Generation functions for data used in benchmarks.
 
 For each code, this module provides a function to generate data with
 a distribution similar to the implied distribution of the code, that is,
-p(w) = 2<sup>–|w|</sup>. Moreover, the function returns the
+p(w) = 2<sup>−|w|</sup>. Moreover, the function returns the
 hit ratio, that is, the ratio of values that is decodable using tables.
 
 */

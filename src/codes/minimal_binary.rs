@@ -15,9 +15,9 @@
 //!
 //! There are several such codes, and the one implemented here is defined as
 //! follows: let *s* = ⌈log₂*u*⌉; then, given *x* < *u*, if *x* <
-//! 2*ˢ* – *u* then *x* is coded as the binary representation of *x*
-//! in *s* – 1 bits; otherwise, *x* is coded as the binary representation of *x*
-//! – *u* + 2*ˢ* in *s* bits.
+//! 2*ˢ* − *u* then *x* is coded as the binary representation of *x*
+//! in *s* − 1 bits; otherwise, *x* is coded as the binary representation of *x*
+//! − *u* + 2*ˢ* in *s* bits.
 //!
 //! See the [codes module documentation](crate::codes) for some elaboration on
 //! the difference between the big-endian and little-endian versions of the

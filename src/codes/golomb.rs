@@ -16,7 +16,7 @@
 //! Note that the Golomb code for *b* = 1 is exactly the unary code.
 //!
 //! For natural numbers distributed with a geometric distribution with base *p*,
-//! the optimal code is a Golomb code with [*b* = ⌈–log(2 – *p*) / log(1 –
+//! the optimal code is a Golomb code with [*b* = ⌈−log(2 − *p*) / log(1 −
 //! *p*)⌉](b).
 //!
 //! For a faster, less precise alternative, see [Rice codes](super::rice).
@@ -25,12 +25,12 @@
 //!
 //! Solomon W. Golomb, “[Run-length encodings
 //! (Corresp.)](https://doi.org/10.1109/TIT.1966.1053907)”. IEEE Transactions on
-//! Information Theory, 12(3):399–401, July 1966.
+//! Information Theory, 12(3):399−401, July 1966.
 //!
 //! Robert G. Gallager and David C. Van Voorhis, “[Optimal source codes for
 //! geometrically distributed integer alphabets
 //! (Corresp.)](https://doi.org/10.1109/TIT.1975.1055357)”. IEEE Transactions on
-//! Information Theory, 21(2):228–230, March 1975.
+//! Information Theory, 21(2):228−230, March 1975.
 
 use super::minimal_binary::{len_minimal_binary, MinimalBinaryRead, MinimalBinaryWrite};
 use crate::traits::*;
@@ -43,7 +43,7 @@ pub fn len_golomb(n: u64, b: u64) -> usize {
 }
 
 /// Returns the optimal value of *b* for a geometric distribution of base *p*,
-/// that is, ⌈–log(2 – *p*) / log(1 – *p*)⌉.
+/// that is, ⌈−log(2 − *p*) / log(1 − *p*)⌉.
 pub fn b(p: f64) -> u64 {
     (-(2.0 - p).ln() / (1.0 - p).ln()).ceil() as u64
 }

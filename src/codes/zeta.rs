@@ -6,12 +6,12 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
-//! Boldi–Vigna ζ codes.
+//! Boldi−Vigna ζ codes.
 //!
 //! The ζ code with parameter *k* ≥ 1 of a natural number *n* is the
 //! concatenation of of the unary code of *h* = ⌊⌊log₂(*n* + 1)⌋ / *k*⌋ and of
-//! the [minimal binary code](crate::codes::minimal_binary) of *n* + 1 – 2*ʰᵏ*
-//! with 2⁽*ʰ* ⁺ ¹⁾*ᵏ* – 2*ʰᵏ* as upper bound.
+//! the [minimal binary code](crate::codes::minimal_binary) of *n* + 1 − 2*ʰᵏ*
+//! with 2⁽*ʰ* ⁺ ¹⁾*ᵏ* − 2*ʰᵏ* as upper bound.
 //!
 //! The implied distribution of a ζ code with parameter *k* is ≈ 1/*x*<sup>1 +
 //! 1/*k*</sup>.
