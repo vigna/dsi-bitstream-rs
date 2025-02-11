@@ -40,6 +40,15 @@ no_copy_impls = []
 # offset_of_enum MemDbg feature gate if needed
 offset_of_enum = []
 
+[profile.bench]
+opt-level = 3 # like --release
+lto = "fat"              # Full LTO
+overflow-checks = false  # Disable integer overflow checks.
+debug = true             # Include debug info.
+debug-assertions = false # Enables debug assertions.
+codegen-units = 1        # slower compile times, but maybe better perf
+
+
 [[bench]]
 name = "write_unary"
 harness = false
