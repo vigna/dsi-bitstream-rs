@@ -4,7 +4,7 @@
 
 ### New
 
-* Added VByte, Elias Omega, and streamlined Pi codes.
+* Added VByteBe, VByteLe, Elias Omega, and streamlined Pi codes.
 
 * Added `dispatch` module to choose / dispatch codes at runtime.
  

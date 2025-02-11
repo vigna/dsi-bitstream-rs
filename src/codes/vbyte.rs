@@ -78,14 +78,21 @@
 //!
 //! # Implementations
 //!
-//! We provide two unsigned, ungrouped, complete representations, one big-endian
-//! and one little-endian. We recommend using the big-endian code if you need
-//! lexicographical comparisons. Otherwise, you might choose an endianness
-//! matching that of your hardware, which might increase performance.
+//! We provide two unsigned, ungrouped, complete representations, one
+//! [big-endian](VByteBeRead) and one [little-endian](VByteLeRead). We recommend
+//! in general big-endian version as it is lexicographical. However, the
+//! big-endian version needs a small buffer when writing, so on some hardware
+//! the little-endian version might be faster.
+//!
+//! Note that the endianness of the code is independent from the endianness of
+//! the underlying bit stream, as it just depend on the order in which bytes are
+//! written.
 //!
 //! Since this code is byte-aligned, we provide also convenient, fast methods
 //! [`vbyte_write`] and [`vbyte_read`] that can be used on types implementing
-//! [`std::io::Read`] and [`std::io::Write`].
+//! [`std::io::Read`] and [`std::io::Write`]. There are also endianness-specific
+//! methods [`vbyte_write_be`], [`vbyte_write_le`], [`vbyte_read_be`], and
+//! [`vbyte_read_le`].
 //!
 //! [`LEB128`]: https://en.wikipedia.org/wiki/LEB128
 //! [`VLQ`]: https://en.wikipedia.org/wiki/Variable-length_quantity
