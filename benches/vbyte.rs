@@ -87,8 +87,7 @@ pub fn bench_bytestream<C: ByteCode + WithName>(c: &mut Criterion) {
     let mut v = <Vec<u8>>::with_capacity(CAPACITY);
     // test that the impl works
     {
-        let vals = vec![256];
-        (0..64)
+        let vals = (0..64)
             .map(|i| 1 << i)
             .chain(0..1024)
             .chain([u64::MAX])
@@ -335,7 +334,7 @@ impl<B: IsComplete + 'static, C: ContinuationBit> ByteCode
         loop {
             r.read_exact(&mut buffer)?;
             let byte = buffer[0];
-            result |= ((byte & 0x7F) as u64) << shift;
+            result += ((byte & 0x7F) as u64) << shift;
             if (byte >> 7) == (1 - C::INT) {
                 break;
             }

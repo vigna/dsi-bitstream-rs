@@ -79,7 +79,7 @@
 //!
 //! # Implementations
 //!
-//! We provide two unsigned, grouped, complete representations, one big-endian
+//! We provide two unsigned, ungrouped, complete representations, one big-endian
 //! and one little-endian. We recommend using the big-endian code if you need
 //! lexicographical comparisons. Otherwise, you might choose an endianness
 //! matching that of your hardware, which might increase performance.
@@ -107,46 +107,20 @@
 //!   is a little-endian incomplete ungrouped representation.
 
 use crate::traits::*;
-use common_traits::CastableInto;
-
-const UPPER_BOUND_1: u64 = 128;
-const UPPER_BOUND_2: u64 = 128_u64.pow(2) + UPPER_BOUND_1;
-const UPPER_BOUND_3: u64 = 128_u64.pow(3) + UPPER_BOUND_2;
-const UPPER_BOUND_4: u64 = 128_u64.pow(4) + UPPER_BOUND_3;
-const UPPER_BOUND_5: u64 = 128_u64.pow(5) + UPPER_BOUND_4;
-const UPPER_BOUND_6: u64 = 128_u64.pow(6) + UPPER_BOUND_5;
-const UPPER_BOUND_7: u64 = 128_u64.pow(7) + UPPER_BOUND_6;
-const UPPER_BOUND_8: u64 = 128_u64.pow(8) + UPPER_BOUND_7;
 
 /// Return the length of the variable-length byte code for `value` in bytes.
 #[must_use]
 #[inline]
-pub fn byte_len_vbyte(value: u64) -> usize {
-    if value < UPPER_BOUND_1 {
-        return 1;
+pub fn byte_len_vbyte(mut value: u64) -> usize {
+    let mut len = 1;
+    loop {
+        value >>= 7;
+        if value == 0 {
+            return len;
+        }
+        value -= 1;
+        len += 1;
     }
-    if value < UPPER_BOUND_2 {
-        return 2;
-    }
-    if value < UPPER_BOUND_3 {
-        return 3;
-    }
-    if value < UPPER_BOUND_4 {
-        return 4;
-    }
-    if value < UPPER_BOUND_5 {
-        return 5;
-    }
-    if value < UPPER_BOUND_6 {
-        return 6;
-    }
-    if value < UPPER_BOUND_7 {
-        return 7;
-    }
-    if value < UPPER_BOUND_8 {
-        return 8;
-    }
-    9
 }
 
 /// Return the length of the variable-length byte code for `value` in bits.
@@ -158,100 +132,82 @@ pub fn bit_len_vbyte(value: u64) -> usize {
 
 /// Trait for reading variable-length byte codes.
 pub trait VByteRead<E: Endianness>: BitRead<E> {
-    #[inline(always)]
-    fn read_vbyte(&mut self) -> Result<u64, Self::Error> {
-        let len = self.peek_bits(8)?.cast() as u8;
-        let len = if core::any::TypeId::of::<E>() == core::any::TypeId::of::<BigEndian>() {
-            len.leading_ones() as u8
-        } else {
-            len.trailing_ones() as u8
-        }
-        .min(8);
-        self.skip_bits((1 + len as usize).min(8))?;
+    fn read_vbyte(&mut self) -> Result<u64, Self::Error>;
+}
 
-        match len {
-            0 => self.read_bits(8 - 1),
-            1 => self.read_bits(16 - 2).map(|x| x + UPPER_BOUND_1),
-            2 => self.read_bits(24 - 3).map(|x| x + UPPER_BOUND_2),
-            3 => self.read_bits(32 - 4).map(|x| x + UPPER_BOUND_3),
-            4 => self.read_bits(40 - 5).map(|x| x + UPPER_BOUND_4),
-            5 => self.read_bits(48 - 6).map(|x| x + UPPER_BOUND_5),
-            6 => self.read_bits(56 - 7).map(|x| x + UPPER_BOUND_6),
-            7 => self.read_bits(64 - 8).map(|x| x + UPPER_BOUND_7),
-            8.. => self.read_bits(64).map(|x| x + UPPER_BOUND_8),
+impl<B: BitRead<LE>> VByteRead<LE> for B {
+    fn read_vbyte(&mut self) -> Result<u64, Self::Error> {
+        let mut result = 0;
+        let mut shift = 0;
+        loop {
+            let byte = self.read_bits(8)?;
+            result += ((byte & 0x7F) as u64) << shift;
+            if (byte >> 7) == 0 {
+                break;
+            }
+            shift += 7;
+            result += 1 << shift;
         }
+        Ok(result)
+    }
+}
+
+impl<B: BitRead<BE>> VByteRead<BE> for B {
+    fn read_vbyte(&mut self) -> Result<u64, Self::Error> {
+        let mut byte = self.read_bits(8)?;
+        let mut value = byte & 0x7F;
+        while (byte >> 7) != 0 {
+            value += 1;
+            byte = self.read_bits(8)?;
+            value = (value << 7) | (byte & 0x7F);
+        }
+        Ok(value)
     }
 }
 
 /// Trait for writing variable-length byte codes.
 pub trait VByteWrite<E: Endianness>: BitWrite<E> {
-    #[inline]
-    fn write_vbyte(&mut self, mut value: u64) -> Result<usize, Self::Error> {
-        // endianness dependant constant
-        macro_rules! edc {
-            ($be:literal, $le:literal) => {
-                if core::any::TypeId::of::<E>() == core::any::TypeId::of::<LittleEndian>() {
-                    $le
-                } else {
-                    $be
-                }
-            };
-        }
+    fn write_vbyte(&mut self, value: u64) -> Result<usize, Self::Error>;
+}
 
-        if value < UPPER_BOUND_1 {
-            self.write_bits(0, 1)?;
-            return self.write_bits(value, 8 - 1);
+impl<B: BitWrite<BE>> VByteWrite<BE> for B {
+    fn write_vbyte(&mut self, mut value: u64) -> Result<usize, Self::Error> {
+        let mut buf = [0u8; 10];
+        let mut pos = buf.len() - 1;
+        buf[pos] = (value & 0x7F) as u8;
+        value >>= 7;
+        while value != 0 {
+            value -= 1;
+            pos -= 1;
+            buf[pos] = 0x80 | (value & 0x7F) as u8;
+            value >>= 7;
         }
-        if value < UPPER_BOUND_2 {
-            value -= UPPER_BOUND_1;
-            debug_assert!((value >> 8) < (1 << 6));
-            self.write_bits(edc!(0b10, 0b01), 2)?;
-            return self.write_bits(value, 16 - 2);
+        let bytes_to_write = buf.len() - pos;
+        for &byte in &buf[pos..] {
+            self.write_bits(byte as u64, 8)?;
         }
-        if value < UPPER_BOUND_3 {
-            value -= UPPER_BOUND_2;
-            debug_assert!((value >> 16) < (1 << 5));
-            self.write_bits(edc!(0b110, 0b011), 3)?;
-            return self.write_bits(value, 24 - 3);
-        }
-        if value < UPPER_BOUND_4 {
-            value -= UPPER_BOUND_3;
-            debug_assert!((value >> 24) < (1 << 4));
-            self.write_bits(edc!(0b1110, 0b0111), 4)?;
-            return self.write_bits(value, 32 - 4);
-        }
-        if value < UPPER_BOUND_5 {
-            value -= UPPER_BOUND_4;
-            debug_assert!((value >> 32) < (1 << 3));
-            self.write_bits(edc!(0b11110, 0b01111), 5)?;
-            return self.write_bits(value, 40 - 5);
-        }
-        if value < UPPER_BOUND_6 {
-            value -= UPPER_BOUND_5;
-            debug_assert!((value >> 40) < (1 << 2));
-            self.write_bits(edc!(0b111110, 0b011111), 6)?;
-            return self.write_bits(value, 48 - 6);
-        }
-        if value < UPPER_BOUND_7 {
-            value -= UPPER_BOUND_6;
-            debug_assert!((value >> 48) < (1 << 1));
-            self.write_bits(edc!(0b1111110, 0b0111111), 7)?;
-            return self.write_bits(value, 56 - 7);
-        }
-        if value < UPPER_BOUND_8 {
-            value -= UPPER_BOUND_7;
-            self.write_bits(edc!(0b11111110, 0b01111111), 8)?;
-            return self.write_bits(value, 64 - 8);
-        }
-        // Note that we save one byte by using 0xFF as the first byte.
-        // TODO: sometimes we subtract UPPER_BOUND_8, sometimes not.
-        self.write_bits(0b11111111, 8)?;
-        self.write_bits(value - UPPER_BOUND_8, 64)
+        Ok(bytes_to_write)
     }
 }
 
-impl<E: Endianness, B: BitRead<E>> VByteRead<E> for B {}
-impl<E: Endianness, B: BitWrite<E>> VByteWrite<E> for B {}
+impl<B: BitWrite<LE>> VByteWrite<LE> for B {
+    fn write_vbyte(&mut self, mut value: u64) -> Result<usize, Self::Error> {
+        let mut len = 1;
+        loop {
+            let byte = (value & 0x7F) as u8;
+            value >>= 7;
+            if value != 0 {
+                self.write_bits((byte | 0x80) as u64, 8)?;
+            } else {
+                self.write_bits(byte as u64, 8)?;
+                break;
+            }
+            value -= 1;
+            len += 1;
+        }
+        Ok(len)
+    }
+}
 
 /// Encode an integer to a byte stream using variable-length byte codes and
 /// return the number of bytes written.
@@ -263,18 +219,33 @@ pub fn vbyte_encode<E: Endianness, W: std::io::Write>(
     writer: &mut W,
 ) -> std::io::Result<usize> {
     if core::any::TypeId::of::<E>() == core::any::TypeId::of::<BigEndian>() {
-        vbyte_encode_be(value, writer)
+        vbyte_write_be(value, writer)
     } else {
-        vbyte_encode_le(value, writer)
+        vbyte_write_le(value, writer)
     }
+}
+
+/// Encode an integer to a big-endian byte stream using variable-length byte
+/// codes and return the number of bytes written.
+pub fn vbyte_write_be<W: std::io::Write>(mut value: u64, w: &mut W) -> std::io::Result<usize> {
+    let mut buf = [0u8; 10];
+    let mut pos = buf.len() - 1;
+    buf[pos] = (value & 0x7F) as u8;
+    value >>= 7;
+    while value != 0 {
+        value -= 1;
+        pos -= 1;
+        buf[pos] = 0x80 | (value & 0x7F) as u8;
+        value >>= 7;
+    }
+    let bytes_to_write = buf.len() - pos;
+    w.write_all(&buf[pos..])?;
+    Ok(bytes_to_write)
 }
 
 /// Encode an integer to a little-endian byte stream using variable-length byte
 /// codes and return the number of bytes written.
-pub fn vbyte_encode_le<W: std::io::Write>(
-    mut value: u64,
-    writer: &mut W,
-) -> std::io::Result<usize> {
+pub fn vbyte_write_le<W: std::io::Write>(mut value: u64, writer: &mut W) -> std::io::Result<usize> {
     let mut len = 1;
     loop {
         let byte = (value & 0x7F) as u8;
@@ -291,58 +262,21 @@ pub fn vbyte_encode_le<W: std::io::Write>(
     Ok(len)
 }
 
-/// Encode an integer to a big-endian byte stream using variable-length byte
-/// codes and return the number of bytes written.
-pub fn vbyte_encode_be<W: std::io::Write>(mut value: u64, w: &mut W) -> std::io::Result<usize> {
-    let mut buf = [0u8; 10];
-    let mut pos = buf.len() - 1;
-    buf[pos] = (value & 0x7F) as u8;
-    value >>= 7;
-    while value != 0 {
-        value -= 1;
-        pos -= 1;
-        buf[pos] = 0x80 | (value & 0x7F) as u8;
-        value >>= 7;
-    }
-    let bytes_to_write = buf.len() - pos;
-    w.write_all(&buf[pos..])?;
-    Ok(bytes_to_write)
-}
-
 #[inline(always)]
 /// Decode an integer from a byte stream using variable-length byte codes.
 ///
 /// This method just delegates to the correct endianness-specific method.
 pub fn vbyte_decode<E: Endianness, R: std::io::Read>(reader: &mut R) -> std::io::Result<u64> {
     if core::any::TypeId::of::<E>() == core::any::TypeId::of::<BigEndian>() {
-        vbyte_decode_be(reader)
+        vbyte_read_be(reader)
     } else {
-        vbyte_decode_le(reader)
+        vbyte_read_le(reader)
     }
-}
-
-/// Decode an integer from a little-endian byte stream using variable-length
-/// byte codes.
-pub fn vbyte_decode_le<R: std::io::Read>(reader: &mut R) -> std::io::Result<u64> {
-    let mut result = 0;
-    let mut shift = 0;
-    let mut buffer = [0; 1];
-    loop {
-        reader.read_exact(&mut buffer)?;
-        let byte = buffer[0];
-        result |= ((byte & 0x7F) as u64) << shift;
-        if (byte >> 7) == 0 {
-            break;
-        }
-        result += 1;
-        shift += 7;
-    }
-    Ok(result)
 }
 
 /// Decode an integer from a big-endian byte stream using variable-length byte
 /// codes.
-pub fn vbyte_decode_be<R: std::io::Read>(reader: &mut R) -> std::io::Result<u64> {
+pub fn vbyte_read_be<R: std::io::Read>(reader: &mut R) -> std::io::Result<u64> {
     let mut buf = [0u8; 1];
     let mut value: u64;
     reader.read_exact(&mut buf)?;
@@ -355,9 +289,37 @@ pub fn vbyte_decode_be<R: std::io::Read>(reader: &mut R) -> std::io::Result<u64>
     Ok(value)
 }
 
+/// Decode an integer from a little-endian byte stream using variable-length
+/// byte codes.
+pub fn vbyte_read_le<R: std::io::Read>(reader: &mut R) -> std::io::Result<u64> {
+    let mut result = 0;
+    let mut shift = 0;
+    let mut buffer = [0; 1];
+    loop {
+        reader.read_exact(&mut buffer)?;
+        let byte = buffer[0];
+        result += ((byte & 0x7F) as u64) << shift;
+        if (byte >> 7) == 0 {
+            break;
+        }
+        shift += 7;
+        result += 1 << shift;
+    }
+    Ok(result)
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
+
+    const UPPER_BOUND_1: u64 = 128;
+    const UPPER_BOUND_2: u64 = 128_u64.pow(2) + UPPER_BOUND_1;
+    const UPPER_BOUND_3: u64 = 128_u64.pow(3) + UPPER_BOUND_2;
+    const UPPER_BOUND_4: u64 = 128_u64.pow(4) + UPPER_BOUND_3;
+    const UPPER_BOUND_5: u64 = 128_u64.pow(5) + UPPER_BOUND_4;
+    const UPPER_BOUND_6: u64 = 128_u64.pow(6) + UPPER_BOUND_5;
+    const UPPER_BOUND_7: u64 = 128_u64.pow(7) + UPPER_BOUND_6;
+    const UPPER_BOUND_8: u64 = 128_u64.pow(8) + UPPER_BOUND_7;
 
     macro_rules! impl_tests {
         ($test_name:ident, $E:ty) => {
@@ -373,7 +335,6 @@ mod test {
                 }
                 buffer.set_position(0);
                 for (i, l) in (MIN..MAX).zip(lens.iter()) {
-                    dbg!(i);
                     let j = vbyte_decode::<$E, _>(&mut buffer).unwrap();
                     assert_eq!(byte_len_vbyte(i as _), *l);
                     assert_eq!(j, i as u64);
