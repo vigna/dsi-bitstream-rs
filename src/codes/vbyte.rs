@@ -275,204 +275,38 @@ pub fn vbyte_encode_le<W: std::io::Write>(
     mut value: u64,
     writer: &mut W,
 ) -> std::io::Result<usize> {
-    if value < UPPER_BOUND_1 {
-        writer.write_all(&[value as u8])?;
-        return Ok(1);
+    let mut len = 1;
+    loop {
+        let byte = (value & 0x7F) as u8;
+        value >>= 7;
+        if value != 0 {
+            writer.write_all(&[byte | 0x80])?;
+        } else {
+            writer.write_all(&[byte])?;
+            break;
+        }
+        value -= 1;
+        len += 1;
     }
-    if value < UPPER_BOUND_2 {
-        value -= UPPER_BOUND_1;
-        debug_assert!((value >> 8) < (1 << 6));
-        writer.write_all(&[0x80 | (value & 0b11_1111) as u8, (value >> 6) as u8])?;
-        return Ok(2);
-    }
-    if value < UPPER_BOUND_3 {
-        value -= UPPER_BOUND_2;
-        debug_assert!((value >> 16) < (1 << 5));
-        writer.write_all(&[
-            0xC0 | (value & 0b1_1111) as u8,
-            (value >> 5) as u8,
-            (value >> 13) as u8,
-        ])?;
-        return Ok(3);
-    }
-    if value < UPPER_BOUND_4 {
-        value -= UPPER_BOUND_3;
-        debug_assert!((value >> 24) < (1 << 4));
-        writer.write_all(&[
-            0xE0 | (value & 0b1111) as u8,
-            (value >> 4) as u8,
-            (value >> 12) as u8,
-            (value >> 20) as u8,
-        ])?;
-        return Ok(4);
-    }
-    if value < UPPER_BOUND_5 {
-        value -= UPPER_BOUND_4;
-        debug_assert!((value >> 32) < (1 << 3));
-        writer.write_all(&[
-            0xF0 | (value & 0b111) as u8,
-            (value >> 3) as u8,
-            (value >> 11) as u8,
-            (value >> 19) as u8,
-            (value >> 27) as u8,
-        ])?;
-        return Ok(5);
-    }
-    if value < UPPER_BOUND_6 {
-        value -= UPPER_BOUND_5;
-        debug_assert!((value >> 40) < (1 << 2));
-        writer.write_all(&[
-            0xF8 | (value & 0b11) as u8,
-            (value >> 2) as u8,
-            (value >> 10) as u8,
-            (value >> 18) as u8,
-            (value >> 26) as u8,
-            (value >> 34) as u8,
-        ])?;
-        return Ok(6);
-    }
-    if value < UPPER_BOUND_7 {
-        value -= UPPER_BOUND_6;
-        debug_assert!((value >> 48) < (1 << 1));
-        writer.write_all(&[
-            0xFC | (value & 0b1) as u8,
-            (value >> 1) as u8,
-            (value >> 9) as u8,
-            (value >> 17) as u8,
-            (value >> 25) as u8,
-            (value >> 33) as u8,
-            (value >> 41) as u8,
-        ])?;
-        return Ok(7);
-    }
-    if value < UPPER_BOUND_8 {
-        value -= UPPER_BOUND_7;
-        writer.write_all(&[
-            0xFE,
-            value as u8,
-            (value >> 8) as u8,
-            (value >> 16) as u8,
-            (value >> 24) as u8,
-            (value >> 32) as u8,
-            (value >> 40) as u8,
-            (value >> 48) as u8,
-        ])?;
-        return Ok(8);
-    }
-
-    writer.write_all(&[
-        0xFF,
-        value as u8,
-        (value >> 8) as u8,
-        (value >> 16) as u8,
-        (value >> 24) as u8,
-        (value >> 32) as u8,
-        (value >> 40) as u8,
-        (value >> 48) as u8,
-        (value >> 56) as u8,
-    ])?;
-    Ok(9)
+    Ok(len)
 }
 
 /// Encode an integer to a big-endian byte stream using variable-length byte
 /// codes and return the number of bytes written.
-pub fn vbyte_encode_be<W: std::io::Write>(
-    mut value: u64,
-    writer: &mut W,
-) -> std::io::Result<usize> {
-    if value < UPPER_BOUND_1 {
-        writer.write_all(&[value as u8])?;
-        return Ok(1);
+pub fn vbyte_encode_be<W: std::io::Write>(mut value: u64, w: &mut W) -> std::io::Result<usize> {
+    let mut buf = [0u8; 10];
+    let mut pos = buf.len() - 1;
+    buf[pos] = (value & 0x7F) as u8;
+    value >>= 7;
+    while value != 0 {
+        value -= 1;
+        pos -= 1;
+        buf[pos] = 0x80 | (value & 0x7F) as u8;
+        value >>= 7;
     }
-    if value < UPPER_BOUND_2 {
-        value -= UPPER_BOUND_1;
-        debug_assert!((value >> 8) < (1 << 6));
-        writer.write_all(&[0x80 | (value >> 8) as u8, value as u8])?;
-        return Ok(2);
-    }
-    if value < UPPER_BOUND_3 {
-        value -= UPPER_BOUND_2;
-        debug_assert!((value >> 16) < (1 << 5));
-        writer.write_all(&[0xC0 | (value >> 16) as u8, (value >> 8) as u8, value as u8])?;
-        return Ok(3);
-    }
-    if value < UPPER_BOUND_4 {
-        value -= UPPER_BOUND_3;
-        debug_assert!((value >> 24) < (1 << 4));
-        writer.write_all(&[
-            0xE0 | (value >> 24) as u8,
-            (value >> 16) as u8,
-            (value >> 8) as u8,
-            value as u8,
-        ])?;
-        return Ok(4);
-    }
-    if value < UPPER_BOUND_5 {
-        value -= UPPER_BOUND_4;
-        debug_assert!((value >> 32) < (1 << 3));
-        writer.write_all(&[
-            0xF0 | (value >> 32) as u8,
-            (value >> 24) as u8,
-            (value >> 16) as u8,
-            (value >> 8) as u8,
-            value as u8,
-        ])?;
-        return Ok(5);
-    }
-    if value < UPPER_BOUND_6 {
-        value -= UPPER_BOUND_5;
-        debug_assert!((value >> 40) < (1 << 2));
-        writer.write_all(&[
-            0xF8 | (value >> 40) as u8,
-            (value >> 32) as u8,
-            (value >> 24) as u8,
-            (value >> 16) as u8,
-            (value >> 8) as u8,
-            value as u8,
-        ])?;
-        return Ok(6);
-    }
-    if value < UPPER_BOUND_7 {
-        value -= UPPER_BOUND_6;
-        debug_assert!((value >> 48) < (1 << 1));
-        writer.write_all(&[
-            0xFC | (value >> 48) as u8,
-            (value >> 40) as u8,
-            (value >> 32) as u8,
-            (value >> 24) as u8,
-            (value >> 16) as u8,
-            (value >> 8) as u8,
-            value as u8,
-        ])?;
-        return Ok(7);
-    }
-    if value < UPPER_BOUND_8 {
-        value -= UPPER_BOUND_7;
-        writer.write_all(&[
-            0xFE,
-            (value >> 48) as u8,
-            (value >> 40) as u8,
-            (value >> 32) as u8,
-            (value >> 24) as u8,
-            (value >> 16) as u8,
-            (value >> 8) as u8,
-            value as u8,
-        ])?;
-        return Ok(8);
-    }
-
-    writer.write_all(&[
-        0xFF,
-        (value >> 56) as u8,
-        (value >> 48) as u8,
-        (value >> 40) as u8,
-        (value >> 32) as u8,
-        (value >> 24) as u8,
-        (value >> 16) as u8,
-        (value >> 8) as u8,
-        value as u8,
-    ])?;
-    Ok(9)
+    let bytes_to_write = buf.len() - pos;
+    w.write_all(&buf[pos..])?;
+    Ok(bytes_to_write)
 }
 
 #[inline(always)]
@@ -490,163 +324,35 @@ pub fn vbyte_decode<E: Endianness, R: std::io::Read>(reader: &mut R) -> std::io:
 /// Decode an integer from a little-endian byte stream using variable-length
 /// byte codes.
 pub fn vbyte_decode_le<R: std::io::Read>(reader: &mut R) -> std::io::Result<u64> {
-    let mut data = [0; 9];
-    reader.read_exact(&mut data[..1])?;
-    let x = data[0];
-    if x < 0x80 {
-        return Ok(x as u64);
+    let mut result = 0;
+    let mut shift = 0;
+    let mut buffer = [0; 1];
+    loop {
+        reader.read_exact(&mut buffer)?;
+        let byte = buffer[0];
+        result |= ((byte & 0x7F) as u64) << shift;
+        if (byte >> 7) == 0 {
+            break;
+        }
+        result += 1;
+        shift += 7;
     }
-    if x < 0xC0 {
-        reader.read_exact(&mut data[1..2])?;
-        let x = (((x & !0xC0) as u64) | (data[1] as u64) << 6) + UPPER_BOUND_1;
-        return Ok(x);
-    }
-    if x < 0xE0 {
-        reader.read_exact(&mut data[1..3])?;
-        let x =
-            (((x & !0xE0) as u64) | (data[1] as u64) << 5 | (data[2] as u64) << 13) + UPPER_BOUND_2;
-        return Ok(x);
-    }
-    if x < 0xF0 {
-        reader.read_exact(&mut data[1..4])?;
-        let x = (((x & !0xF0) as u64)
-            | (data[1] as u64) << 4
-            | (data[2] as u64) << 12
-            | (data[3] as u64) << 20)
-            + UPPER_BOUND_3;
-        return Ok(x);
-    }
-    if x < 0xF8 {
-        reader.read_exact(&mut data[1..5])?;
-        let x = (((x & !0xF8) as u64)
-            | (data[1] as u64) << 3
-            | (data[2] as u64) << 11
-            | (data[3] as u64) << 19
-            | (data[4] as u64) << 27)
-            + UPPER_BOUND_4;
-        return Ok(x);
-    }
-    if x < 0xFC {
-        reader.read_exact(&mut data[1..6])?;
-        let x = (((x & !0xFC) as u64)
-            | (data[1] as u64) << 2
-            | (data[2] as u64) << 10
-            | (data[3] as u64) << 18
-            | (data[4] as u64) << 26
-            | (data[5] as u64) << 34)
-            + UPPER_BOUND_5;
-        return Ok(x);
-    }
-    if x < 0xFE {
-        reader.read_exact(&mut data[1..7])?;
-        let x = (((x & !0xFE) as u64)
-            | (data[1] as u64) << 1
-            | (data[2] as u64) << 9
-            | (data[3] as u64) << 17
-            | (data[4] as u64) << 25
-            | (data[5] as u64) << 33
-            | (data[6] as u64) << 41)
-            + UPPER_BOUND_6;
-        return Ok(x);
-    }
-    if x < 0xFF {
-        reader.read_exact(&mut data[1..8])?;
-        let x = ((data[1] as u64)
-            | (data[2] as u64) << 8
-            | (data[3] as u64) << 16
-            | (data[4] as u64) << 24
-            | (data[5] as u64) << 32
-            | (data[6] as u64) << 40
-            | (data[7] as u64) << 48)
-            + UPPER_BOUND_7;
-        return Ok(x);
-    }
-
-    reader.read_exact(&mut data[1..9])?;
-    let x = u64::from_le_bytes(data[1..].try_into().unwrap());
-
-    Ok(x)
+    Ok(result)
 }
 
 /// Decode an integer from a big-endian byte stream using variable-length byte
 /// codes.
 pub fn vbyte_decode_be<R: std::io::Read>(reader: &mut R) -> std::io::Result<u64> {
-    let mut data = [0; 9];
-    reader.read_exact(&mut data[..1])?;
-    let x = data[0];
-    if x < 0x80 {
-        return Ok(x as u64);
+    let mut buf = [0u8; 1];
+    let mut value: u64;
+    reader.read_exact(&mut buf)?;
+    value = (buf[0] & 0x7F) as u64;
+    while (buf[0] >> 7) != 0 {
+        value += 1;
+        reader.read_exact(&mut buf)?;
+        value = (value << 7) | ((buf[0] & 0x7F) as u64);
     }
-    if x < 0xC0 {
-        reader.read_exact(&mut data[1..2])?;
-        let x = (((x & !0xC0) as u64) << 8 | data[1] as u64) + UPPER_BOUND_1;
-        return Ok(x);
-    }
-    if x < 0xE0 {
-        reader.read_exact(&mut data[1..3])?;
-        let x =
-            (((x & !0xE0) as u64) << 16 | (data[1] as u64) << 8 | data[2] as u64) + UPPER_BOUND_2;
-        return Ok(x);
-    }
-    if x < 0xF0 {
-        reader.read_exact(&mut data[1..4])?;
-        let x = (((x & !0xF0) as u64) << 24
-            | (data[1] as u64) << 16
-            | (data[2] as u64) << 8
-            | data[3] as u64)
-            + UPPER_BOUND_3;
-        return Ok(x);
-    }
-    if x < 0xF8 {
-        reader.read_exact(&mut data[1..5])?;
-        let x = (((x & !0xF8) as u64) << 32
-            | (data[1] as u64) << 24
-            | (data[2] as u64) << 16
-            | (data[3] as u64) << 8
-            | data[4] as u64)
-            + UPPER_BOUND_4;
-        return Ok(x);
-    }
-    if x < 0xFC {
-        reader.read_exact(&mut data[1..6])?;
-        let x = (((x & !0xFC) as u64) << 40
-            | (data[1] as u64) << 32
-            | (data[2] as u64) << 24
-            | (data[3] as u64) << 16
-            | (data[4] as u64) << 8
-            | data[5] as u64)
-            + UPPER_BOUND_5;
-        return Ok(x);
-    }
-    if x < 0xFE {
-        reader.read_exact(&mut data[1..7])?;
-        let x = (((x & !0xFE) as u64) << 48
-            | (data[1] as u64) << 40
-            | (data[2] as u64) << 32
-            | (data[3] as u64) << 24
-            | (data[4] as u64) << 16
-            | (data[5] as u64) << 8
-            | data[6] as u64)
-            + UPPER_BOUND_6;
-        return Ok(x);
-    }
-    if x < 0xFF {
-        reader.read_exact(&mut data[1..8])?;
-        let x = ((data[1] as u64) << 48
-            | (data[2] as u64) << 40
-            | (data[3] as u64) << 32
-            | (data[4] as u64) << 24
-            | (data[5] as u64) << 16
-            | (data[6] as u64) << 8
-            | data[7] as u64)
-            + UPPER_BOUND_7;
-        return Ok(x);
-    }
-
-    reader.read_exact(&mut data[1..9])?;
-    let x = u64::from_be_bytes(data[1..].try_into().unwrap());
-
-    Ok(x)
+    Ok(value)
 }
 
 #[cfg(test)]
@@ -667,9 +373,10 @@ mod test {
                 }
                 buffer.set_position(0);
                 for (i, l) in (MIN..MAX).zip(lens.iter()) {
+                    dbg!(i);
                     let j = vbyte_decode::<$E, _>(&mut buffer).unwrap();
-                    assert_eq!(*l, byte_len_vbyte(i as _));
-                    assert_eq!(i as u64, j);
+                    assert_eq!(byte_len_vbyte(i as _), *l);
+                    assert_eq!(j, i as u64);
                 }
 
                 let values = [

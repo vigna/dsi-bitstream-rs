@@ -87,7 +87,8 @@ pub fn bench_bytestream<C: ByteCode + WithName>(c: &mut Criterion) {
     let mut v = <Vec<u8>>::with_capacity(CAPACITY);
     // test that the impl works
     {
-        let vals = (0..64)
+        let vals = vec![256];
+        (0..64)
             .map(|i| 1 << i)
             .chain(0..1024)
             .chain([u64::MAX])
@@ -338,10 +339,10 @@ impl<B: IsComplete + 'static, C: ContinuationBit> ByteCode
             if (byte >> 7) == (1 - C::INT) {
                 break;
             }
-            if core::any::TypeId::of::<B>() == core::any::TypeId::of::<Complete>() {
-                result += 1;
-            }
             shift += 7;
+            if core::any::TypeId::of::<B>() == core::any::TypeId::of::<Complete>() {
+                result += 1 << shift;
+            }
         }
         Ok(result)
     }
@@ -424,13 +425,15 @@ impl BitCode for BitStreamVByte<GroupedIfs, Complete, OneCont> {
 }
 
 pub fn benchmark(c: &mut Criterion) {
+    bench_bytestream::<ByteStreamVByte<LE, NonGrouped, Complete, OneCont>>(c);
+    bench_bytestream::<ByteStreamVByte<LE, NonGrouped, Complete, ZeroCont>>(c);
+    bench_bytestream::<ByteStreamVByte<LE, NonGrouped, NonComplete, OneCont>>(c);
+    bench_bytestream::<ByteStreamVByte<LE, NonGrouped, NonComplete, ZeroCont>>(c);
+
     bench_bytestream::<ByteStreamVByte<BE, NonGrouped, Complete, OneCont>>(c);
     bench_bytestream::<ByteStreamVByte<BE, NonGrouped, Complete, ZeroCont>>(c);
     bench_bytestream::<ByteStreamVByte<BE, NonGrouped, NonComplete, OneCont>>(c);
     bench_bytestream::<ByteStreamVByte<BE, NonGrouped, NonComplete, ZeroCont>>(c);
-
-    bench_bytestream::<ByteStreamVByte<LE, NonGrouped, NonComplete, OneCont>>(c);
-    bench_bytestream::<ByteStreamVByte<LE, NonGrouped, NonComplete, ZeroCont>>(c);
 
     bench_bytestream::<ByteStreamVByte<LE, GroupedIfs, Complete, OneCont>>(c);
     bench_bytestream::<ByteStreamVByte<BE, GroupedIfs, Complete, OneCont>>(c);
