@@ -213,7 +213,7 @@ where
         mut n: u64,
     ) -> Result<(), CopyError<R::Error, Self::Error>> {
         if n < self.space_left_in_buffer as u64 {
-            self.buffer = self.buffer << n
+            self.buffer = (self.buffer << n)
                 | bit_read
                     .read_bits(n as usize)
                     .map_err(CopyError::ReadError)?
@@ -222,7 +222,7 @@ where
             return Ok(());
         }
 
-        self.buffer = self.buffer << (self.space_left_in_buffer - 1) << 1
+        self.buffer = (self.buffer << (self.space_left_in_buffer - 1) << 1)
             | bit_read
                 .read_bits(self.space_left_in_buffer)
                 .map_err(CopyError::ReadError)?
@@ -383,7 +383,7 @@ where
         mut n: u64,
     ) -> Result<(), CopyError<R::Error, Self::Error>> {
         if n < self.space_left_in_buffer as u64 {
-            self.buffer = self.buffer >> n
+            self.buffer = (self.buffer >> n)
                 | (bit_read
                     .read_bits(n as usize)
                     .map_err(CopyError::ReadError)?)
@@ -393,7 +393,7 @@ where
             return Ok(());
         }
 
-        self.buffer = self.buffer >> (self.space_left_in_buffer - 1) >> 1
+        self.buffer = (self.buffer >> (self.space_left_in_buffer - 1) >> 1)
             | (bit_read
                 .read_bits(self.space_left_in_buffer)
                 .map_err(CopyError::ReadError)?

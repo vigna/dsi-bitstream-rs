@@ -47,9 +47,8 @@ pub fn len_zeta_param<const USE_TABLE: bool>(mut n: u64, k: usize) -> usize {
     }
     n += 1;
     let h = n.ilog2() as usize / k;
-    let u = 1 << ((h + 1) * k);
     let l = 1 << (h * k);
-    h + 1 + len_minimal_binary(n - l, u - l)
+    h + 1 + len_minimal_binary(n - l, (l << k).wrapping_sub(l))
 }
 
 /// Returns the length of the ζ code with parameter `k` for `n` using
@@ -122,9 +121,8 @@ fn default_read_zeta<BO: Endianness, B: BitRead<BO>>(
     k: usize,
 ) -> Result<u64, B::Error> {
     let h = backend.read_unary()? as usize;
-    let u = 1 << ((h + 1) * k);
-    let l = 1 << (h * k);
-    let res = backend.read_minimal_binary(u - l)?;
+    let l = 1_u64 << (h * k);
+    let res = backend.read_minimal_binary((l << k).wrapping_sub(l))?;
     Ok(l + res - 1)
 }
 
@@ -207,12 +205,11 @@ fn default_write_zeta<E: Endianness, B: BitWrite<E>>(
 ) -> Result<usize, B::Error> {
     n += 1;
     let h = n.ilog2() as usize / k;
-    let u = 1 << ((h + 1) * k);
     let l = 1 << (h * k);
 
     debug_assert!(l <= n, "{} <= {}", l, n);
-    debug_assert!(n < u, "{} < {}", n, u);
 
     // Write the code
-    Ok(backend.write_unary(h as u64)? + backend.write_minimal_binary(n - l, u - l)?)
+    Ok(backend.write_unary(h as u64)?
+        + backend.write_minimal_binary(n - l, (l << k).wrapping_sub(l))?)
 }

@@ -33,7 +33,7 @@ pub fn len_minimal_binary(n: u64, max: u64) -> usize {
         return 0;
     }
     let l = max.ilog2();
-    let limit = (1 << (l + 1)) - max;
+    let limit = ((1_u64 << l) << 1).wrapping_sub(max);
     let mut result = l as usize;
     if n >= limit {
         result += 1;
@@ -47,7 +47,7 @@ pub trait MinimalBinaryRead<E: Endianness>: BitRead<E> {
     fn read_minimal_binary(&mut self, max: u64) -> Result<u64, Self::Error> {
         let l = max.ilog2();
         let mut prefix = self.read_bits(l as _)?;
-        let limit = (1 << (l + 1)) - max;
+        let limit = ((1_u64 << l) << 1).wrapping_sub(max);
 
         Ok(if prefix < limit {
             prefix
@@ -64,7 +64,7 @@ pub trait MinimalBinaryWrite<E: Endianness>: BitWrite<E> {
     #[inline]
     fn write_minimal_binary(&mut self, n: u64, max: u64) -> Result<usize, Self::Error> {
         let l = max.ilog2();
-        let limit = (1 << (l + 1)) - max;
+        let limit = ((1_u64 << l) << 1).wrapping_sub(max);
 
         if n < limit {
             self.write_bits(n, l as _)?;

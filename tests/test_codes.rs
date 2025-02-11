@@ -6,187 +6,94 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
+use dsi_bitstream::codes::dispatch::{
+    CodeLen, CodesRead, CodesWrite, FuncCodeReader, FuncCodeWriter,
+};
 use dsi_bitstream::prelude::*;
-use rand::rngs::SmallRng;
-use rand::{Rng, SeedableRng};
-use std::error::Error;
 
 #[test]
-fn test_codes() -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
-    test_codes_endianness::<LE>()?;
-    test_codes_endianness::<BE>()?;
-    Ok(())
+fn test_codes() {
+    test_codes_endianness::<LE>();
+    test_codes_endianness::<BE>();
 }
 
-fn test_codes_endianness<E: Endianness>() -> Result<(), Box<dyn Error + Send + Sync + 'static>>
+fn test_codes_endianness<E: Endianness>()
 where
-    BufBitWriter<E, MemWordWriterVec<u64, Vec<u64>>>: BitWrite<E>
-        + GammaWrite<E>
-        + DeltaWrite<E>
-        + ZetaWrite<E>
-        + GolombWrite<E>
-        + RiceWrite<E>
-        + OmegaWrite<E>
-        + PiWrite<E>,
-    BufBitReader<E, MemWordReader<u64, Vec<u64>>>: BitRead<E>
-        + GammaRead<E>
-        + DeltaRead<E>
-        + ZetaRead<E>
-        + GolombRead<E>
-        + RiceRead<E>
-        + OmegaRead<E>
-        + PiRead<E>,
+    for<'a> BufBitWriter<E, MemWordWriterVec<u64, &'a mut Vec<u64>>>: CodesWrite<E>,
+    for<'a> BufBitReader<E, MemWordReader<u32, &'a [u32]>>: CodesRead<E>,
 {
-    const N: usize = 100000;
-    let mut r = SmallRng::seed_from_u64(0);
-    let mut v = SmallRng::seed_from_u64(1);
-    let buffer = Vec::<u64>::new();
-    let mut write = BufBitWriter::<E, _>::new(MemWordWriterVec::new(buffer));
-
-    let mut pos = vec![];
-
-    for _ in 0..N {
-        let mut written_bits = 0;
-        match r.random_range(0..11) {
-            0 => {
-                for _ in 0..r.random_range(1..10) {
-                    written_bits += write.write_unary(v.random_range(0..100))?;
-                }
-            }
-            1 => {
-                for _ in 0..r.random_range(1..10) {
-                    written_bits += write.write_gamma(v.random_range(0..100))?;
-                }
-            }
-            2 => {
-                for _ in 0..r.random_range(1..10) {
-                    written_bits += write.write_delta(v.random_range(0..100))?;
-                }
-            }
-            3 => {
-                let k = r.random_range(2..4);
-                for _ in 0..r.random_range(1..10) {
-                    written_bits += write.write_zeta(v.random_range(0..100), k)?;
-                }
-            }
-            4 => {
-                for _ in 0..r.random_range(1..10) {
-                    written_bits += write.write_zeta3(v.random_range(0..100))?;
-                }
-            }
-            5 => {
-                let max = r.random_range(1..17);
-                for _ in 0..r.random_range(1..10) {
-                    written_bits += write.write_minimal_binary(v.random_range(0..max), max)?;
-                }
-            }
-            6 => {
-                let b = r.random_range(1..10);
-                for _ in 0..r.random_range(1..10) {
-                    written_bits += write.write_golomb(v.random_range(0..100), b)?;
-                }
-            }
-            7 => {
-                let log2_b = r.random_range(1..5);
-                for _ in 0..r.random_range(1..10) {
-                    written_bits += write.write_rice(v.random_range(0..100), log2_b)?;
-                }
-            }
-            8 => {
-                let k = r.random_range(1..5);
-                for _ in 0..r.random_range(1..10) {
-                    written_bits += write.write_exp_golomb(v.random_range(0..100), k)?;
-                }
-            }
-            9 => {
-                for _ in 0..r.random_range(1..10) {
-                    written_bits += write.write_omega(v.random_range(0..100))?;
-                }
-            }
-            10 => {
-                let k = r.random_range(1..4);
-                for _ in 0..r.random_range(1..10) {
-                    written_bits += write.write_pi(v.random_range(0..100), k)?;
-                }
-            }
-            _ => unreachable!(),
-        }
-        pos.push(written_bits);
+    // Codes that handle u64::MAX - 1
+    let mut codes = vec![
+        Codes::Gamma,
+        Codes::Delta,
+        Codes::Omega,
+        Codes::VByteBe,
+        Codes::VByteLe,
+    ];
+    for i in 0..10_usize {
+        codes.push(Codes::Pi { k: i });
+        codes.push(Codes::ExpGolomb { k: i });
+    }
+    for i in 1..10_usize {
+        codes.push(Codes::Zeta { k: i });
+    }
+    let vals = (0..64)
+        .map(|i| 1 << i)
+        .chain(0..1024)
+        .chain([u64::MAX - 1])
+        .collect::<Vec<_>>();
+    for code in codes {
+        test_codes_and_vals(code, &vals);
     }
 
-    let buffer = write.into_inner()?.into_inner();
+    // codes that would generate code words too big to be handled for
+    // u64::MAX - 1
+    let mut sparse_codes = vec![Codes::Unary];
+    for i in 0..10_usize {
+        sparse_codes.push(Codes::Rice { log2_b: i });
+    }
+    for i in 1..10_usize {
+        sparse_codes.push(Codes::Golomb { b: i });
+    }
+    let vals = (0..1024).collect::<Vec<_>>();
+    for code in sparse_codes {
+        test_codes_and_vals(code, &vals);
+    }
+}
 
-    let mut read = BufBitReader::<E, _>::new(MemWordReader::new(buffer));
+fn test_codes_and_vals<E: Endianness>(code: Codes, vals: &[u64])
+where
+    for<'a> BufBitWriter<E, MemWordWriterVec<u64, &'a mut Vec<u64>>>: CodesWrite<E>,
+    for<'a> BufBitReader<E, MemWordReader<u32, &'a [u32]>>: CodesRead<E>,
+{
+    dbg!(code);
+    let write_dispatch = FuncCodeWriter::new(code).unwrap();
+    let read_dispatch = FuncCodeReader::new(code).unwrap();
 
-    let mut r = SmallRng::seed_from_u64(0);
-    let mut v = SmallRng::seed_from_u64(1);
+    let mut buffer1 = Vec::<u64>::new();
+    let mut buffer2 = Vec::<u64>::new();
+    let mut write1 = BufBitWriter::<E, _>::new(MemWordWriterVec::new(&mut buffer1));
+    let mut write2 = BufBitWriter::<E, _>::new(MemWordWriterVec::new(&mut buffer2));
 
-    for _ in 0..N {
-        match r.random_range(0..11) {
-            0 => {
-                for _ in 0..r.random_range(1..10) {
-                    assert_eq!(v.random_range(0..100), read.read_unary()?);
-                }
-            }
-            1 => {
-                for _ in 0..r.random_range(1..10) {
-                    assert_eq!(v.random_range(0..100), read.read_gamma()?);
-                }
-            }
-            2 => {
-                for _ in 0..r.random_range(1..10) {
-                    assert_eq!(v.random_range(0..100), read.read_delta()?);
-                }
-            }
-            3 => {
-                let k = r.random_range(2..4);
-                for _ in 0..r.random_range(1..10) {
-                    assert_eq!(v.random_range(0..100), read.read_zeta(k)?);
-                }
-            }
-            4 => {
-                for _ in 0..r.random_range(1..10) {
-                    assert_eq!(v.random_range(0..100), read.read_zeta3()?);
-                }
-            }
-            5 => {
-                let max = r.random_range(1..17);
-                for _ in 0..r.random_range(1..10) {
-                    assert_eq!(v.random_range(0..max), read.read_minimal_binary(max)?);
-                }
-            }
-            6 => {
-                let b = r.random_range(1..10);
-                for _ in 0..r.random_range(1..10) {
-                    assert_eq!(v.random_range(0..100), read.read_golomb(b)?);
-                }
-            }
-            7 => {
-                let log2_b = r.random_range(1..5);
-                for _ in 0..r.random_range(1..10) {
-                    assert_eq!(v.random_range(0..100), read.read_rice(log2_b)?);
-                }
-            }
-            8 => {
-                let k = r.random_range(1..5);
-                for _ in 0..r.random_range(1..10) {
-                    assert_eq!(v.random_range(0..100), read.read_exp_golomb(k)?);
-                }
-            }
-            9 => {
-                for _ in 0..r.random_range(1..10) {
-                    assert_eq!(v.random_range(0..100), read.read_omega()?);
-                }
-            }
-            10 => {
-                let k = r.random_range(1..4);
-                for _ in 0..r.random_range(1..10) {
-                    assert_eq!(v.random_range(0..100), read.read_pi(k)?);
-                }
-            }
-            _ => unreachable!(),
-        }
+    for &val in vals {
+        let len = code.write(&mut write1, val).unwrap();
+        assert_eq!(len, code.len(val), "Code Write Len: {:?}", code);
+        let len = write_dispatch.write(&mut write2, val).unwrap();
+        assert_eq!(len, code.len(val), "Dispatch Code Write Len: {:?}", code);
     }
 
-    Ok(())
+    drop(write1);
+    drop(write2);
+    let slice1 = unsafe { buffer1.as_slice().align_to::<u32>().1 };
+    let slice2 = unsafe { buffer2.as_slice().align_to::<u32>().1 };
+
+    let mut read1 = BufBitReader::<E, _>::new(MemWordReader::new(slice1));
+    let mut read2 = BufBitReader::<E, _>::new(MemWordReader::new(slice2));
+
+    for &val in vals {
+        let value = code.read(&mut read1).unwrap();
+        assert_eq!(value, val, "Code Read: {:?}", code);
+        let value = read_dispatch.read(&mut read2).unwrap();
+        assert_eq!(value, val, "Dispatch Code Read: {:?}", code);
+    }
 }

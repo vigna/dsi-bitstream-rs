@@ -171,7 +171,7 @@ impl<E: Endianness, B: BitRead<E>> VByteLeRead<E> for B {
         let mut shift = 0;
         loop {
             let byte = self.read_bits(8)?;
-            result += ((byte & 0x7F) as u64) << shift;
+            result += (byte & 0x7F) << shift;
             if (byte >> 7) == 0 {
                 break;
             }
@@ -213,7 +213,7 @@ impl<E: Endianness, B: BitWrite<E>> VByteBeWrite<E> for B {
         for &byte in &buf[pos..] {
             self.write_bits(byte as u64, 8)?;
         }
-        Ok(bytes_to_write)
+        Ok(bytes_to_write * 8)
     }
 }
 
@@ -232,7 +232,7 @@ impl<E: Endianness, B: BitWrite<E>> VByteLeWrite<E> for B {
             value -= 1;
             len += 1;
         }
-        Ok(len)
+        Ok(len * 8)
     }
 }
 

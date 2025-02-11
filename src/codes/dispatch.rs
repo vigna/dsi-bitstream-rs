@@ -433,7 +433,7 @@ impl DynamicCodeRead for Codes {
             Codes::Delta => reader.read_delta()?,
             Codes::Omega => reader.read_omega()?,
             Codes::VByteBe => reader.read_vbyte_be()?,
-            Codes::VByteLe => reader.read_vbyte_be()?,
+            Codes::VByteLe => reader.read_vbyte_le()?,
             Codes::Zeta { k: 3 } => reader.read_zeta3()?,
             Codes::Zeta { k } => reader.read_zeta(*k)?,
             Codes::Pi { k } => reader.read_pi(*k)?,
@@ -458,6 +458,7 @@ impl DynamicCodeWrite for Codes {
             Codes::Omega => writer.write_omega(value)?,
             Codes::VByteBe => writer.write_vbyte_be(value)?,
             Codes::VByteLe => writer.write_vbyte_le(value)?,
+            Codes::Zeta { k: 1 } => writer.write_gamma(value)?,
             Codes::Zeta { k: 3 } => writer.write_zeta3(value)?,
             Codes::Zeta { k } => writer.write_zeta(value, *k)?,
             Codes::Pi { k } => writer.write_pi(value, *k)?,
@@ -491,6 +492,7 @@ impl CodeLen for Codes {
             Codes::Delta => len_delta(value),
             Codes::Omega => len_omega(value),
             Codes::VByteLe | Codes::VByteBe => bit_len_vbyte(value),
+            Codes::Zeta { k: 1 } => len_gamma(value),
             Codes::Zeta { k } => len_zeta(value, *k),
             Codes::Pi { k } => len_pi(value, *k),
             Codes::Golomb { b } => len_golomb(value, *b as u64),
@@ -727,7 +729,7 @@ impl<E: Endianness, CR: CodesRead<E> + ?Sized> FuncCodeReader<E, CR> {
 impl<E: Endianness, CR: CodesRead<E> + ?Sized> StaticCodeRead<E, CR> for FuncCodeReader<E, CR> {
     #[inline(always)]
     fn read(&self, reader: &mut CR) -> Result<u64, CR::Error> {
-        (self.0)(reader).map_err(Into::into)
+        (self.0)(reader)
     }
 }
 
@@ -896,7 +898,7 @@ impl<E: Endianness, CW: CodesWrite<E> + ?Sized> FuncCodeWriter<E, CW> {
 impl<E: Endianness, CW: CodesWrite<E> + ?Sized> StaticCodeWrite<E, CW> for FuncCodeWriter<E, CW> {
     #[inline(always)]
     fn write(&self, writer: &mut CW, value: u64) -> Result<usize, CW::Error> {
-        (self.0)(writer, value).map_err(Into::into)
+        (self.0)(writer, value)
     }
 }
 
