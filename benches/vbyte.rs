@@ -201,10 +201,10 @@ impl<E: Endianness, F: Format, B: IsComplete, C: ContinuationBit> WithName
 
 impl<E: Endianness> ByteCode for ByteStreamVByte<E, GroupedIfs, Complete, OneCont> {
     fn read(r: &mut impl Read) -> Result<u64> {
-        Ok(dsi_bitstream::codes::vbyte::vbyte_decode::<E, _>(r)?)
+        Ok(dsi_bitstream::codes::vbyte::vbyte_read::<E, _>(r)?)
     }
     fn write(value: u64, w: &mut impl Write) -> Result<usize> {
-        Ok(dsi_bitstream::codes::vbyte::vbyte_encode::<E, _>(value, w)?)
+        Ok(dsi_bitstream::codes::vbyte::vbyte_write::<E, _>(value, w)?)
     }
 }
 
@@ -415,11 +415,11 @@ impl<F: Format, B: IsComplete, C: ContinuationBit> WithName for BitStreamVByte<F
 impl BitCode for BitStreamVByte<GroupedIfs, Complete, OneCont> {
     #[inline(always)]
     fn read<E: Endianness>(r: &mut impl BitRead<E>) -> Result<u64> {
-        Ok(r.read_vbyte()?)
+        Ok(r.read_vbyte_be()?)
     }
     #[inline(always)]
     fn write<E: Endianness>(value: u64, w: &mut impl BitWrite<E>) -> Result<usize> {
-        Ok(w.write_vbyte(value)?)
+        Ok(w.write_vbyte_le(value)?)
     }
 }
 

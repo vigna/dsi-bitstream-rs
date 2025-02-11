@@ -135,7 +135,7 @@ pub mod exp_golomb;
 pub use exp_golomb::{len_exp_golomb, ExpGolombRead, ExpGolombWrite};
 
 pub mod vbyte;
-pub use vbyte::{bit_len_vbyte, VByteRead, VByteWrite};
+pub use vbyte::*;
 
 use crate::prelude::Endianness;
 

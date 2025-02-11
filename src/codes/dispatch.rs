@@ -250,7 +250,8 @@ pub trait CodesRead<E: Endianness>:
     + GolombRead<E>
     + RiceRead<E>
     + ExpGolombRead<E>
-    + VByteRead<E>
+    + VByteBeRead<E>
+    + VByteLeRead<E>
 {
 }
 
@@ -268,7 +269,8 @@ impl<E: Endianness, B> CodesRead<E> for B where
         + GolombRead<E>
         + RiceRead<E>
         + ExpGolombRead<E>
-        + VByteRead<E>
+        + VByteBeRead<E>
+        + VByteLeRead<E>
 {
 }
 
@@ -293,7 +295,8 @@ pub trait CodesWrite<E: Endianness>:
     + GolombWrite<E>
     + RiceWrite<E>
     + ExpGolombWrite<E>
-    + VByteWrite<E>
+    + VByteBeWrite<E>
+    + VByteLeWrite<E>
 {
 }
 
@@ -308,7 +311,8 @@ impl<E: Endianness, B> CodesWrite<E> for B where
         + GolombWrite<E>
         + RiceWrite<E>
         + ExpGolombWrite<E>
-        + VByteWrite<E>
+        + VByteBeWrite<E>
+        + VByteLeWrite<E>
 {
 }
 
@@ -381,7 +385,8 @@ pub enum Codes {
     Gamma,
     Delta,
     Omega,
-    VByte,
+    VByteLe,
+    VByteBe,
     Zeta { k: usize },
     Pi { k: usize },
     Golomb { b: usize },
@@ -427,7 +432,8 @@ impl DynamicCodeRead for Codes {
             Codes::Gamma => reader.read_gamma()?,
             Codes::Delta => reader.read_delta()?,
             Codes::Omega => reader.read_omega()?,
-            Codes::VByte => reader.read_vbyte()?,
+            Codes::VByteBe => reader.read_vbyte_be()?,
+            Codes::VByteLe => reader.read_vbyte_be()?,
             Codes::Zeta { k: 3 } => reader.read_zeta3()?,
             Codes::Zeta { k } => reader.read_zeta(*k)?,
             Codes::Pi { k } => reader.read_pi(*k)?,
@@ -450,7 +456,8 @@ impl DynamicCodeWrite for Codes {
             Codes::Gamma => writer.write_gamma(value)?,
             Codes::Delta => writer.write_delta(value)?,
             Codes::Omega => writer.write_omega(value)?,
-            Codes::VByte => writer.write_vbyte(value)?,
+            Codes::VByteBe => writer.write_vbyte_be(value)?,
+            Codes::VByteLe => writer.write_vbyte_le(value)?,
             Codes::Zeta { k: 3 } => writer.write_zeta3(value)?,
             Codes::Zeta { k } => writer.write_zeta(value, *k)?,
             Codes::Pi { k } => writer.write_pi(value, *k)?,
@@ -483,7 +490,7 @@ impl CodeLen for Codes {
             Codes::Gamma => len_gamma(value),
             Codes::Delta => len_delta(value),
             Codes::Omega => len_omega(value),
-            Codes::VByte => bit_len_vbyte(value),
+            Codes::VByteLe | Codes::VByteBe => bit_len_vbyte(value),
             Codes::Zeta { k } => len_zeta(value, *k),
             Codes::Pi { k } => len_pi(value, *k),
             Codes::Golomb { b } => len_golomb(value, *b as u64),
@@ -522,7 +529,8 @@ impl core::fmt::Display for Codes {
             Codes::Gamma => write!(f, "Gamma"),
             Codes::Delta => write!(f, "Delta"),
             Codes::Omega => write!(f, "Omega"),
-            Codes::VByte => write!(f, "VByte"),
+            Codes::VByteBe => write!(f, "VByteBe"),
+            Codes::VByteLe => write!(f, "VByteLe"),
             Codes::Zeta { k } => write!(f, "Zeta({})", k),
             Codes::Pi { k } => write!(f, "Pi({})", k),
             Codes::Golomb { b } => write!(f, "Golomb({})", b),
@@ -541,7 +549,8 @@ impl std::str::FromStr for Codes {
             "Gamma" => Ok(Codes::Gamma),
             "Delta" => Ok(Codes::Delta),
             "Omega" => Ok(Codes::Omega),
-            "VByte" => Ok(Codes::VByte),
+            "VByteBe" => Ok(Codes::VByteBe),
+
             _ => {
                 let mut parts = s.split('(');
                 let name = parts
@@ -590,7 +599,8 @@ impl<E: Endianness, CR: CodesRead<E> + ?Sized> FuncCodeReader<E, CR> {
     const GAMMA: ReadFn<E, CR> = |reader: &mut CR| reader.read_gamma();
     const DELTA: ReadFn<E, CR> = |reader: &mut CR| reader.read_delta();
     const OMEGA: ReadFn<E, CR> = |reader: &mut CR| reader.read_omega();
-    const VBYTE: ReadFn<E, CR> = |reader: &mut CR| reader.read_vbyte();
+    const VBYTE_BE: ReadFn<E, CR> = |reader: &mut CR| reader.read_vbyte_be();
+    const VBYTE_LE: ReadFn<E, CR> = |reader: &mut CR| reader.read_vbyte_le();
     const ZETA2: ReadFn<E, CR> = |reader: &mut CR| reader.read_zeta(2);
     const ZETA3: ReadFn<E, CR> = |reader: &mut CR| reader.read_zeta3();
     const ZETA4: ReadFn<E, CR> = |reader: &mut CR| reader.read_zeta(4);
@@ -648,7 +658,8 @@ impl<E: Endianness, CR: CodesRead<E> + ?Sized> FuncCodeReader<E, CR> {
             Codes::Gamma => Self::GAMMA,
             Codes::Delta => Self::DELTA,
             Codes::Omega => Self::OMEGA,
-            Codes::VByte => Self::VBYTE,
+            Codes::VByteBe => Self::VBYTE_BE,
+            Codes::VByteLe => Self::VBYTE_LE,
             Codes::Zeta { k: 1 } => Self::GAMMA,
             Codes::Zeta { k: 2 } => Self::ZETA2,
             Codes::Zeta { k: 3 } => Self::ZETA3,
@@ -746,7 +757,8 @@ impl<E: Endianness, CW: CodesWrite<E> + ?Sized> FuncCodeWriter<E, CW> {
     const GAMMA: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_gamma(value);
     const DELTA: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_delta(value);
     const OMEGA: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_omega(value);
-    const VBYTE: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_vbyte(value);
+    const VBYTE_BE: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_vbyte_be(value);
+    const VBYTE_LE: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_vbyte_le(value);
     const ZETA2: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_zeta(value, 2);
     const ZETA3: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_zeta3(value);
     const ZETA4: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_zeta(value, 4);
@@ -815,7 +827,8 @@ impl<E: Endianness, CW: CodesWrite<E> + ?Sized> FuncCodeWriter<E, CW> {
             Codes::Gamma => Self::GAMMA,
             Codes::Delta => Self::DELTA,
             Codes::Omega => Self::OMEGA,
-            Codes::VByte => Self::VBYTE,
+            Codes::VByteBe => Self::VBYTE_BE,
+            Codes::VByteLe => Self::VBYTE_LE,
             Codes::Zeta { k: 1 } => Self::GAMMA,
             Codes::Zeta { k: 2 } => Self::ZETA2,
             Codes::Zeta { k: 3 } => Self::ZETA3,
@@ -935,60 +948,61 @@ pub mod code_consts {
     pub const GAMMA: usize = 1;
     pub const DELTA: usize = 2;
     pub const OMEGA: usize = 3;
-    pub const VBYTE: usize = 4;
+    pub const VBYTE_BE: usize = 4;
+    pub const VBYTE_LE: usize = 5;
     pub const ZETA1: usize = GAMMA;
-    pub const ZETA2: usize = 5;
-    pub const ZETA3: usize = 6;
-    pub const ZETA4: usize = 7;
-    pub const ZETA5: usize = 8;
-    pub const ZETA6: usize = 9;
-    pub const ZETA7: usize = 10;
-    pub const ZETA8: usize = 11;
-    pub const ZETA9: usize = 12;
-    pub const ZETA10: usize = 13;
+    pub const ZETA2: usize = 6;
+    pub const ZETA3: usize = 7;
+    pub const ZETA4: usize = 8;
+    pub const ZETA5: usize = 9;
+    pub const ZETA6: usize = 10;
+    pub const ZETA7: usize = 11;
+    pub const ZETA8: usize = 12;
+    pub const ZETA9: usize = 13;
+    pub const ZETA10: usize = 14;
     pub const RICE0: usize = UNARY;
-    pub const RICE1: usize = 14;
-    pub const RICE2: usize = 15;
-    pub const RICE3: usize = 16;
-    pub const RICE4: usize = 17;
-    pub const RICE5: usize = 18;
-    pub const RICE6: usize = 19;
-    pub const RICE7: usize = 20;
-    pub const RICE8: usize = 21;
-    pub const RICE9: usize = 22;
-    pub const RICE10: usize = 23;
+    pub const RICE1: usize = 15;
+    pub const RICE2: usize = 16;
+    pub const RICE3: usize = 17;
+    pub const RICE4: usize = 18;
+    pub const RICE5: usize = 19;
+    pub const RICE6: usize = 20;
+    pub const RICE7: usize = 21;
+    pub const RICE8: usize = 22;
+    pub const RICE9: usize = 23;
+    pub const RICE10: usize = 24;
     pub const PI0: usize = GAMMA;
-    pub const PI1: usize = 24;
-    pub const PI2: usize = 25;
-    pub const PI3: usize = 26;
-    pub const PI4: usize = 27;
-    pub const PI5: usize = 28;
-    pub const PI6: usize = 29;
-    pub const PI7: usize = 30;
-    pub const PI8: usize = 31;
-    pub const PI9: usize = 32;
-    pub const PI10: usize = 33;
+    pub const PI1: usize = 25;
+    pub const PI2: usize = 26;
+    pub const PI3: usize = 27;
+    pub const PI4: usize = 28;
+    pub const PI5: usize = 29;
+    pub const PI6: usize = 30;
+    pub const PI7: usize = 31;
+    pub const PI8: usize = 32;
+    pub const PI9: usize = 33;
+    pub const PI10: usize = 34;
     pub const GOLOMB1: usize = UNARY;
     pub const GOLOMB2: usize = RICE1;
-    pub const GOLOMB3: usize = 34;
+    pub const GOLOMB3: usize = 35;
     pub const GOLOMB4: usize = RICE2;
-    pub const GOLOMB5: usize = 35;
-    pub const GOLOMB6: usize = 36;
-    pub const GOLOMB7: usize = 37;
+    pub const GOLOMB5: usize = 36;
+    pub const GOLOMB6: usize = 37;
+    pub const GOLOMB7: usize = 38;
     pub const GOLOMB8: usize = RICE3;
-    pub const GOLOMB9: usize = 38;
-    pub const GOLOMB10: usize = 39;
+    pub const GOLOMB9: usize = 39;
+    pub const GOLOMB10: usize = 40;
     pub const EXP_GOLOMB0: usize = GAMMA;
-    pub const EXP_GOLOMB1: usize = 40;
-    pub const EXP_GOLOMB2: usize = 41;
-    pub const EXP_GOLOMB3: usize = 42;
-    pub const EXP_GOLOMB4: usize = 43;
-    pub const EXP_GOLOMB5: usize = 44;
-    pub const EXP_GOLOMB6: usize = 45;
-    pub const EXP_GOLOMB7: usize = 46;
-    pub const EXP_GOLOMB8: usize = 47;
-    pub const EXP_GOLOMB9: usize = 48;
-    pub const EXP_GOLOMB10: usize = 49;
+    pub const EXP_GOLOMB1: usize = 41;
+    pub const EXP_GOLOMB2: usize = 42;
+    pub const EXP_GOLOMB3: usize = 43;
+    pub const EXP_GOLOMB4: usize = 44;
+    pub const EXP_GOLOMB5: usize = 45;
+    pub const EXP_GOLOMB6: usize = 46;
+    pub const EXP_GOLOMB7: usize = 47;
+    pub const EXP_GOLOMB8: usize = 48;
+    pub const EXP_GOLOMB9: usize = 49;
+    pub const EXP_GOLOMB10: usize = 50;
 }
 
 impl<const CODE: usize> DynamicCodeRead for ConstCode<CODE> {
@@ -1001,7 +1015,8 @@ impl<const CODE: usize> DynamicCodeRead for ConstCode<CODE> {
             code_consts::GAMMA => reader.read_gamma(),
             code_consts::DELTA => reader.read_delta(),
             code_consts::OMEGA => reader.read_omega(),
-            code_consts::VBYTE => reader.read_vbyte(),
+            code_consts::VBYTE_BE => reader.read_vbyte_be(),
+            code_consts::VBYTE_LE => reader.read_vbyte_le(),
             code_consts::ZETA2 => reader.read_zeta(2),
             code_consts::ZETA3 => reader.read_zeta3(),
             code_consts::ZETA4 => reader.read_zeta(4),
@@ -1063,7 +1078,8 @@ impl<const CODE: usize> DynamicCodeWrite for ConstCode<CODE> {
             code_consts::GAMMA => writer.write_gamma(value),
             code_consts::DELTA => writer.write_delta(value),
             code_consts::OMEGA => writer.write_omega(value),
-            code_consts::VBYTE => writer.write_vbyte(value),
+            code_consts::VBYTE_BE => writer.write_vbyte_be(value),
+            code_consts::VBYTE_LE => writer.write_vbyte_le(value),
             code_consts::ZETA2 => writer.write_zeta(value, 2),
             code_consts::ZETA3 => writer.write_zeta3(value),
             code_consts::ZETA4 => writer.write_zeta(value, 4),
@@ -1140,7 +1156,7 @@ impl<const CODE: usize> CodeLen for ConstCode<CODE> {
             code_consts::GAMMA => len_gamma(value),
             code_consts::DELTA => len_delta(value),
             code_consts::OMEGA => len_omega(value),
-            code_consts::VBYTE => bit_len_vbyte(value),
+            code_consts::VBYTE_BE | code_consts::VBYTE_LE => bit_len_vbyte(value),
             code_consts::ZETA2 => len_zeta(value, 2),
             code_consts::ZETA3 => len_zeta(value, 3),
             code_consts::ZETA4 => len_zeta(value, 4),

@@ -186,7 +186,7 @@ impl<
         check!(Codes::Gamma, self.gamma);
         check!(Codes::Delta, self.delta);
         check!(Codes::Omega, self.omega);
-        check!(Codes::VByte, self.vbyte);
+        check!(Codes::VByteBe, self.vbyte);
 
         for (k, val) in self.zeta.iter().enumerate() {
             check!(Codes::Zeta { k: (k + 1) as _ }, *val);
