@@ -6,7 +6,7 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
-use dsi_bitstream::utils::{ToInt, ToNat};
+use dsi_bitstream::codes::{ToInt, ToNat};
 
 #[test]
 fn test_toint_tonat_8() {
