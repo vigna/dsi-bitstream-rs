@@ -25,7 +25,7 @@
 //!
 //! # Dispatch Traits
 //!
-//! The traits [`GenericCodeRead`] and [`GenericCodeWrite`] are the most generic
+//! The traits [`DynamicCodeRead`] and [`DynamicCodeWrite`] are the most generic
 //! ones, and provide a method to read and write a code from a bitstream. By
 //! implementing them, you can write a method accepting one or more unspecified
 //! codes, and operate with them. For example, in this function we read twice a
@@ -33,40 +33,44 @@
 //! code we will be using:
 //!```rust
 //! use dsi_bitstream::prelude::*;
-//! use dsi_bitstream::codes::dispatch::{CodesRead, GenericCodeRead};
+//! use dsi_bitstream::codes::dispatch::{CodesRead, DynamicCodeRead};
 //! use std::fmt::Debug;
 //!
 //! fn read_two_codes_and_sum<
 //!     E: Endianness,
 //!     R: CodesRead<E> + ?Sized,
-//!     GR: GenericCodeRead
+//!     GR: DynamicCodeRead
 //! >(
 //!     reader: &mut R,
 //!     code: GR,
-//! ) -> Result<u64, GR::Error<R::Error>> {
+//! ) -> Result<u64, R::Error> {
 //!     Ok(code.read(reader)? + code.read(reader)?)
 //! }
 //!```
-//! On the other hand, the traits [`SpecificCodeRead`] and [`SpecificCodeWrite`]
+//! On the other hand, the traits [`StaticCodeRead`] and [`StaticCodeWrite`]
 //! are specialized for a reader or writer of given endianness. This means that
 //! they can in principle be implemented for a specific code by storing a
 //! function pointer, with much less runtime overhead.
 //!```rust
 //! use dsi_bitstream::prelude::*;
-//! use dsi_bitstream::codes::dispatch::{CodesRead, SpecificCodeRead};
+//! use dsi_bitstream::codes::dispatch::{CodesRead, StaticCodeRead};
 //! use std::fmt::Debug;
 //!
 //! fn read_two_codes_and_sum<
 //!     E: Endianness,
 //!     R: CodesRead<E> + ?Sized,
-//!     SR: SpecificCodeRead<E, R>
+//!     SR: StaticCodeRead<E, R>
 //! >(
 //!     reader: &mut R,
 //!     code: SR,
-//! ) -> Result<u64, SR::Error<R::Error>> {
+//! ) -> Result<u64, R::Error> {
 //!     Ok(code.read(reader)? + code.read(reader)?)
 //! }
 //!```
+//!
+//! Note that the syntax for invoking the methods in the two groups of traits
+//! is identical, but the type variables are on the method in the first
+//! case, and on the trait in the second case.
 //!
 //! # Implementations
 //!
@@ -89,17 +93,17 @@
 //! `read_two_codes_and_sum` is generic:
 //!```rust
 //! use dsi_bitstream::prelude::*;
-//! use dsi_bitstream::codes::dispatch::{code_consts, CodesRead, GenericCodeRead};
+//! use dsi_bitstream::codes::dispatch::{code_consts, CodesRead, DynamicCodeRead};
 //! use std::fmt::Debug;
 //!
 //! fn read_two_codes_and_sum<
 //!     E: Endianness,
 //!     R: CodesRead<E> + ?Sized,
-//!     GR: GenericCodeRead
+//!     GR: DynamicCodeRead
 //! >(
 //!     reader: &mut R,
 //!     code: GR,
-//! ) -> Result<u64, GR::Error<R::Error>> {
+//! ) -> Result<u64, R::Error> {
 //!     Ok(code.read(reader)? + code.read(reader)?)
 //! }
 //!
@@ -113,8 +117,8 @@
 //! Working with [`ConstCode`] is very efficient, but it forces the choice of a
 //! code at compile time. If you need to read or write a code multiple times on
 //! the same type of bitstream, you can use the structs [`FuncCodeReader`] and
-//! [`FuncCodeWriter`], which implement [`SpecificCodeRead`] and
-//! [`SpecificCodeWrite`] by storing a function pointer.
+//! [`FuncCodeWriter`], which implement [`StaticCodeRead`] and
+//! [`StaticCodeWrite`] by storing a function pointer.
 //!
 //! A value of type [`FuncCodeReader`] or [`FuncCodeWriter`] can be created by calling
 //! their `new` method with a variant of the [`Codes`] enum. As in the case of
@@ -125,17 +129,17 @@
 //! For example:
 //!```rust
 //! use dsi_bitstream::prelude::*;
-//! use dsi_bitstream::codes::dispatch::{CodesRead, SpecificCodeRead, FuncCodeReader};
+//! use dsi_bitstream::codes::dispatch::{CodesRead, StaticCodeRead, FuncCodeReader};
 //! use std::fmt::Debug;
 //!
 //! fn read_two_codes_and_sum<
 //!     E: Endianness,
 //!     R: CodesRead<E> + ?Sized,
-//!     SR: SpecificCodeRead<E, R>
+//!     SR: StaticCodeRead<E, R>
 //! >(
 //!     reader: &mut R,
 //!     code: SR,
-//! ) -> Result<u64, SR::Error<R::Error>> {
+//! ) -> Result<u64, R::Error> {
 //!     Ok(code.read(reader)? + code.read(reader)?)
 //! }
 //!
@@ -159,31 +163,27 @@
 //! ```rust
 //! use dsi_bitstream::prelude::*;
 //! use dsi_bitstream::codes::dispatch::{CodesRead, CodesWrite};
-//! use dsi_bitstream::codes::dispatch::{GenericCodeRead, GenericCodeWrite};
+//! use dsi_bitstream::codes::dispatch::{DynamicCodeRead, DynamicCodeWrite};
 //! use std::fmt::Debug;
 //!
 //! #[derive(Clone, Copy, Debug, Default)]
 //! pub struct Rice<const LOG2_B: usize>;
 //!
-//! impl<const LOG2_B: usize> GenericCodeRead for Rice<LOG2_B> {
-//!     type Error<CRE:  Debug + Send + Sync + 'static> = CRE;
-//!
+//! impl<const LOG2_B: usize> DynamicCodeRead for Rice<LOG2_B> {
 //!     fn read<E: Endianness, CR: CodesRead<E> + ?Sized>(
 //!         &self,
 //!         reader: &mut CR,
-//!     ) -> Result<u64, Self::Error<CR::Error>> {
+//!     ) -> Result<u64, CR::Error> {
 //!         reader.read_rice(LOG2_B)
 //!     }
 //! }
 //!
-//! impl<const LOG2_B: usize> GenericCodeWrite for Rice<LOG2_B> {
-//!     type Error<CWE:  Debug + Send + Sync + 'static> = CWE;
-//!
+//! impl<const LOG2_B: usize> DynamicCodeWrite for Rice<LOG2_B> {
 //!     fn write<E: Endianness, CW: CodesWrite<E> + ?Sized>(
 //!         &self,
 //!         writer: &mut CW,
 //!         value: u64,
-//!     ) -> Result<usize, Self::Error<CW::Error>> {
+//!     ) -> Result<usize, CW::Error> {
 //!         writer.write_rice(value, LOG2_B)
 //!     }
 //! }
@@ -196,22 +196,22 @@
 //! }
 //! ```
 //!
-//! Suppose instead you need to pass a [`SpecificCodeRead`] to a method using a
+//! Suppose instead you need to pass a [`StaticCodeRead`] to a method using a
 //! code that is not supported directly by [`FuncCodeReader`]. You can create a new
 //! [`FuncCodeReader`] using a provided function:
 //!```rust
 //! use dsi_bitstream::prelude::*;
-//! use dsi_bitstream::codes::dispatch::{CodesRead, SpecificCodeRead, FuncCodeReader};
+//! use dsi_bitstream::codes::dispatch::{CodesRead, StaticCodeRead, FuncCodeReader};
 //! use std::fmt::Debug;
 //!
 //! fn read_two_codes_and_sum<
 //!     E: Endianness,
 //!     R: CodesRead<E> + ?Sized,
-//!     SR: SpecificCodeRead<E, R>
+//!     SR: StaticCodeRead<E, R>
 //! >(
 //!     reader: &mut R,
 //!     code: SR,
-//! ) -> Result<u64, SR::Error<R::Error>> {
+//! ) -> Result<u64, R::Error> {
 //!     Ok(code.read(reader)? + code.read(reader)?)
 //! }
 //!
@@ -233,8 +233,8 @@ use core::fmt::Debug;
 /// necessary traits.
 ///
 /// This trait is mainly useful internally to implement the dispatch
-/// traits [`GenericCodeRead`], [`SpecificCodeRead`], [`GenericCodeWrite`], and
-/// [`SpecificCodeWrite`]. The user might find more useful to define its own
+/// traits [`DynamicCodeRead`], [`StaticCodeRead`], [`DynamicCodeWrite`], and
+/// [`StaticCodeWrite`]. The user might find more useful to define its own
 /// convenience trait that includes only the codes they need.
 pub trait CodesRead<E: Endianness>:
     BitRead<E>
@@ -279,8 +279,8 @@ impl<E: Endianness, B> CodesRead<E> for B where
 /// necessary traits.
 ///
 /// This trait is mainly useful internally to implement the dispatch
-/// traits [`GenericCodeRead`], [`SpecificCodeRead`], [`GenericCodeWrite`], and
-/// [`SpecificCodeWrite`]. The user might find more useful to define its own
+/// traits [`DynamicCodeRead`], [`StaticCodeRead`], [`DynamicCodeWrite`], and
+/// [`StaticCodeWrite`]. The user might find more useful to define its own
 /// convenience trait that includes only the codes they need.
 pub trait CodesWrite<E: Endianness>:
     BitWrite<E>
@@ -314,57 +314,49 @@ impl<E: Endianness, B> CodesWrite<E> for B where
 
 /// A trait providing a method to read a code from a generic [`CodesRead`].
 ///
-/// The difference with [`SpecificCodeRead`] is that this trait is more generic,
+/// The difference with [`StaticCodeRead`] is that this trait is more generic,
 /// as the [`CodesRead`] is a parameter of the method, and not of the trait.
-pub trait GenericCodeRead {
-    type Error<CRE: Debug + Send + Sync + 'static>: Debug + Send + Sync + 'static;
-
+pub trait DynamicCodeRead {
     fn read<E: Endianness, CR: CodesRead<E> + ?Sized>(
         &self,
         reader: &mut CR,
-    ) -> Result<u64, Self::Error<CR::Error>>;
+    ) -> Result<u64, CR::Error>;
 }
 
 /// A trait providing a method to write a code to a generic [`CodesWrite`].
 ///
-/// The difference with [`SpecificCodeWrite`] is that this trait is more generic,
+/// The difference with [`StaticCodeWrite`] is that this trait is more generic,
 /// as the [`CodesWrite`] is a parameter of the method, and not of the trait.
-pub trait GenericCodeWrite {
-    type Error<CWE: Debug + Send + Sync + 'static>: Debug + Send + Sync + 'static;
-
+pub trait DynamicCodeWrite {
     fn write<E: Endianness, CW: CodesWrite<E> + ?Sized>(
         &self,
         writer: &mut CW,
         value: u64,
-    ) -> Result<usize, Self::Error<CW::Error>>;
+    ) -> Result<usize, CW::Error>;
 }
 
 /// A trait providing a method to read a code from a [`CodesRead`] specified as
 /// trait type parameter.
 ///
-/// The difference with [`GenericCodeRead`] is that this trait is more specialized,
+/// The difference with [`DynamicCodeRead`] is that this trait is more specialized,
 /// as the [`CodesRead`] is a parameter of the trait.
 ///
 /// For a fixed code this trait may be implemented by storing
 /// a function pointer.
-pub trait SpecificCodeRead<E: Endianness, CR: CodesRead<E> + ?Sized> {
-    type Error<CRE: Debug + Send + Sync + 'static>: Debug + Send + Sync + 'static;
-
-    fn read(&self, reader: &mut CR) -> Result<u64, Self::Error<CR::Error>>;
+pub trait StaticCodeRead<E: Endianness, CR: CodesRead<E> + ?Sized> {
+    fn read(&self, reader: &mut CR) -> Result<u64, CR::Error>;
 }
 
 /// A trait providing a method to write a code to a [`CodesWrite`] specified as
 /// a trait type parameter.
 ///
-/// The difference with [`GenericCodeWrite`] is that this trait is more specialized,
+/// The difference with [`DynamicCodeWrite`] is that this trait is more specialized,
 /// as the [`CodesWrite`] is a parameter of the trait.
 ///
 /// For a fixed code this trait may be implemented by storing a function
 /// pointer.
-pub trait SpecificCodeWrite<E: Endianness, CW: CodesWrite<E> + ?Sized> {
-    type Error<CWE: Debug + Send + Sync + 'static>: Debug + Send + Sync + 'static;
-
-    fn write(&self, writer: &mut CW, value: u64) -> Result<usize, Self::Error<CW::Error>>;
+pub trait StaticCodeWrite<E: Endianness, CW: CodesWrite<E> + ?Sized> {
+    fn write(&self, writer: &mut CW, value: u64) -> Result<usize, CW::Error>;
 }
 
 /// A trait providing a generic method to compute the length of a codeword.
@@ -398,7 +390,7 @@ pub enum Codes {
 }
 
 impl Codes {
-    /// Delegate to the [`GenericCodeRead`] implementation.
+    /// Delegate to the [`DynamicCodeRead`] implementation.
     ///
     /// This inherent method is provided to reduce ambiguity in method
     /// resolution.
@@ -406,11 +398,11 @@ impl Codes {
     pub fn read<E: Endianness, CR: CodesRead<E> + ?Sized>(
         &self,
         reader: &mut CR,
-    ) -> Result<u64, <Self as GenericCodeRead>::Error<CR::Error>> {
-        GenericCodeRead::read(self, reader)
+    ) -> Result<u64, CR::Error> {
+        DynamicCodeRead::read(self, reader)
     }
 
-    /// Delegate to the [`GenericCodeWrite`] implementation.
+    /// Delegate to the [`DynamicCodeWrite`] implementation.
     ///
     /// This inherent method is provided to reduce ambiguity in method
     /// resolution.
@@ -419,19 +411,17 @@ impl Codes {
         &self,
         writer: &mut CW,
         value: u64,
-    ) -> Result<usize, <Self as GenericCodeWrite>::Error<CW::Error>> {
-        GenericCodeWrite::write(self, writer, value)
+    ) -> Result<usize, CW::Error> {
+        DynamicCodeWrite::write(self, writer, value)
     }
 }
 
-impl GenericCodeRead for Codes {
-    type Error<CRE: Debug + Send + Sync + 'static> = CRE;
-
+impl DynamicCodeRead for Codes {
     #[inline]
     fn read<E: Endianness, CR: CodesRead<E> + ?Sized>(
         &self,
         reader: &mut CR,
-    ) -> Result<u64, Self::Error<CR::Error>> {
+    ) -> Result<u64, CR::Error> {
         Ok(match self {
             Codes::Unary => reader.read_unary()?,
             Codes::Gamma => reader.read_gamma()?,
@@ -448,15 +438,13 @@ impl GenericCodeRead for Codes {
     }
 }
 
-impl GenericCodeWrite for Codes {
-    type Error<CWE: Debug + Send + Sync + 'static> = CWE;
-
+impl DynamicCodeWrite for Codes {
     #[inline]
     fn write<E: Endianness, CW: CodesWrite<E> + ?Sized>(
         &self,
         writer: &mut CW,
         value: u64,
-    ) -> Result<usize, Self::Error<CW::Error>> {
+    ) -> Result<usize, CW::Error> {
         Ok(match self {
             Codes::Unary => writer.write_unary(value)?,
             Codes::Gamma => writer.write_gamma(value)?,
@@ -473,21 +461,17 @@ impl GenericCodeWrite for Codes {
     }
 }
 
-impl<E: Endianness, CR: CodesRead<E> + ?Sized> SpecificCodeRead<E, CR> for Codes {
-    type Error<CRE: Debug + Send + Sync + 'static> = CRE;
-
+impl<E: Endianness, CR: CodesRead<E> + ?Sized> StaticCodeRead<E, CR> for Codes {
     #[inline(always)]
-    fn read(&self, reader: &mut CR) -> Result<u64, Self::Error<CR::Error>> {
-        <Self as GenericCodeRead>::read(self, reader)
+    fn read(&self, reader: &mut CR) -> Result<u64, CR::Error> {
+        <Self as DynamicCodeRead>::read(self, reader)
     }
 }
 
-impl<E: Endianness, CW: CodesWrite<E> + ?Sized> SpecificCodeWrite<E, CW> for Codes {
-    type Error<CWE: Debug + Send + Sync + 'static> = CWE;
-
+impl<E: Endianness, CW: CodesWrite<E> + ?Sized> StaticCodeWrite<E, CW> for Codes {
     #[inline(always)]
-    fn write(&self, writer: &mut CW, value: u64) -> Result<usize, Self::Error<CW::Error>> {
-        <Self as GenericCodeWrite>::write(self, writer, value)
+    fn write(&self, writer: &mut CW, value: u64) -> Result<usize, CW::Error> {
+        <Self as DynamicCodeWrite>::write(self, writer, value)
     }
 }
 
@@ -587,13 +571,16 @@ type ReadFn<E, CR> = fn(&mut CR) -> Result<u64, <CR as BitRead<E>>::Error>;
 /// A newtype containing a function pointer dispatching the read method for a
 /// code.
 ///
-/// This is a more efficient way to pass a [`SpecificCodeRead`] to a method, as
+/// This is a more efficient way to pass a [`StaticCodeRead`] to a method, as
 /// a [`FuncCodeReader`] does not need to do a runtime test to dispatch the correct
 /// code.
 ///
 /// Instances can be obtained by calling the [`new`](FuncCodeReader::new) method with
 ///  method with a variant of the [`Codes`] enum, or by calling the
 /// [`new_with_func`](FuncCodeReader::new_with_func) method with a function pointer.
+///
+/// Note that since selection of the code happens in the [`new`](FuncCodeReader::new)
+/// method, it is more efficient to clone a [`FuncCodeReader`] than to create a new one.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
 pub struct FuncCodeReader<E: Endianness, CR: CodesRead<E> + ?Sized>(ReadFn<E, CR>);
@@ -623,6 +610,7 @@ impl<E: Endianness, CR: CodesRead<E> + ?Sized> FuncCodeReader<E, CR> {
     const RICE8: ReadFn<E, CR> = |reader: &mut CR| reader.read_rice(8);
     const RICE9: ReadFn<E, CR> = |reader: &mut CR| reader.read_rice(9);
     const RICE10: ReadFn<E, CR> = |reader: &mut CR| reader.read_rice(10);
+    const PI1: ReadFn<E, CR> = |reader: &mut CR| reader.read_pi(1);
     const PI2: ReadFn<E, CR> = |reader: &mut CR| reader.read_pi(2);
     const PI3: ReadFn<E, CR> = |reader: &mut CR| reader.read_pi(3);
     const PI4: ReadFn<E, CR> = |reader: &mut CR| reader.read_pi(4);
@@ -683,7 +671,7 @@ impl<E: Endianness, CR: CodesRead<E> + ?Sized> FuncCodeReader<E, CR> {
             Codes::Rice { log2_b: 9 } => Self::RICE9,
             Codes::Rice { log2_b: 10 } => Self::RICE10,
             Codes::Pi { k: 0 } => Self::GAMMA,
-            Codes::Pi { k: 1 } => Self::ZETA2,
+            Codes::Pi { k: 1 } => Self::PI1,
             Codes::Pi { k: 2 } => Self::PI2,
             Codes::Pi { k: 3 } => Self::PI3,
             Codes::Pi { k: 4 } => Self::PI4,
@@ -725,11 +713,9 @@ impl<E: Endianness, CR: CodesRead<E> + ?Sized> FuncCodeReader<E, CR> {
     }
 }
 
-impl<E: Endianness, CR: CodesRead<E> + ?Sized> SpecificCodeRead<E, CR> for FuncCodeReader<E, CR> {
-    type Error<CRE: Debug + Send + Sync + 'static> = CRE;
-
+impl<E: Endianness, CR: CodesRead<E> + ?Sized> StaticCodeRead<E, CR> for FuncCodeReader<E, CR> {
     #[inline(always)]
-    fn read(&self, reader: &mut CR) -> Result<u64, Self::Error<CR::Error>> {
+    fn read(&self, reader: &mut CR) -> Result<u64, CR::Error> {
         (self.0)(reader).map_err(Into::into)
     }
 }
@@ -739,13 +725,18 @@ type WriteFn<E, CW> = fn(&mut CW, u64) -> Result<usize, <CW as BitWrite<E>>::Err
 /// A newtype containing a function pointer dispatching the write method for a
 /// code.
 ///
-/// This is a more efficient way to pass a [`SpecificCodeWrite`] to a method, as a
-/// [`FuncCodeWriter`] does not need to do a runtime test to dispatch the correct
-/// code.
+/// This is a more efficient way to pass a [`StaticCodeWrite`] to a method, as
+/// a [`FuncCodeWriter`] does not need to do a runtime test to dispatch the
+/// correct code.
 ///
-/// Instances can be obtained by calling the [`new`](FuncCodeWriter::new) method with
-///  method with a variant of the [`Codes`] enum, or by calling the
-/// [`new_with_func`](FuncCodeWriter::new_with_func) method with a function pointer.
+/// Instances can be obtained by calling the [`new`](FuncCodeWriter::new) method
+///  with method with a variant of the [`Codes`] enum, or by calling the
+/// [`new_with_func`](FuncCodeWriter::new_with_func) method with a function
+/// pointer.
+///
+/// Note that since selection of the code happens in the
+/// [`new`](FuncCodeReader::new) method, it is more efficient to clone a
+/// [`FuncCodeWriter`] than to create a new one.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
 pub struct FuncCodeWriter<E: Endianness, CW: CodesWrite<E> + ?Sized>(WriteFn<E, CW>);
@@ -775,6 +766,7 @@ impl<E: Endianness, CW: CodesWrite<E> + ?Sized> FuncCodeWriter<E, CW> {
     const RICE8: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_rice(value, 8);
     const RICE9: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_rice(value, 9);
     const RICE10: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_rice(value, 10);
+    const PI1: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_pi(value, 1);
     const PI2: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_pi(value, 2);
     const PI3: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_pi(value, 3);
     const PI4: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_pi(value, 4);
@@ -846,7 +838,7 @@ impl<E: Endianness, CW: CodesWrite<E> + ?Sized> FuncCodeWriter<E, CW> {
             Codes::Rice { log2_b: 9 } => Self::RICE9,
             Codes::Rice { log2_b: 10 } => Self::RICE10,
             Codes::Pi { k: 0 } => Self::GAMMA,
-            Codes::Pi { k: 1 } => Self::ZETA2,
+            Codes::Pi { k: 1 } => Self::PI1,
             Codes::Pi { k: 2 } => Self::PI2,
             Codes::Pi { k: 3 } => Self::PI3,
             Codes::Pi { k: 4 } => Self::PI4,
@@ -888,11 +880,9 @@ impl<E: Endianness, CW: CodesWrite<E> + ?Sized> FuncCodeWriter<E, CW> {
     }
 }
 
-impl<E: Endianness, CW: CodesWrite<E> + ?Sized> SpecificCodeWrite<E, CW> for FuncCodeWriter<E, CW> {
-    type Error<CWE: Debug + Send + Sync + 'static> = CWE;
-
+impl<E: Endianness, CW: CodesWrite<E> + ?Sized> StaticCodeWrite<E, CW> for FuncCodeWriter<E, CW> {
     #[inline(always)]
-    fn write(&self, writer: &mut CW, value: u64) -> Result<usize, Self::Error<CW::Error>> {
+    fn write(&self, writer: &mut CW, value: u64) -> Result<usize, CW::Error> {
         (self.0)(writer, value).map_err(Into::into)
     }
 }
@@ -913,7 +903,7 @@ impl<E: Endianness, CW: CodesWrite<E> + ?Sized> SpecificCodeWrite<E, CW> for Fun
 pub struct ConstCode<const CODE: usize>;
 
 impl<const CODE: usize> ConstCode<CODE> {
-    /// Delegate the read method to the [`GenericCodeRead`] implementation.
+    /// Delegate the read method to the [`DynamicCodeRead`] implementation.
     ///
     /// This inherent method is provided to reduce ambiguity in method
     /// resolution.
@@ -921,11 +911,11 @@ impl<const CODE: usize> ConstCode<CODE> {
     pub fn read<E: Endianness, CR: CodesRead<E> + ?Sized>(
         &self,
         reader: &mut CR,
-    ) -> Result<u64, <Self as GenericCodeRead>::Error<CR::Error>> {
-        GenericCodeRead::read(self, reader)
+    ) -> Result<u64, CR::Error> {
+        DynamicCodeRead::read(self, reader)
     }
 
-    /// Delegate to the [`GenericCodeWrite`] implementation.
+    /// Delegate to the [`DynamicCodeWrite`] implementation.
     ///
     /// This inherent method is provided to reduce ambiguity in method
     /// resolution.
@@ -934,8 +924,8 @@ impl<const CODE: usize> ConstCode<CODE> {
         &self,
         writer: &mut CW,
         value: u64,
-    ) -> Result<usize, <Self as GenericCodeWrite>::Error<CW::Error>> {
-        GenericCodeWrite::write(self, writer, value)
+    ) -> Result<usize, CW::Error> {
+        DynamicCodeWrite::write(self, writer, value)
     }
 }
 
@@ -968,46 +958,44 @@ pub mod code_consts {
     pub const RICE9: usize = 22;
     pub const RICE10: usize = 23;
     pub const PI0: usize = GAMMA;
-    pub const PI1: usize = ZETA2;
-    pub const PI2: usize = 24;
-    pub const PI3: usize = 25;
-    pub const PI4: usize = 26;
-    pub const PI5: usize = 27;
-    pub const PI6: usize = 28;
-    pub const PI7: usize = 29;
-    pub const PI8: usize = 30;
-    pub const PI9: usize = 31;
-    pub const PI10: usize = 32;
+    pub const PI1: usize = 24;
+    pub const PI2: usize = 25;
+    pub const PI3: usize = 26;
+    pub const PI4: usize = 27;
+    pub const PI5: usize = 28;
+    pub const PI6: usize = 29;
+    pub const PI7: usize = 30;
+    pub const PI8: usize = 31;
+    pub const PI9: usize = 32;
+    pub const PI10: usize = 33;
     pub const GOLOMB1: usize = UNARY;
     pub const GOLOMB2: usize = RICE1;
-    pub const GOLOMB3: usize = 33;
+    pub const GOLOMB3: usize = 34;
     pub const GOLOMB4: usize = RICE2;
-    pub const GOLOMB5: usize = 34;
-    pub const GOLOMB6: usize = 35;
-    pub const GOLOMB7: usize = 36;
+    pub const GOLOMB5: usize = 35;
+    pub const GOLOMB6: usize = 36;
+    pub const GOLOMB7: usize = 37;
     pub const GOLOMB8: usize = RICE3;
-    pub const GOLOMB9: usize = 37;
-    pub const GOLOMB10: usize = 38;
+    pub const GOLOMB9: usize = 38;
+    pub const GOLOMB10: usize = 39;
     pub const EXP_GOLOMB0: usize = GAMMA;
-    pub const EXP_GOLOMB1: usize = 39;
-    pub const EXP_GOLOMB2: usize = 40;
-    pub const EXP_GOLOMB3: usize = 41;
-    pub const EXP_GOLOMB4: usize = 42;
-    pub const EXP_GOLOMB5: usize = 43;
-    pub const EXP_GOLOMB6: usize = 44;
-    pub const EXP_GOLOMB7: usize = 45;
-    pub const EXP_GOLOMB8: usize = 46;
-    pub const EXP_GOLOMB9: usize = 47;
-    pub const EXP_GOLOMB10: usize = 48;
+    pub const EXP_GOLOMB1: usize = 40;
+    pub const EXP_GOLOMB2: usize = 41;
+    pub const EXP_GOLOMB3: usize = 42;
+    pub const EXP_GOLOMB4: usize = 43;
+    pub const EXP_GOLOMB5: usize = 44;
+    pub const EXP_GOLOMB6: usize = 45;
+    pub const EXP_GOLOMB7: usize = 46;
+    pub const EXP_GOLOMB8: usize = 47;
+    pub const EXP_GOLOMB9: usize = 48;
+    pub const EXP_GOLOMB10: usize = 49;
 }
 
-impl<const CODE: usize> GenericCodeRead for ConstCode<CODE> {
-    type Error<CRE: Debug + Send + Sync + 'static> = CRE;
-
+impl<const CODE: usize> DynamicCodeRead for ConstCode<CODE> {
     fn read<E: Endianness, CR: CodesRead<E> + ?Sized>(
         &self,
         reader: &mut CR,
-    ) -> Result<u64, Self::Error<CR::Error>> {
+    ) -> Result<u64, CR::Error> {
         match CODE {
             code_consts::UNARY => reader.read_unary(),
             code_consts::GAMMA => reader.read_gamma(),
@@ -1033,6 +1021,7 @@ impl<const CODE: usize> GenericCodeRead for ConstCode<CODE> {
             code_consts::RICE8 => reader.read_rice(8),
             code_consts::RICE9 => reader.read_rice(9),
             code_consts::RICE10 => reader.read_rice(10),
+            code_consts::PI1 => reader.read_pi(1),
             code_consts::PI2 => reader.read_pi(2),
             code_consts::PI3 => reader.read_pi(3),
             code_consts::PI4 => reader.read_pi(4),
@@ -1063,14 +1052,12 @@ impl<const CODE: usize> GenericCodeRead for ConstCode<CODE> {
     }
 }
 
-impl<const CODE: usize> GenericCodeWrite for ConstCode<CODE> {
-    type Error<CWE: Debug + Send + Sync + 'static> = CWE;
-
+impl<const CODE: usize> DynamicCodeWrite for ConstCode<CODE> {
     fn write<E: Endianness, CW: CodesWrite<E> + ?Sized>(
         &self,
         writer: &mut CW,
         value: u64,
-    ) -> Result<usize, Self::Error<CW::Error>> {
+    ) -> Result<usize, CW::Error> {
         match CODE {
             code_consts::UNARY => writer.write_unary(value),
             code_consts::GAMMA => writer.write_gamma(value),
@@ -1096,6 +1083,7 @@ impl<const CODE: usize> GenericCodeWrite for ConstCode<CODE> {
             code_consts::RICE8 => writer.write_rice(value, 8),
             code_consts::RICE9 => writer.write_rice(value, 9),
             code_consts::RICE10 => writer.write_rice(value, 10),
+            code_consts::PI1 => writer.write_pi(value, 2),
             code_consts::PI2 => writer.write_pi(value, 2),
             code_consts::PI3 => writer.write_pi(value, 3),
             code_consts::PI4 => writer.write_pi(value, 4),
@@ -1126,25 +1114,21 @@ impl<const CODE: usize> GenericCodeWrite for ConstCode<CODE> {
     }
 }
 
-impl<E: Endianness, CR: CodesRead<E> + ?Sized, const CODE: usize> SpecificCodeRead<E, CR>
+impl<E: Endianness, CR: CodesRead<E> + ?Sized, const CODE: usize> StaticCodeRead<E, CR>
     for ConstCode<CODE>
 {
-    type Error<CRE: Debug + Send + Sync + 'static> = CRE;
-
     #[inline(always)]
-    fn read(&self, reader: &mut CR) -> Result<u64, Self::Error<CR::Error>> {
-        <Self as GenericCodeRead>::read(self, reader)
+    fn read(&self, reader: &mut CR) -> Result<u64, CR::Error> {
+        <Self as DynamicCodeRead>::read(self, reader)
     }
 }
 
-impl<E: Endianness, CW: CodesWrite<E> + ?Sized, const CODE: usize> SpecificCodeWrite<E, CW>
+impl<E: Endianness, CW: CodesWrite<E> + ?Sized, const CODE: usize> StaticCodeWrite<E, CW>
     for ConstCode<CODE>
 {
-    type Error<CWE: Debug + Send + Sync + 'static> = CWE;
-
     #[inline(always)]
-    fn write(&self, writer: &mut CW, value: u64) -> Result<usize, Self::Error<CW::Error>> {
-        <Self as GenericCodeWrite>::write(self, writer, value)
+    fn write(&self, writer: &mut CW, value: u64) -> Result<usize, CW::Error> {
+        <Self as DynamicCodeWrite>::write(self, writer, value)
     }
 }
 
@@ -1176,6 +1160,7 @@ impl<const CODE: usize> CodeLen for ConstCode<CODE> {
             code_consts::RICE8 => len_rice(value, 8),
             code_consts::RICE9 => len_rice(value, 9),
             code_consts::RICE10 => len_rice(value, 10),
+            code_consts::PI1 => len_pi(value, 1),
             code_consts::PI2 => len_pi(value, 2),
             code_consts::PI3 => len_pi(value, 3),
             code_consts::PI4 => len_pi(value, 4),

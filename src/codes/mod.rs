@@ -84,6 +84,13 @@
 //! the most significant bit as first bit. This is sufficient to make the
 //! decoding possible, and the rotation is a much faster operation than bit
 //! reversal.
+//!
+//! # Dispatch
+//!
+//! The basic method for accessing code is through traits like [`GammaRead`] and
+//! [`GammaWrite`]. This approach, however, forces a choice of code in the
+//! source. To pass a choice of code dynamically, please have a look at the
+//! [`dispatch`] module.
 
 use anyhow::Result;
 #[cfg(feature = "mem_dbg")]
@@ -94,9 +101,7 @@ pub mod params;
 
 pub mod dispatch;
 pub use dispatch::{code_consts, Codes, ConstCode, FuncCodeReader, FuncCodeWriter};
-pub use dispatch::{
-    CodeLen, GenericCodeRead, GenericCodeWrite, SpecificCodeRead, SpecificCodeWrite,
-};
+pub use dispatch::{CodeLen, DynamicCodeRead, DynamicCodeWrite, StaticCodeRead, StaticCodeWrite};
 
 pub mod gamma;
 pub use gamma::{

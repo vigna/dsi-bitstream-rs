@@ -10,7 +10,7 @@ use mem_dbg::{MemDbg, MemSize};
 
 use crate::codes::dispatch::{CodesRead, CodesWrite};
 use crate::prelude::dispatch::{
-    GenericCodeRead, GenericCodeWrite, SpecificCodeRead, SpecificCodeWrite,
+    DynamicCodeRead, DynamicCodeWrite, StaticCodeRead, StaticCodeWrite,
 };
 use crate::prelude::Endianness;
 use crate::prelude::{
@@ -276,7 +276,7 @@ pub struct CodesStatsWrapper<
     const PI: usize = 10,
 > {
     // TODO!: figure out how we can do this without a lock.
-    // This is needed because the [`GenericCodeRead`] and [`GenericCodeWrite`] traits must have
+    // This is needed because the [`DynamicCodeRead`] and [`DynamicCodeWrite`] traits must have
     // &self and not &mut self.
     stats: Mutex<CodesStats<ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>>,
     wrapped: W,
@@ -311,21 +311,19 @@ impl<
 }
 
 impl<
-        W: GenericCodeRead,
+        W: DynamicCodeRead,
         const ZETA: usize,
         const GOLOMB: usize,
         const EXP_GOLOMB: usize,
         const RICE: usize,
         const PI: usize,
-    > GenericCodeRead for CodesStatsWrapper<W, ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
+    > DynamicCodeRead for CodesStatsWrapper<W, ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
 {
-    type Error<CRE: Debug + Send + Sync + 'static> = W::Error<CRE>;
-
     #[inline]
     fn read<E: Endianness, CR: CodesRead<E> + ?Sized>(
         &self,
         reader: &mut CR,
-    ) -> Result<u64, Self::Error<CR::Error>> {
+    ) -> Result<u64, CR::Error> {
         let res = self.wrapped.read(reader)?;
         self.stats.lock().unwrap().update(res);
         Ok(res)
@@ -333,7 +331,7 @@ impl<
 }
 
 impl<
-        W: SpecificCodeRead<E, CR>,
+        W: StaticCodeRead<E, CR>,
         const ZETA: usize,
         const GOLOMB: usize,
         const EXP_GOLOMB: usize,
@@ -341,12 +339,10 @@ impl<
         const PI: usize,
         E: Endianness,
         CR: CodesRead<E> + ?Sized,
-    > SpecificCodeRead<E, CR> for CodesStatsWrapper<W, ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
+    > StaticCodeRead<E, CR> for CodesStatsWrapper<W, ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
 {
-    type Error<CRE: Debug + Send + Sync + 'static> = W::Error<CRE>;
-
     #[inline]
-    fn read(&self, reader: &mut CR) -> Result<u64, Self::Error<CR::Error>> {
+    fn read(&self, reader: &mut CR) -> Result<u64, CR::Error> {
         let res = self.wrapped.read(reader)?;
         self.stats.lock().unwrap().update(res);
         Ok(res)
@@ -354,22 +350,20 @@ impl<
 }
 
 impl<
-        W: GenericCodeWrite,
+        W: DynamicCodeWrite,
         const ZETA: usize,
         const GOLOMB: usize,
         const EXP_GOLOMB: usize,
         const RICE: usize,
         const PI: usize,
-    > GenericCodeWrite for CodesStatsWrapper<W, ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
+    > DynamicCodeWrite for CodesStatsWrapper<W, ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
 {
-    type Error<CWE: Debug + Send + Sync + 'static> = W::Error<CWE>;
-
     #[inline]
     fn write<E: Endianness, CW: CodesWrite<E> + ?Sized>(
         &self,
         writer: &mut CW,
         value: u64,
-    ) -> Result<usize, Self::Error<CW::Error>> {
+    ) -> Result<usize, CW::Error> {
         let res = self.wrapped.write(writer, value)?;
         self.stats.lock().unwrap().update(value);
         Ok(res)
@@ -377,7 +371,7 @@ impl<
 }
 
 impl<
-        W: SpecificCodeWrite<E, CW>,
+        W: StaticCodeWrite<E, CW>,
         const ZETA: usize,
         const GOLOMB: usize,
         const EXP_GOLOMB: usize,
@@ -385,12 +379,10 @@ impl<
         const PI: usize,
         E: Endianness,
         CW: CodesWrite<E> + ?Sized,
-    > SpecificCodeWrite<E, CW> for CodesStatsWrapper<W, ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
+    > StaticCodeWrite<E, CW> for CodesStatsWrapper<W, ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
 {
-    type Error<CWE: Debug + Send + Sync + 'static> = W::Error<CWE>;
-
     #[inline]
-    fn write(&self, writer: &mut CW, value: u64) -> Result<usize, Self::Error<CW::Error>> {
+    fn write(&self, writer: &mut CW, value: u64) -> Result<usize, CW::Error> {
         let res = self.wrapped.write(writer, value)?;
         self.stats.lock().unwrap().update(value);
         Ok(res)
