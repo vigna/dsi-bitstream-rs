@@ -16,13 +16,13 @@ pub mod find_change;
 use find_change::*;
 
 /// Number of read/write operations tested for each combination of parameters.
-pub const N: usize = 10_000_000;
+pub const N: usize = 5_000_000;
 /// Number of warmup read/write operations.
 pub const WARMUP_ITERS: usize = 7;
 /// How many iterations of measurement we will execute.
 pub const BENCH_ITERS: usize = 31;
 /// For how many times we will measure the measurement overhead.
-pub const CALIBRATION_ITERS: usize = 100_000;
+pub const CALIBRATION_ITERS: usize = 1_000_000;
 
 type WriteWord = u64;
 type ReadWord = u32;
@@ -218,36 +218,38 @@ pub fn main() {
         |r| r.read_zeta3().unwrap(),
         |x| len_zeta(x, 3),
     );
-    for k in 2..5 {
+    for k in 2..4 {
         bench!(
             format!("zeta_{}", k), 
-            |w, x| w.write_zeta(x, 2).unwrap(),
-            |r| r.read_zeta(2).unwrap(),
-            |x| len_zeta(x, 2),
+            |w, x| w.write_zeta(x, k).unwrap(),
+            |r| r.read_zeta(k).unwrap(),
+            |x| len_zeta(x, k),
         );
+    }
+    for k in 2..5 {
         bench!(
             format!("pi_{}", k), 
-            |w, x| w.write_pi(x, 2).unwrap(),
-            |r| r.read_pi(2).unwrap(),
-            |x| len_pi(x, 2),
+            |w, x| w.write_pi(x, k).unwrap(),
+            |r| r.read_pi(k).unwrap(),
+            |x| len_pi(x, k),
         );
         bench!(
             format!("rice_{}", k), 
-            |w, x| w.write_rice(x, 2).unwrap(),
-            |r| r.read_rice(2).unwrap(),
-            |x| len_rice(x, 2),
+            |w, x| w.write_rice(x, k).unwrap(),
+            |r| r.read_rice(k).unwrap(),
+            |x| len_rice(x, k),
         );
         bench!(
             format!("exp_golomb_{}", k), 
-            |w, x| w.write_exp_golomb(x, 2).unwrap(),
-            |r| r.read_exp_golomb(2).unwrap(),
-            |x| len_exp_golomb(x, 2),
+            |w, x| w.write_exp_golomb(x, k).unwrap(),
+            |r| r.read_exp_golomb(k).unwrap(),
+            |x| len_exp_golomb(x, k),
         );
         bench!(
             format!("golomb_{}", k), 
-            |w, x| w.write_exp_golomb(x, 2).unwrap(),
-            |r| r.read_exp_golomb(2).unwrap(),
-            |x| len_exp_golomb(x, 2),
+            |w, x| w.write_exp_golomb(x, k).unwrap(),
+            |r| r.read_exp_golomb(k).unwrap(),
+            |x| len_exp_golomb(x, k),
         );
     }
 }

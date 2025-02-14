@@ -39,6 +39,8 @@ select aggressive optimizations and `--target-cpu=native`. You can modify
 them to run the tests with different options.
 
 ## Benchmark on intended distributions
+To get the comparative graph of the speed of reading / writing each code on their
+intended distribution use:
 ```
 RUSTFLAGS="-Ctarget-cpu=native" cargo run --bin intended --release | tee intended.tsv
 python3 ./plot_intended.py ./intended.tsv
