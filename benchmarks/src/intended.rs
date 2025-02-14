@@ -148,6 +148,7 @@ fn gen_data(f: impl Fn(u64) -> usize, n_samples: usize) -> Vec<u64> {
 }
 
 
+
 pub fn main() {
     // tricks to reduce the noise
     #[cfg(target_os = "linux")]
@@ -231,6 +232,32 @@ pub fn main() {
             format!("pi_{}", k), 
             |w, x| w.write_pi(x, k).unwrap(),
             |r| r.read_pi(k).unwrap(),
+            |x| len_pi(x, k),
+        );
+        bench!(
+            format!("pi_old_{}", k), 
+            |w, mut n| {
+                n += 1; // π codes are indexed from 1
+                let r = n.ilog2() as usize;
+                let h = 1 + r;
+                let l = h.div_ceil(1 << k);
+                let v = (l * (1 << k) - h) as u64;
+                let rem = n & !(u64::MAX << r);
+
+                let mut written_bits = 0;
+                written_bits += w.write_unary((l - 1) as u64).unwrap();
+                written_bits += w.write_bits(v, k as usize).unwrap();
+                written_bits += w.write_bits(rem, r).unwrap();
+                written_bits
+            },
+            |r| {
+                let l = r.read_unary().unwrap() + 1;
+                let v = r.read_bits(k as usize).unwrap();
+                let h = l * (1 << k) - v;
+                let re = h - 1;
+                let rem = r.read_bits(re as usize).unwrap();
+                (1 << re) + rem - 1
+            },
             |x| len_pi(x, k),
         );
         bench!(
