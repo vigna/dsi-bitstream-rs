@@ -82,7 +82,7 @@ use super::{len_rice, RiceRead, RiceWrite};
 /// assert_eq!(len_pi(7, 3), 7, "π_3(7)");
 /// ```
 #[must_use]
-#[inline]
+#[inline(always)]
 pub fn len_pi(mut n: u64, k: usize) -> usize {
     n += 1;
     let λ = n.ilog2() as usize;

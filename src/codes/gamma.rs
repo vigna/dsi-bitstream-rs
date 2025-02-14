@@ -28,7 +28,7 @@ use crate::traits::*;
 
 /// Returns the length of the γ code for `n`.
 #[must_use]
-#[inline]
+#[inline(always)]
 pub fn len_gamma_param<const USE_TABLE: bool>(mut n: u64) -> usize {
     if USE_TABLE {
         if let Some(idx) = gamma_tables::LEN.get(n as usize) {
@@ -42,6 +42,7 @@ pub fn len_gamma_param<const USE_TABLE: bool>(mut n: u64) -> usize {
 
 /// Returns the length of the γ code for `n` using
 /// a default value for `USE_TABLE`.
+#[inline(always)]
 pub fn len_gamma(n: u64) -> usize {
     #[cfg(target_arch = "arm")]
     return len_gamma_param::<false>(n);

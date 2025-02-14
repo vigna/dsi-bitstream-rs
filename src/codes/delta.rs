@@ -30,7 +30,7 @@ use crate::traits::*;
 
 /// Returns the length of the δ code for `n`.
 #[must_use]
-#[inline]
+#[inline(always)]
 pub fn len_delta_param<const USE_DELTA_TABLE: bool, const USE_GAMMA_TABLE: bool>(n: u64) -> usize {
     if USE_DELTA_TABLE {
         if let Some(idx) = delta_tables::LEN.get(n as usize) {

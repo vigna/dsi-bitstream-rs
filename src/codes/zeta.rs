@@ -35,7 +35,7 @@ use crate::traits::*;
 
 /// Returns the length of the ζ code with parameter `k` for `n`.
 #[must_use]
-#[inline]
+#[inline(always)]
 #[allow(clippy::collapsible_if)]
 pub fn len_zeta_param<const USE_TABLE: bool>(mut n: u64, k: usize) -> usize {
     if USE_TABLE {

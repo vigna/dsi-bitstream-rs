@@ -27,7 +27,7 @@ use crate::traits::*;
 
 /// Returns the length of the minimal binary code for `n` with upper bound `max`.
 #[must_use]
-#[inline]
+#[inline(always)]
 pub fn len_minimal_binary(n: u64, max: u64) -> usize {
     if max == 0 {
         return 0;
@@ -43,7 +43,7 @@ pub fn len_minimal_binary(n: u64, max: u64) -> usize {
 
 /// Trait for reading minimal binary codes.
 pub trait MinimalBinaryRead<E: Endianness>: BitRead<E> {
-    #[inline]
+    #[inline(always)]
     fn read_minimal_binary(&mut self, max: u64) -> Result<u64, Self::Error> {
         let l = max.ilog2();
         let mut prefix = self.read_bits(l as _)?;
@@ -61,7 +61,7 @@ pub trait MinimalBinaryRead<E: Endianness>: BitRead<E> {
 
 /// Trait for writing minimal binary codes.
 pub trait MinimalBinaryWrite<E: Endianness>: BitWrite<E> {
-    #[inline]
+    #[inline(always)]
     fn write_minimal_binary(&mut self, n: u64, max: u64) -> Result<usize, Self::Error> {
         let l = max.ilog2();
         let limit = ((1_u64 << l) << 1).wrapping_sub(max);
