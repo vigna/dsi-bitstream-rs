@@ -37,3 +37,9 @@ you will have to restore them manually.
 The cargo options in `Cargo.html` and the `rustc` options in `.cargo/config.toml`
 select aggressive optimizations and `--target-cpu=native`. You can modify
 them to run the tests with different options.
+
+## Benchmark on intended distributions
+```
+RUSTFLAGS="-Ctarget-cpu=native" cargo run --bin intended --release | tee intended.tsv
+python3 ./plot_intended.py ./intended.tsv
+```

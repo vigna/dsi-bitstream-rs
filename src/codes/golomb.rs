@@ -37,7 +37,7 @@ use crate::traits::*;
 
 /// Returns the length of the Golomb code for `n` with modulo `b`.
 #[must_use]
-#[inline]
+#[inline(always)]
 pub fn len_golomb(n: u64, b: u64) -> usize {
     (n / b) as usize + 1 + len_minimal_binary(n % b, b)
 }
@@ -50,7 +50,7 @@ pub fn b(p: f64) -> u64 {
 
 /// Trait for reading Golomb codes.
 pub trait GolombRead<E: Endianness>: BitRead<E> + MinimalBinaryRead<E> {
-    #[inline]
+    #[inline(always)]
     fn read_golomb(&mut self, b: u64) -> Result<u64, Self::Error> {
         Ok(self.read_unary()? * b + self.read_minimal_binary(b)?)
     }
@@ -58,7 +58,7 @@ pub trait GolombRead<E: Endianness>: BitRead<E> + MinimalBinaryRead<E> {
 
 /// Trait for writing Golomb codes.
 pub trait GolombWrite<E: Endianness>: BitWrite<E> + MinimalBinaryWrite<E> {
-    #[inline]
+    #[inline(always)]
     fn write_golomb(&mut self, n: u64, b: u64) -> Result<usize, Self::Error> {
         Ok(self.write_unary(n / b)? + self.write_minimal_binary(n % b, b)?)
     }

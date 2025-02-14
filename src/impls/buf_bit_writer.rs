@@ -118,7 +118,7 @@ where
     }
 
     #[allow(unused_mut)]
-    #[inline]
+    #[inline(always)]
     fn write_bits(&mut self, mut value: u64, n_bits: usize) -> Result<usize, Self::Error> {
         debug_assert!(n_bits <= 64);
         #[cfg(feature = "checks")]
@@ -164,7 +164,7 @@ where
         Ok(n_bits)
     }
 
-    #[inline]
+    #[inline(always)]
     #[allow(clippy::collapsible_if)]
     fn write_unary(&mut self, mut value: u64) -> Result<usize, Self::Error> {
         debug_assert_ne!(value, u64::MAX);
@@ -286,7 +286,7 @@ where
         flush_le(self)
     }
 
-    #[inline]
+    #[inline(always)]
     fn write_bits(&mut self, mut value: u64, n_bits: usize) -> Result<usize, Self::Error> {
         debug_assert!(n_bits <= 64);
         #[cfg(feature = "checks")]
@@ -333,7 +333,7 @@ where
         Ok(n_bits)
     }
 
-    #[inline]
+    #[inline(always)]
     #[allow(clippy::collapsible_if)]
     fn write_unary(&mut self, mut value: u64) -> Result<usize, Self::Error> {
         debug_assert_ne!(value, u64::MAX);
@@ -433,6 +433,7 @@ impl<WW: WordWrite, WP: WriteParams> std::io::Write for BufBitWriter<BE, WW, WP>
 where
     u64: CastableInto<WW::Word>,
 {
+    #[inline(always)]
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
         let mut iter = buf.chunks_exact(WW::Word::BYTES);
 
@@ -471,6 +472,7 @@ impl<WW: WordWrite, WP: WriteParams> std::io::Write for BufBitWriter<LE, WW, WP>
 where
     u64: CastableInto<WW::Word>,
 {
+    #[inline(always)]
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
         let mut iter = buf.chunks_exact(WW::Word::BYTES);
 

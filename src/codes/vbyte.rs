@@ -116,7 +116,7 @@ use crate::traits::*;
 
 /// Return the length of the variable-length byte code for `value` in bytes.
 #[must_use]
-#[inline]
+#[inline(always)]
 pub fn byte_len_vbyte(mut value: u64) -> usize {
     let mut len = 1;
     loop {
@@ -131,7 +131,7 @@ pub fn byte_len_vbyte(mut value: u64) -> usize {
 
 /// Return the length of the variable-length byte code for `value` in bits.
 #[must_use]
-#[inline]
+#[inline(always)]
 pub fn bit_len_vbyte(value: u64) -> usize {
     8 * byte_len_vbyte(value)
 }
@@ -153,6 +153,7 @@ pub trait VByteLeRead<E: Endianness>: BitRead<E> {
 }
 
 impl<E: Endianness, B: BitRead<E>> VByteBeRead<E> for B {
+    #[inline(always)]
     fn read_vbyte_be(&mut self) -> Result<u64, Self::Error> {
         let mut byte = self.read_bits(8)?;
         let mut value = byte & 0x7F;
@@ -166,6 +167,7 @@ impl<E: Endianness, B: BitRead<E>> VByteBeRead<E> for B {
 }
 
 impl<E: Endianness, B: BitRead<E>> VByteLeRead<E> for B {
+    #[inline(always)]
     fn read_vbyte_le(&mut self) -> Result<u64, Self::Error> {
         let mut result = 0;
         let mut shift = 0;
@@ -198,6 +200,7 @@ pub trait VByteLeWrite<E: Endianness>: BitWrite<E> {
 }
 
 impl<E: Endianness, B: BitWrite<E>> VByteBeWrite<E> for B {
+    #[inline(always)]
     fn write_vbyte_be(&mut self, mut value: u64) -> Result<usize, Self::Error> {
         let mut buf = [0u8; 10];
         let mut pos = buf.len() - 1;
@@ -218,6 +221,7 @@ impl<E: Endianness, B: BitWrite<E>> VByteBeWrite<E> for B {
 }
 
 impl<E: Endianness, B: BitWrite<E>> VByteLeWrite<E> for B {
+    #[inline(always)]
     fn write_vbyte_le(&mut self, mut value: u64) -> Result<usize, Self::Error> {
         let mut len = 1;
         loop {
@@ -254,6 +258,7 @@ pub fn vbyte_write<E: Endianness, W: std::io::Write>(
 
 /// Encode a natural number to a big-endian byte stream using variable-length
 /// byte codes and return the number of bytes written.
+#[inline(always)]
 pub fn vbyte_write_be<W: std::io::Write>(mut value: u64, w: &mut W) -> std::io::Result<usize> {
     let mut buf = [0u8; 10];
     let mut pos = buf.len() - 1;
@@ -272,6 +277,7 @@ pub fn vbyte_write_be<W: std::io::Write>(mut value: u64, w: &mut W) -> std::io::
 
 /// Encode a natural number to a little-endian byte stream using variable-length
 /// byte codes and return the number of bytes written.
+#[inline(always)]
 pub fn vbyte_write_le<W: std::io::Write>(mut value: u64, writer: &mut W) -> std::io::Result<usize> {
     let mut len = 1;
     loop {
@@ -303,6 +309,7 @@ pub fn vbyte_read<E: Endianness, R: std::io::Read>(reader: &mut R) -> std::io::R
 
 /// Decode a natural number from a big-endian byte stream using variable-length
 /// byte codes.
+#[inline(always)]
 pub fn vbyte_read_be<R: std::io::Read>(reader: &mut R) -> std::io::Result<u64> {
     let mut buf = [0u8; 1];
     let mut value: u64;
@@ -318,6 +325,7 @@ pub fn vbyte_read_be<R: std::io::Read>(reader: &mut R) -> std::io::Result<u64> {
 
 /// Decode a natural number from a little-endian byte stream using
 /// variable-length byte codes.
+#[inline(always)]
 pub fn vbyte_read_le<R: std::io::Read>(reader: &mut R) -> std::io::Result<u64> {
     let mut result = 0;
     let mut shift = 0;
