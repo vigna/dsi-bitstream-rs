@@ -67,9 +67,9 @@ def create_plot(operations, title):
                         np.array(q75_be) - np.array(medians_be)])
     
     # Create the scatter plots with error bars
-    ax.errorbar(x - width/2, medians_le, yerr=yerr_le, fmt='o', 
+    ax.errorbar(x - width/2, medians_le, yerr=yerr_le, fmt='.', 
                 label='Little Endian', capsize=5, capthick=1, markersize=8)
-    ax.errorbar(x + width/2, medians_be, yerr=yerr_be, fmt='o', 
+    ax.errorbar(x + width/2, medians_be, yerr=yerr_be, fmt='.', 
                 label='Big Endian', capsize=5, capthick=1, markersize=8)
     
     # Add rotated text labels for median values
@@ -83,11 +83,10 @@ def create_plot(operations, title):
     
     # Customize the plot
     ax.set_ylabel('Time (ns)')
-    ax.set_title(f'{title} Performance')
+    ax.set_title(f'{title} Performance on intended distribution')
     ax.set_xticks(x)
     ax.set_xticklabels(codes, rotation=45, ha='right')
     ax.legend()
-    ax.grid(True, linestyle='--', alpha=0.7)
     
     # Add a light gray background grid
     ax.set_axisbelow(True)
@@ -99,8 +98,8 @@ def create_plot(operations, title):
     return fig
 
 # Create both plots
-read_fig = create_plot(read_ops, 'Read')
-write_fig = create_plot(write_ops, 'Write')
+read_fig = create_plot(read_ops, 'Read (u32 read word)')
+write_fig = create_plot(write_ops, 'Write (u64 write word)')
 
 # Save the plots
 read_fig.savefig('read_performance.png', dpi=300, bbox_inches='tight')
