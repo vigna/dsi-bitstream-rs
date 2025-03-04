@@ -592,9 +592,16 @@ type ReadFn<E, CR> = fn(&mut CR) -> Result<u64, <CR as BitRead<E>>::Error>;
 ///
 /// Note that since selection of the code happens in the [`new`](FuncCodeReader::new)
 /// method, it is more efficient to clone a [`FuncCodeReader`] than to create a new one.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
 pub struct FuncCodeReader<E: Endianness, CR: CodesRead<E> + ?Sized>(ReadFn<E, CR>);
+
+/// manually implement Clone to avoid the Clone bound on CR and E
+impl<E: Endianness, CR: CodesRead<E> + ?Sized> Clone for FuncCodeReader<E, CR> {
+    fn clone(&self) -> Self {
+        Self(self.0)
+    }
+}
 
 impl<E: Endianness, CR: CodesRead<E> + ?Sized> FuncCodeReader<E, CR> {
     const UNARY: ReadFn<E, CR> = |reader: &mut CR| reader.read_unary();
@@ -750,9 +757,16 @@ type WriteFn<E, CW> = fn(&mut CW, u64) -> Result<usize, <CW as BitWrite<E>>::Err
 /// Note that since selection of the code happens in the
 /// [`new`](FuncCodeReader::new) method, it is more efficient to clone a
 /// [`FuncCodeWriter`] than to create a new one.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
 pub struct FuncCodeWriter<E: Endianness, CW: CodesWrite<E> + ?Sized>(WriteFn<E, CW>);
+
+/// manually implement Clone to avoid the Clone bound on CR and E
+impl<E: Endianness, CR: CodesWrite<E> + ?Sized> Clone for FuncCodeWriter<E, CR> {
+    fn clone(&self) -> Self {
+        Self(self.0)
+    }
+}
 
 impl<E: Endianness, CW: CodesWrite<E> + ?Sized> FuncCodeWriter<E, CW> {
     const UNARY: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_unary(value);
