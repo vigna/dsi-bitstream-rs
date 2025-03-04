@@ -371,6 +371,7 @@ pub trait CodeLen {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
+#[cfg_attr(feature = "fuzz", derive(arbitrary::Arbitrary))]
 #[non_exhaustive]
 /// An enum whose variants represent all the available codes.
 ///
