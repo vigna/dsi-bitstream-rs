@@ -103,6 +103,9 @@ pub mod params;
 pub mod dispatch;
 pub use dispatch::*;
 
+pub mod dispatch_factory;
+pub use dispatch_factory::{CodeReaderFactory, FuncCodeReaderFactory};
+
 pub mod gamma;
 pub use gamma::{
     len_gamma, len_gamma_param, GammaRead, GammaReadParam, GammaWrite, GammaWriteParam,
