@@ -1090,6 +1090,164 @@ impl<E: Endianness, CW: CodesWrite<E> + ?Sized> StaticCodeWrite<E, CW> for FuncC
     }
 }
 
+type LenFn = fn(u64) -> usize;
+
+/// A newtype containing a function pointer dispatching the read method for a
+/// code.
+///
+/// This is a more efficient way to pass a [`StaticCodeRead`] to a method, as
+/// a [`FuncCodeReader`] does not need to do a runtime test to dispatch the correct
+/// code.
+///
+/// Instances can be obtained by calling the [`new`](FuncCodeReader::new) method with
+///  method with a variant of the [`Codes`] enum, or by calling the
+/// [`new_with_func`](FuncCodeReader::new_with_func) method with a function pointer.
+///
+/// Note that since selection of the code happens in the [`new`](FuncCodeReader::new)
+/// method, it is more efficient to clone a [`FuncCodeReader`] than to create a new one.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
+pub struct FuncCodeLen(LenFn);
+
+impl FuncCodeLen {
+    const UNARY: LenFn = |value| value as usize + 1;
+    const GAMMA: LenFn = |value| len_gamma(value);
+    const DELTA: LenFn = |value| len_delta(value);
+    const OMEGA: LenFn = |value| len_omega(value);
+    const VBYTE_BE: LenFn = |value| bit_len_vbyte(value);
+    const VBYTE_LE: LenFn = |value| bit_len_vbyte(value);
+    const ZETA2: LenFn = |value| len_zeta(value, 2);
+    const ZETA3: LenFn = |value| len_zeta(value, 3);
+    const ZETA4: LenFn = |value| len_zeta(value, 4);
+    const ZETA5: LenFn = |value| len_zeta(value, 5);
+    const ZETA6: LenFn = |value| len_zeta(value, 6);
+    const ZETA7: LenFn = |value| len_zeta(value, 7);
+    const ZETA8: LenFn = |value| len_zeta(value, 8);
+    const ZETA9: LenFn = |value| len_zeta(value, 9);
+    const ZETA10: LenFn = |value| len_zeta(value, 10);
+    const RICE1: LenFn = |value| len_rice(value, 1);
+    const RICE2: LenFn = |value| len_rice(value, 2);
+    const RICE3: LenFn = |value| len_rice(value, 3);
+    const RICE4: LenFn = |value| len_rice(value, 4);
+    const RICE5: LenFn = |value| len_rice(value, 5);
+    const RICE6: LenFn = |value| len_rice(value, 6);
+    const RICE7: LenFn = |value| len_rice(value, 7);
+    const RICE8: LenFn = |value| len_rice(value, 8);
+    const RICE9: LenFn = |value| len_rice(value, 9);
+    const RICE10: LenFn = |value| len_rice(value, 10);
+    const PI1: LenFn = |value| len_pi(value, 1);
+    const PI2: LenFn = |value| len_pi(value, 2);
+    const PI3: LenFn = |value| len_pi(value, 3);
+    const PI4: LenFn = |value| len_pi(value, 4);
+    const PI5: LenFn = |value| len_pi(value, 5);
+    const PI6: LenFn = |value| len_pi(value, 6);
+    const PI7: LenFn = |value| len_pi(value, 7);
+    const PI8: LenFn = |value| len_pi(value, 8);
+    const PI9: LenFn = |value| len_pi(value, 9);
+    const PI10: LenFn = |value| len_pi(value, 10);
+    const GOLOMB3: LenFn = |value| len_golomb(value, 3);
+    const GOLOMB5: LenFn = |value| len_golomb(value, 5);
+    const GOLOMB6: LenFn = |value| len_golomb(value, 6);
+    const GOLOMB7: LenFn = |value| len_golomb(value, 7);
+    const GOLOMB9: LenFn = |value| len_golomb(value, 9);
+    const GOLOMB10: LenFn = |value| len_golomb(value, 10);
+    const EXP_GOLOMB1: LenFn = |value| len_exp_golomb(value, 1);
+    const EXP_GOLOMB2: LenFn = |value| len_exp_golomb(value, 2);
+    const EXP_GOLOMB3: LenFn = |value| len_exp_golomb(value, 3);
+    const EXP_GOLOMB4: LenFn = |value| len_exp_golomb(value, 4);
+    const EXP_GOLOMB5: LenFn = |value| len_exp_golomb(value, 5);
+    const EXP_GOLOMB6: LenFn = |value| len_exp_golomb(value, 6);
+    const EXP_GOLOMB7: LenFn = |value| len_exp_golomb(value, 7);
+    const EXP_GOLOMB8: LenFn = |value| len_exp_golomb(value, 8);
+    const EXP_GOLOMB9: LenFn = |value| len_exp_golomb(value, 9);
+    const EXP_GOLOMB10: LenFn = |value| len_exp_golomb(value, 10);
+    /// Return a new [`FuncCodeLen`] for the given code.
+    ///
+    /// # Errors
+    ///
+    /// The method will return an error if there is no constant
+    /// for the given code in [`FuncCodeLen`].
+    pub fn new(code: Codes) -> anyhow::Result<Self> {
+        let len_func = match code {
+            Codes::Unary => Self::UNARY,
+            Codes::Gamma => Self::GAMMA,
+            Codes::Delta => Self::DELTA,
+            Codes::Omega => Self::OMEGA,
+            Codes::VByteBe => Self::VBYTE_BE,
+            Codes::VByteLe => Self::VBYTE_LE,
+            Codes::Zeta { k: 1 } => Self::GAMMA,
+            Codes::Zeta { k: 2 } => Self::ZETA2,
+            Codes::Zeta { k: 3 } => Self::ZETA3,
+            Codes::Zeta { k: 4 } => Self::ZETA4,
+            Codes::Zeta { k: 5 } => Self::ZETA5,
+            Codes::Zeta { k: 6 } => Self::ZETA6,
+            Codes::Zeta { k: 7 } => Self::ZETA7,
+            Codes::Zeta { k: 8 } => Self::ZETA8,
+            Codes::Zeta { k: 9 } => Self::ZETA9,
+            Codes::Zeta { k: 10 } => Self::ZETA10,
+            Codes::Rice { log2_b: 0 } => Self::UNARY,
+            Codes::Rice { log2_b: 1 } => Self::RICE1,
+            Codes::Rice { log2_b: 2 } => Self::RICE2,
+            Codes::Rice { log2_b: 3 } => Self::RICE3,
+            Codes::Rice { log2_b: 4 } => Self::RICE4,
+            Codes::Rice { log2_b: 5 } => Self::RICE5,
+            Codes::Rice { log2_b: 6 } => Self::RICE6,
+            Codes::Rice { log2_b: 7 } => Self::RICE7,
+            Codes::Rice { log2_b: 8 } => Self::RICE8,
+            Codes::Rice { log2_b: 9 } => Self::RICE9,
+            Codes::Rice { log2_b: 10 } => Self::RICE10,
+            Codes::Pi { k: 0 } => Self::GAMMA,
+            Codes::Pi { k: 1 } => Self::PI1,
+            Codes::Pi { k: 2 } => Self::PI2,
+            Codes::Pi { k: 3 } => Self::PI3,
+            Codes::Pi { k: 4 } => Self::PI4,
+            Codes::Pi { k: 5 } => Self::PI5,
+            Codes::Pi { k: 6 } => Self::PI6,
+            Codes::Pi { k: 7 } => Self::PI7,
+            Codes::Pi { k: 8 } => Self::PI8,
+            Codes::Pi { k: 9 } => Self::PI9,
+            Codes::Pi { k: 10 } => Self::PI10,
+            Codes::Golomb { b: 1 } => Self::UNARY,
+            Codes::Golomb { b: 2 } => Self::RICE1,
+            Codes::Golomb { b: 3 } => Self::GOLOMB3,
+            Codes::Golomb { b: 4 } => Self::RICE2,
+            Codes::Golomb { b: 5 } => Self::GOLOMB5,
+            Codes::Golomb { b: 6 } => Self::GOLOMB6,
+            Codes::Golomb { b: 7 } => Self::GOLOMB7,
+            Codes::Golomb { b: 8 } => Self::RICE3,
+            Codes::Golomb { b: 9 } => Self::GOLOMB9,
+            Codes::Golomb { b: 10 } => Self::GOLOMB10,
+            Codes::ExpGolomb { k: 0 } => Self::GAMMA,
+            Codes::ExpGolomb { k: 1 } => Self::EXP_GOLOMB1,
+            Codes::ExpGolomb { k: 2 } => Self::EXP_GOLOMB2,
+            Codes::ExpGolomb { k: 3 } => Self::EXP_GOLOMB3,
+            Codes::ExpGolomb { k: 4 } => Self::EXP_GOLOMB4,
+            Codes::ExpGolomb { k: 5 } => Self::EXP_GOLOMB5,
+            Codes::ExpGolomb { k: 6 } => Self::EXP_GOLOMB6,
+            Codes::ExpGolomb { k: 7 } => Self::EXP_GOLOMB7,
+            Codes::ExpGolomb { k: 8 } => Self::EXP_GOLOMB8,
+            Codes::ExpGolomb { k: 9 } => Self::EXP_GOLOMB9,
+            Codes::ExpGolomb { k: 10 } => Self::EXP_GOLOMB10,
+            _ => anyhow::bail!("Unsupported read dispatch for code {:?}", code),
+        };
+        Ok(Self(len_func))
+    }
+
+    /// Return a new [`FuncCodeReader`] for the given function.
+    pub fn new_with_func(len_func: LenFn) -> Self {
+        Self(len_func)
+    }
+}
+
+/// Here we do not depend on the bitstream, so there is no need for a "static"
+/// version of the trait.
+impl CodeLen for FuncCodeLen {
+    #[inline(always)]
+    fn len(&self, value: u64) -> usize {
+        (self.0)(value)
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
 /// A zero-sized struct with a const generic parameter representing a code using
