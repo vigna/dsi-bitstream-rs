@@ -369,7 +369,7 @@ pub trait CodeLen {
     fn len(&self, value: u64) -> usize;
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, Eq)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
 #[cfg_attr(feature = "fuzz", derive(arbitrary::Arbitrary))]
 #[non_exhaustive]
@@ -393,6 +393,48 @@ pub enum Codes {
     Golomb { b: usize },
     ExpGolomb { k: usize },
     Rice { log2_b: usize },
+}
+
+/// Some codes are equivalent, so we implement [`PartialEq`] to make them
+/// interchangeable so `Codes::Unary == Codes::Rice{log2_b: 0}`.
+impl PartialEq for Codes {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            // First we check the equivalence classes
+            (
+                Self::Unary | Self::Rice { log2_b: 0 } | Self::Golomb { b: 1 },
+                Self::Unary | Self::Rice { log2_b: 0 } | Self::Golomb { b: 1 },
+            ) => true,
+            (
+                Self::Gamma | Self::Zeta { k: 1 } | Self::ExpGolomb { k: 0 },
+                Self::Gamma | Self::Zeta { k: 1 } | Self::ExpGolomb { k: 0 },
+            ) => true,
+            (
+                Self::Golomb { b: 2 } | Self::Rice { log2_b: 1 },
+                Self::Golomb { b: 2 } | Self::Rice { log2_b: 1 },
+            ) => true,
+            (
+                Self::Golomb { b: 4 } | Self::Rice { log2_b: 2 },
+                Self::Golomb { b: 4 } | Self::Rice { log2_b: 2 },
+            ) => true,
+            (
+                Self::Golomb { b: 8 } | Self::Rice { log2_b: 3 },
+                Self::Golomb { b: 8 } | Self::Rice { log2_b: 3 },
+            ) => true,
+            // we know that we are not in a special case, so we can directly
+            // compare them naively
+            (Self::Delta, Self::Delta) => true,
+            (Self::Omega, Self::Omega) => true,
+            (Self::VByteLe, Self::VByteLe) => true,
+            (Self::VByteBe, Self::VByteBe) => true,
+            (Self::Zeta { k }, Self::Zeta { k: k2 }) => k == k2,
+            (Self::Pi { k }, Self::Pi { k: k2 }) => k == k2,
+            (Self::Golomb { b }, Self::Golomb { b: b2 }) => b == b2,
+            (Self::ExpGolomb { k }, Self::ExpGolomb { k: k2 }) => k == k2,
+            (Self::Rice { log2_b }, Self::Rice { log2_b: log2_b2 }) => log2_b == log2_b2,
+            _ => false,
+        }
+    }
 }
 
 impl Codes {
@@ -419,6 +461,137 @@ impl Codes {
         value: u64,
     ) -> Result<usize, CW::Error> {
         DynamicCodeWrite::write(self, writer, value)
+    }
+
+    /// Convert a code to the constant enum [`code_consts`] used for [`ConstCode`].
+    /// This is mostly used to verify that the code is supported by
+    /// [`ConstCode`].
+    pub fn to_code_const(&self) -> Result<usize> {
+        Ok(match self {
+            Self::Unary => code_consts::UNARY,
+            Self::Gamma => code_consts::GAMMA,
+            Self::Delta => code_consts::DELTA,
+            Self::Omega => code_consts::OMEGA,
+            Self::VByteLe => code_consts::VBYTE_LE,
+            Self::VByteBe => code_consts::VBYTE_BE,
+            Self::Zeta { k: 1 } => code_consts::ZETA1,
+            Self::Zeta { k: 2 } => code_consts::ZETA2,
+            Self::Zeta { k: 3 } => code_consts::ZETA3,
+            Self::Zeta { k: 4 } => code_consts::ZETA4,
+            Self::Zeta { k: 5 } => code_consts::ZETA5,
+            Self::Zeta { k: 6 } => code_consts::ZETA6,
+            Self::Zeta { k: 7 } => code_consts::ZETA7,
+            Self::Zeta { k: 8 } => code_consts::ZETA8,
+            Self::Zeta { k: 9 } => code_consts::ZETA9,
+            Self::Zeta { k: 10 } => code_consts::ZETA10,
+            Self::Rice { log2_b: 0 } => code_consts::RICE0,
+            Self::Rice { log2_b: 1 } => code_consts::RICE1,
+            Self::Rice { log2_b: 2 } => code_consts::RICE2,
+            Self::Rice { log2_b: 3 } => code_consts::RICE3,
+            Self::Rice { log2_b: 4 } => code_consts::RICE4,
+            Self::Rice { log2_b: 5 } => code_consts::RICE5,
+            Self::Rice { log2_b: 6 } => code_consts::RICE6,
+            Self::Rice { log2_b: 7 } => code_consts::RICE7,
+            Self::Rice { log2_b: 8 } => code_consts::RICE8,
+            Self::Rice { log2_b: 9 } => code_consts::RICE9,
+            Self::Rice { log2_b: 10 } => code_consts::RICE10,
+            Self::Pi { k: 0 } => code_consts::PI0,
+            Self::Pi { k: 1 } => code_consts::PI1,
+            Self::Pi { k: 2 } => code_consts::PI2,
+            Self::Pi { k: 3 } => code_consts::PI3,
+            Self::Pi { k: 4 } => code_consts::PI4,
+            Self::Pi { k: 5 } => code_consts::PI5,
+            Self::Pi { k: 6 } => code_consts::PI6,
+            Self::Pi { k: 7 } => code_consts::PI7,
+            Self::Pi { k: 8 } => code_consts::PI8,
+            Self::Pi { k: 9 } => code_consts::PI9,
+            Self::Pi { k: 10 } => code_consts::PI10,
+            Self::Golomb { b: 1 } => code_consts::GOLOMB1,
+            Self::Golomb { b: 2 } => code_consts::GOLOMB2,
+            Self::Golomb { b: 3 } => code_consts::GOLOMB3,
+            Self::Golomb { b: 4 } => code_consts::GOLOMB4,
+            Self::Golomb { b: 5 } => code_consts::GOLOMB5,
+            Self::Golomb { b: 6 } => code_consts::GOLOMB6,
+            Self::Golomb { b: 7 } => code_consts::GOLOMB7,
+            Self::Golomb { b: 8 } => code_consts::GOLOMB8,
+            Self::Golomb { b: 9 } => code_consts::GOLOMB9,
+            Self::Golomb { b: 10 } => code_consts::GOLOMB10,
+            Self::ExpGolomb { k: 0 } => code_consts::EXP_GOLOMB0,
+            Self::ExpGolomb { k: 1 } => code_consts::EXP_GOLOMB1,
+            Self::ExpGolomb { k: 2 } => code_consts::EXP_GOLOMB2,
+            Self::ExpGolomb { k: 3 } => code_consts::EXP_GOLOMB3,
+            Self::ExpGolomb { k: 4 } => code_consts::EXP_GOLOMB4,
+            Self::ExpGolomb { k: 5 } => code_consts::EXP_GOLOMB5,
+            Self::ExpGolomb { k: 6 } => code_consts::EXP_GOLOMB6,
+            Self::ExpGolomb { k: 7 } => code_consts::EXP_GOLOMB7,
+            Self::ExpGolomb { k: 8 } => code_consts::EXP_GOLOMB8,
+            Self::ExpGolomb { k: 9 } => code_consts::EXP_GOLOMB9,
+            Self::ExpGolomb { k: 10 } => code_consts::EXP_GOLOMB10,
+            _ => {
+                return Err(anyhow::anyhow!(
+                    "Code {:?} not supported as const code",
+                    self
+                ))
+            }
+        })
+    }
+
+    /// Convert a value from [`code_consts`] to a code.
+    pub fn from_code_const(const_code: usize) -> Result<Self> {
+        Ok(match const_code {
+            code_consts::UNARY => Self::Unary,
+            code_consts::GAMMA => Self::Gamma,
+            code_consts::DELTA => Self::Delta,
+            code_consts::OMEGA => Self::Omega,
+            code_consts::VBYTE_LE => Self::VByteLe,
+            code_consts::VBYTE_BE => Self::VByteBe,
+            code_consts::ZETA2 => Self::Zeta { k: 2 },
+            code_consts::ZETA3 => Self::Zeta { k: 3 },
+            code_consts::ZETA4 => Self::Zeta { k: 4 },
+            code_consts::ZETA5 => Self::Zeta { k: 5 },
+            code_consts::ZETA6 => Self::Zeta { k: 6 },
+            code_consts::ZETA7 => Self::Zeta { k: 7 },
+            code_consts::ZETA8 => Self::Zeta { k: 8 },
+            code_consts::ZETA9 => Self::Zeta { k: 9 },
+            code_consts::ZETA10 => Self::Zeta { k: 10 },
+            code_consts::RICE1 => Self::Rice { log2_b: 1 },
+            code_consts::RICE2 => Self::Rice { log2_b: 2 },
+            code_consts::RICE3 => Self::Rice { log2_b: 3 },
+            code_consts::RICE4 => Self::Rice { log2_b: 4 },
+            code_consts::RICE5 => Self::Rice { log2_b: 5 },
+            code_consts::RICE6 => Self::Rice { log2_b: 6 },
+            code_consts::RICE7 => Self::Rice { log2_b: 7 },
+            code_consts::RICE8 => Self::Rice { log2_b: 8 },
+            code_consts::RICE9 => Self::Rice { log2_b: 9 },
+            code_consts::RICE10 => Self::Rice { log2_b: 10 },
+            code_consts::PI1 => Self::Pi { k: 1 },
+            code_consts::PI2 => Self::Pi { k: 2 },
+            code_consts::PI3 => Self::Pi { k: 3 },
+            code_consts::PI4 => Self::Pi { k: 4 },
+            code_consts::PI5 => Self::Pi { k: 5 },
+            code_consts::PI6 => Self::Pi { k: 6 },
+            code_consts::PI7 => Self::Pi { k: 7 },
+            code_consts::PI8 => Self::Pi { k: 8 },
+            code_consts::PI9 => Self::Pi { k: 9 },
+            code_consts::PI10 => Self::Pi { k: 10 },
+            code_consts::GOLOMB3 => Self::Golomb { b: 3 },
+            code_consts::GOLOMB5 => Self::Golomb { b: 5 },
+            code_consts::GOLOMB6 => Self::Golomb { b: 6 },
+            code_consts::GOLOMB7 => Self::Golomb { b: 7 },
+            code_consts::GOLOMB9 => Self::Golomb { b: 9 },
+            code_consts::GOLOMB10 => Self::Golomb { b: 10 },
+            code_consts::EXP_GOLOMB1 => Self::ExpGolomb { k: 1 },
+            code_consts::EXP_GOLOMB2 => Self::ExpGolomb { k: 2 },
+            code_consts::EXP_GOLOMB3 => Self::ExpGolomb { k: 3 },
+            code_consts::EXP_GOLOMB4 => Self::ExpGolomb { k: 4 },
+            code_consts::EXP_GOLOMB5 => Self::ExpGolomb { k: 5 },
+            code_consts::EXP_GOLOMB6 => Self::ExpGolomb { k: 6 },
+            code_consts::EXP_GOLOMB7 => Self::ExpGolomb { k: 7 },
+            code_consts::EXP_GOLOMB8 => Self::ExpGolomb { k: 8 },
+            code_consts::EXP_GOLOMB9 => Self::ExpGolomb { k: 9 },
+            code_consts::EXP_GOLOMB10 => Self::ExpGolomb { k: 10 },
+            _ => return Err(anyhow::anyhow!("Code {} not supported", const_code)),
+        })
     }
 }
 

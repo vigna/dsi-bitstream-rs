@@ -23,7 +23,6 @@ integers using different codes.
 */
 
 mod count;
-use common_traits::{AsBytes, SignedInt, UnsignedInt};
 pub use count::*;
 
 mod dbg_codes;
