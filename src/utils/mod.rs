@@ -1,12 +1,13 @@
 /*
  * SPDX-FileCopyrightText: 2023 Sebastiano Vigna
+ * SPDX-FileCopyrightText: 2025 Tommaso Fontana
  *
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
 /*!
 
-Debug helpers and statistics.
+Helpers and statistics.
 
 [`CountBitReader`] and [`CountBitWriter`] keep track of the number
 of bits read or written to a [`BitRead`](crate::traits::BitRead)
@@ -20,14 +21,26 @@ operation beformed by a [`BitRead`](crate::traits::BitRead) or
 [`CodesStats`] keeps track of the space needed to store a stream of
 integers using different codes.
 
+It also provides [`sample_implied_distribution`], it is an infinite iterator that
+returns samples from the implied distribution of a code,
+and the helper functions and structs we use to implement it:
+- [`FindChangePoints`] to find, using exponential search, the points where a
+  non decreasing monotonic function changes value.
+- [`get_implied_distribution`] to calculate the implied distribution of a code.
+
 */
 
 mod count;
-use common_traits::{AsBytes, SignedInt, UnsignedInt};
 pub use count::*;
 
 mod dbg_codes;
 pub use dbg_codes::*;
+
+mod find_change;
+pub use find_change::*;
+
+mod implied;
+pub use implied::*;
 
 pub mod stats;
 pub use stats::{CodesStats, CodesStatsWrapper};
