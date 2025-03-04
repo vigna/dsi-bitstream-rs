@@ -27,8 +27,8 @@ name = "main"
 path = "src/main.rs"
 
 [[bin]]
-name = "intended"
-path = "src/intended.rs"
+name = "implied"
+path = "src/implied.rs"
 
 [profile.release]
 opt-level = 3             # like --release

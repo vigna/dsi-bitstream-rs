@@ -1,8 +1,16 @@
+/*
+ * SPDX-FileCopyrightText: 2025 Tommaso Fontana
+ *
+ * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
+ */
+
 /// Iters the points where the given function change value.
 /// This only works for monotonic non decreasing functions.
 ///
 /// Each call to next returns a tuple with the first input where the function
 /// changes value and the new value.
+///
+/// This is useful to generate data following the implied distribution of a code.
 pub struct FindChangePoints<F: Fn(u64) -> usize> {
     func: F,
     current: u64,
@@ -40,7 +48,16 @@ impl<F: Fn(u64) -> usize> Iterator for FindChangePoints<F> {
                 return None;
             }
             // check if we found a change point
-            if (self.func)(self.current + step) != self.prev_value {
+            let new_val = (self.func)(self.current + step);
+            debug_assert!(
+                new_val >= self.prev_value,
+                "Function is not monotonic as f({}) = {} < {} = f({})",
+                self.current + step,
+                new_val,
+                self.prev_value,
+                self.current,
+            );
+            if new_val != self.prev_value {
                 break;
             }
             step *= 2;
@@ -52,7 +69,16 @@ impl<F: Fn(u64) -> usize> Iterator for FindChangePoints<F> {
 
         while left < right {
             let mid = left + (right - left) / 2;
-            if (self.func)(mid) == self.prev_value {
+            let mid_val = (self.func)(mid);
+            debug_assert!(
+                mid_val >= self.prev_value,
+                "Function is not monotonic as f({}) = {} < {} = f({})",
+                mid,
+                mid_val,
+                self.prev_value,
+                self.current,
+            );
+            if mid_val == self.prev_value {
                 left = mid + 1;
             } else {
                 right = mid;
@@ -60,8 +86,17 @@ impl<F: Fn(u64) -> usize> Iterator for FindChangePoints<F> {
         }
 
         // Update state
+        let new_value = (self.func)(left);
+        debug_assert!(
+            new_value >= self.prev_value,
+            "Function is not monotonic as f({}) = {} < {} = f({})",
+            left,
+            new_value,
+            self.prev_value,
+            self.current,
+        );
+
         self.current = left;
-        let new_value = (self.func)(self.current);
         self.prev_value = new_value;
         Some((self.current, new_value))
     }
@@ -73,11 +108,11 @@ mod test {
 
     #[test]
     fn test_find_change_points() {
-        test_func(dsi_bitstream::codes::len_gamma);
-        test_func(dsi_bitstream::codes::len_delta);
-        test_func(dsi_bitstream::codes::len_omega);
-        test_func(|x| dsi_bitstream::codes::len_zeta(x, 3));
-        test_func(|x| dsi_bitstream::codes::len_pi(x, 3));
+        test_func(crate::codes::len_gamma);
+        test_func(crate::codes::len_delta);
+        test_func(crate::codes::len_omega);
+        test_func(|x| crate::codes::len_zeta(x, 3));
+        test_func(|x| crate::codes::len_pi(x, 3));
     }
 
     fn test_func(func: impl Fn(u64) -> usize) {

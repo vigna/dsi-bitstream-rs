@@ -1,8 +1,7 @@
 use dsi_bitstream::prelude::*;
+use dsi_bitstream::utils::sample_implied_distribution;
 use rand::rngs::SmallRng;
-use rand::Rng;
 use rand::SeedableRng;
-use rand_distr::Distribution;
 use std::hint::black_box;
 use std::time::Instant;
 
@@ -11,9 +10,6 @@ use metrics::*;
 
 pub mod utils;
 use utils::*;
-
-pub mod find_change;
-use find_change::*;
 
 /// Number of read/write operations tested for each combination of parameters.
 pub const N: usize = 5_000_000;
@@ -40,8 +36,10 @@ fn bench<E: Endianness>(
     for<'a> BufBitWriter<E, MemWordWriterVec<WriteWord, &'a mut Vec<WriteWord>>>: BitWrite<E>,
     for<'a> BufBitReader<E, MemWordReader<ReadWord, &'a [ReadWord]>>: BitRead<E>,
 {
-
-    let data = gen_data(&len, N);
+    let mut rng = SmallRng::seed_from_u64(42);
+    let data = sample_implied_distribution(&len, &mut rng)
+        .take(N)
+        .collect::<Vec<_>>();
 
     // calculate the total number of bits we will write
     // so we can guarantee that the buffer always has enough capacity
@@ -50,7 +48,6 @@ fn bench<E: Endianness>(
 
     let mut read = MetricsStream::with_capacity(BENCH_ITERS);
     let mut write = MetricsStream::with_capacity(BENCH_ITERS);
-
 
     for iter in 0..(WARMUP_ITERS + BENCH_ITERS) {
         buffer.clear();
@@ -112,43 +109,6 @@ fn bench<E: Endianness>(
     );
 }
 
-/// Given the len function of a code, generate data following its intended
-/// distribution, i.e. a code-word with length l has probability 2^(-l).
-/// This code works only with monotonic non decreasing len functions.
-fn gen_data(f: impl Fn(u64) -> usize, n_samples: usize) -> Vec<u64> {
-    let change_points = FindChangePoints::new(f)
-        .take_while(|(_input, len)| *len <= 128)
-        .collect::<Vec<_>>();
-    // convert to len probabilities
-    let probabilities = change_points
-        .windows(2)
-        .map(|window| {
-            let (input, len) = window[0];
-            let (next_input, _next_len) = window[1];
-            let prob = 2.0_f64.powi(-(len as i32));
-            prob * (next_input - input) as f64
-        })
-        .collect::<Vec<_>>();
-    // TODO!: this ignores the last change point
-
-    let distr = 
-    rand_distr::weighted::WeightedAliasIndex::new(probabilities).unwrap();
-    let mut rng = SmallRng::seed_from_u64(0xbadc0ffee);
-
-    (0..n_samples)
-        .map(|_| {
-            // sample a len with the correct probability
-            let idx = distr.sample(&mut rng);
-            // now we sample a random value with the sampled len
-            let (start_input, _len) = change_points[idx];
-            let (end_input, _len) = change_points[idx + 1];
-            rng.random_range(start_input..end_input)
-        })
-        .collect::<Vec<_>>()
-}
-
-
-
 pub fn main() {
     // tricks to reduce the noise
     #[cfg(target_os = "linux")]
@@ -160,68 +120,56 @@ pub fn main() {
 
     macro_rules! bench {
         ($name:expr, $write:expr, $read:expr, $len:expr,) => {
-            bench::<LE>(
-                calibration,
-                $name,
-                $write,
-                $read,
-                $len,
-            );
-            bench::<BE>(
-                calibration,
-                $name,
-                $write,
-                $read,
-                $len,
-            );
+            bench::<LE>(calibration, $name, $write, $read, $len);
+            bench::<BE>(calibration, $name, $write, $read, $len);
         };
     }
 
     bench!(
-        "unary", 
+        "unary",
         |w, x| w.write_unary(x).unwrap(),
         |r| r.read_unary().unwrap(),
         |x| x as usize + 1,
     );
     bench!(
-        "gamma", 
+        "gamma",
         |w, x| w.write_gamma(x).unwrap(),
         |r| r.read_gamma().unwrap(),
-        |x| len_gamma(x),
+        len_gamma,
     );
     bench!(
-        "delta", 
+        "delta",
         |w, x| w.write_delta(x).unwrap(),
         |r| r.read_delta().unwrap(),
-        |x| len_delta(x),
+        len_delta,
     );
     bench!(
-        "omega", 
+        "omega",
         |w, x| w.write_omega(x).unwrap(),
         |r| r.read_omega().unwrap(),
-        |x| len_omega(x),
+        len_omega,
     );
     bench!(
-        "vbyte_be", 
+        "vbyte_be",
         |w, x| w.write_vbyte_be(x).unwrap(),
         |r| r.read_vbyte_be().unwrap(),
-        |x| bit_len_vbyte(x),
+        bit_len_vbyte,
     );
     bench!(
-        "vbyte_le", 
+        "vbyte_le",
         |w, x| w.write_vbyte_le(x).unwrap(),
         |r| r.read_vbyte_le().unwrap(),
-        |x| bit_len_vbyte(x),
+        bit_len_vbyte,
     );
     bench!(
-        "zeta_3_table", 
+        "zeta_3_table",
         |w, x| w.write_zeta3(x).unwrap(),
         |r| r.read_zeta3().unwrap(),
         |x| len_zeta(x, 3),
     );
     for k in 2..4 {
         bench!(
-            format!("zeta_{}", k), 
+            format!("zeta_{}", k),
             |w, x| w.write_zeta(x, k).unwrap(),
             |r| r.read_zeta(k).unwrap(),
             |x| len_zeta(x, k),
@@ -229,13 +177,13 @@ pub fn main() {
     }
     for k in 2..5 {
         bench!(
-            format!("pi_{}", k), 
+            format!("pi_{}", k),
             |w, x| w.write_pi(x, k).unwrap(),
             |r| r.read_pi(k).unwrap(),
             |x| len_pi(x, k),
         );
         bench!(
-            format!("pi_old_{}", k), 
+            format!("pi_old_{}", k),
             |w, mut n| {
                 n += 1; // π codes are indexed from 1
                 let r = n.ilog2() as usize;
@@ -246,13 +194,13 @@ pub fn main() {
 
                 let mut written_bits = 0;
                 written_bits += w.write_unary((l - 1) as u64).unwrap();
-                written_bits += w.write_bits(v, k as usize).unwrap();
+                written_bits += w.write_bits(v, k).unwrap();
                 written_bits += w.write_bits(rem, r).unwrap();
                 written_bits
             },
             |r| {
                 let l = r.read_unary().unwrap() + 1;
-                let v = r.read_bits(k as usize).unwrap();
+                let v = r.read_bits(k).unwrap();
                 let h = l * (1 << k) - v;
                 let re = h - 1;
                 let rem = r.read_bits(re as usize).unwrap();
@@ -261,19 +209,19 @@ pub fn main() {
             |x| len_pi(x, k),
         );
         bench!(
-            format!("rice_{}", k), 
+            format!("rice_{}", k),
             |w, x| w.write_rice(x, k).unwrap(),
             |r| r.read_rice(k).unwrap(),
             |x| len_rice(x, k),
         );
         bench!(
-            format!("exp_golomb_{}", k), 
+            format!("exp_golomb_{}", k),
             |w, x| w.write_exp_golomb(x, k).unwrap(),
             |r| r.read_exp_golomb(k).unwrap(),
             |x| len_exp_golomb(x, k),
         );
         bench!(
-            format!("golomb_{}", k), 
+            format!("golomb_{}", k),
             |w, x| w.write_exp_golomb(x, k).unwrap(),
             |r| r.read_exp_golomb(k).unwrap(),
             |x| len_exp_golomb(x, k),
