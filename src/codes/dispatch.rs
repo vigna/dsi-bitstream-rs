@@ -905,6 +905,11 @@ impl<E: Endianness, CR: CodesRead<E> + ?Sized> FuncCodeReader<E, CR> {
     pub fn new_with_func(read_func: ReadFn<E, CR>) -> Self {
         Self(read_func)
     }
+
+    /// Get the function pointer for the code.
+    pub fn get_func(&self) -> ReadFn<E, CR> {
+        self.0
+    }
 }
 
 impl<E: Endianness, CR: CodesRead<E> + ?Sized> StaticCodeRead<E, CR> for FuncCodeReader<E, CR> {
@@ -1081,6 +1086,11 @@ impl<E: Endianness, CW: CodesWrite<E> + ?Sized> FuncCodeWriter<E, CW> {
     pub fn new_with_func(write_func: WriteFn<E, CW>) -> Self {
         Self(write_func)
     }
+
+    /// Get the function pointer for the code.
+    pub fn get_func(&self) -> WriteFn<E, CW> {
+        self.0
+    }
 }
 
 impl<E: Endianness, CW: CodesWrite<E> + ?Sized> StaticCodeWrite<E, CW> for FuncCodeWriter<E, CW> {
@@ -1236,6 +1246,10 @@ impl FuncCodeLen {
     /// Return a new [`FuncCodeReader`] for the given function.
     pub fn new_with_func(len_func: LenFn) -> Self {
         Self(len_func)
+    }
+    /// Get the function pointer for the code.
+    pub fn get_func(&self) -> LenFn {
+        self.0
     }
 }
 
