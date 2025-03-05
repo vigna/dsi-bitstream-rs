@@ -76,7 +76,7 @@ macro_rules! impl_default_read_codes {
             fn read_gamma(&mut self) -> Result<u64, Self::Error> {
                 // From our tests, the ARM architecture is faster
                 // without tables for ɣ codes.
-                return self.read_gamma_param::<false>();
+                self.read_gamma_param::<false>()
             }
         }
 
@@ -88,7 +88,7 @@ macro_rules! impl_default_read_codes {
         {
             #[inline(always)]
             fn read_delta(&mut self) -> Result<u64, Self::Error> {
-                return self.read_delta_param::<false, true>();
+                self.read_delta_param::<false, true>()
             }
         }
 
@@ -119,7 +119,7 @@ macro_rules! impl_default_read_codes {
             fn read_gamma(&mut self) -> Result<u64, Self::Error> {
                 // From our tests, the ARM architecture is faster
                 // without tables for ɣ codes.
-                return self.read_gamma_param::<false>();
+                self.read_gamma_param::<false>()
             }
         }
 
@@ -131,7 +131,7 @@ macro_rules! impl_default_read_codes {
         {
             #[inline(always)]
             fn read_delta(&mut self) -> Result<u64, Self::Error> {
-                return self.read_delta_param::<false, true>();
+                self.read_delta_param::<false, true>()
             }
         }
 

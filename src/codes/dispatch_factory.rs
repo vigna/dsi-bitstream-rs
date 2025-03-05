@@ -9,12 +9,7 @@ use core::fmt::Debug;
 /// We need to have it defined here in dsi-bitstream because it's needed to
 /// define the [`FuncCodeReaderFactory`] type.
 pub trait CodeReaderFactory<E: Endianness> {
-    /// This error type is used only to overcome a rust compiler limitation.
-    /// This has to be the same as the error type of the [`CodesRead`] returned
-    /// by the factory. Look at [`FuncCodeReaderFactory`] documentation for more
-    /// details.
     type Error;
-
     /// The type of the [`CodesRead`] that can reference data owned by the factory.
     type CodeReader<'a>: CodesRead<E, Error = Self::Error>
     where
@@ -26,7 +21,7 @@ pub trait CodeReaderFactory<E: Endianness> {
 
 /// The type of the Read function factory, these are like [`FuncCodeReader`]`
 /// functions, but they have an extra lifetime parameter.
-type ReadFnFactory<E, CF> = for<'a> fn(
+type FactoryReadFn<E, CF> = for<'a> fn(
     &mut <CF as CodeReaderFactory<E>>::CodeReader<'a>,
 ) -> Result<u64, <CF as CodeReaderFactory<E>>::Error>;
 
@@ -72,7 +67,7 @@ type ReadFnFactory<E, CF> = for<'a> fn(
 /// ```
 #[derive(Debug, Copy, PartialEq, Eq)]
 pub struct FuncCodeReaderFactory<E: Endianness, CF: CodeReaderFactory<E> + ?Sized>(
-    ReadFnFactory<E, CF>,
+    FactoryReadFn<E, CF>,
 );
 
 /// manually implement Clone to avoid the Clone bound on CR and E
@@ -84,57 +79,57 @@ impl<E: Endianness, CF: CodeReaderFactory<E> + ?Sized> Clone for FuncCodeReaderF
 
 impl<E: Endianness, CF: CodeReaderFactory<E> + ?Sized> FuncCodeReaderFactory<E, CF> {
     // due to the added lifetime generic we cannot just re-use the FuncCodeReader definitions
-    const UNARY: ReadFnFactory<E, CF> = |reader| reader.read_unary();
-    const GAMMA: ReadFnFactory<E, CF> = |reader| reader.read_gamma();
-    const DELTA: ReadFnFactory<E, CF> = |reader| reader.read_delta();
-    const OMEGA: ReadFnFactory<E, CF> = |reader| reader.read_omega();
-    const VBYTE_BE: ReadFnFactory<E, CF> = |reader| reader.read_vbyte_be();
-    const VBYTE_LE: ReadFnFactory<E, CF> = |reader| reader.read_vbyte_le();
-    const ZETA2: ReadFnFactory<E, CF> = |reader| reader.read_zeta(2);
-    const ZETA3: ReadFnFactory<E, CF> = |reader| reader.read_zeta3();
-    const ZETA4: ReadFnFactory<E, CF> = |reader| reader.read_zeta(4);
-    const ZETA5: ReadFnFactory<E, CF> = |reader| reader.read_zeta(5);
-    const ZETA6: ReadFnFactory<E, CF> = |reader| reader.read_zeta(6);
-    const ZETA7: ReadFnFactory<E, CF> = |reader| reader.read_zeta(7);
-    const ZETA8: ReadFnFactory<E, CF> = |reader| reader.read_zeta(8);
-    const ZETA9: ReadFnFactory<E, CF> = |reader| reader.read_zeta(9);
-    const ZETA10: ReadFnFactory<E, CF> = |reader| reader.read_zeta(10);
-    const RICE1: ReadFnFactory<E, CF> = |reader| reader.read_rice(1);
-    const RICE2: ReadFnFactory<E, CF> = |reader| reader.read_rice(2);
-    const RICE3: ReadFnFactory<E, CF> = |reader| reader.read_rice(3);
-    const RICE4: ReadFnFactory<E, CF> = |reader| reader.read_rice(4);
-    const RICE5: ReadFnFactory<E, CF> = |reader| reader.read_rice(5);
-    const RICE6: ReadFnFactory<E, CF> = |reader| reader.read_rice(6);
-    const RICE7: ReadFnFactory<E, CF> = |reader| reader.read_rice(7);
-    const RICE8: ReadFnFactory<E, CF> = |reader| reader.read_rice(8);
-    const RICE9: ReadFnFactory<E, CF> = |reader| reader.read_rice(9);
-    const RICE10: ReadFnFactory<E, CF> = |reader| reader.read_rice(10);
-    const PI1: ReadFnFactory<E, CF> = |reader| reader.read_pi(1);
-    const PI2: ReadFnFactory<E, CF> = |reader| reader.read_pi(2);
-    const PI3: ReadFnFactory<E, CF> = |reader| reader.read_pi(3);
-    const PI4: ReadFnFactory<E, CF> = |reader| reader.read_pi(4);
-    const PI5: ReadFnFactory<E, CF> = |reader| reader.read_pi(5);
-    const PI6: ReadFnFactory<E, CF> = |reader| reader.read_pi(6);
-    const PI7: ReadFnFactory<E, CF> = |reader| reader.read_pi(7);
-    const PI8: ReadFnFactory<E, CF> = |reader| reader.read_pi(8);
-    const PI9: ReadFnFactory<E, CF> = |reader| reader.read_pi(9);
-    const PI10: ReadFnFactory<E, CF> = |reader| reader.read_pi(10);
-    const GOLOMB3: ReadFnFactory<E, CF> = |reader| reader.read_golomb(3);
-    const GOLOMB5: ReadFnFactory<E, CF> = |reader| reader.read_golomb(5);
-    const GOLOMB6: ReadFnFactory<E, CF> = |reader| reader.read_golomb(6);
-    const GOLOMB7: ReadFnFactory<E, CF> = |reader| reader.read_golomb(7);
-    const GOLOMB9: ReadFnFactory<E, CF> = |reader| reader.read_golomb(9);
-    const GOLOMB10: ReadFnFactory<E, CF> = |reader| reader.read_golomb(10);
-    const EXP_GOLOMB1: ReadFnFactory<E, CF> = |reader| reader.read_exp_golomb(1);
-    const EXP_GOLOMB2: ReadFnFactory<E, CF> = |reader| reader.read_exp_golomb(2);
-    const EXP_GOLOMB3: ReadFnFactory<E, CF> = |reader| reader.read_exp_golomb(3);
-    const EXP_GOLOMB4: ReadFnFactory<E, CF> = |reader| reader.read_exp_golomb(4);
-    const EXP_GOLOMB5: ReadFnFactory<E, CF> = |reader| reader.read_exp_golomb(5);
-    const EXP_GOLOMB6: ReadFnFactory<E, CF> = |reader| reader.read_exp_golomb(6);
-    const EXP_GOLOMB7: ReadFnFactory<E, CF> = |reader| reader.read_exp_golomb(7);
-    const EXP_GOLOMB8: ReadFnFactory<E, CF> = |reader| reader.read_exp_golomb(8);
-    const EXP_GOLOMB9: ReadFnFactory<E, CF> = |reader| reader.read_exp_golomb(9);
-    const EXP_GOLOMB10: ReadFnFactory<E, CF> = |reader| reader.read_exp_golomb(10);
+    const UNARY: FactoryReadFn<E, CF> = |reader| reader.read_unary();
+    const GAMMA: FactoryReadFn<E, CF> = |reader| reader.read_gamma();
+    const DELTA: FactoryReadFn<E, CF> = |reader| reader.read_delta();
+    const OMEGA: FactoryReadFn<E, CF> = |reader| reader.read_omega();
+    const VBYTE_BE: FactoryReadFn<E, CF> = |reader| reader.read_vbyte_be();
+    const VBYTE_LE: FactoryReadFn<E, CF> = |reader| reader.read_vbyte_le();
+    const ZETA2: FactoryReadFn<E, CF> = |reader| reader.read_zeta(2);
+    const ZETA3: FactoryReadFn<E, CF> = |reader| reader.read_zeta3();
+    const ZETA4: FactoryReadFn<E, CF> = |reader| reader.read_zeta(4);
+    const ZETA5: FactoryReadFn<E, CF> = |reader| reader.read_zeta(5);
+    const ZETA6: FactoryReadFn<E, CF> = |reader| reader.read_zeta(6);
+    const ZETA7: FactoryReadFn<E, CF> = |reader| reader.read_zeta(7);
+    const ZETA8: FactoryReadFn<E, CF> = |reader| reader.read_zeta(8);
+    const ZETA9: FactoryReadFn<E, CF> = |reader| reader.read_zeta(9);
+    const ZETA10: FactoryReadFn<E, CF> = |reader| reader.read_zeta(10);
+    const RICE1: FactoryReadFn<E, CF> = |reader| reader.read_rice(1);
+    const RICE2: FactoryReadFn<E, CF> = |reader| reader.read_rice(2);
+    const RICE3: FactoryReadFn<E, CF> = |reader| reader.read_rice(3);
+    const RICE4: FactoryReadFn<E, CF> = |reader| reader.read_rice(4);
+    const RICE5: FactoryReadFn<E, CF> = |reader| reader.read_rice(5);
+    const RICE6: FactoryReadFn<E, CF> = |reader| reader.read_rice(6);
+    const RICE7: FactoryReadFn<E, CF> = |reader| reader.read_rice(7);
+    const RICE8: FactoryReadFn<E, CF> = |reader| reader.read_rice(8);
+    const RICE9: FactoryReadFn<E, CF> = |reader| reader.read_rice(9);
+    const RICE10: FactoryReadFn<E, CF> = |reader| reader.read_rice(10);
+    const PI1: FactoryReadFn<E, CF> = |reader| reader.read_pi(1);
+    const PI2: FactoryReadFn<E, CF> = |reader| reader.read_pi(2);
+    const PI3: FactoryReadFn<E, CF> = |reader| reader.read_pi(3);
+    const PI4: FactoryReadFn<E, CF> = |reader| reader.read_pi(4);
+    const PI5: FactoryReadFn<E, CF> = |reader| reader.read_pi(5);
+    const PI6: FactoryReadFn<E, CF> = |reader| reader.read_pi(6);
+    const PI7: FactoryReadFn<E, CF> = |reader| reader.read_pi(7);
+    const PI8: FactoryReadFn<E, CF> = |reader| reader.read_pi(8);
+    const PI9: FactoryReadFn<E, CF> = |reader| reader.read_pi(9);
+    const PI10: FactoryReadFn<E, CF> = |reader| reader.read_pi(10);
+    const GOLOMB3: FactoryReadFn<E, CF> = |reader| reader.read_golomb(3);
+    const GOLOMB5: FactoryReadFn<E, CF> = |reader| reader.read_golomb(5);
+    const GOLOMB6: FactoryReadFn<E, CF> = |reader| reader.read_golomb(6);
+    const GOLOMB7: FactoryReadFn<E, CF> = |reader| reader.read_golomb(7);
+    const GOLOMB9: FactoryReadFn<E, CF> = |reader| reader.read_golomb(9);
+    const GOLOMB10: FactoryReadFn<E, CF> = |reader| reader.read_golomb(10);
+    const EXP_GOLOMB1: FactoryReadFn<E, CF> = |reader| reader.read_exp_golomb(1);
+    const EXP_GOLOMB2: FactoryReadFn<E, CF> = |reader| reader.read_exp_golomb(2);
+    const EXP_GOLOMB3: FactoryReadFn<E, CF> = |reader| reader.read_exp_golomb(3);
+    const EXP_GOLOMB4: FactoryReadFn<E, CF> = |reader| reader.read_exp_golomb(4);
+    const EXP_GOLOMB5: FactoryReadFn<E, CF> = |reader| reader.read_exp_golomb(5);
+    const EXP_GOLOMB6: FactoryReadFn<E, CF> = |reader| reader.read_exp_golomb(6);
+    const EXP_GOLOMB7: FactoryReadFn<E, CF> = |reader| reader.read_exp_golomb(7);
+    const EXP_GOLOMB8: FactoryReadFn<E, CF> = |reader| reader.read_exp_golomb(8);
+    const EXP_GOLOMB9: FactoryReadFn<E, CF> = |reader| reader.read_exp_golomb(9);
+    const EXP_GOLOMB10: FactoryReadFn<E, CF> = |reader| reader.read_exp_golomb(10);
 
     /// Return a new [`FuncCodeReaderFactory`] for the given code.
     ///
@@ -209,12 +204,12 @@ impl<E: Endianness, CF: CodeReaderFactory<E> + ?Sized> FuncCodeReaderFactory<E, 
     }
 
     /// Returns a new [`FuncCodeReaderFactory`] for the given function.
-    pub fn new_with_func(read_func: ReadFnFactory<E, CF>) -> Self {
+    pub fn new_with_func(read_func: FactoryReadFn<E, CF>) -> Self {
         Self(read_func)
     }
 
     /// Returns the function pointer for the code.
-    pub fn get_func(&self) -> ReadFnFactory<E, CF> {
+    pub fn get_func(&self) -> FactoryReadFn<E, CF> {
         self.0
     }
 
