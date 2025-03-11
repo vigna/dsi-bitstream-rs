@@ -10,7 +10,7 @@
 /// impossible for other structs.
 mod private {
     /// This is a [SealedTrait](https://predr.ag/blog/definitive-guide-to-sealed-traits-in-rust/).
-    pub trait Endianness: 'static {
+    pub trait Endianness: 'static + Send + Sync + Copy {
         /// The name of the endianness.
         const _NAME: &'static str;
         /// Whether the endianness is little-endian.
@@ -55,11 +55,11 @@ impl core::fmt::Display for BE {
 }
 
 /// Selector type for little-endian streams.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct LittleEndian;
 
 /// Selector type for big-endian streams.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct BigEndian;
 
 impl private::Endianness for LittleEndian {
