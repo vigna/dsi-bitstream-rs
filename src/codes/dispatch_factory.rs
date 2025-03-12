@@ -19,11 +19,27 @@ pub trait CodeReaderFactory<E: Endianness> {
     fn new_reader(&self) -> Self::CodeReader<'_>;
 }
 
+pub trait IntermediateFactory<E: Endianness>:
+    for<'a> CodeReaderFactory<
+    E,
+    CodeReader<'a>: BitRead<E, Error = <Self as IntermediateFactory<E>>::Error>,
+>
+{
+    type Error;
+}
+
+impl<E: Endianness, F, ERR> IntermediateFactory<E> for F
+where
+    F: ?Sized + for<'a> CodeReaderFactory<E, CodeReader<'a>: CodesRead<E> + BitRead<E, Error = ERR>>,
+{
+    type Error = ERR;
+}
+
 /// The type of the Read function factory, these are like [`FuncCodeReader`]`
 /// functions, but they have an extra lifetime parameter.
 type FactoryReadFn<E, CF> = for<'a> fn(
     &mut <CF as CodeReaderFactory<E>>::CodeReader<'a>,
-) -> Result<u64, <CF as CodeReaderFactory<E>>::Error>;
+) -> Result<u64, <CF as IntermediateFactory<E>>::Error>;
 
 /// This struct is used to do a more general version of single-static dispatching
 /// of read functions.
@@ -63,21 +79,21 @@ type FactoryReadFn<E, CF> = for<'a> fn(
 /// of the [`CodeReaderFactory::CodeReader`] returned by the factory.
 /// This is not ideal, but it works and allows us to specify the error type as:
 /// ```ignore
-/// Result<u64, <<CF as CodeReaderFactory<E>>::Error>
+/// Result<u64, <<CF as CodeReaderFactory2<E>>::Error>
 /// ```
 #[derive(Debug, Copy, PartialEq, Eq)]
-pub struct FuncCodeReaderFactory<E: Endianness, CF: CodeReaderFactory<E> + ?Sized>(
+pub struct FuncCodeReaderFactory<E: Endianness, CF: IntermediateFactory<E> + ?Sized>(
     FactoryReadFn<E, CF>,
 );
 
 /// manually implement Clone to avoid the Clone bound on CR and E
-impl<E: Endianness, CF: CodeReaderFactory<E> + ?Sized> Clone for FuncCodeReaderFactory<E, CF> {
+impl<E: Endianness, CF: IntermediateFactory<E> + ?Sized> Clone for FuncCodeReaderFactory<E, CF> {
     fn clone(&self) -> Self {
         Self(self.0)
     }
 }
 
-impl<E: Endianness, CF: CodeReaderFactory<E> + ?Sized> FuncCodeReaderFactory<E, CF> {
+impl<E: Endianness, CF: IntermediateFactory<E> + ?Sized> FuncCodeReaderFactory<E, CF> {
     // due to the added lifetime generic we cannot just re-use the FuncCodeReader definitions
     const UNARY: FactoryReadFn<E, CF> = |reader| reader.read_unary();
     const GAMMA: FactoryReadFn<E, CF> = |reader| reader.read_gamma();

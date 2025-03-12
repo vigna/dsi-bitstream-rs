@@ -146,7 +146,7 @@ let table = if ($($table),*,).0 {
 // print the results
 #[cfg(not(feature="reads"))]
 println!("{}::{}::{},{},{},{},{},{},{},{}",
-    $code, stringify!($bo), table, // the informations about what we are benchmarking
+    $code, stringify!($bo), table, // information about what we are benchmarking
     "write",
     ratio,
     write.avg / N as f64,
@@ -157,7 +157,7 @@ println!("{}::{}::{},{},{},{},{},{},{},{}",
 );
 #[cfg(feature="reads")]
 println!("{}::{}::{},{},{},{},{},{},{},{}",
-    $code, stringify!($bo), table, // the informations about what we are benchmarking
+    $code, stringify!($bo), table, // information about what we are benchmarking
     "read_buff",
     ratio,
     read_buff.avg / N as f64,
@@ -168,7 +168,7 @@ println!("{}::{}::{},{},{},{},{},{},{},{}",
 );
 #[cfg(feature="reads")]
 println!("{}::{}::{},{},{},{},{},{},{},{}",
-    $code, stringify!($bo), table, // the informations about what we are benchmarking
+    $code, stringify!($bo), table, // information about what we are benchmarking
     "read_unbuff",
     ratio,
     read_unbuff.avg / N as f64,
