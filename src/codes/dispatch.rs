@@ -772,6 +772,7 @@ pub struct FuncCodesReader<E: Endianness, CR: CodesRead<E> + ?Sized>(ReadFn<E, C
 
 /// manually implement Clone to avoid the Clone bound on CR and E
 impl<E: Endianness, CR: CodesRead<E> + ?Sized> Clone for FuncCodesReader<E, CR> {
+    #[inline(always)]
     fn clone(&self) -> Self {
         Self(self.0)
     }
@@ -902,11 +903,13 @@ impl<E: Endianness, CR: CodesRead<E> + ?Sized> FuncCodesReader<E, CR> {
     }
 
     /// Return a new [`FuncCodesReader`] for the given function.
+    #[inline(always)]
     pub fn new_with_func(read_func: ReadFn<E, CR>) -> Self {
         Self(read_func)
     }
 
     /// Get the function pointer for the code.
+    #[inline(always)]
     pub fn get_func(&self) -> ReadFn<E, CR> {
         self.0
     }
@@ -942,6 +945,7 @@ pub struct FuncCodeWriter<E: Endianness, CW: CodesWrite<E> + ?Sized>(WriteFn<E, 
 
 /// manually implement Clone to avoid the Clone bound on CR and E
 impl<E: Endianness, CR: CodesWrite<E> + ?Sized> Clone for FuncCodeWriter<E, CR> {
+    #[inline(always)]
     fn clone(&self) -> Self {
         Self(self.0)
     }
@@ -1083,11 +1087,13 @@ impl<E: Endianness, CW: CodesWrite<E> + ?Sized> FuncCodeWriter<E, CW> {
     }
 
     /// Return a new [`FuncCodeWriter`] for the given function.
+    #[inline(always)]
     pub fn new_with_func(write_func: WriteFn<E, CW>) -> Self {
         Self(write_func)
     }
 
     /// Get the function pointer for the code.
+    #[inline(always)]
     pub fn get_func(&self) -> WriteFn<E, CW> {
         self.0
     }
@@ -1244,10 +1250,12 @@ impl FuncCodeLen {
     }
 
     /// Return a new [`FuncCodesReader`] for the given function.
+    #[inline(always)]
     pub fn new_with_func(len_func: LenFn) -> Self {
         Self(len_func)
     }
     /// Get the function pointer for the code.
+    #[inline(always)]
     pub fn get_func(&self) -> LenFn {
         self.0
     }

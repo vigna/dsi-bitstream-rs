@@ -25,8 +25,7 @@ pub trait CodesReaderFactoryHelper<E: Endianness>:
 
 impl<E: Endianness, F, ERR> CodesReaderFactoryHelper<E> for F
 where
-    F: ?Sized
-        + for<'a> CodesReaderFactory<E, CodesReader<'a>: CodesRead<E, Error = ERR>>,
+    F: ?Sized + for<'a> CodesReaderFactory<E, CodesReader<'a>: CodesRead<E, Error = ERR>>,
 {
     type Error = ERR;
 }
@@ -83,7 +82,10 @@ pub struct FuncCodesReaderFactory<E: Endianness, CF: CodesReaderFactoryHelper<E>
 );
 
 /// manually implement Clone to avoid the Clone bound on CR and E
-impl<E: Endianness, CF: CodesReaderFactoryHelper<E> + ?Sized> Clone for FuncCodesReaderFactory<E, CF> {
+impl<E: Endianness, CF: CodesReaderFactoryHelper<E> + ?Sized> Clone
+    for FuncCodesReaderFactory<E, CF>
+{
+    #[inline(always)]
     fn clone(&self) -> Self {
         Self(self.0)
     }
@@ -216,17 +218,20 @@ impl<E: Endianness, CF: CodesReaderFactoryHelper<E> + ?Sized> FuncCodesReaderFac
     }
 
     /// Returns a new [`FuncCodesReaderFactory`] for the given function.
+    #[inline(always)]
     pub fn new_with_func(read_func: FactoryReadFn<E, CF>) -> Self {
         Self(read_func)
     }
 
     /// Returns the function pointer for the code.
+    #[inline(always)]
     pub fn get_func(&self) -> FactoryReadFn<E, CF> {
         self.0
     }
 
     /// Returns a [`FuncCodesReader`] compatible with `CF`'s [`CodesReaderFactory::CodesReader`]
     /// for a given lifetime `'a`.
+    #[inline(always)]
     pub fn get<'a>(
         &self,
     ) -> super::FuncCodesReader<E, <CF as CodesReaderFactory<E>>::CodesReader<'a>> {

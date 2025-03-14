@@ -693,12 +693,12 @@ mod test {
         for i in 0..data.len() {
             let mut reader = BufBitReader::<LE, _>::new(MemWordReader::new(&data_u32));
             let mut buffer = vec![0; i];
-            reader.read(&mut buffer).unwrap();
+            assert_eq!(reader.read(&mut buffer).unwrap(), i);
             assert_eq!(&buffer, &data[..i]);
 
             let mut reader = BufBitReader::<BE, _>::new(MemWordReader::new(&data_u32));
             let mut buffer = vec![0; i];
-            reader.read(&mut buffer).unwrap();
+            assert_eq!(reader.read(&mut buffer).unwrap(), i);
             assert_eq!(&buffer, &data[..i]);
         }
     }
@@ -764,6 +764,8 @@ mod test {
                 drop(little);
 
                 type ReadWord = $word;
+
+                #[allow(clippy::size_of_in_element_count)] // false positive
                 let be_trans: &[ReadWord] = unsafe {
                     core::slice::from_raw_parts(
                         buffer_be.as_ptr() as *const ReadWord,
@@ -771,6 +773,8 @@ mod test {
                             * (core::mem::size_of::<$word>() / core::mem::size_of::<ReadWord>()),
                     )
                 };
+
+                #[allow(clippy::size_of_in_element_count)] // false positive
                 let le_trans: &[ReadWord] = unsafe {
                     core::slice::from_raw_parts(
                         buffer_le.as_ptr() as *const ReadWord,

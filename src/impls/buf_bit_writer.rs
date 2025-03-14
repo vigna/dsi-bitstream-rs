@@ -612,6 +612,7 @@ mod test {
                 drop(little);
 
                 type ReadWord = u16;
+                #[allow(clippy::size_of_in_element_count)] // false positive
                 let be_trans: &[ReadWord] = unsafe {
                     core::slice::from_raw_parts(
                         buffer_be.as_ptr() as *const ReadWord,
@@ -619,6 +620,7 @@ mod test {
                             * (core::mem::size_of::<$word>() / core::mem::size_of::<ReadWord>()),
                     )
                 };
+                #[allow(clippy::size_of_in_element_count)] // false positive
                 let le_trans: &[ReadWord] = unsafe {
                     core::slice::from_raw_parts(
                         buffer_le.as_ptr() as *const ReadWord,

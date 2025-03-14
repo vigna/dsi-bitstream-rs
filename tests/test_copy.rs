@@ -77,7 +77,7 @@ where
 
 const MAX_LEN: u64 = 500;
 
-fn test_endianness<'a, E: Endianness, W: UnsignedInt + DoubleType + 'static>(
+fn test_endianness<E: Endianness, W: UnsignedInt + DoubleType + 'static>(
 ) -> Result<(), Box<dyn Error + Send + Sync + 'static>>
 where
     BufBitReader<E, MemWordReader<W, Vec<W>>>: BitRead<E>,

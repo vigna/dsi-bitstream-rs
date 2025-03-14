@@ -158,6 +158,7 @@ mod test {
     }
 
     #[test]
+    #[allow(clippy::unusual_byte_groupings)]
     fn test_omega() {
         for (value, expected_be, expected_le) in [
             (0, 0, 0),

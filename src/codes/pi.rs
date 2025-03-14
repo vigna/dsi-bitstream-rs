@@ -147,6 +147,7 @@ mod test {
     }
 
     #[test]
+    #[allow(clippy::unusual_byte_groupings)]
     fn test_bits() {
         for (k, value, expected) in [
             (2, 20, 0b01_00_0101 << (64 - 8)),

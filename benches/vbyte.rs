@@ -224,14 +224,14 @@ impl ByteCode for ByteStreamVByte<BE, GroupedCLZ, NonComplete, OneCont> {
 
         if buffer[0] == 0xFF {
             r.read_exact(&mut buffer)?;
-            return Ok(u64::from_be_bytes(buffer).into());
+            return Ok(u64::from_be_bytes(buffer));
         }
 
         let len = buffer[0].leading_ones() as usize;
-        let result = buffer[0] as u64 & (0xFF >> len + 1);
+        let result = buffer[0] as u64 & (0xFF >> (len + 1));
         buffer[0] = 0;
         r.read_exact(&mut buffer[8 - len..])?;
-        Ok(result << len * 8 | u64::from_be_bytes(buffer))
+        Ok(result << (len * 8) | u64::from_be_bytes(buffer))
     }
     fn write(value: u64, w: &mut impl Write) -> Result<usize> {
         if value < UPPER_BOUND_1 {

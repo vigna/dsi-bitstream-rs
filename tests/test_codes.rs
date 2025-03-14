@@ -7,7 +7,7 @@
  */
 
 use dsi_bitstream::codes::dispatch::{
-    CodeLen, CodesRead, CodesWrite, FuncCodesReader, FuncCodeWriter,
+    CodeLen, CodesRead, CodesWrite, FuncCodeWriter, FuncCodesReader,
 };
 use dsi_bitstream::prelude::*;
 
