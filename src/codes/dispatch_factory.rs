@@ -7,94 +7,90 @@ use core::fmt::Debug;
 /// bit stream, and returns a [`CodesRead`] that can read from it.
 ///
 /// We need to have it defined here in dsi-bitstream because it's needed to
-/// define the [`FuncCodeReaderFactory`] type.
-pub trait CodeReaderFactory<E: Endianness> {
-    type Error;
-    /// The type of the [`CodesRead`] that can reference data owned by the factory.
-    type CodeReader<'a>: CodesRead<E, Error = Self::Error>
+/// define the [`FuncCodesReaderFactory`] type.
+pub trait CodesReaderFactory<E: Endianness> {
+    type CodesReader<'a>
     where
         Self: 'a;
 
     /// Create a new code reader that can reference data owned by the factory.
-    fn new_reader(&self) -> Self::CodeReader<'_>;
+    fn new_reader(&self) -> Self::CodesReader<'_>;
 }
 
-pub trait IntermediateFactory<E: Endianness>:
-    for<'a> CodeReaderFactory<
-    E,
-    CodeReader<'a>: BitRead<E, Error = <Self as IntermediateFactory<E>>::Error>,
->
+pub trait CodesReaderFactoryHelper<E: Endianness>:
+    for<'a> CodesReaderFactory<E, CodesReader<'a>: CodesRead<E, Error = Self::Error>>
 {
     type Error;
 }
 
-impl<E: Endianness, F, ERR> IntermediateFactory<E> for F
+impl<E: Endianness, F, ERR> CodesReaderFactoryHelper<E> for F
 where
-    F: ?Sized + for<'a> CodeReaderFactory<E, CodeReader<'a>: CodesRead<E> + BitRead<E, Error = ERR>>,
+    F: ?Sized
+        + for<'a> CodesReaderFactory<E, CodesReader<'a>: CodesRead<E, Error = ERR>>,
 {
     type Error = ERR;
 }
 
-/// The type of the Read function factory, these are like [`FuncCodeReader`]`
+/// The type of the Read function factory, these are like [`FuncCodesReader`]`
 /// functions, but they have an extra lifetime parameter.
 type FactoryReadFn<E, CF> = for<'a> fn(
-    &mut <CF as CodeReaderFactory<E>>::CodeReader<'a>,
-) -> Result<u64, <CF as IntermediateFactory<E>>::Error>;
+    &mut <CF as CodesReaderFactory<E>>::CodesReader<'a>,
+) -> Result<u64, <CF as CodesReaderFactoryHelper<E>>::Error>;
 
 /// This struct is used to do a more general version of single-static dispatching
 /// of read functions.
 ///
-/// [`FuncCodeReader`] already allows to do single-static dispatching
-/// of read functions, but it has to know the lifetime of the [`CodeReader`] it will
+/// [`FuncCodesReader`] already allows to do single-static dispatching
+/// of read functions, but it has to know the lifetime of the [`CodesReader`] it will
 /// be using. This is not always possible, for example when we want to use a
-/// [`FuncCodeReader`] with a [`CodeReader`] that is created by a factory that owns
+/// [`FuncCodesReader`] with a [`CodesReader`] that is created by a factory that owns
 /// the bit stream. One can work around this by doing the dispatch every time
 /// a reader is created, but this is not very efficient.  
 ///
-/// [`FuncCodeReaderFactory`] does the dispatching only once, when the factory
-/// is created, and it can create a [`FuncCodeReader`] with any given lifetime
-/// using [`FuncCodeReaderFactory::get`]
+/// [`FuncCodesReaderFactory`] does the dispatching only once, when the factory
+/// is created, and it can create a [`FuncCodesReader`] with any given lifetime
+/// using [`FuncCodesReaderFactory::get`]
 ///
 /// This is needed because of a limitation of Rust type system, we can't express:
 /// ```ignore
-/// for<'a> FuncCodeReader<E, CF::CodeReader<'a>>
+/// for<'a> FuncCodesReader<E, CF::CodesReader<'a>>
 /// ```
 /// but we can express:
 /// ```ignore
-/// for<'a> fn(&mut CF::CodeReader<'a>) -> Result<u64>
+/// for<'a> fn(&mut CF::CodesReader<'a>) -> Result<u64>
 /// ```
 /// therefore, we store a function pointer with a generic lifetime that can be
 /// down-casted to the specific lifetime when needed.
 ///
 /// This workaround is not perfect as we cannot properly specify the error type:
 /// ```ignore
-/// Result<u64, <<CF as CodeReaderFactory<E>>::CodeReader<'a> as BitRead<E>>::Error>
+/// Result<u64, <<CF as CodesReaderFactory<E>>::CodesReader<'a> as BitRead<E>>::Error>
 /// ```
 /// this cannot be done because the compiler complains that the return type has
 /// a lifetime not constrained by the input arguments. To work around this,
-/// we added an, otherwise useless, associated type [`CodeReaderFactory::Error`]
-/// to the [`CodeReaderFactory`] trait,
+/// we added an, otherwise useless, associated type [`CodesReaderFactory::Error`]
+/// to the [`CodesReaderFactory`] trait,
 /// and constraint the error type of the read functions to be the same as the
 /// error type
-/// of the [`CodeReaderFactory::CodeReader`] returned by the factory.
+/// of the [`CodesReaderFactory::CodesReader`] returned by the factory.
 /// This is not ideal, but it works and allows us to specify the error type as:
 /// ```ignore
-/// Result<u64, <<CF as CodeReaderFactory2<E>>::Error>
+/// Result<u64, <<CF as CodesReaderFactory2<E>>::Error>
 /// ```
 #[derive(Debug, Copy, PartialEq, Eq)]
-pub struct FuncCodeReaderFactory<E: Endianness, CF: IntermediateFactory<E> + ?Sized>(
+pub struct FuncCodesReaderFactory<E: Endianness, CF: CodesReaderFactoryHelper<E> + ?Sized>(
     FactoryReadFn<E, CF>,
 );
 
 /// manually implement Clone to avoid the Clone bound on CR and E
-impl<E: Endianness, CF: IntermediateFactory<E> + ?Sized> Clone for FuncCodeReaderFactory<E, CF> {
+impl<E: Endianness, CF: CodesReaderFactoryHelper<E> + ?Sized> Clone for FuncCodesReaderFactory<E, CF> {
     fn clone(&self) -> Self {
         Self(self.0)
     }
 }
 
-impl<E: Endianness, CF: IntermediateFactory<E> + ?Sized> FuncCodeReaderFactory<E, CF> {
-    // due to the added lifetime generic we cannot just re-use the FuncCodeReader definitions
+impl<E: Endianness, CF: CodesReaderFactoryHelper<E> + ?Sized> FuncCodesReaderFactory<E, CF> {
+    // due to the added lifetime generic we cannot just re-use the FuncCodesReader definitions
     const UNARY: FactoryReadFn<E, CF> = |reader| reader.read_unary();
     const GAMMA: FactoryReadFn<E, CF> = |reader| reader.read_gamma();
     const DELTA: FactoryReadFn<E, CF> = |reader| reader.read_delta();
@@ -147,12 +143,12 @@ impl<E: Endianness, CF: IntermediateFactory<E> + ?Sized> FuncCodeReaderFactory<E
     const EXP_GOLOMB9: FactoryReadFn<E, CF> = |reader| reader.read_exp_golomb(9);
     const EXP_GOLOMB10: FactoryReadFn<E, CF> = |reader| reader.read_exp_golomb(10);
 
-    /// Return a new [`FuncCodeReaderFactory`] for the given code.
+    /// Return a new [`FuncCodesReaderFactory`] for the given code.
     ///
     /// # Errors
     ///
     /// The method will return an error if there is no constant
-    /// for the given code in [`FuncCodeReaderFactory`].
+    /// for the given code in [`FuncCodesReaderFactory`].
     pub fn new(code: Codes) -> anyhow::Result<Self> {
         let read_func = match code {
             Codes::Unary => Self::UNARY,
@@ -219,7 +215,7 @@ impl<E: Endianness, CF: IntermediateFactory<E> + ?Sized> FuncCodeReaderFactory<E
         Ok(Self(read_func))
     }
 
-    /// Returns a new [`FuncCodeReaderFactory`] for the given function.
+    /// Returns a new [`FuncCodesReaderFactory`] for the given function.
     pub fn new_with_func(read_func: FactoryReadFn<E, CF>) -> Self {
         Self(read_func)
     }
@@ -229,11 +225,11 @@ impl<E: Endianness, CF: IntermediateFactory<E> + ?Sized> FuncCodeReaderFactory<E
         self.0
     }
 
-    /// Returns a [`FuncCodeReader`] compatible with `CF`'s [`CodeReaderFactory::CodeReader`]
+    /// Returns a [`FuncCodesReader`] compatible with `CF`'s [`CodesReaderFactory::CodesReader`]
     /// for a given lifetime `'a`.
     pub fn get<'a>(
         &self,
-    ) -> super::FuncCodeReader<E, <CF as CodeReaderFactory<E>>::CodeReader<'a>> {
-        super::FuncCodeReader::new_with_func(self.0)
+    ) -> super::FuncCodesReader<E, <CF as CodesReaderFactory<E>>::CodesReader<'a>> {
+        super::FuncCodesReader::new_with_func(self.0)
     }
 }

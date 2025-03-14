@@ -104,7 +104,7 @@ pub mod dispatch;
 pub use dispatch::*;
 
 pub mod dispatch_factory;
-pub use dispatch_factory::{CodeReaderFactory, FuncCodeReaderFactory};
+pub use dispatch_factory::{CodesReaderFactory, FuncCodesReaderFactory};
 
 pub mod gamma;
 pub use gamma::{

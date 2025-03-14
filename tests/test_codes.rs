@@ -7,7 +7,7 @@
  */
 
 use dsi_bitstream::codes::dispatch::{
-    CodeLen, CodesRead, CodesWrite, FuncCodeReader, FuncCodeWriter,
+    CodeLen, CodesRead, CodesWrite, FuncCodesReader, FuncCodeWriter,
 };
 use dsi_bitstream::prelude::*;
 
@@ -68,7 +68,7 @@ where
 {
     dbg!(code);
     let write_dispatch = FuncCodeWriter::new(code).unwrap();
-    let read_dispatch = FuncCodeReader::new(code).unwrap();
+    let read_dispatch = FuncCodesReader::new(code).unwrap();
 
     let mut buffer1 = Vec::<u64>::new();
     let mut buffer2 = Vec::<u64>::new();
