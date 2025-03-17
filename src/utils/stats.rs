@@ -8,15 +8,13 @@
 #[cfg(feature = "mem_dbg")]
 use mem_dbg::{MemDbg, MemSize};
 
-use crate::codes::dispatch::{CodesRead, CodesWrite};
-use crate::prelude::dispatch::{
-    DynamicCodeRead, DynamicCodeWrite, StaticCodeRead, StaticCodeWrite,
-};
+use crate::dispatch::{CodesRead, CodesWrite};
 use crate::prelude::Endianness;
 use crate::prelude::{
     bit_len_vbyte, len_delta, len_exp_golomb, len_gamma, len_golomb, len_omega, len_pi, len_rice,
     len_zeta, Codes,
 };
+use crate::prelude::{DynamicCodeRead, DynamicCodeWrite, StaticCodeRead, StaticCodeWrite};
 use anyhow::Result;
 use core::fmt::Debug;
 use std::sync::Mutex;

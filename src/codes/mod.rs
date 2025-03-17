@@ -94,17 +94,7 @@
 
 use anyhow::Result;
 use common_traits::{AsBytes, SignedInt, UnsignedInt};
-#[cfg(feature = "mem_dbg")]
-use mem_dbg::{MemDbg, MemSize};
-
-use crate::prelude::{BitRead, BitWrite};
 pub mod params;
-
-pub mod dispatch;
-pub use dispatch::*;
-
-pub mod dispatch_factory;
-pub use dispatch_factory::{CodesReaderFactory, FuncCodesReaderFactory};
 
 pub mod gamma;
 pub use gamma::{
@@ -139,8 +129,6 @@ pub use exp_golomb::{len_exp_golomb, ExpGolombRead, ExpGolombWrite};
 
 pub mod vbyte;
 pub use vbyte::*;
-
-use crate::prelude::Endianness;
 
 pub mod delta_tables;
 pub mod gamma_tables;

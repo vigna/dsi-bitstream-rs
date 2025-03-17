@@ -6,9 +6,7 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
-use dsi_bitstream::codes::dispatch::{
-    CodeLen, CodesRead, CodesWrite, FuncCodeWriter, FuncCodesReader,
-};
+use dsi_bitstream::dispatch::{CodeLen, CodesRead, CodesWrite, FuncCodeWriter, FuncCodesReader};
 use dsi_bitstream::prelude::*;
 
 #[test]

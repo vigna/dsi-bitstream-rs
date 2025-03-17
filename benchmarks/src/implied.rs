@@ -182,6 +182,7 @@ pub fn main() {
             |r| r.read_pi(k).unwrap(),
             |x| len_pi(x, k),
         );
+        /*
         bench!(
             format!("pi_old_{}", k),
             |w, mut n| {
@@ -208,6 +209,7 @@ pub fn main() {
             },
             |x| len_pi(x, k),
         );
+         */
         bench!(
             format!("rice_{}", k),
             |w, x| w.write_rice(x, k).unwrap(),

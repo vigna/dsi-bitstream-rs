@@ -12,6 +12,7 @@
 extern crate alloc;
 
 pub mod codes;
+pub mod dispatch;
 pub mod impls;
 pub mod traits;
 pub mod utils;
@@ -21,6 +22,7 @@ pub mod fuzz;
 
 pub mod prelude {
     pub use crate::codes::*;
+    pub use crate::dispatch::*;
     pub use crate::impls::*;
     pub use crate::traits::*;
     pub use crate::utils::*;
