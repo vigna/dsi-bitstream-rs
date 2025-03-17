@@ -9,9 +9,9 @@
 //! Traits for reading and writing instantaneous codes.
 //!
 //! This modules contains code for reading and writing instantaneous codes.
-//! Codewords are uniformely indexed from 0 for all codes. For example, the
-//! first few words of [unary](crate::traits::BitRead::read_unary), [γ](gamma),
-//! and [δ](delta) codes are:
+//! Codewords are uniformly indexed from 0 for all codes. For example, the first
+//! few words of [unary](crate::traits::BitRead::read_unary), [γ](gamma), and
+//! [δ](delta) codes are:
 //!
 //! | Arg |  unary   |    γ    |     δ    |
 //! |-----|---------:|--------:|---------:|
@@ -24,30 +24,30 @@
 //! | 6   |  0000001 |   00111 |    01111 |
 //! | 7   | 00000001 | 0001000 | 00100000 |
 //!
-//! If you need to encode signed integers, please use the
-//! [`ToInt`](crate::utils::ToInt) and [`ToNat`](crate::utils::ToNat) traits,
-//! which provide a bijection between signed integers and natural numbers.
+//! If you need to encode signed integers, please use the [`ToInt`] and
+//! [`ToNat`] traits, which provide a bijection between signed integers and
+//! natural numbers.
 //!
 //! Each code is implemented as a pair of traits for reading and writing (e.g.,
 //! [`GammaReadParam`] and [`GammaWriteParam`]). The traits for reading depend
-//! on [`BitRead`], whereas the traits for writing depend on [`BitWrite`]. Note
-//! that most codes cannot write the number [`u64::MAX`] because of overflow
-//! issues, which could be avoided with tests, but at the price of a significant
-//! performance drop.
+//! on [`BitRead`](crate::traits::BitRead), whereas the traits for writing
+//! depend on [`BitWrite`](crate::traits::BitWrite). Note that most codes cannot
+//! write the number [`u64::MAX`] because of overflow issues, which could be
+//! avoided with tests, but at the price of a significant performance drop.
 //!
 //! The traits ending with `Param` make it possible to specify parameters—for
-//! example, whether to use decoding tables. Usually, one whould instead pull in
+//! example, whether to use decoding tables. Usually, one would instead pull in
 //! scope non-parametric traits such as [`GammaRead`] and [`GammaWrite`], for
 //! which defaults are provided using the mechanism described in the [`params`]
 //! module.
 //!
 //! Note that if you are using decoding tables, you must ensure that the
-//! [`peek_bits`](crate::traits::BitRead::peek_bits) method of your [`BitRead`]
-//! implementation returns a sufficient number of bits: if it does not, an
-//! assertion will be triggered in test mode, but behavior will be unpredictable
-//! otherwise. This is unfortunately difficult to check statically. To stay on
-//! the safe side, we recommend to use a an implementation that is able to peek
-//! at least at 16 bits.
+//! [`peek_bits`](crate::traits::BitRead::peek_bits) method of your
+//! [`BitRead`](crate::traits::BitRead) implementation returns a sufficient
+//! number of bits: if it does not, an assertion will be triggered in test mode,
+//! but behavior will be unpredictable otherwise. This is unfortunately
+//! difficult to check statically. To stay on the safe side, we recommend to use
+//! a an implementation that is able to peek at least at 16 bits.
 //!
 //! # Big-endian vs. little-endian
 //!
@@ -90,7 +90,7 @@
 //! The basic method for accessing code is through traits like [`GammaRead`] and
 //! [`GammaWrite`]. This approach, however, forces a choice of code in the
 //! source. To pass a choice of code dynamically, please have a look at the
-//! [`dispatch`] module.
+//! [`dispatch`](crate::dispatch) module.
 
 use anyhow::Result;
 use common_traits::{AsBytes, SignedInt, UnsignedInt};

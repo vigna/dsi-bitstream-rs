@@ -9,9 +9,9 @@
 //! Dynamic dispatching for codes based on function pointers.
 //! 
 //! This kind of dispatch is resolved at runtime, but just once, at construction
-//! time. The code is stored in a function pointer, so it cannot be inlined like
-//! in the [static case](crate::dispatch::static), but the approach is more
-//! flexible.
+//! time, against a specific [`CodesRead`]. The code is stored in a function
+//! pointer, so it cannot be inlined like in the [static
+//! case](crate::dispatch::static), but the approach is more flexible.
 
 use super::*;
 #[cfg(feature = "mem_dbg")]
@@ -19,7 +19,7 @@ use mem_dbg::{MemDbg, MemSize};
 
 type ReadFn<E, CR> = fn(&mut CR) -> Result<u64, <CR as BitRead<E>>::Error>;
 
-/// A newtype containing a [function pointer](ReadFn) dispatching the read
+/// A newtype containing a function pointer dispatching the read
 /// method for a code.
 ///
 /// This is a more efficient way to pass a [`StaticCodeRead`] to a method, as a

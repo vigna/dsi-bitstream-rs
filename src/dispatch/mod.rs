@@ -8,10 +8,10 @@
 
 //! Programmable static and dynamic dispatch for codes.
 //!
-//! The code traits in [codes](super::codes), such as [`Omega`](super::omega),
-//! extend [`BitRead`] and [`BitWrite`] to provide a way to read and write codes
-//! from a bitstream. The user can thus select at compile time the desired trait
-//! and use the associated codes.
+//! The code traits in [codes](super::codes), such as
+//! [`Omega`](crate::codes::omega), extend [`BitRead`] and [`BitWrite`] to
+//! provide a way to read and write codes from a bitstream. The user can thus
+//! select at compile time the desired trait and use the associated codes.
 //!
 //! In many contexts, however, one does not want to commit to a specific set of
 //! codes, but rather would like to write generic methods that accept some code
@@ -239,7 +239,7 @@ pub mod dynamic;
 pub use dynamic::{FuncCodeLen, FuncCodeWriter, FuncCodeReader};
 
 pub mod factory;
-pub use factory::{CodesReaderFactory, FuncCodeReaderFactory};
+pub use factory::{CodesReaderFactory, FactoryFuncCodeReader};
 
 /// Convenience extension trait for reading all the codes supported by the
 /// library.

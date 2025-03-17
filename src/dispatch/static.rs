@@ -8,10 +8,10 @@
 
 //! Static dispatch for codes.
 //! 
-//! This kind of dispatch is resolved at compile time. Thus, the code can be
-//! inlined and optimized, contrarily to the [dynamic
-//! case](crate::dispatch::dynamic), but you have less flexibility as codes have
-//! to be chosen at compile time.
+//! This kind of dispatch is resolved at compile time against a specific
+//! [`CodesRead`]. Thus, the code can be inlined and optimized, contrarily to
+//! the [dynamic case](crate::dispatch::dynamic), but you have less flexibility
+//! as codes have to be chosen at compile time.
 
 use super::*;
 
@@ -30,7 +30,7 @@ use mem_dbg::{MemDbg, MemSize};
 /// If the value is not among those defined in the [`code_consts`] module, the
 /// methods will panic.
 ///
-/// See the [module documentation](crate::codes::dispatch) for more information.
+/// See the [module documentation](crate::dispatch) for more information.
 pub struct ConstCode<const CODE: usize>;
 
 impl<const CODE: usize> ConstCode<CODE> {

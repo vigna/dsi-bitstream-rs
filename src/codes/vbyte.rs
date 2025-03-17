@@ -72,7 +72,7 @@
 //! ## Sign
 //!
 //! It is possible to extend the codes to represent signed integers. Two
-//! possible approaches are using a [bijective mapping](crate::utils::ToInt)
+//! possible approaches are using a [bijective mapping](crate::codes::ToInt)
 //! between the integers and the natural numbers, or defining a specialized
 //! code.
 //!

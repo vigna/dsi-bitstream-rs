@@ -6,6 +6,12 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
+//! Enumeration of all available codes, with associated read and write methods.
+//! 
+//! This is the slower and more generic form of dispatching, mostly used for
+//! testing and writing examples. For faster dispatching, consider using
+//! [dynamic] or [static] dispatch.
+
 use super::*;
 #[cfg(feature = "mem_dbg")]
 use mem_dbg::{MemDbg, MemSize};

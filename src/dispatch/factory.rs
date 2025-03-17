@@ -6,16 +6,79 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
+//! Dynamic-dispatching factories for readers with a lifetime.
+//! 
+//! # Motivation
+//! 
+//! [`FuncCodeReader`] already provides dynamic dispatching of read functions,
+//! but in some uses cases the reader has to reference some data (e.g., readers
+//! based on the same memory buffer). In this case, one would need to create a
+//! dispatching function pointer for each code and each reader because the
+//! lifetime of different readers make the function pointers incompatible.
+//! 
+//! The trait [`CodesReaderFactory`] solves this problem by providing a way to
+//! create a [`CodesRead`] with a lifetime that can reference data owned by the
+//! factory. This trait must be implemented by client applications.
+//! 
+//! At the point, one can create a [`FactoryFuncCodeReader`] depending on a
+//! specific [`CodesReaderFactory`]. The [`FactoryFuncCodeReader`] will store a
+//! function pointer with a generic lifetime that can be downcast to a specific
+//! lifetime. Thus, the function pointer is created just once at the creation of
+//! the [`FactoryFuncCodeReader`], and can be reused to create
+//! [`FuncCodeReader`]s with any lifetime using [`FactoryFuncCodeReader::get`].
+//! 
+//! # Implementation Notes
+//! 
+//! In principle, we would like to have inside a [`FactoryFuncCodeReader`] a
+//! field with type
+//! 
+//! ```ignore
+//! for<'a> FuncCodeReader<E, CRF::CodesReader<'a>>
+//! ```
+//! 
+//! However, this is not possible in the Rust type system. We can however write
+//! the type
+//! 
+//! ```ignore
+//! for<'a> fn(&mut CRF::CodesReader<'a>) -> Result<u64>
+//! ```
+//! 
+//! This workaround is not perfect as we cannot properly specify the error type:
+//! ```ignore
+//! Result<u64, <CRF::CodesReader<'a> as BitRead<E>>::Error>
+//! ```
+//! The compiler here complains that the return type has a lifetime not
+//! constrained by the input arguments.
+//!
+//! To work around this problem, we could add an otherwise useless associated
+//! type `CodesReaderFactory::Error` to the [`CodesReaderFactory`] trait,
+//! imposing that the error type of the associated [`CodesRead`] is the same.
+//! Unfortunately, this requires that all users of the factory add a where
+//! constraint in which the error type is written explicitly.
+//!
+//! To mitigate this problem, we provide instead a helper trait
+//! [`CodesReaderFactoryHelper`] that extends [`CodesReaderFactory`]; the helper
+//! trait contains an `Error` associated type and [uses higher-rank trait
+//! bounds](https://users.rust-lang.org/t/extracting-static-associated-type-from-type-with-lifetime/126880)
+//! to bind the associated type to the error type of the
+//! [`CodesReaderFactory::CodesReader`]. The user can implement
+//! [`CodesReaderFactory`] on its own types and write trait bounds using
+//! [`CodesReaderFactoryHelper`]:
+//! ```ignore
+//! fn test<E: Endianness, CRF: CodesReaderFactoryHelper<E>>(factory: CRF)
+//! {
+//!     let reader = factory.new_reader();
+//!     // do something with the reader
+//!     // CRF::Error is the error type of CRF::CodesReader<'a>
+//! }
+//! ```
+
 use super::*;
 use anyhow::Result;
 use core::fmt::Debug;
-
 /// A trait that models a type that can return a [`CodesRead`] that can reference
 /// data owned by the factory. The typical case is a factory that owns the
 /// bit stream, and returns a [`CodesRead`] that can read from it.
-///
-/// We need to have it defined here in dsi-bitstream because it's needed to
-/// define the [`FuncCodeReaderFactory`] type.
 pub trait CodesReaderFactory<E: Endianness> {
     type CodesReader<'a>
     where
@@ -25,6 +88,11 @@ pub trait CodesReaderFactory<E: Endianness> {
     fn new_reader(&self) -> Self::CodesReader<'_>;
 }
 
+/// Extension helper trait for [`CodesReaderFactory`].
+/// 
+/// By writing trait bounds using this helper instead of [`CodesReaderFactory`],
+/// you can access the error type of the [`CodesReaderFactory::CodesReader`] through
+/// [`CodesReaderFactoryHelper::Error`].
 pub trait CodesReaderFactoryHelper<E: Endianness>:
     for<'a> CodesReaderFactory<E, CodesReader<'a>: CodesRead<E, Error = Self::Error>>
 {
@@ -38,96 +106,29 @@ where
     type Error = ERR;
 }
 
-/// The type of the Read function factory, these are like [`FuncCodeReader`]`
-/// functions, but they have an extra lifetime parameter.
-type FactoryReadFn<E, CF> = for<'a> fn(
-    &mut <CF as CodesReaderFactory<E>>::CodesReader<'a>,
-) -> Result<u64, <CF as CodesReaderFactoryHelper<E>>::Error>;
+/// The function type stored in a [`FactoryFuncCodeReader`].
+/// 
+/// The role of this type is analogous to that of `ReadFn` in [`FuncCodeReader`],
+/// but we have an extra lifetime parameter to handle the lifetime
+/// of the [`CodesReaderFactory::CodesReader`].
+type FactoryReadFn<E, CRF> = for<'a> fn(
+    &mut <CRF as CodesReaderFactory<E>>::CodesReader<'a>,
+) -> Result<u64, <CRF as CodesReaderFactoryHelper<E>>::Error>;
 
-/// This struct is used to do a more general version of single-dynamic dispatching
-/// of read functions.
-///
-/// [`FuncCodeReader`] already allows to do single-dynamic dispatching
-/// of read functions, but it has to know the lifetime of the [`CodesReader`] it will
-/// be using. This is not always possible, for example when we want to use a
-/// [`FuncCodeReader`] with a [`CodesReaderFactory::CodesReader`] that is
-/// created by a factory that owns the bit stream.
-/// One can work around this by doing the dispatch every time
-/// a reader is created, but this is not very efficient.
-///
-/// # Design details
-///
-/// [`FuncCodeReaderFactory`] does the dispatching only once, when the factory
-/// is created, and it can create a [`FuncCodeReader`] with any given lifetime
-/// using [`FuncCodeReaderFactory::get`]
-///
-/// This is needed because of a limitation of Rust type system, we can't express:
-/// ```ignore
-/// for<'a> FuncCodeReader<E, CF::CodesReader<'a>>
-/// ```
-/// but we can express:
-/// ```ignore
-/// for<'a> fn(&mut CF::CodesReader<'a>) -> Result<u64>
-/// ```
-/// therefore, we store a function pointer with a generic lifetime that can be
-/// down-casted to the specific lifetime when needed.
-///
-/// This workaround is not perfect as we cannot properly specify the error type:
-/// ```ignore
-/// Result<u64, <<CF as CodesReaderFactory<E>>::CodesReader<'a> as BitRead<E>>::Error>
-/// ```
-/// this cannot be done because the compiler complains that the return type has
-/// a lifetime not constrained by the input arguments.
-///
-/// To work around this, we added an, otherwise useless, associated type
-/// `CodesReaderFactory::Error` to the [`CodesReaderFactory`] trait,
-/// ```ignore
-/// pub trait CodesReaderFactory<E: Endianness> {
-/// type Error;
-/// type CodesReader<'a>:  CodesRead<E, Error = Self::Error>>
-///     where Self: 'a;
-///     /// Create a new code reader that can reference data owned by the factory.
-///     fn new_reader(&self) -> Self::CodesReader<'_>;
-/// }
-/// ```
-/// and constraint the error type of the read functions to be the same as the
-/// error type of the [`CodesReaderFactory::CodesReader`] returned by the factory.
-/// This is not ideal, but it works and allows us to specify the error type as:
-/// ```ignore
-/// Result<u64, <<CF as CodesReaderFactory<E>>::Error>
-/// ```
-///
-/// But this requires adding a where constraint on **all users** of the factory.
-/// ```ignore
-/// fn test<E: Endianness, CF: CodesReaderFactory<E>>(factory: CF)
-/// where
-///     for<'a> CF::CodesReader<'a>: BitRead<E, Error = CF::Error>
-/// {
-///     let reader = factory.new_reader();
-///     // do something with reader
-/// }
-/// ```
-///
-/// To mitigate this, we added a helper trait [`CodesReaderFactoryHelper`] that
-/// contains the `Error` type and the bound on the factory, so that the user can
-/// implement [`CodesReaderFactory`] on its own types, but constraint in
-/// [`CodesReaderFactoryHelper`].
-/// ```ignore
-/// fn test<E: Endianness, CF: CodesReaderFactoryHelper<E>>(factory: CF)
-/// {
-///     let reader = factory.new_reader();
-///     // do something with reader
-/// }
-/// ```
-///
+/// A newtype depending on a [`CodesReaderFactory`] and containing a function
+/// pointer dispatching the read method for a code.
+/// 
+/// It is essentially a version of [`FuncCodeReader`] that depends on a
+/// [`CodesReaderFactory`] and its associated
+/// [`CodesReaderFactory::CodesReader`] instead of a generic [`CodesRead`].
 #[derive(Debug, Copy, PartialEq, Eq)]
-pub struct FuncCodeReaderFactory<E: Endianness, CF: CodesReaderFactoryHelper<E> + ?Sized>(
-    FactoryReadFn<E, CF>,
+pub struct FactoryFuncCodeReader<E: Endianness, CRF: CodesReaderFactoryHelper<E> + ?Sized>(
+    FactoryReadFn<E, CRF>,
 );
 
-/// manually implement Clone to avoid the Clone bound on CR and E
-impl<E: Endianness, CF: CodesReaderFactoryHelper<E> + ?Sized> Clone
-    for FuncCodeReaderFactory<E, CF>
+/// Manually implement [`Clone`] to avoid the [`Clone`] bound on `CR` and `E`.
+impl<E: Endianness, CRF: CodesReaderFactoryHelper<E> + ?Sized> Clone
+    for FactoryFuncCodeReader<E, CRF>
 {
     #[inline(always)]
     fn clone(&self) -> Self {
@@ -135,66 +136,66 @@ impl<E: Endianness, CF: CodesReaderFactoryHelper<E> + ?Sized> Clone
     }
 }
 
-impl<E: Endianness, CF: CodesReaderFactoryHelper<E> + ?Sized> FuncCodeReaderFactory<E, CF> {
+impl<E: Endianness, CRF: CodesReaderFactoryHelper<E> + ?Sized> FactoryFuncCodeReader<E, CRF> {
     // due to the added lifetime generic we cannot just re-use the FuncCodeReader definitions
-    const UNARY: FactoryReadFn<E, CF> = |reader| reader.read_unary();
-    const GAMMA: FactoryReadFn<E, CF> = |reader| reader.read_gamma();
-    const DELTA: FactoryReadFn<E, CF> = |reader| reader.read_delta();
-    const OMEGA: FactoryReadFn<E, CF> = |reader| reader.read_omega();
-    const VBYTE_BE: FactoryReadFn<E, CF> = |reader| reader.read_vbyte_be();
-    const VBYTE_LE: FactoryReadFn<E, CF> = |reader| reader.read_vbyte_le();
-    const ZETA2: FactoryReadFn<E, CF> = |reader| reader.read_zeta(2);
-    const ZETA3: FactoryReadFn<E, CF> = |reader| reader.read_zeta3();
-    const ZETA4: FactoryReadFn<E, CF> = |reader| reader.read_zeta(4);
-    const ZETA5: FactoryReadFn<E, CF> = |reader| reader.read_zeta(5);
-    const ZETA6: FactoryReadFn<E, CF> = |reader| reader.read_zeta(6);
-    const ZETA7: FactoryReadFn<E, CF> = |reader| reader.read_zeta(7);
-    const ZETA8: FactoryReadFn<E, CF> = |reader| reader.read_zeta(8);
-    const ZETA9: FactoryReadFn<E, CF> = |reader| reader.read_zeta(9);
-    const ZETA10: FactoryReadFn<E, CF> = |reader| reader.read_zeta(10);
-    const RICE1: FactoryReadFn<E, CF> = |reader| reader.read_rice(1);
-    const RICE2: FactoryReadFn<E, CF> = |reader| reader.read_rice(2);
-    const RICE3: FactoryReadFn<E, CF> = |reader| reader.read_rice(3);
-    const RICE4: FactoryReadFn<E, CF> = |reader| reader.read_rice(4);
-    const RICE5: FactoryReadFn<E, CF> = |reader| reader.read_rice(5);
-    const RICE6: FactoryReadFn<E, CF> = |reader| reader.read_rice(6);
-    const RICE7: FactoryReadFn<E, CF> = |reader| reader.read_rice(7);
-    const RICE8: FactoryReadFn<E, CF> = |reader| reader.read_rice(8);
-    const RICE9: FactoryReadFn<E, CF> = |reader| reader.read_rice(9);
-    const RICE10: FactoryReadFn<E, CF> = |reader| reader.read_rice(10);
-    const PI1: FactoryReadFn<E, CF> = |reader| reader.read_pi(1);
-    const PI2: FactoryReadFn<E, CF> = |reader| reader.read_pi(2);
-    const PI3: FactoryReadFn<E, CF> = |reader| reader.read_pi(3);
-    const PI4: FactoryReadFn<E, CF> = |reader| reader.read_pi(4);
-    const PI5: FactoryReadFn<E, CF> = |reader| reader.read_pi(5);
-    const PI6: FactoryReadFn<E, CF> = |reader| reader.read_pi(6);
-    const PI7: FactoryReadFn<E, CF> = |reader| reader.read_pi(7);
-    const PI8: FactoryReadFn<E, CF> = |reader| reader.read_pi(8);
-    const PI9: FactoryReadFn<E, CF> = |reader| reader.read_pi(9);
-    const PI10: FactoryReadFn<E, CF> = |reader| reader.read_pi(10);
-    const GOLOMB3: FactoryReadFn<E, CF> = |reader| reader.read_golomb(3);
-    const GOLOMB5: FactoryReadFn<E, CF> = |reader| reader.read_golomb(5);
-    const GOLOMB6: FactoryReadFn<E, CF> = |reader| reader.read_golomb(6);
-    const GOLOMB7: FactoryReadFn<E, CF> = |reader| reader.read_golomb(7);
-    const GOLOMB9: FactoryReadFn<E, CF> = |reader| reader.read_golomb(9);
-    const GOLOMB10: FactoryReadFn<E, CF> = |reader| reader.read_golomb(10);
-    const EXP_GOLOMB1: FactoryReadFn<E, CF> = |reader| reader.read_exp_golomb(1);
-    const EXP_GOLOMB2: FactoryReadFn<E, CF> = |reader| reader.read_exp_golomb(2);
-    const EXP_GOLOMB3: FactoryReadFn<E, CF> = |reader| reader.read_exp_golomb(3);
-    const EXP_GOLOMB4: FactoryReadFn<E, CF> = |reader| reader.read_exp_golomb(4);
-    const EXP_GOLOMB5: FactoryReadFn<E, CF> = |reader| reader.read_exp_golomb(5);
-    const EXP_GOLOMB6: FactoryReadFn<E, CF> = |reader| reader.read_exp_golomb(6);
-    const EXP_GOLOMB7: FactoryReadFn<E, CF> = |reader| reader.read_exp_golomb(7);
-    const EXP_GOLOMB8: FactoryReadFn<E, CF> = |reader| reader.read_exp_golomb(8);
-    const EXP_GOLOMB9: FactoryReadFn<E, CF> = |reader| reader.read_exp_golomb(9);
-    const EXP_GOLOMB10: FactoryReadFn<E, CF> = |reader| reader.read_exp_golomb(10);
+    const UNARY: FactoryReadFn<E, CRF> = |reader| reader.read_unary();
+    const GAMMA: FactoryReadFn<E, CRF> = |reader| reader.read_gamma();
+    const DELTA: FactoryReadFn<E, CRF> = |reader| reader.read_delta();
+    const OMEGA: FactoryReadFn<E, CRF> = |reader| reader.read_omega();
+    const VBYTE_BE: FactoryReadFn<E, CRF> = |reader| reader.read_vbyte_be();
+    const VBYTE_LE: FactoryReadFn<E, CRF> = |reader| reader.read_vbyte_le();
+    const ZETA2: FactoryReadFn<E, CRF> = |reader| reader.read_zeta(2);
+    const ZETA3: FactoryReadFn<E, CRF> = |reader| reader.read_zeta3();
+    const ZETA4: FactoryReadFn<E, CRF> = |reader| reader.read_zeta(4);
+    const ZETA5: FactoryReadFn<E, CRF> = |reader| reader.read_zeta(5);
+    const ZETA6: FactoryReadFn<E, CRF> = |reader| reader.read_zeta(6);
+    const ZETA7: FactoryReadFn<E, CRF> = |reader| reader.read_zeta(7);
+    const ZETA8: FactoryReadFn<E, CRF> = |reader| reader.read_zeta(8);
+    const ZETA9: FactoryReadFn<E, CRF> = |reader| reader.read_zeta(9);
+    const ZETA10: FactoryReadFn<E, CRF> = |reader| reader.read_zeta(10);
+    const RICE1: FactoryReadFn<E, CRF> = |reader| reader.read_rice(1);
+    const RICE2: FactoryReadFn<E, CRF> = |reader| reader.read_rice(2);
+    const RICE3: FactoryReadFn<E, CRF> = |reader| reader.read_rice(3);
+    const RICE4: FactoryReadFn<E, CRF> = |reader| reader.read_rice(4);
+    const RICE5: FactoryReadFn<E, CRF> = |reader| reader.read_rice(5);
+    const RICE6: FactoryReadFn<E, CRF> = |reader| reader.read_rice(6);
+    const RICE7: FactoryReadFn<E, CRF> = |reader| reader.read_rice(7);
+    const RICE8: FactoryReadFn<E, CRF> = |reader| reader.read_rice(8);
+    const RICE9: FactoryReadFn<E, CRF> = |reader| reader.read_rice(9);
+    const RICE10: FactoryReadFn<E, CRF> = |reader| reader.read_rice(10);
+    const PI1: FactoryReadFn<E, CRF> = |reader| reader.read_pi(1);
+    const PI2: FactoryReadFn<E, CRF> = |reader| reader.read_pi(2);
+    const PI3: FactoryReadFn<E, CRF> = |reader| reader.read_pi(3);
+    const PI4: FactoryReadFn<E, CRF> = |reader| reader.read_pi(4);
+    const PI5: FactoryReadFn<E, CRF> = |reader| reader.read_pi(5);
+    const PI6: FactoryReadFn<E, CRF> = |reader| reader.read_pi(6);
+    const PI7: FactoryReadFn<E, CRF> = |reader| reader.read_pi(7);
+    const PI8: FactoryReadFn<E, CRF> = |reader| reader.read_pi(8);
+    const PI9: FactoryReadFn<E, CRF> = |reader| reader.read_pi(9);
+    const PI10: FactoryReadFn<E, CRF> = |reader| reader.read_pi(10);
+    const GOLOMB3: FactoryReadFn<E, CRF> = |reader| reader.read_golomb(3);
+    const GOLOMB5: FactoryReadFn<E, CRF> = |reader| reader.read_golomb(5);
+    const GOLOMB6: FactoryReadFn<E, CRF> = |reader| reader.read_golomb(6);
+    const GOLOMB7: FactoryReadFn<E, CRF> = |reader| reader.read_golomb(7);
+    const GOLOMB9: FactoryReadFn<E, CRF> = |reader| reader.read_golomb(9);
+    const GOLOMB10: FactoryReadFn<E, CRF> = |reader| reader.read_golomb(10);
+    const EXP_GOLOMB1: FactoryReadFn<E, CRF> = |reader| reader.read_exp_golomb(1);
+    const EXP_GOLOMB2: FactoryReadFn<E, CRF> = |reader| reader.read_exp_golomb(2);
+    const EXP_GOLOMB3: FactoryReadFn<E, CRF> = |reader| reader.read_exp_golomb(3);
+    const EXP_GOLOMB4: FactoryReadFn<E, CRF> = |reader| reader.read_exp_golomb(4);
+    const EXP_GOLOMB5: FactoryReadFn<E, CRF> = |reader| reader.read_exp_golomb(5);
+    const EXP_GOLOMB6: FactoryReadFn<E, CRF> = |reader| reader.read_exp_golomb(6);
+    const EXP_GOLOMB7: FactoryReadFn<E, CRF> = |reader| reader.read_exp_golomb(7);
+    const EXP_GOLOMB8: FactoryReadFn<E, CRF> = |reader| reader.read_exp_golomb(8);
+    const EXP_GOLOMB9: FactoryReadFn<E, CRF> = |reader| reader.read_exp_golomb(9);
+    const EXP_GOLOMB10: FactoryReadFn<E, CRF> = |reader| reader.read_exp_golomb(10);
 
-    /// Return a new [`FuncCodeReaderFactory`] for the given code.
+    /// Return a new [`FactoryFuncCodeReader`] for the given code.
     ///
     /// # Errors
     ///
     /// The method will return an error if there is no constant
-    /// for the given code in [`FuncCodeReaderFactory`].
+    /// for the given code in [`FactoryFuncCodeReader`].
     pub fn new(code: Codes) -> anyhow::Result<Self> {
         let read_func = match code {
             Codes::Unary => Self::UNARY,
@@ -261,24 +262,24 @@ impl<E: Endianness, CF: CodesReaderFactoryHelper<E> + ?Sized> FuncCodeReaderFact
         Ok(Self(read_func))
     }
 
-    /// Returns a new [`FuncCodeReaderFactory`] for the given function.
+    /// Returns a new [`FactoryFuncCodeReader`] for the given function.
     #[inline(always)]
-    pub fn new_with_func(read_func: FactoryReadFn<E, CF>) -> Self {
+    pub fn new_with_func(read_func: FactoryReadFn<E, CRF>) -> Self {
         Self(read_func)
     }
 
     /// Returns the function pointer for the code.
     #[inline(always)]
-    pub fn get_func(&self) -> FactoryReadFn<E, CF> {
+    pub fn inner(&self) -> FactoryReadFn<E, CRF> {
         self.0
     }
 
-    /// Returns a [`FuncCodeReader`] compatible with `CF`'s [`CodesReaderFactory::CodesReader`]
-    /// for a given lifetime `'a`.
+    /// Returns a [`FuncCodeReader`] compatible with `CRF`'s
+    /// [`CodesReaderFactory::CodesReader`] for a given lifetime `'a`.
     #[inline(always)]
     pub fn get<'a>(
         &self,
-    ) -> super::FuncCodeReader<E, <CF as CodesReaderFactory<E>>::CodesReader<'a>> {
+    ) -> super::FuncCodeReader<E, <CRF as CodesReaderFactory<E>>::CodesReader<'a>> {
         super::FuncCodeReader::new_with_func(self.0)
     }
 }
