@@ -6,7 +6,12 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
-//! Single-dynamic dispatching for codes based on function pointers.
+//! Dynamic dispatching for codes based on function pointers.
+//! 
+//! This kind of dispatch is resolved at runtime, but just once, at construction
+//! time. The code is stored in a function pointer, so it cannot be inlined like
+//! in the [static case](crate::dispatch::static), but the approach is more
+//! flexible.
 
 use super::*;
 #[cfg(feature = "mem_dbg")]

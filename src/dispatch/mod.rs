@@ -232,11 +232,11 @@ use anyhow::Result;
 pub mod codes;
 pub use codes::*;
 
-pub mod constant;
-pub use constant::{code_consts, ConstCode};
+pub mod r#static;
+pub use r#static::{code_consts, ConstCode};
 
-pub mod func;
-pub use func::{FuncCodeLen, FuncCodeWriter, FuncCodeReader};
+pub mod dynamic;
+pub use dynamic::{FuncCodeLen, FuncCodeWriter, FuncCodeReader};
 
 pub mod factory;
 pub use factory::{CodesReaderFactory, FuncCodeReaderFactory};

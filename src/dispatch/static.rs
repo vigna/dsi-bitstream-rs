@@ -7,6 +7,11 @@
  */
 
 //! Static dispatch for codes.
+//! 
+//! This kind of dispatch is resolved at compile time. Thus, the code can be
+//! inlined and optimized, contrarily to the [dynamic
+//! case](crate::dispatch::dynamic), but you have less flexibility as codes have
+//! to be chosen at compile time.
 
  use super::*;
 #[cfg(feature = "mem_dbg")]
