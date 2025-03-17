@@ -6,12 +6,12 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
- //! Programmable static and dynamic dispatch for codes.
+//! Programmable static and dynamic dispatch for codes.
 //!
-//! The code traits in the submodules of this module, such as
-//! [`Omega`](super::omega), extend [`BitRead`] and [`BitWrite`] to provide a
-//! way to read and write codes from a bitstream. The user can thus select at
-//! compile time the desired trait and use the associated codes.
+//! The code traits in [codes](super::codes), such as [`Omega`](super::omega),
+//! extend [`BitRead`] and [`BitWrite`] to provide a way to read and write codes
+//! from a bitstream. The user can thus select at compile time the desired trait
+//! and use the associated codes.
 //!
 //! In many contexts, however, one does not want to commit to a specific set of
 //! codes, but rather would like to write generic methods that accept some code
@@ -30,7 +30,7 @@
 //! ones, and provide a method to read and write a code from a bitstream. By
 //! implementing them, you can write a method accepting one or more unspecified
 //! codes, and operate with them. For example, in this function we read twice a
-//! code and return the sum of the two values, but make no committment on which
+//! code and return the sum of the two values, but make no commitment on which
 //! code we will be using:
 //!```rust
 //! use dsi_bitstream::prelude::*;
@@ -48,10 +48,10 @@
 //!     Ok(code.read(reader)? + code.read(reader)?)
 //! }
 //!```
-//! On the other hand, the traits [`StaticCodeRead`] and [`StaticCodeWrite`]
-//! are specialized for a reader or writer of given endianness. This means that
-//! they can in principle be implemented for a specific code by storing a
-//! function pointer, with much less runtime overhead.
+//! On the other hand, the traits [`StaticCodeRead`] and [`StaticCodeWrite`] are
+//! specialized for a reader or writer of given endianness. This means that they
+//! can in principle be implemented for a specific code by storing a function
+//! pointer, with much less runtime overhead.
 //!```rust
 //! use dsi_bitstream::prelude::*;
 //! use dsi_bitstream::dispatch::{CodesRead, StaticCodeRead};
@@ -69,9 +69,9 @@
 //! }
 //!```
 //!
-//! Note that the syntax for invoking the methods in the two groups of traits
-//! is identical, but the type variables are on the method in the first
-//! case, and on the trait in the second case.
+//! Note that the syntax for invoking the methods in the two groups of traits is
+//! identical, but the type variables are on the method in the first case, and
+//! on the trait in the second case.
 //!
 //! # Implementations
 //!
@@ -121,11 +121,11 @@
 //! [`FuncCodeWriter`], which implement [`StaticCodeRead`] and
 //! [`StaticCodeWrite`] by storing a function pointer.
 //!
-//! A value of type [`FuncCodesReader`] or [`FuncCodeWriter`] can be created by calling
-//! their `new` method with a variant of the [`Codes`] enum. As in the case of
-//! [`ConstCode`], there are pointers for all parameterless codes, and for the
-//! codes with parameters up to 10, and the method will return an error if the
-//! code is not supported.
+//! A value of type [`FuncCodesReader`] or [`FuncCodeWriter`] can be created by
+//! calling their `new` method with a variant of the [`Codes`] enum. As in the
+//! case of [`ConstCode`], there are pointers for all parameterless codes, and
+//! for the codes with parameters up to 10, and the method will return an error
+//! if the code is not supported.
 //!
 //! For example:
 //!```rust
@@ -151,15 +151,15 @@
 //! }
 //!```
 //! Note that we [`unwrap`](core::result::Result::unwrap) the result of the
-//! [`new`](FuncCodesReader::new) method, as we know that a function pointer exists
-//! for the γ code.
+//! [`new`](FuncCodesReader::new) method, as we know that a function pointer
+//! exists for the γ code.
 //!
 //! # Workaround to Limitations
 //!
-//! Both [`ConstCode`] and [`FuncCodesReader`] / [`FuncCodeWriter`] are limited to a
-//! fixed set of codes. If you need to work with a code that is not supported by
-//! them, you can implement your own version. For example, here we define a
-//! zero-sized struct that represent a Rice code with a fixed parameter
+//! Both [`ConstCode`] and [`FuncCodesReader`] / [`FuncCodeWriter`] are limited
+//! to a fixed set of codes. If you need to work with a code that is not
+//! supported by them, you can implement your own version. For example, here we
+//! define a zero-sized struct that represent a Rice code with a fixed parameter
 //! `LOG2_B`:
 //! ```rust
 //! use dsi_bitstream::prelude::*;
@@ -198,8 +198,8 @@
 //! ```
 //!
 //! Suppose instead you need to pass a [`StaticCodeRead`] to a method using a
-//! code that is not supported directly by [`FuncCodesReader`]. You can create a new
-//! [`FuncCodesReader`] using a provided function:
+//! code that is not supported directly by [`FuncCodesReader`]. You can create a
+//! new [`FuncCodesReader`] using a provided function:
 //!```rust
 //! use dsi_bitstream::prelude::*;
 //! use dsi_bitstream::dispatch::{CodesRead, StaticCodeRead, FuncCodesReader};
