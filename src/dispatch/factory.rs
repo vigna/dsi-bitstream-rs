@@ -7,42 +7,42 @@
  */
 
 //! Dynamic-dispatching factories for readers with a lifetime.
-//! 
+//!
 //! # Motivation
-//! 
+//!
 //! [`FuncCodeReader`] already provides dynamic dispatching of read functions,
 //! but in some uses cases the reader has to reference some data (e.g., readers
 //! based on the same memory buffer). In this case, one would need to create a
 //! dispatching function pointer for each code and each reader because the
 //! lifetime of different readers make the function pointers incompatible.
-//! 
+//!
 //! The trait [`CodesReaderFactory`] solves this problem by providing a way to
 //! create a [`CodesRead`] with a lifetime that can reference data owned by the
 //! factory. This trait must be implemented by client applications.
-//! 
+//!
 //! At the point, one can create a [`FactoryFuncCodeReader`] depending on a
 //! specific [`CodesReaderFactory`]. The [`FactoryFuncCodeReader`] will store a
 //! function pointer with a generic lifetime that can be downcast to a specific
 //! lifetime. Thus, the function pointer is created just once at the creation of
 //! the [`FactoryFuncCodeReader`], and can be reused to create
 //! [`FuncCodeReader`]s with any lifetime using [`FactoryFuncCodeReader::get`].
-//! 
+//!
 //! # Implementation Notes
-//! 
+//!
 //! In principle, we would like to have inside a [`FactoryFuncCodeReader`] a
 //! field with type
-//! 
+//!
 //! ```ignore
 //! for<'a> FuncCodeReader<E, CRF::CodesReader<'a>>
 //! ```
-//! 
+//!
 //! However, this is not possible in the Rust type system. We can however write
 //! the type
-//! 
+//!
 //! ```ignore
 //! for<'a> fn(&mut CRF::CodesReader<'a>) -> Result<u64>
 //! ```
-//! 
+//!
 //! This workaround is not perfect as we cannot properly specify the error type:
 //! ```ignore
 //! Result<u64, <CRF::CodesReader<'a> as BitRead<E>>::Error>
@@ -89,7 +89,7 @@ pub trait CodesReaderFactory<E: Endianness> {
 }
 
 /// Extension helper trait for [`CodesReaderFactory`].
-/// 
+///
 /// By writing trait bounds using this helper instead of [`CodesReaderFactory`],
 /// you can access the error type of the [`CodesReaderFactory::CodesReader`] through
 /// [`CodesReaderFactoryHelper::Error`].
@@ -107,17 +107,18 @@ where
 }
 
 /// The function type stored in a [`FactoryFuncCodeReader`].
-/// 
+///
 /// The role of this type is analogous to that of `ReadFn` in [`FuncCodeReader`],
 /// but we have an extra lifetime parameter to handle the lifetime
 /// of the [`CodesReaderFactory::CodesReader`].
 type FactoryReadFn<E, CRF> = for<'a> fn(
     &mut <CRF as CodesReaderFactory<E>>::CodesReader<'a>,
-) -> Result<u64, <CRF as CodesReaderFactoryHelper<E>>::Error>;
+)
+    -> Result<u64, <CRF as CodesReaderFactoryHelper<E>>::Error>;
 
 /// A newtype depending on a [`CodesReaderFactory`] and containing a function
 /// pointer dispatching the read method for a code.
-/// 
+///
 /// It is essentially a version of [`FuncCodeReader`] that depends on a
 /// [`CodesReaderFactory`] and its associated
 /// [`CodesReaderFactory::CodesReader`] instead of a generic [`CodesRead`].

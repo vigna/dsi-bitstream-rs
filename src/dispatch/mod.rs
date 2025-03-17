@@ -236,7 +236,7 @@ pub mod r#static;
 pub use r#static::{code_consts, ConstCode};
 
 pub mod dynamic;
-pub use dynamic::{FuncCodeLen, FuncCodeWriter, FuncCodeReader};
+pub use dynamic::{FuncCodeLen, FuncCodeReader, FuncCodeWriter};
 
 pub mod factory;
 pub use factory::{CodesReaderFactory, FactoryFuncCodeReader};

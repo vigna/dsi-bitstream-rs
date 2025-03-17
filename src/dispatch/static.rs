@@ -7,7 +7,7 @@
  */
 
 //! Static dispatch for codes.
-//! 
+//!
 //! This kind of dispatch is resolved at compile time against a specific
 //! [`CodesRead`]. Thus, the code can be inlined and optimized, contrarily to
 //! the [dynamic case](crate::dispatch::dynamic), but you have less flexibility

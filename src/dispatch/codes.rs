@@ -7,7 +7,7 @@
  */
 
 //! Enumeration of all available codes, with associated read and write methods.
-//! 
+//!
 //! This is the slower and more generic form of dispatching, mostly used for
 //! testing and writing examples. For faster dispatching, consider using
 //! [dynamic] or [static] dispatch.

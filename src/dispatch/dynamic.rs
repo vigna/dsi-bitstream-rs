@@ -7,7 +7,7 @@
  */
 
 //! Dynamic dispatching for codes based on function pointers.
-//! 
+//!
 //! This kind of dispatch is resolved at runtime, but just once, at construction
 //! time, against a specific [`CodesRead`]. The code is stored in a function
 //! pointer, so it cannot be inlined like in the [static

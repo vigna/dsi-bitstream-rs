@@ -45,7 +45,8 @@ enum RandomCommand {
     Rice(u64, usize),
     ExpGolomb(u64, usize),
     Bytes(Vec<u8>),
-    VByte(u64),
+    VByteBe(u64),
+    VByteLe(u64),
     Omega(u64),
     Pi(u64, usize),
 }
@@ -88,7 +89,8 @@ pub fn harness(data: FuzzCase) {
                 *k = (*k).max(0).min(8);
             }
             RandomCommand::Bytes(_) => {}
-            RandomCommand::VByte(_) => {}
+            RandomCommand::VByteLe(_) => {}
+            RandomCommand::VByteBe(_) => {}
             RandomCommand::Omega(value) => {
                 *value = (*value).min(u64::MAX - 1);
             }
@@ -206,10 +208,18 @@ pub fn harness(data: FuzzCase) {
                     assert_eq!(big_success, little_success);
                     writes.push(big_success);
                 }
-                RandomCommand::VByte(value) => {
+                RandomCommand::VByteLe(value) => {
                     let (big_success, little_success) = (
-                        big.write_vbyte(*value).is_ok(),
-                        little.write_vbyte(*value).is_ok(),
+                        big.write_vbyte_le(*value).is_ok(),
+                        little.write_vbyte_le(*value).is_ok(),
+                    );
+                    assert_eq!(big_success, little_success);
+                    writes.push(big_success);
+                }
+                RandomCommand::VByteBe(value) => {
+                    let (big_success, little_success) = (
+                        big.write_vbyte_be(*value).is_ok(),
+                        little.write_vbyte_be(*value).is_ok(),
                     );
                     assert_eq!(big_success, little_success);
                     writes.push(big_success);
@@ -805,31 +815,81 @@ pub fn harness(data: FuzzCase) {
                         assert_eq!(pos, little_buff.bit_pos().unwrap());
                     }
                 }
-                RandomCommand::VByte(value) => {
+                RandomCommand::VByteLe(value) => {
                     let (b, l, bb, lb) = (
-                        big.read_vbyte(),
-                        little.read_vbyte(),
-                        big_buff.read_vbyte(),
-                        little_buff.read_vbyte(),
+                        big.read_vbyte_le(),
+                        little.read_vbyte_le(),
+                        big_buff.read_vbyte_le(),
+                        little_buff.read_vbyte_le(),
                     );
                     if succ {
                         assert_eq!(b.unwrap(), value as u64, "b");
                         assert_eq!(l.unwrap(), value as u64, "l");
                         assert_eq!(bb.unwrap(), value as u64, "bb");
                         assert_eq!(lb.unwrap(), value as u64, "lb");
-                        assert_eq!(pos + len_vbyte(value) as u64, big.bit_pos().unwrap());
-                        assert_eq!(pos + len_vbyte(value) as u64, little.bit_pos().unwrap());
-                        assert_eq!(pos + len_vbyte(value) as u64, big_buff.bit_pos().unwrap());
+                        assert_eq!(pos + bit_len_vbyte(value) as u64, big.bit_pos().unwrap());
+                        assert_eq!(pos + bit_len_vbyte(value) as u64, little.bit_pos().unwrap());
                         assert_eq!(
-                            pos + len_vbyte(value) as u64,
+                            pos + bit_len_vbyte(value) as u64,
+                            big_buff.bit_pos().unwrap()
+                        );
+                        assert_eq!(
+                            pos + bit_len_vbyte(value) as u64,
                             little_buff.bit_pos().unwrap()
                         );
 
-                        assert_eq!(pos + len_vbyte(value) as u64, big.bit_pos().unwrap());
-                        assert_eq!(pos + len_vbyte(value) as u64, little.bit_pos().unwrap());
-                        assert_eq!(pos + len_vbyte(value) as u64, big_buff.bit_pos().unwrap());
+                        assert_eq!(pos + bit_len_vbyte(value) as u64, big.bit_pos().unwrap());
+                        assert_eq!(pos + bit_len_vbyte(value) as u64, little.bit_pos().unwrap());
                         assert_eq!(
-                            pos + len_vbyte(value) as u64,
+                            pos + bit_len_vbyte(value) as u64,
+                            big_buff.bit_pos().unwrap()
+                        );
+                        assert_eq!(
+                            pos + bit_len_vbyte(value) as u64,
+                            little_buff.bit_pos().unwrap()
+                        );
+                    } else {
+                        assert!(b.is_err());
+                        assert!(l.is_err());
+                        assert!(bb.is_err());
+                        assert!(lb.is_err());
+                        assert_eq!(pos, big.bit_pos().unwrap());
+                        assert_eq!(pos, little.bit_pos().unwrap());
+                        assert_eq!(pos, big_buff.bit_pos().unwrap());
+                        assert_eq!(pos, little_buff.bit_pos().unwrap());
+                    }
+                }
+                RandomCommand::VByteBe(value) => {
+                    let (b, l, bb, lb) = (
+                        big.read_vbyte_be(),
+                        little.read_vbyte_be(),
+                        big_buff.read_vbyte_be(),
+                        little_buff.read_vbyte_be(),
+                    );
+                    if succ {
+                        assert_eq!(b.unwrap(), value as u64, "b");
+                        assert_eq!(l.unwrap(), value as u64, "l");
+                        assert_eq!(bb.unwrap(), value as u64, "bb");
+                        assert_eq!(lb.unwrap(), value as u64, "lb");
+                        assert_eq!(pos + bit_len_vbyte(value) as u64, big.bit_pos().unwrap());
+                        assert_eq!(pos + bit_len_vbyte(value) as u64, little.bit_pos().unwrap());
+                        assert_eq!(
+                            pos + bit_len_vbyte(value) as u64,
+                            big_buff.bit_pos().unwrap()
+                        );
+                        assert_eq!(
+                            pos + bit_len_vbyte(value) as u64,
+                            little_buff.bit_pos().unwrap()
+                        );
+
+                        assert_eq!(pos + bit_len_vbyte(value) as u64, big.bit_pos().unwrap());
+                        assert_eq!(pos + bit_len_vbyte(value) as u64, little.bit_pos().unwrap());
+                        assert_eq!(
+                            pos + bit_len_vbyte(value) as u64,
+                            big_buff.bit_pos().unwrap()
+                        );
+                        assert_eq!(
+                            pos + bit_len_vbyte(value) as u64,
                             little_buff.bit_pos().unwrap()
                         );
                     } else {
