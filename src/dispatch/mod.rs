@@ -34,7 +34,7 @@
 //! code we will be using:
 //!```rust
 //! use dsi_bitstream::prelude::*;
-//! use dsi_bitstream::codes::dispatch::{CodesRead, DynamicCodeRead};
+//! use dsi_bitstream::dispatch::{CodesRead, DynamicCodeRead};
 //! use std::fmt::Debug;
 //!
 //! fn read_two_codes_and_sum<
@@ -54,7 +54,7 @@
 //! function pointer, with much less runtime overhead.
 //!```rust
 //! use dsi_bitstream::prelude::*;
-//! use dsi_bitstream::codes::dispatch::{CodesRead, StaticCodeRead};
+//! use dsi_bitstream::dispatch::{CodesRead, StaticCodeRead};
 //! use std::fmt::Debug;
 //!
 //! fn read_two_codes_and_sum<
@@ -94,7 +94,7 @@
 //! `read_two_codes_and_sum` is generic:
 //!```rust
 //! use dsi_bitstream::prelude::*;
-//! use dsi_bitstream::codes::dispatch::{code_consts, CodesRead, DynamicCodeRead};
+//! use dsi_bitstream::dispatch::{code_consts, CodesRead, DynamicCodeRead};
 //! use std::fmt::Debug;
 //!
 //! fn read_two_codes_and_sum<
@@ -130,7 +130,7 @@
 //! For example:
 //!```rust
 //! use dsi_bitstream::prelude::*;
-//! use dsi_bitstream::codes::dispatch::{CodesRead, StaticCodeRead, FuncCodesReader};
+//! use dsi_bitstream::dispatch::{CodesRead, StaticCodeRead, FuncCodesReader};
 //! use std::fmt::Debug;
 //!
 //! fn read_two_codes_and_sum<
@@ -163,8 +163,8 @@
 //! `LOG2_B`:
 //! ```rust
 //! use dsi_bitstream::prelude::*;
-//! use dsi_bitstream::codes::dispatch::{CodesRead, CodesWrite};
-//! use dsi_bitstream::codes::dispatch::{DynamicCodeRead, DynamicCodeWrite};
+//! use dsi_bitstream::dispatch::{CodesRead, CodesWrite};
+//! use dsi_bitstream::dispatch::{DynamicCodeRead, DynamicCodeWrite};
 //! use std::fmt::Debug;
 //!
 //! #[derive(Clone, Copy, Debug, Default)]
@@ -202,7 +202,7 @@
 //! [`FuncCodesReader`] using a provided function:
 //!```rust
 //! use dsi_bitstream::prelude::*;
-//! use dsi_bitstream::codes::dispatch::{CodesRead, StaticCodeRead, FuncCodesReader};
+//! use dsi_bitstream::dispatch::{CodesRead, StaticCodeRead, FuncCodesReader};
 //! use std::fmt::Debug;
 //!
 //! fn read_two_codes_and_sum<
