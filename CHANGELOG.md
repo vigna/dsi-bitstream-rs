@@ -7,7 +7,7 @@
 * Added VByteBe, VByteLe, Elias Omega, and streamlined Pi codes.
 
 * Added `dispatch` module to choose / dispatch codes at runtime.
- 
+
 * Implemented `std::io::Read` for `BitReader` and `BufBitReader`.
 
 * Implemented `std::io::Write` for `BufBitWriter`.
@@ -17,12 +17,15 @@
 * Added `core::ops::Add`, `core::ops::AddAssign`, and `core::iter::Sum` to
   CodeStats so they can be merged using iter's `.sum()`.
 
+* New benchmarks on implied distributions.
+
+* `ToInt`/`ToNat` traits for reading and writing integers.
+
 ## [0.4.2] - 2024-04-07
 
 ### Changed
 
 * made mem_dbg optional.
-
 
 ## [0.4.1] - 2024-04-07
 

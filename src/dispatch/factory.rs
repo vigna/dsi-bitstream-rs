@@ -52,8 +52,8 @@
 //!
 //! To work around this problem, we could add an otherwise useless associated
 //! type `CodesReaderFactory::Error` to the [`CodesReaderFactory`] trait,
-//! imposing that the error type of the associated [`CodesRead`] is the same.
-//! Unfortunately, this requires that all users of the factory add a where
+//! imposing that the error type of [`CodesReaderFactory::CodesReader`] is the
+//! same. Unfortunately, this requires that all users of the factory add a `where`
 //! constraint in which the error type is written explicitly.
 //!
 //! To mitigate this problem, we provide instead a helper trait
