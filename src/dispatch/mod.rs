@@ -117,11 +117,11 @@
 //!
 //! Working with [`ConstCode`] is very efficient, but it forces the choice of a
 //! code at compile time. If you need to read or write a code multiple times on
-//! the same type of bitstream, you can use the structs [`FuncCodesReader`] and
+//! the same type of bitstream, you can use the structs [`FuncCodeReader`] and
 //! [`FuncCodeWriter`], which implement [`StaticCodeRead`] and
 //! [`StaticCodeWrite`] by storing a function pointer.
 //!
-//! A value of type [`FuncCodesReader`] or [`FuncCodeWriter`] can be created by
+//! A value of type [`FuncCodeReader`] or [`FuncCodeWriter`] can be created by
 //! calling their `new` method with a variant of the [`Codes`] enum. As in the
 //! case of [`ConstCode`], there are pointers for all parameterless codes, and
 //! for the codes with parameters up to 10, and the method will return an error
@@ -130,7 +130,7 @@
 //! For example:
 //!```rust
 //! use dsi_bitstream::prelude::*;
-//! use dsi_bitstream::dispatch::{CodesRead, StaticCodeRead, FuncCodesReader};
+//! use dsi_bitstream::dispatch::{CodesRead, StaticCodeRead, FuncCodeReader};
 //! use std::fmt::Debug;
 //!
 //! fn read_two_codes_and_sum<
@@ -147,16 +147,16 @@
 //! fn call_read_two_codes_and_sum<E: Endianness, R: CodesRead<E> + ?Sized>(
 //!     reader: &mut R,
 //! ) -> Result<u64, R::Error> {
-//!     read_two_codes_and_sum(reader, FuncCodesReader::new(Codes::Gamma).unwrap())
+//!     read_two_codes_and_sum(reader, FuncCodeReader::new(Codes::Gamma).unwrap())
 //! }
 //!```
 //! Note that we [`unwrap`](core::result::Result::unwrap) the result of the
-//! [`new`](FuncCodesReader::new) method, as we know that a function pointer
+//! [`new`](FuncCodeReader::new) method, as we know that a function pointer
 //! exists for the γ code.
 //!
 //! # Workaround to Limitations
 //!
-//! Both [`ConstCode`] and [`FuncCodesReader`] / [`FuncCodeWriter`] are limited
+//! Both [`ConstCode`] and [`FuncCodeReader`] / [`FuncCodeWriter`] are limited
 //! to a fixed set of codes. If you need to work with a code that is not
 //! supported by them, you can implement your own version. For example, here we
 //! define a zero-sized struct that represent a Rice code with a fixed parameter
@@ -198,11 +198,11 @@
 //! ```
 //!
 //! Suppose instead you need to pass a [`StaticCodeRead`] to a method using a
-//! code that is not supported directly by [`FuncCodesReader`]. You can create a
-//! new [`FuncCodesReader`] using a provided function:
+//! code that is not supported directly by [`FuncCodeReader`]. You can create a
+//! new [`FuncCodeReader`] using a provided function:
 //!```rust
 //! use dsi_bitstream::prelude::*;
-//! use dsi_bitstream::dispatch::{CodesRead, StaticCodeRead, FuncCodesReader};
+//! use dsi_bitstream::dispatch::{CodesRead, StaticCodeRead, FuncCodeReader};
 //! use std::fmt::Debug;
 //!
 //! fn read_two_codes_and_sum<
@@ -219,7 +219,7 @@
 //! fn call_read_two_codes_and_sum<E: Endianness, R: CodesRead<E> + ?Sized>(
 //!     reader: &mut R,
 //! ) -> Result<u64, R::Error> {
-//!     read_two_codes_and_sum(reader, FuncCodesReader::new_with_func(|r: &mut R| r.read_rice(20)))
+//!     read_two_codes_and_sum(reader, FuncCodeReader::new_with_func(|r: &mut R| r.read_rice(20)))
 //! }
 //!```
 
@@ -236,10 +236,10 @@ pub mod constant;
 pub use constant::{code_consts, ConstCode};
 
 pub mod func;
-pub use func::{FuncCodeLen, FuncCodeWriter, FuncCodesReader};
+pub use func::{FuncCodeLen, FuncCodeWriter, FuncCodeReader};
 
 pub mod factory;
-pub use factory::{CodesReaderFactory, FuncCodesReaderFactory};
+pub use factory::{CodesReaderFactory, FuncCodeReaderFactory};
 
 /// Convenience extension trait for reading all the codes supported by the
 /// library.

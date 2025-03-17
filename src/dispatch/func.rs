@@ -6,38 +6,42 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
- use super::*;
+//! Single-dynamic dispatching for codes based on function pointers.
+
+use super::*;
 #[cfg(feature = "mem_dbg")]
 use mem_dbg::{MemDbg, MemSize};
 
 type ReadFn<E, CR> = fn(&mut CR) -> Result<u64, <CR as BitRead<E>>::Error>;
 
-/// A newtype containing a function pointer dispatching the read method for a
-/// code.
+/// A newtype containing a [function pointer](ReadFn) dispatching the read
+/// method for a code.
 ///
-/// This is a more efficient way to pass a [`StaticCodeRead`] to a method, as
-/// a [`FuncCodesReader`] does not need to do a runtime test to dispatch the correct
-/// code.
+/// This is a more efficient way to pass a [`StaticCodeRead`] to a method, as a
+/// [`FuncCodeReader`] does not need to do a runtime test to dispatch the
+/// correct code.
 ///
-/// Instances can be obtained by calling the [`new`](FuncCodesReader::new) method with
-///  method with a variant of the [`Codes`] enum, or by calling the
-/// [`new_with_func`](FuncCodesReader::new_with_func) method with a function pointer.
+/// Instances can be obtained by calling the [`new`](FuncCodeReader::new) method
+///  with method with a variant of the [`Codes`] enum, or by calling the
+/// [`new_with_func`](FuncCodeReader::new_with_func) method with a function
+/// pointer.
 ///
-/// Note that since selection of the code happens in the [`new`](FuncCodesReader::new)
-/// method, it is more efficient to clone a [`FuncCodesReader`] than to create a new one.
+/// Note that since selection of the code happens in the
+/// [`new`](FuncCodeReader::new) method, it is more efficient to clone a
+/// [`FuncCodeReader`] than to create a new one.
 #[derive(Debug, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
-pub struct FuncCodesReader<E: Endianness, CR: CodesRead<E> + ?Sized>(ReadFn<E, CR>);
+pub struct FuncCodeReader<E: Endianness, CR: CodesRead<E> + ?Sized>(ReadFn<E, CR>);
 
 /// manually implement Clone to avoid the Clone bound on CR and E
-impl<E: Endianness, CR: CodesRead<E> + ?Sized> Clone for FuncCodesReader<E, CR> {
+impl<E: Endianness, CR: CodesRead<E> + ?Sized> Clone for FuncCodeReader<E, CR> {
     #[inline(always)]
     fn clone(&self) -> Self {
         Self(self.0)
     }
 }
 
-impl<E: Endianness, CR: CodesRead<E> + ?Sized> FuncCodesReader<E, CR> {
+impl<E: Endianness, CR: CodesRead<E> + ?Sized> FuncCodeReader<E, CR> {
     const UNARY: ReadFn<E, CR> = |reader: &mut CR| reader.read_unary();
     const GAMMA: ReadFn<E, CR> = |reader: &mut CR| reader.read_gamma();
     const DELTA: ReadFn<E, CR> = |reader: &mut CR| reader.read_delta();
@@ -89,12 +93,12 @@ impl<E: Endianness, CR: CodesRead<E> + ?Sized> FuncCodesReader<E, CR> {
     const EXP_GOLOMB8: ReadFn<E, CR> = |reader: &mut CR| reader.read_exp_golomb(8);
     const EXP_GOLOMB9: ReadFn<E, CR> = |reader: &mut CR| reader.read_exp_golomb(9);
     const EXP_GOLOMB10: ReadFn<E, CR> = |reader: &mut CR| reader.read_exp_golomb(10);
-    /// Return a new [`FuncCodesReader`] for the given code.
+    /// Return a new [`FuncCodeReader`] for the given code.
     ///
     /// # Errors
     ///
     /// The method will return an error if there is no constant
-    /// for the given code in [`FuncCodesReader`].
+    /// for the given code in [`FuncCodeReader`].
     pub fn new(code: Codes) -> anyhow::Result<Self> {
         let read_func = match code {
             Codes::Unary => Self::UNARY,
@@ -161,7 +165,7 @@ impl<E: Endianness, CR: CodesRead<E> + ?Sized> FuncCodesReader<E, CR> {
         Ok(Self(read_func))
     }
 
-    /// Return a new [`FuncCodesReader`] for the given function.
+    /// Return a new [`FuncCodeReader`] for the given function.
     #[inline(always)]
     pub fn new_with_func(read_func: ReadFn<E, CR>) -> Self {
         Self(read_func)
@@ -174,7 +178,7 @@ impl<E: Endianness, CR: CodesRead<E> + ?Sized> FuncCodesReader<E, CR> {
     }
 }
 
-impl<E: Endianness, CR: CodesRead<E> + ?Sized> StaticCodeRead<E, CR> for FuncCodesReader<E, CR> {
+impl<E: Endianness, CR: CodesRead<E> + ?Sized> StaticCodeRead<E, CR> for FuncCodeReader<E, CR> {
     #[inline(always)]
     fn read(&self, reader: &mut CR) -> Result<u64, CR::Error> {
         (self.0)(reader)
@@ -196,7 +200,7 @@ type WriteFn<E, CW> = fn(&mut CW, u64) -> Result<usize, <CW as BitWrite<E>>::Err
 /// pointer.
 ///
 /// Note that since selection of the code happens in the
-/// [`new`](FuncCodesReader::new) method, it is more efficient to clone a
+/// [`new`](FuncCodeReader::new) method, it is more efficient to clone a
 /// [`FuncCodeWriter`] than to create a new one.
 #[derive(Debug, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
@@ -371,15 +375,15 @@ type LenFn = fn(u64) -> usize;
 /// code.
 ///
 /// This is a more efficient way to pass a [`StaticCodeRead`] to a method, as
-/// a [`FuncCodesReader`] does not need to do a runtime test to dispatch the correct
+/// a [`FuncCodeReader`] does not need to do a runtime test to dispatch the correct
 /// code.
 ///
-/// Instances can be obtained by calling the [`new`](FuncCodesReader::new) method with
+/// Instances can be obtained by calling the [`new`](FuncCodeReader::new) method with
 ///  method with a variant of the [`Codes`] enum, or by calling the
-/// [`new_with_func`](FuncCodesReader::new_with_func) method with a function pointer.
+/// [`new_with_func`](FuncCodeReader::new_with_func) method with a function pointer.
 ///
-/// Note that since selection of the code happens in the [`new`](FuncCodesReader::new)
-/// method, it is more efficient to clone a [`FuncCodesReader`] than to create a new one.
+/// Note that since selection of the code happens in the [`new`](FuncCodeReader::new)
+/// method, it is more efficient to clone a [`FuncCodeReader`] than to create a new one.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
 pub struct FuncCodeLen(LenFn);
@@ -508,7 +512,7 @@ impl FuncCodeLen {
         Ok(Self(len_func))
     }
 
-    /// Return a new [`FuncCodesReader`] for the given function.
+    /// Return a new [`FuncCodeReader`] for the given function.
     #[inline(always)]
     pub fn new_with_func(len_func: LenFn) -> Self {
         Self(len_func)

@@ -126,6 +126,10 @@ directory) and can be changed only by regenerating the tables using the script
 `gen_code_tables.py` in the `python` directory. You will need to modify the
 values hardwired at the end of the script.
 
+## Dispatching
+
+We provide several options to [dispatch] codes dynamically.
+
 ## Benchmarks
 
 To evaluate the performance on your hardware you can run the
@@ -178,3 +182,4 @@ Union nor the Italian MUR can be held responsible for them.
 [exponential Golomb codes]: <https://docs.rs/dsi-bitstream/latest/dsi_bitstream/codes/exp_golomb/index.html>
 [H.264 (MPEG-4)]: <https://en.wikipedia.org/wiki/Advanced_Video_Coding>
 [H.265]: <https://en.wikipedia.org/wiki/High_Efficiency_Video_Coding>
+[dispatch]: <https://docs.rs/dsi-bitstream/latest/dsi_bitstream/dispatch/index.html>
