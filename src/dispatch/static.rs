@@ -13,7 +13,8 @@
 //! case](crate::dispatch::dynamic), but you have less flexibility as codes have
 //! to be chosen at compile time.
 
- use super::*;
+use super::*;
+
 #[cfg(feature = "mem_dbg")]
 use mem_dbg::{MemDbg, MemSize};
 

@@ -6,7 +6,7 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
- use super::*;
+use super::*;
 use anyhow::Result;
 use core::fmt::Debug;
 
@@ -44,15 +44,18 @@ type FactoryReadFn<E, CF> = for<'a> fn(
     &mut <CF as CodesReaderFactory<E>>::CodesReader<'a>,
 ) -> Result<u64, <CF as CodesReaderFactoryHelper<E>>::Error>;
 
-/// This struct is used to do a more general version of single-static dispatching
+/// This struct is used to do a more general version of single-dynamic dispatching
 /// of read functions.
 ///
-/// [`FuncCodeReader`] already allows to do single-static dispatching
+/// [`FuncCodeReader`] already allows to do single-dynamic dispatching
 /// of read functions, but it has to know the lifetime of the [`CodesReader`] it will
 /// be using. This is not always possible, for example when we want to use a
-/// [`FuncCodeReader`] with a [`CodesReader`] that is created by a factory that owns
-/// the bit stream. One can work around this by doing the dispatch every time
-/// a reader is created, but this is not very efficient.  
+/// [`FuncCodeReader`] with a [`CodesReaderFactory::CodesReader`] that is
+/// created by a factory that owns the bit stream.
+/// One can work around this by doing the dispatch every time
+/// a reader is created, but this is not very efficient.
+///
+/// # Design details
 ///
 /// [`FuncCodeReaderFactory`] does the dispatching only once, when the factory
 /// is created, and it can create a [`FuncCodeReader`] with any given lifetime
@@ -74,16 +77,49 @@ type FactoryReadFn<E, CF> = for<'a> fn(
 /// Result<u64, <<CF as CodesReaderFactory<E>>::CodesReader<'a> as BitRead<E>>::Error>
 /// ```
 /// this cannot be done because the compiler complains that the return type has
-/// a lifetime not constrained by the input arguments. To work around this,
-/// we added an, otherwise useless, associated type [`CodesReaderFactory::Error`]
-/// to the [`CodesReaderFactory`] trait,
+/// a lifetime not constrained by the input arguments.
+///
+/// To work around this, we added an, otherwise useless, associated type
+/// `CodesReaderFactory::Error` to the [`CodesReaderFactory`] trait,
+/// ```ignore
+/// pub trait CodesReaderFactory<E: Endianness> {
+/// type Error;
+/// type CodesReader<'a>:  CodesRead<E, Error = Self::Error>>
+///     where Self: 'a;
+///     /// Create a new code reader that can reference data owned by the factory.
+///     fn new_reader(&self) -> Self::CodesReader<'_>;
+/// }
+/// ```
 /// and constraint the error type of the read functions to be the same as the
-/// error type
-/// of the [`CodesReaderFactory::CodesReader`] returned by the factory.
+/// error type of the [`CodesReaderFactory::CodesReader`] returned by the factory.
 /// This is not ideal, but it works and allows us to specify the error type as:
 /// ```ignore
-/// Result<u64, <<CF as CodesReaderFactory2<E>>::Error>
+/// Result<u64, <<CF as CodesReaderFactory<E>>::Error>
 /// ```
+///
+/// But this requires adding a where constraint on **all users** of the factory.
+/// ```ignore
+/// fn test<E: Endianness, CF: CodesReaderFactory<E>>(factory: CF)
+/// where
+///     for<'a> CF::CodesReader<'a>: BitRead<E, Error = CF::Error>
+/// {
+///     let reader = factory.new_reader();
+///     // do something with reader
+/// }
+/// ```
+///
+/// To mitigate this, we added a helper trait [`CodesReaderFactoryHelper`] that
+/// contains the `Error` type and the bound on the factory, so that the user can
+/// implement [`CodesReaderFactory`] on its own types, but constraint in
+/// [`CodesReaderFactoryHelper`].
+/// ```ignore
+/// fn test<E: Endianness, CF: CodesReaderFactoryHelper<E>>(factory: CF)
+/// {
+///     let reader = factory.new_reader();
+///     // do something with reader
+/// }
+/// ```
+///
 #[derive(Debug, Copy, PartialEq, Eq)]
 pub struct FuncCodeReaderFactory<E: Endianness, CF: CodesReaderFactoryHelper<E> + ?Sized>(
     FactoryReadFn<E, CF>,
