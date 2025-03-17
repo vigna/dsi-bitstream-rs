@@ -40,14 +40,14 @@ enum RandomCommand {
     Unary(u64),
     Gamma(u64, bool, bool),
     Delta(u64, bool, bool),
-    Zeta(u64, u64, bool, bool),
+    Zeta(u64, usize, bool, bool),
     Golomb(u64, u64),
     Rice(u64, usize),
     ExpGolomb(u64, usize),
     Bytes(Vec<u8>),
     VByte(u64),
     Omega(u64),
-    Pi(u64, u64),
+    Pi(u64, usize),
 }
 
 pub fn harness(data: FuzzCase) {
