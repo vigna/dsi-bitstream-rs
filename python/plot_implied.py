@@ -119,7 +119,7 @@ def create_plot(operations, title):
 
     # Customize the plot
     ax.set_ylabel("Time (ns)")
-    ax.set_title(f"{title} Performance on intended distribution")
+    ax.set_title(f"{title} Performance on implied distribution")
     ax.set_xticks(x)
     ax.set_xticklabels(codes, rotation=45, ha="right")
     ax.legend()
@@ -139,7 +139,7 @@ read_fig = create_plot(read_ops, "Read (u32 read word)")
 write_fig = create_plot(write_ops, "Write (u64 write word)")
 
 # Save the plots
-read_fig.savefig("read_performance.png", dpi=300, bbox_inches="tight")
-write_fig.savefig("write_performance.png", dpi=300, bbox_inches="tight")
+read_fig.savefig("read_performance.svg", dpi=300, bbox_inches="tight")
+write_fig.savefig("write_performance.svg", dpi=300, bbox_inches="tight")
 
 plt.close("all")

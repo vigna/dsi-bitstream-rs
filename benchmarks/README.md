@@ -38,19 +38,20 @@ The cargo options in `Cargo.html` and the `rustc` options in `.cargo/config.toml
 select aggressive optimizations and `--target-cpu=native`. You can modify
 them to run the tests with different options.
 
-## Benchmark on implied distributions
+# Benchmarks on implied distributions
 
 To generate a comparative graph that illustrates the speed of reading and
-writing for each code based on their respective implied distributions, use the
-following steps:
+writing for each code based on their respective implied distributions, use
+the following steps:
 
 ```bash
-RUSTFLAGS="-Ctarget-cpu=native" cargo run --bin implied --release | tee implied.tsv
+cd benchmarks
+cargo run --bin implied --release | tee implied.tsv
 python3 ../python/plot_implied.py ./implied.tsv
 ```
 
-Every complete prefix-free code, such as γ, δ, or ζ₃, has an implied distribution
-where each symbol is assigned a probability proportional to the reciprocal of
-2 raised to the length of the codeword. The graph shows the speed of reading
-and writing for each code based on their respective implied distributions.
-
+Every complete prefix-free code, such as γ, δ, or ζ₃, has an implied
+distribution where each symbol is assigned a probability proportional to
+the reciprocal of 2 raised to the length of the codeword. The graph shows
+the speed of reading and writing for each code based on their respective
+implied distributions.
