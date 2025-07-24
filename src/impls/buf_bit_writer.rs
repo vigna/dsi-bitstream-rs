@@ -44,6 +44,15 @@ pub struct BufBitWriter<E: Endianness, WW: WordWrite, WP: WriteParams = DefaultW
     _marker_endianness: core::marker::PhantomData<(E, WP)>,
 }
 
+impl<E: Endianness, WW: WordWrite + Default, WP: WriteParams> Default for BufBitWriter<E, WW, WP>
+where
+    BufBitWriter<E, WW, WP>: BitWrite<E>,
+{
+    fn default() -> Self {
+        Self::new(WW::default())
+    }
+}
+
 impl<E: Endianness, WW: WordWrite, WP: WriteParams> BufBitWriter<E, WW, WP>
 where
     BufBitWriter<E, WW, WP>: BitWrite<E>,
