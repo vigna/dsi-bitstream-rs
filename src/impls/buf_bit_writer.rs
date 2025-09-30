@@ -442,9 +442,7 @@ where
 
         for word in &mut iter {
             self.write_bits(u64::from_be_bytes(word.try_into().unwrap()), 64)
-                .map_err(|_| {
-                    std::io::Error::new(std::io::ErrorKind::Other, "Could not write bits to stream")
-                })?;
+                .map_err(|_| std::io::Error::other("Could not write bits to stream"))?;
         }
 
         let rem = iter.remainder();
@@ -455,18 +453,15 @@ where
                 word <<= 8;
                 word |= *byte as u64;
             }
-            self.write_bits(word, bits).map_err(|_| {
-                std::io::Error::new(std::io::ErrorKind::Other, "Could not write bits to stream")
-            })?;
+            self.write_bits(word, bits)
+                .map_err(|_| std::io::Error::other("Could not write bits to stream"))?;
         }
 
         Ok(buf.len())
     }
 
     fn flush(&mut self) -> std::io::Result<()> {
-        flush_be(self).map_err(|_| {
-            std::io::Error::new(std::io::ErrorKind::Other, "Could not flush bits to stream")
-        })?;
+        flush_be(self).map_err(|_| std::io::Error::other("Could not flush bits to stream"))?;
         Ok(())
     }
 }
@@ -481,9 +476,7 @@ where
 
         for word in &mut iter {
             self.write_bits(u64::from_le_bytes(word.try_into().unwrap()), 64)
-                .map_err(|_| {
-                    std::io::Error::new(std::io::ErrorKind::Other, "Could not write bits to stream")
-                })?;
+                .map_err(|_| std::io::Error::other("Could not write bits to stream"))?;
         }
 
         let rem = iter.remainder();
@@ -494,18 +487,15 @@ where
                 word <<= 8;
                 word |= *byte as u64;
             }
-            self.write_bits(word, bits).map_err(|_| {
-                std::io::Error::new(std::io::ErrorKind::Other, "Could not write bits to stream")
-            })?;
+            self.write_bits(word, bits)
+                .map_err(|_| std::io::Error::other("Could not write bits to stream"))?;
         }
 
         Ok(buf.len())
     }
 
     fn flush(&mut self) -> std::io::Result<()> {
-        flush_le(self).map_err(|_| {
-            std::io::Error::new(std::io::ErrorKind::Other, "Could not flush bits to stream")
-        })?;
+        flush_le(self).map_err(|_| std::io::Error::other("Could not flush bits to stream"))?;
         Ok(())
     }
 }

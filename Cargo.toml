@@ -12,6 +12,7 @@ authors = [
 	"Tommaso Fontana <tommaso.fontana.96@gmail.com>",
 	"Sebastiano Vigna <sebastiano.vigna@unimi.it>",
 ]
+rust-version = "1.85.0"
 
 [dependencies]
 rand = { version = "0.9.0", features = ["small_rng"] }
@@ -36,7 +37,7 @@ fuzz = ["dep:arbitrary"]
 checks = []
 # Disable copy_from/copy_to implementations so to test the default methods
 no_copy_impls = []
-# This is necessary to avoid warnings from MemDbg and to use the 
+# This is necessary to avoid warnings from MemDbg and to use the
 # offset_of_enum MemDbg feature gate if needed
 offset_of_enum = []
 

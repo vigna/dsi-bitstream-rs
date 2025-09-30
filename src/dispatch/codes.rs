@@ -258,7 +258,7 @@ impl DynamicCodeRead for Codes {
             Codes::Zeta { k: 3 } => reader.read_zeta3()?,
             Codes::Zeta { k } => reader.read_zeta(*k)?,
             Codes::Pi { k } => reader.read_pi(*k)?,
-            Codes::Golomb { b } => reader.read_golomb(*b as u64)?,
+            Codes::Golomb { b } => reader.read_golomb(*b)?,
             Codes::ExpGolomb { k } => reader.read_exp_golomb(*k)?,
             Codes::Rice { log2_b } => reader.read_rice(*log2_b)?,
         })
@@ -283,7 +283,7 @@ impl DynamicCodeWrite for Codes {
             Codes::Zeta { k: 3 } => writer.write_zeta3(value)?,
             Codes::Zeta { k } => writer.write_zeta(value, *k)?,
             Codes::Pi { k } => writer.write_pi(value, *k)?,
-            Codes::Golomb { b } => writer.write_golomb(value, *b as u64)?,
+            Codes::Golomb { b } => writer.write_golomb(value, *b)?,
             Codes::ExpGolomb { k } => writer.write_exp_golomb(value, *k)?,
             Codes::Rice { log2_b } => writer.write_rice(value, *log2_b)?,
         })
@@ -316,7 +316,7 @@ impl CodeLen for Codes {
             Codes::Zeta { k: 1 } => len_gamma(value),
             Codes::Zeta { k } => len_zeta(value, *k),
             Codes::Pi { k } => len_pi(value, *k),
-            Codes::Golomb { b } => len_golomb(value, *b as u64),
+            Codes::Golomb { b } => len_golomb(value, *b),
             Codes::ExpGolomb { k } => len_exp_golomb(value, *k),
             Codes::Rice { log2_b } => len_rice(value, *log2_b),
         }

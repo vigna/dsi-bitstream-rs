@@ -31,7 +31,6 @@ use crate::traits::*;
 #[must_use]
 #[inline(always)]
 pub fn len_minimal_binary(n: u64, u: u64) -> usize {
-    debug_assert!(u <= u64::MAX);
     debug_assert!(n < u);
     if u == 0 {
         return 0;
@@ -49,7 +48,6 @@ pub fn len_minimal_binary(n: u64, u: u64) -> usize {
 pub trait MinimalBinaryRead<E: Endianness>: BitRead<E> {
     #[inline(always)]
     fn read_minimal_binary(&mut self, u: u64) -> Result<u64, Self::Error> {
-        debug_assert!(u <= u64::MAX);
         let l = u.ilog2();
         let mut prefix = self.read_bits(l as _)?;
         let limit = ((1_u64 << l) << 1).wrapping_sub(u);
@@ -68,7 +66,6 @@ pub trait MinimalBinaryRead<E: Endianness>: BitRead<E> {
 pub trait MinimalBinaryWrite<E: Endianness>: BitWrite<E> {
     #[inline(always)]
     fn write_minimal_binary(&mut self, n: u64, u: u64) -> Result<usize, Self::Error> {
-        debug_assert!(u <= u64::MAX);
         debug_assert!(n < u);
         let l = u.ilog2();
         let limit = ((1_u64 << l) << 1).wrapping_sub(u);

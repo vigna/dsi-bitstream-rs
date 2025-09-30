@@ -8,9 +8,7 @@
 
 use core::fmt;
 
-use dsi_bitstream::dispatch::{
-    CodeLen, CodesRead, CodesWrite, FuncCodeReader, FuncCodeWriter, MinimalBinary,
-};
+use dsi_bitstream::dispatch::{CodeLen, CodesRead, CodesWrite, MinimalBinary};
 use dsi_bitstream::prelude::*;
 
 type BW<'a, E> = BufBitWriter<E, MemWordWriterVec<u64, &'a mut Vec<u64>>>;
@@ -28,7 +26,7 @@ where
     for<'a> BW<'a, E>: CodesWrite<E>,
     for<'a> BR<'a, E>: CodesRead<E>,
 {
-    test_func(
+    test_vals_codes(
         [
             (0, MinimalBinary(1)),
             (0, MinimalBinary(2)),
@@ -67,15 +65,15 @@ where
         .chain([u64::MAX - 1])
         .collect::<Vec<_>>();
     for code in codes {
-        test_codes_and_vals(code, &vals)?;
+        test_code_with_vals(code, &vals)?;
     }
 
     for k in 1..3 {
-        test_codes_and_vals(Codes::ExpGolomb { k }, &[u64::MAX])?;
+        test_code_with_vals(Codes::ExpGolomb { k }, &[u64::MAX])?;
     }
 
-    test_codes_and_vals(Codes::VByteBe, &[u64::MAX])?;
-    test_codes_and_vals(Codes::VByteLe, &[u64::MAX])?;
+    test_code_with_vals(Codes::VByteBe, &[u64::MAX])?;
+    test_code_with_vals(Codes::VByteLe, &[u64::MAX])?;
 
     // codes that would generate code words too big to be handled for
     // u64::MAX - 1
@@ -88,10 +86,10 @@ where
     }
     let vals = (0..1024).collect::<Vec<_>>();
     for code in sparse_codes {
-        test_codes_and_vals(code, &vals)?;
+        test_code_with_vals(code, &vals)?;
     }
 
-    test_func(
+    test_vals_codes(
         [
             (0, Codes::Golomb { b: u64::MAX }),
             (u64::MAX / 2, Codes::Golomb { b: u64::MAX }),
@@ -106,7 +104,7 @@ where
     Ok(())
 }
 
-fn test_codes_and_vals<E: Endianness>(
+fn test_code_with_vals<E: Endianness>(
     code: Codes,
     vals: &[u64],
 ) -> Result<(), Box<dyn std::error::Error>>
@@ -115,64 +113,50 @@ where
     for<'a> BR<'a, E>: CodesRead<E>,
 {
     dbg!(code);
-    let write_dispatch = FuncCodeWriter::new(code)?;
-    let read_dispatch = FuncCodeReader::new(code)?;
 
-    let mut buffer_call = Vec::<u64>::new();
-    let mut buffer_disp = Vec::<u64>::new();
-    let mut write_call = BufBitWriter::<E, _>::new(MemWordWriterVec::new(&mut buffer_call));
-    let mut write_disp = BufBitWriter::<E, _>::new(MemWordWriterVec::new(&mut buffer_disp));
-
-    for &val in vals {
-        let len = code.write(&mut write_call, val)?;
-        assert_eq!(len, code.len(val), "Code Write Len: {:?}", code);
-        let len = write_dispatch.write(&mut write_disp, val)?;
-        assert_eq!(len, code.len(val), "Dispatch Code Write Len: {:?}", code);
-    }
-
-    drop(write_call);
-    drop(write_disp);
-    let slice_call = unsafe { buffer_call.as_slice().align_to::<u32>().1 };
-    let slice_disp = unsafe { buffer_disp.as_slice().align_to::<u32>().1 };
-
-    let mut read_call = BufBitReader::<E, _>::new(MemWordReader::new(slice_call));
-    let mut read_disp = BufBitReader::<E, _>::new(MemWordReader::new(slice_disp));
-
-    for &val in vals {
-        let value = code.read(&mut read_call)?;
-        assert_eq!(value, val, "Code Read: {:?}", code);
-        let value = read_dispatch.read(&mut read_disp)?;
-        assert_eq!(value, val, "Dispatch Code Read: {:?}", code);
-    }
-
-    Ok(())
+    let mut v = vals.iter().map(|&v| (v, code)).collect::<Vec<_>>();
+    test_vals_codes(v.as_mut_slice())
 }
 
-fn test_func<E: Endianness>(
+fn test_vals_codes<E: Endianness>(
     val_codes: &mut [(
         u64,
-        impl DynamicCodeRead + DynamicCodeWrite + CodeLen + fmt::Debug,
+        impl DynamicCodeRead
+            + DynamicCodeWrite
+            + for<'a> StaticCodeRead<E, BR<'a, E>>
+            + for<'b> StaticCodeWrite<E, BW<'b, E>>
+            + CodeLen
+            + fmt::Debug,
     )],
 ) -> Result<(), Box<dyn std::error::Error>>
 where
     for<'a> BW<'a, E>: CodesWrite<E>,
     for<'a> BR<'a, E>: CodesRead<E>,
 {
-    let mut buffer = Vec::<u64>::new();
-    let mut write_call = BufBitWriter::<E, _>::new(MemWordWriterVec::new(&mut buffer));
+    let mut buffer_dynamic = Vec::<u64>::new();
+    let mut buffer_static = Vec::<u64>::new();
+    let mut write_dynamic = BufBitWriter::<E, _>::new(MemWordWriterVec::new(&mut buffer_dynamic));
+    let mut write_static = BufBitWriter::<E, _>::new(MemWordWriterVec::new(&mut buffer_static));
 
     for (val, code) in val_codes.iter_mut() {
-        let len = code.write(&mut write_call, *val)?;
+        let len = DynamicCodeWrite::write(code, &mut write_dynamic, *val)?;
+        assert_eq!(len, code.len(*val));
+        let len = StaticCodeWrite::write(code, &mut write_static, *val)?;
         assert_eq!(len, code.len(*val));
     }
 
-    drop(write_call);
-    let slice_call = unsafe { buffer.as_slice().align_to::<u32>().1 };
+    drop(write_dynamic);
+    drop(write_static);
+    let slice_dynamic = unsafe { buffer_dynamic.as_slice().align_to::<u32>().1 };
+    let slice_static = unsafe { buffer_static.as_slice().align_to::<u32>().1 };
 
-    let mut read_call = BufBitReader::<E, _>::new(MemWordReader::new(slice_call));
+    let mut read_dynamic = BufBitReader::<E, _>::new(MemWordReader::new(slice_dynamic));
+    let mut read_static = BufBitReader::<E, _>::new(MemWordReader::new(slice_static));
 
     for (val, code) in val_codes.iter_mut() {
-        let value = code.read(&mut read_call)?;
+        let value = DynamicCodeRead::read(code, &mut read_dynamic)?;
+        assert_eq!(*val, value);
+        let value = StaticCodeRead::read(code, &mut read_static)?;
         assert_eq!(*val, value);
     }
 
