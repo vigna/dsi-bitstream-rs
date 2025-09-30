@@ -22,8 +22,11 @@ use mem_dbg::{MemDbg, MemSize};
 /// [`WordWrite`], which on most platform should be `usize`.
 ///
 /// The additional type parameter `WP` is used to select the parameters for the
-/// instantanous codes, but the casual user should be happy with the default
+/// instantaneous codes, but the casual user should be happy with the default
 /// value. See [`WriteParams`] for more details.
+///
+/// The supported range for [writing unary codes](Self:write_unary) is
+/// [0 . . 2⁶⁴ – 1).
 ///
 /// For additional flexibility, this structures implements [`std::io::Write`].
 /// Note that because of coherence rules it is not possible to implement
@@ -167,7 +170,7 @@ where
     #[inline(always)]
     #[allow(clippy::collapsible_if)]
     fn write_unary(&mut self, mut value: u64) -> Result<usize, Self::Error> {
-        debug_assert_ne!(value, u64::MAX);
+        debug_assert!(value < u64::MAX);
         debug_assert!(self.space_left_in_buffer > 0);
 
         let code_length = value + 1;
@@ -336,7 +339,7 @@ where
     #[inline(always)]
     #[allow(clippy::collapsible_if)]
     fn write_unary(&mut self, mut value: u64) -> Result<usize, Self::Error> {
-        debug_assert_ne!(value, u64::MAX);
+        debug_assert!(value < u64::MAX);
         debug_assert!(self.space_left_in_buffer > 0);
 
         let code_length = value + 1;

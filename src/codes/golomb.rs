@@ -21,6 +21,8 @@
 //!
 //! For a faster, less precise alternative, see [Rice codes](super::rice).
 //!
+//! The supported range is [0 . . 2⁶⁴) for *b* in [0 . . 2⁶⁴).
+//!
 //! # References
 //!
 //! Solomon W. Golomb, “[Run-length encodings

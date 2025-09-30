@@ -19,6 +19,10 @@
 //! Note that the exponential Golomb code for *k* = 0 is exactly the [γ
 //! code](super::gamma).
 //!
+//! The supported range is [0 . . 2⁶⁴ – 1) for *k* = 0 and [0 . . 2⁶⁴) for *k*
+//! in [1 . . 64).
+//!
+//!
 //! Exponential Golomb codes are used in the [H.264
 //! (MPEG-4)](https://en.wikipedia.org/wiki/Advanced_Video_Coding) and
 //! [H.265](https://en.wikipedia.org/wiki/High_Efficiency_Video_Coding)
@@ -31,6 +35,7 @@ use crate::traits::*;
 #[must_use]
 #[inline(always)]
 pub fn len_exp_golomb(n: u64, k: usize) -> usize {
+    debug_assert!(k < 64);
     len_gamma(n >> k) + k
 }
 
@@ -38,6 +43,7 @@ pub fn len_exp_golomb(n: u64, k: usize) -> usize {
 pub trait ExpGolombRead<E: Endianness>: BitRead<E> + GammaRead<E> {
     #[inline(always)]
     fn read_exp_golomb(&mut self, k: usize) -> Result<u64, Self::Error> {
+        debug_assert!(k < 64);
         Ok((self.read_gamma()? << k) + self.read_bits(k)?)
     }
 }
@@ -46,6 +52,7 @@ pub trait ExpGolombRead<E: Endianness>: BitRead<E> + GammaRead<E> {
 pub trait ExpGolombWrite<E: Endianness>: BitWrite<E> + GammaWrite<E> {
     #[inline(always)]
     fn write_exp_golomb(&mut self, n: u64, k: usize) -> Result<usize, Self::Error> {
+        debug_assert!(k < 64);
         let mut written_bits = self.write_gamma(n >> k)?;
         #[cfg(feature = "checks")]
         {

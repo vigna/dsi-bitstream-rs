@@ -17,6 +17,8 @@
 //! The `USE_TABLE` parameter enables or disables the use of pre-computed tables
 //! for decoding.
 //!
+//! The supported range is [0 . . 2⁶⁴ – 1).
+//!
 //! # References
 //!
 //! Peter Elias, “[Universal codeword sets and representations of the
@@ -30,6 +32,7 @@ use crate::traits::*;
 #[must_use]
 #[inline(always)]
 pub fn len_gamma_param<const USE_TABLE: bool>(mut n: u64) -> usize {
+    debug_assert!(n < u64::MAX);
     if USE_TABLE {
         if let Some(idx) = gamma_tables::LEN.get(n as usize) {
             return *idx as usize;
@@ -74,7 +77,7 @@ pub trait GammaReadParam<E: Endianness>: BitRead<E> {
 #[inline(always)]
 fn default_read_gamma<E: Endianness, B: BitRead<E>>(backend: &mut B) -> Result<u64, B::Error> {
     let len = backend.read_unary()?;
-    debug_assert!(len <= 64);
+    debug_assert!(len < 64);
     Ok(backend.read_bits(len as usize)? + (1 << len) - 1)
 }
 
@@ -154,6 +157,7 @@ fn default_write_gamma<E: Endianness, B: BitWrite<E>>(
     backend: &mut B,
     mut n: u64,
 ) -> Result<usize, B::Error> {
+    debug_assert!(n < u64::MAX);
     n += 1;
     let λ = n.ilog2();
 

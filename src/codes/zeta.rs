@@ -24,6 +24,8 @@
 //! This module provides a generic implementation of ζ codes, and a specialized
 //! implementation for ζ₃ that may use tables.
 //!
+//! The supported range is [0 . . 2⁶⁴ – 1) for *k* in [1 . . 64).
+//!
 //! # References
 //!
 //! Paolo Boldi and Sebastiano Vigna. “[Codes for the World−Wide
@@ -45,6 +47,7 @@ pub fn len_zeta_param<const USE_TABLE: bool>(mut n: u64, k: usize) -> usize {
             }
         }
     }
+    debug_assert!(n < u64::MAX);
     n += 1;
     let h = n.ilog2() as usize / k;
     let l = 1 << (h * k);
@@ -121,6 +124,7 @@ fn default_read_zeta<BO: Endianness, B: BitRead<BO>>(
     k: usize,
 ) -> Result<u64, B::Error> {
     let h = backend.read_unary()? as usize;
+    debug_assert!(h * k < 64);
     let l = 1_u64 << (h * k);
     let res = backend.read_minimal_binary((l << k).wrapping_sub(l))?;
     Ok(l + res - 1)
@@ -203,6 +207,7 @@ fn default_write_zeta<E: Endianness, B: BitWrite<E>>(
     mut n: u64,
     k: usize,
 ) -> Result<usize, B::Error> {
+    debug_assert!(n < u64::MAX);
     n += 1;
     let h = n.ilog2() as usize / k;
     let l = 1 << (h * k);

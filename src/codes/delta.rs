@@ -19,6 +19,8 @@
 //! disables the use of pre-computed tables for decoding the the initial γ code
 //! in case the whole δ code could not be decoded by tables.
 //!
+//! The supported range is [0 . . 2⁶⁴ – 1).
+//!
 //! # References
 //!
 //! Peter Elias, “[Universal codeword sets and representations of the
@@ -32,6 +34,7 @@ use crate::traits::*;
 #[must_use]
 #[inline(always)]
 pub fn len_delta_param<const USE_DELTA_TABLE: bool, const USE_GAMMA_TABLE: bool>(n: u64) -> usize {
+    debug_assert!(n < u64::MAX);
     if USE_DELTA_TABLE {
         if let Some(idx) = delta_tables::LEN.get(n as usize) {
             return *idx as usize;
@@ -79,7 +82,7 @@ fn default_read_delta<E: Endianness, B: GammaReadParam<E>, const USE_GAMMA_TABLE
     backend: &mut B,
 ) -> Result<u64, B::Error> {
     let len = backend.read_gamma_param::<USE_GAMMA_TABLE>()?;
-    debug_assert!(len <= 64);
+    debug_assert!(len < 64);
     Ok(backend.read_bits(len as usize)? + (1 << len) - 1)
 }
 
@@ -172,6 +175,7 @@ fn default_write_delta<E: Endianness, B: GammaWriteParam<E>, const USE_GAMMA_TAB
     backend: &mut B,
     mut n: u64,
 ) -> Result<usize, B::Error> {
+    debug_assert!(n < u64::MAX);
     n += 1;
     let λ = n.ilog2();
 

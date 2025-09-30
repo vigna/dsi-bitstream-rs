@@ -122,7 +122,7 @@ type FactoryReadFn<E, CRF> = for<'a> fn(
 /// It is essentially a version of [`FuncCodeReader`] that depends on a
 /// [`CodesReaderFactory`] and its associated
 /// [`CodesReaderFactory::CodesReader`] instead of a generic [`CodesRead`].
-#[derive(Debug, Copy, PartialEq, Eq)]
+#[derive(Debug, Copy)]
 pub struct FactoryFuncCodeReader<E: Endianness, CRF: CodesReaderFactoryHelper<E> + ?Sized>(
     FactoryReadFn<E, CRF>,
 );

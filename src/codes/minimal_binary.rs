@@ -19,21 +19,25 @@
 //! in *s* − 1 bits; otherwise, *x* is coded as the binary representation of *x*
 //! − *u* + 2*ˢ* in *s* bits.
 //!
+//! The supported range for *u* is [0 . . 2⁶⁴).
+//!
 //! See the [codes module documentation](crate::codes) for some elaboration on
 //! the difference between the big-endian and little-endian versions of the
 //! codes.
 
 use crate::traits::*;
 
-/// Returns the length of the minimal binary code for `n` with upper bound `max`.
+/// Returns the length of the minimal binary code for `n` with upper bound `u`.
 #[must_use]
 #[inline(always)]
-pub fn len_minimal_binary(n: u64, max: u64) -> usize {
-    if max == 0 {
+pub fn len_minimal_binary(n: u64, u: u64) -> usize {
+    debug_assert!(u <= u64::MAX);
+    debug_assert!(n < u);
+    if u == 0 {
         return 0;
     }
-    let l = max.ilog2();
-    let limit = ((1_u64 << l) << 1).wrapping_sub(max);
+    let l = u.ilog2();
+    let limit = ((1_u64 << l) << 1).wrapping_sub(u);
     let mut result = l as usize;
     if n >= limit {
         result += 1;
@@ -44,10 +48,11 @@ pub fn len_minimal_binary(n: u64, max: u64) -> usize {
 /// Trait for reading minimal binary codes.
 pub trait MinimalBinaryRead<E: Endianness>: BitRead<E> {
     #[inline(always)]
-    fn read_minimal_binary(&mut self, max: u64) -> Result<u64, Self::Error> {
-        let l = max.ilog2();
+    fn read_minimal_binary(&mut self, u: u64) -> Result<u64, Self::Error> {
+        debug_assert!(u <= u64::MAX);
+        let l = u.ilog2();
         let mut prefix = self.read_bits(l as _)?;
-        let limit = ((1_u64 << l) << 1).wrapping_sub(max);
+        let limit = ((1_u64 << l) << 1).wrapping_sub(u);
 
         Ok(if prefix < limit {
             prefix
@@ -62,9 +67,11 @@ pub trait MinimalBinaryRead<E: Endianness>: BitRead<E> {
 /// Trait for writing minimal binary codes.
 pub trait MinimalBinaryWrite<E: Endianness>: BitWrite<E> {
     #[inline(always)]
-    fn write_minimal_binary(&mut self, n: u64, max: u64) -> Result<usize, Self::Error> {
-        let l = max.ilog2();
-        let limit = ((1_u64 << l) << 1).wrapping_sub(max);
+    fn write_minimal_binary(&mut self, n: u64, u: u64) -> Result<usize, Self::Error> {
+        debug_assert!(u <= u64::MAX);
+        debug_assert!(n < u);
+        let l = u.ilog2();
+        let limit = ((1_u64 << l) << 1).wrapping_sub(u);
 
         if n < limit {
             self.write_bits(n, l as _)?;
