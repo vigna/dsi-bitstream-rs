@@ -20,6 +20,8 @@
 //! endianness](crate::codes), in the little-endian case π₁ and ζ₂ have the same
 //! codeword lengths but slightly permuted bits.
 //!
+//! The supported range is [0 . . 2⁶⁴ – 1) for *k* in [0 . . 64).
+//!
 //! In the original paper the definition of the code is very convoluted, as the
 //! authors appear to have missed the connection with [Rice codes](super::rice).
 //! The codewords implemented by this module are equivalent to the ones in the
@@ -84,6 +86,8 @@ use super::{len_rice, RiceRead, RiceWrite};
 #[must_use]
 #[inline(always)]
 pub fn len_pi(mut n: u64, k: usize) -> usize {
+    debug_assert!(k < 64);
+    debug_assert!(n < u64::MAX);
     n += 1;
     let λ = n.ilog2() as usize;
     len_rice(λ as u64, k) + λ
@@ -95,7 +99,9 @@ pub fn len_pi(mut n: u64, k: usize) -> usize {
 pub trait PiRead<E: Endianness>: BitRead<E> + RiceRead<E> {
     #[inline(always)]
     fn read_pi(&mut self, k: usize) -> Result<u64, Self::Error> {
+        debug_assert!(k < 64);
         let λ = self.read_rice(k)?;
+        debug_assert!(λ < 64);
         Ok((1 << λ) + self.read_bits(λ as usize)? - 1)
     }
 }
@@ -106,6 +112,9 @@ pub trait PiRead<E: Endianness>: BitRead<E> + RiceRead<E> {
 pub trait PiWrite<E: Endianness>: BitWrite<E> + RiceWrite<E> {
     #[inline(always)]
     fn write_pi(&mut self, mut n: u64, k: usize) -> Result<usize, Self::Error> {
+        debug_assert!(k < 64);
+        debug_assert!(n < u64::MAX);
+
         n += 1;
         let λ = n.ilog2() as usize;
 

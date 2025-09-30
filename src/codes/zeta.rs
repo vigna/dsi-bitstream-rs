@@ -40,6 +40,7 @@ use crate::traits::*;
 #[inline(always)]
 #[allow(clippy::collapsible_if)]
 pub fn len_zeta_param<const USE_TABLE: bool>(mut n: u64, k: usize) -> usize {
+    debug_assert!(k >= 1);
     if USE_TABLE {
         if k == zeta_tables::K {
             if let Some(idx) = zeta_tables::LEN.get(n as usize) {
@@ -123,6 +124,7 @@ fn default_read_zeta<BO: Endianness, B: BitRead<BO>>(
     backend: &mut B,
     k: usize,
 ) -> Result<u64, B::Error> {
+    debug_assert!(k >= 1);
     let h = backend.read_unary()? as usize;
     debug_assert!(h * k < 64);
     let l = 1_u64 << (h * k);
@@ -207,6 +209,7 @@ fn default_write_zeta<E: Endianness, B: BitWrite<E>>(
     mut n: u64,
     k: usize,
 ) -> Result<usize, B::Error> {
+    debug_assert!(k >= 1);
     debug_assert!(n < u64::MAX);
     n += 1;
     let h = n.ilog2() as usize / k;

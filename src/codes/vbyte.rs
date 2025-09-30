@@ -17,6 +17,8 @@
 //! There are several variants of their definition, but their implied
 //! distribution is always ≈ 1/*x*<sup>8/7</sup>
 //!
+//! The supported range is [0 . . 2⁶⁴).
+//!
 //! # Definition
 //!
 //! Since there are a few slightly different variants used in production code
@@ -47,7 +49,7 @@
 //! This basic representation discussed above is not *complete*, as there are
 //! sequences that are not used. For example, zero can be written in many ways
 //! (e.g., `0x00` or `0x80 0x00` ), but we are using only the single-byte
-//! representation. Uncompleteness leads to a (small) loss in compression.
+//! representation. Incompleteness leads to a (small) loss in compression.
 //!
 //! To have completeness, one can offset the representation in *k* bits by the
 //! maximum number representable using *k* − 1 bits. That is, we represent the
@@ -65,7 +67,7 @@
 //! significant bit, improving branch prediction.
 //!
 //! Note that if the code is grouped, choosing a code with the same endianness
-//! as your hardare can lead to a performance improvement, as after the first
+//! as your hardware can lead to a performance improvement, as after the first
 //! byte the rest of the code can be read with a
 //![`read_exact`](std::io::Read::read_exact).
 //!
@@ -138,7 +140,7 @@ pub fn bit_len_vbyte(value: u64) -> usize {
 
 /// Trait for reading big-endian variable-length byte codes.
 ///
-/// Note that the endianess of the code is independent
+/// Note that the endianness of the code is independent
 /// from the endianness of the underlying bit stream.
 pub trait VByteBeRead<E: Endianness>: BitRead<E> {
     fn read_vbyte_be(&mut self) -> Result<u64, Self::Error>;
@@ -146,7 +148,7 @@ pub trait VByteBeRead<E: Endianness>: BitRead<E> {
 
 /// Trait for reading little-endian variable-length byte codes.
 ///
-/// Note that the endianess of the code is independent
+/// Note that the endianness of the code is independent
 /// from the endianness of the underlying bit stream.
 pub trait VByteLeRead<E: Endianness>: BitRead<E> {
     fn read_vbyte_le(&mut self) -> Result<u64, Self::Error>;
@@ -186,14 +188,14 @@ impl<E: Endianness, B: BitRead<E>> VByteLeRead<E> for B {
 
 /// Trait for write big-endian variable-length byte codes.
 ///
-/// Note that the endianess of the code is independent
+/// Note that the endianness of the code is independent
 /// from the endianness of the underlying bit stream.
 pub trait VByteBeWrite<E: Endianness>: BitWrite<E> {
     fn write_vbyte_be(&mut self, value: u64) -> Result<usize, Self::Error>;
 }
 /// Trait for write little-endian variable-length byte codes.
 ///
-/// Note that the endianess of the code is independent
+/// Note that the endianness of the code is independent
 /// from the endianness of the underlying bit stream.
 pub trait VByteLeWrite<E: Endianness>: BitWrite<E> {
     fn write_vbyte_le(&mut self, value: u64) -> Result<usize, Self::Error>;

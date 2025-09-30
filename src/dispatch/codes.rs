@@ -37,7 +37,7 @@ pub enum Codes {
     VByteBe,
     Zeta { k: usize },
     Pi { k: usize },
-    Golomb { b: usize },
+    Golomb { b: u64 },
     ExpGolomb { k: usize },
     Rice { log2_b: usize },
 }
@@ -395,5 +395,54 @@ impl std::str::FromStr for Codes {
                 }
             }
         }
+    }
+}
+
+/// Structure representing minimal binary coding with a fixed length.
+///
+/// [Minimal binary coding](crate::codes::minimal_binary) does not
+/// fit the [`Codes`] enum because it is not defined for all integers.
+///
+/// Instances of this structure can be used in context in which a
+/// [`DynamicCodeRead`], [`DynamicCodeWrite`], [`StaticCodeRead`],
+/// [`StaticCodeWrite`] or [`CodeLen`] implementing minimal binary coding
+/// is necessary.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct MinimalBinary(pub u64);
+
+impl DynamicCodeRead for MinimalBinary {
+    fn read<E: Endianness, R: CodesRead<E> + ?Sized>(
+        &self,
+        reader: &mut R,
+    ) -> Result<u64, R::Error> {
+        reader.read_minimal_binary(self.0)
+    }
+}
+
+impl DynamicCodeWrite for MinimalBinary {
+    fn write<E: Endianness, W: CodesWrite<E> + ?Sized>(
+        &self,
+        writer: &mut W,
+        n: u64,
+    ) -> Result<usize, W::Error> {
+        writer.write_minimal_binary(n, self.0)
+    }
+}
+
+impl<E: Endianness, CR: CodesRead<E> + ?Sized> StaticCodeRead<E, CR> for MinimalBinary {
+    fn read(&self, reader: &mut CR) -> Result<u64, CR::Error> {
+        <Self as DynamicCodeRead>::read(self, reader)
+    }
+}
+
+impl<E: Endianness, CW: CodesWrite<E> + ?Sized> StaticCodeWrite<E, CW> for MinimalBinary {
+    fn write(&self, writer: &mut CW, n: u64) -> Result<usize, CW::Error> {
+        <Self as DynamicCodeWrite>::write(self, writer, n)
+    }
+}
+
+impl CodeLen for MinimalBinary {
+    fn len(&self, n: u64) -> usize {
+        len_minimal_binary(n, self.0)
     }
 }

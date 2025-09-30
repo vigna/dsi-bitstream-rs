@@ -19,6 +19,8 @@
 //! the base-2 logarithm of the optimal *b* is [⌈log₂(ln((√5 + 1)/2) / ln(1 -
 //! *p*))⌉](log2_b).
 //!
+//! The supported range is [0 . . 2⁶⁴ – 1) for log₂(*b*) in [0 . . 64).
+//!
 //! # References
 //!
 //! Robert F. Rice, “[Some practical universal noiseless coding
@@ -37,6 +39,7 @@ use crate::traits::*;
 #[must_use]
 #[inline(always)]
 pub fn len_rice(n: u64, log2_b: usize) -> usize {
+    debug_assert!(log2_b < 64);
     (n >> log2_b) as usize + 1 + log2_b
 }
 
@@ -50,6 +53,7 @@ pub fn log2_b(p: f64) -> usize {
 pub trait RiceRead<E: Endianness>: BitRead<E> {
     #[inline(always)]
     fn read_rice(&mut self, log2_b: usize) -> Result<u64, Self::Error> {
+        debug_assert!(log2_b < 64);
         Ok((self.read_unary()? << log2_b) + self.read_bits(log2_b)?)
     }
 }
@@ -58,6 +62,8 @@ pub trait RiceRead<E: Endianness>: BitRead<E> {
 pub trait RiceWrite<E: Endianness>: BitWrite<E> {
     #[inline(always)]
     fn write_rice(&mut self, n: u64, log2_b: usize) -> Result<usize, Self::Error> {
+        debug_assert!(log2_b < 64);
+
         let mut written_bits = self.write_unary(n >> log2_b)?;
         #[cfg(feature = "checks")]
         {

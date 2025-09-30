@@ -1,5 +1,13 @@
 # Change Log
 
+## [0.5.1] -
+
+* New `MinimalBinary` struct providing static and dynamic
+  dispatching of minimal binary codes.
+
+* All codes now declare their range of validity (parameters
+  and inputs), which is checked in the tests.
+
 ## [0.5.0] - 2025-03-17
 
 ### New

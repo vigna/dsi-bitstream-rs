@@ -19,6 +19,8 @@
 //! but essentially it is as close as possible to ≈ 1/*x* (as there is no code
 //! for that distribution).
 //!
+//! The supported range is [0 . . 2⁶⁴ – 1).
+//!
 //! The ω code is easier to describe the format of a code, rather than the
 //! encoding algorithm.
 //!
@@ -35,7 +37,7 @@
 //! the value of the last block, decremented by one.
 //!
 //! For example, `1110010`, which is formed by the blocks `11`, `1011`, and `0`,
-//! represents 10.
+//! represents the number 10.
 //!
 //! As discussed in the [codes module documentation](crate::codes), to make the
 //! code readable in the little-endian case, rather than reversing the bits of
@@ -58,6 +60,7 @@ use common_traits::CastableInto;
 /// Returns the length of the ω code for `n`.
 #[inline(always)]
 pub fn len_omega(n: u64) -> usize {
+    debug_assert!(n < u64::MAX);
     recursive_len(n + 1)
 }
 
@@ -102,6 +105,7 @@ pub trait OmegaRead<E: Endianness>: BitRead<E> {
 pub trait OmegaWrite<E: Endianness>: BitWrite<E> {
     #[inline(always)]
     fn write_omega(&mut self, n: u64) -> Result<usize, Self::Error> {
+        debug_assert!(n < u64::MAX);
         // omega codes are indexed from 1
         Ok(recursive_write::<E, Self>(n + 1, self)? + self.write_bits(0, 1)?)
     }
@@ -136,26 +140,6 @@ impl<E: Endianness, B: BitWrite<E>> OmegaWrite<E> for B {}
 #[cfg(test)]
 mod test {
     use crate::prelude::*;
-
-    #[test]
-    fn test_roundtrip() {
-        for value in (0..64).map(|i| 1 << i).chain(0..1024).chain([u64::MAX - 1]) {
-            let mut data = vec![0_u64];
-            let mut writer = <BufBitWriter<BE, _>>::new(MemWordWriterVec::new(&mut data));
-            let code_len = writer.write_omega(value).unwrap();
-            assert_eq!(code_len, len_omega(value));
-            drop(writer);
-            let mut reader = <BufBitReader<BE, _>>::new(MemWordReader::new(&data));
-            assert_eq!(reader.read_omega().unwrap(), value);
-
-            let mut writer = <BufBitWriter<LE, _>>::new(MemWordWriterVec::new(&mut data));
-            let code_len = writer.write_omega(value).unwrap();
-            assert_eq!(code_len, len_omega(value));
-            drop(writer);
-            let mut reader = <BufBitReader<LE, _>>::new(MemWordReader::new(&data));
-            assert_eq!(reader.read_omega().unwrap(), value,);
-        }
-    }
 
     #[test]
     #[allow(clippy::unusual_byte_groupings)]
