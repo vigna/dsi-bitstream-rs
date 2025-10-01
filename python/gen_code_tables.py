@@ -84,7 +84,6 @@ pub fn len_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> Option<usize> {
         let idx: u64 = idx.cast();
         let len = READ_LEN_%(BO)s[idx as usize];
         if len != MISSING_VALUE_LEN_%(BO)s {
-            backend.skip_bits_after_peek(len as usize);
             return Some(len as usize);
         }
     }
@@ -703,6 +702,141 @@ def gen_zeta(read_bits, write_max_val, len_max_val=None, k=3, merged_table=False
 
 ################################################################################
 
+
+def read_omega(bitstream, be):
+    """Read an omega code"""
+    n = 1
+    while True:
+        if be:
+            if not bitstream:
+                raise ValueError()
+            if bitstream[0] == "0":
+                return n - 1, bitstream[1:]
+
+            l = n
+            if len(bitstream) < l + 1:
+                raise ValueError()
+            block = bitstream[0 : l + 1]
+            bitstream = bitstream[l + 1 :]
+            n = int(block, 2)
+        else:  # LE
+            if not bitstream:
+                raise ValueError()
+            if bitstream[-1] == "0":
+                return n - 1, bitstream[:-1]
+
+            l = n
+            if len(bitstream) < l + 1:
+                raise ValueError()
+            block = bitstream[-(l + 1) :]
+            bitstream = bitstream[: -(l + 1)]
+
+            k = int(block, 2)
+            n = (k >> 1) | (1 << l)
+
+
+def _recursive_write_omega(value, bitstream, be):
+    """Recursively write the omega code"""
+    if value <= 1:
+        return bitstream
+    l = floor(log2(value))  # NoQA: E741
+    bitstream = _recursive_write_omega(l, bitstream, be)
+    if be:
+        return bitstream + ("{:0%sb}" % (l + 1)).format(value)
+    else:
+        # Little-endian case: rotate left the lower λ + 1 bits (the bit in
+        # position λ is a one) so that the lowest bit can be peeked to find the
+        # block.
+        value = (value << 1) | 1
+        # Clean up value in case checks are enabled
+        mask = (1 << (l + 1)) - 1
+        value &= mask
+        return ("{:0%sb}" % (l + 1)).format(value) + bitstream
+
+
+def write_omega(value, bitstream, be):
+    """Write an omega code"""
+    value += 1
+    bitstream = _recursive_write_omega(value, bitstream, be)
+    if be:
+        return bitstream + "0"
+    else:
+        return "0" + bitstream
+
+
+def _recursive_len_omega(value):
+    if value <= 1:
+        return 1
+    l = floor(log2(value))  # NoQA: E741
+    return _recursive_len_omega(l) + l + 1
+
+
+def len_omega(value):
+    """Length of the omega code of `value`"""
+    return _recursive_len_omega(value + 1)
+
+
+# Test that the impl is reasonable
+assert write_omega(0, "", True) == "0"
+assert write_omega(1, "", True) == "100"
+assert write_omega(2, "", True) == "110"
+assert write_omega(3, "", True) == "101000"
+assert write_omega(4, "", True) == "101010"
+assert write_omega(5, "", True) == "101100"
+assert write_omega(6, "", True) == "101110"
+assert write_omega(7, "", True) == "1110000"
+assert write_omega(15, "", True) == "10100100000"
+assert write_omega(99, "", True) == "1011011001000"
+assert write_omega(999, "", True) == "11100111111010000"
+assert write_omega(999999, "", True) == "1010010011111101000010010000000"
+
+assert write_omega(0, "", False) == "0"
+assert write_omega(1, "", False) == "001"
+assert write_omega(2, "", False) == "011"
+assert write_omega(3, "", False) == "000101"
+assert write_omega(4, "", False) == "001101"
+assert write_omega(5, "", False) == "010101"
+assert write_omega(6, "", False) == "011101"
+assert write_omega(7, "", False) == "0000111"
+assert write_omega(15, "", False) == "00000100101"
+assert write_omega(99, "", False) == "0100100110101"
+assert write_omega(999, "", False) == "01111010001001111"
+assert write_omega(999999, "", False) == "0111010000100100000010011100101"
+
+# Little consistency check
+for i in range(256):
+    wbe = write_omega(i, "", True)
+    rbe, rem_be = read_omega(wbe, True)
+    assert rem_be == ""
+    wle = write_omega(i, "", False)
+    rle, rem_le = read_omega(wle, False)
+    assert rem_le == ""
+    l = len_omega(i)  # NoQA: E741
+    assert i == rbe
+    assert i == rle
+    assert len(wbe) == l
+    assert len(wle) == l
+
+
+def gen_omega(read_bits, write_max_val, len_max_val=None, merged_table=False):
+    """Configuration of `gen_table` for omega"""
+    assert read_bits > 0
+    len_max_val = len_max_val or write_max_val
+    return gen_table(
+        read_bits,
+        write_max_val,
+        len_max_val,
+        "omega",
+        len_omega,
+        read_omega,
+        write_omega,
+        merged_table,
+    )
+
+
+################################################################################
+
+
 def generate_default_tables():
     # Generate the default tables
     gen_gamma(
@@ -719,6 +853,11 @@ def generate_default_tables():
         read_bits=12, # Necessary for all architectures
         write_max_val=1023, # Very useful   
         k=3,
+        merged_table=False, # A bit better on ARM, very slightly worse on i7, same on Xeon
+    )
+    gen_omega(
+        read_bits=12, # Necessary for all architectures
+        write_max_val=1023, # Very useful
         merged_table=False, # A bit better on ARM, very slightly worse on i7, same on Xeon
     )
     subprocess.check_call(

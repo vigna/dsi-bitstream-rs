@@ -40,6 +40,7 @@ automatically your blanket implementations instead of the ones provided by this 
 */
 
 use crate::codes::*;
+use crate::codes::omega::{OmegaReadParam, OmegaWriteParam};
 use crate::impls::*;
 use crate::traits::*;
 use common_traits::*;
@@ -92,6 +93,18 @@ macro_rules! impl_default_read_codes {
             }
         }
 
+        impl<WR: WordRead> OmegaRead<$endianess>
+            for BufBitReader<$endianess, WR, DefaultReadParams>
+        where
+            WR:: Word: DoubleType + UpcastableInto<u64>,
+            <WR::Word as DoubleType>::DoubleType: CastableInto<u64>,
+        {
+            #[inline(always)]
+            fn read_omega(&mut self) -> Result<u64, Self::Error> {
+                self.read_omega_param::<true>()
+            }
+        }
+
         impl<WR: WordRead> ZetaRead<$endianess>
             for BufBitReader<$endianess, WR, DefaultReadParams>
         where
@@ -132,6 +145,18 @@ macro_rules! impl_default_read_codes {
             #[inline(always)]
             fn read_delta(&mut self) -> Result<u64, Self::Error> {
                 self.read_delta_param::<false, true>()
+            }
+        }
+
+        impl<E: Error + Send + Sync + 'static, WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>> OmegaRead<$endianess>
+            for BitReader<$endianess, WR, DefaultReadParams>
+        where
+            WR:: Word: DoubleType + UpcastableInto<u64>,
+            <WR::Word as DoubleType>::DoubleType: CastableInto<u64>,
+        {
+            #[inline(always)]
+            fn read_omega(&mut self) -> Result<u64, Self::Error> {
+                self.read_omega_param::<true>()
             }
         }
 
@@ -192,6 +217,16 @@ macro_rules! impl_default_write_codes {
             #[inline(always)]
             fn write_delta(&mut self, value: u64) -> Result<usize, Self::Error> {
                 self.write_delta_param::<true, true>(value)
+            }
+        }
+
+        impl<WR: WordWrite, WP: WriteParams> OmegaWrite<$endianess>
+            for BufBitWriter<$endianess, WR, WP>
+            where u64: CastableInto<WR::Word>,
+        {
+            #[inline(always)]
+            fn write_omega(&mut self, value: u64) -> Result<usize, Self::Error> {
+                self.write_omega_param::<true>(value)
             }
         }
 

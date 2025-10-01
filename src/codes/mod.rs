@@ -134,6 +134,8 @@ pub mod delta_tables;
 pub mod gamma_tables;
 pub mod zeta_tables;
 
+pub mod omega_tables;
+
 /// Extension trait mapping natural numbers bijectively to integers.
 ///
 /// The method [`to_int`](#tymethod.to_int) will map a natural number `x` to `x
