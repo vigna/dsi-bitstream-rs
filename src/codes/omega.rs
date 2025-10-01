@@ -151,11 +151,19 @@ impl<B: BitWrite<BE>> OmegaWrite<BE> for B {
     }
 }
 
-fn recursive_write_be<B: BitWrite<BE> + ?Sized>(n: u64, writer: &mut B) -> Result<usize, B::Error> {
+fn recursive_write_be<B: BitWrite<BE> + ?Sized>(
+    mut n: u64,
+    writer: &mut B,
+) -> Result<usize, B::Error> {
     if n <= 1 {
         return Ok(0);
     }
     let λ = n.ilog2();
+    #[cfg(feature = "checks")]
+    {
+        // Clean up n in case checks are enabled
+        n &= u64::MAX >> (u64::BITS - 1 - λ);
+    }
     Ok(recursive_write_be(λ as u64, writer)? + writer.write_bits(n, λ as usize + 1)?)
 }
 
