@@ -40,7 +40,6 @@ automatically your blanket implementations instead of the ones provided by this 
 */
 
 use crate::codes::*;
-use crate::codes::omega::{OmegaReadParam, OmegaWriteParam};
 use crate::impls::*;
 use crate::traits::*;
 use common_traits::*;

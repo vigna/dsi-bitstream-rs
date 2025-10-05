@@ -107,7 +107,7 @@ pub use delta::{
 };
 
 pub mod omega;
-pub use omega::{len_omega, OmegaRead, OmegaWrite};
+pub use omega::{len_omega, OmegaRead, OmegaReadParam, OmegaWrite, OmegaWriteParam};
 
 pub mod minimal_binary;
 pub use minimal_binary::{len_minimal_binary, MinimalBinaryRead, MinimalBinaryWrite};
