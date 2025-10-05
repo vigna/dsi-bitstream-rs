@@ -54,17 +54,8 @@
 //! integers](https://doi.org/10.1109/TIT.1975.1055349)”. IEEE Transactions on
 //! Information Theory, 21(2):194−203, March 1975.
 
-use crate::{
-    codes::omega_tables,
-    prelude::*,
-};
+use crate::{codes::omega_tables, prelude::*};
 use common_traits::CastableInto;
-
-/// Returns the length of the ω code for `n`.
-#[inline(always)]
-pub fn len_omega(n: u64) -> usize {
-    len_omega_param::<true>(n)
-}
 
 /// Returns the length of the ω code for `n`.
 #[inline(always)]
@@ -78,6 +69,13 @@ pub fn len_omega_param<const USE_TABLE: bool>(n: u64) -> usize {
     recursive_len(n + 1)
 }
 
+/// Returns the length of the ω code for `n`.
+#[inline(always)]
+pub fn len_omega(n: u64) -> usize {
+    debug_assert!(n < u64::MAX);
+    len_omega_param::<true>(n)
+}
+
 fn recursive_len(n: u64) -> usize {
     if n <= 1 {
         return 1;
@@ -86,44 +84,29 @@ fn recursive_len(n: u64) -> usize {
     recursive_len(λ) + λ as usize + 1
 }
 
-/// The trait for reading ω codes.
+/// Trait for reading ω codes.
 ///
-/// This is the trait you should pull in scope to read ω codes. The implementations
-/// are in the [`impls`](crate::impls) module.
+/// This is the trait you should usually pull in scope to read ω codes.
 pub trait OmegaRead<E: Endianness>: BitRead<E> {
-    /// Read an ω code.
     fn read_omega(&mut self) -> Result<u64, Self::Error>;
 }
 
-/// The trait for writing ω codes.
+/// Parametric trait for reading ω codes.
 ///
-/// This is the trait you should pull in scope to write ω codes. The implementations
-/// are in the [`impls`](crate::impls) module.
-pub trait OmegaWrite<E: Endianness>: BitWrite<E> {
-    /// Write an ω code.
-    fn write_omega(&mut self, value: u64) -> Result<usize, Self::Error>;
-}
-
-/// The trait for reading ω codes, with a parameter that decides whether to use
-/// tables.
+/// This trait is is more general than [`OmegaRead`], as it makes it possible
+/// to specify how to use tables using const parameters.
 ///
-/// This is a parametrized version of [`OmegaRead`].
+/// We provide an implementation of this trait for [`BitRead`]. An implementation
+/// of [`OmegaRead`] using default values is usually provided exploiting the
+/// [`crate::codes::params::ReadParams`] mechanism.
 pub trait OmegaReadParam<E: Endianness>: BitRead<E> {
-    /// Read an ω code.
     fn read_omega_param<const USE_TABLES: bool>(&mut self) -> Result<u64, Self::Error>;
 }
 
-/// The trait for writing ω codes, with a parameter that decides whether to use
-/// tables.
-///
-/// This is a parametrized version of [`OmegaWrite`].
-pub trait OmegaWriteParam<E: Endianness>: BitWrite<E> {
-    /// Write an ω code.
-    fn write_omega_param<const USE_TABLES: bool>(&mut self, n: u64) -> Result<usize, Self::Error>;
-}
-
+/// Default, internal non-table based implementation that works
+/// for any endianness.
 #[inline(always)]
-fn read_omega_fallback<E: Endianness, B: BitRead<E>>(backend: &mut B) -> Result<u64, B::Error> {
+fn default_read_omega<E: Endianness, B: BitRead<E>>(backend: &mut B) -> Result<u64, B::Error> {
     let mut n = 1;
     loop {
         let bit = backend.peek_bits(1)?.cast();
@@ -136,6 +119,8 @@ fn read_omega_fallback<E: Endianness, B: BitRead<E>>(backend: &mut B) -> Result<
         n = backend.read_bits(λ as usize + 1)?;
 
         if E::IS_LITTLE {
+            // Little-endian case: rotate right the lower λ + 1 bits (the lowest
+            // bit is a one) to reverse the rotation performed when writing
             n = (n >> 1) | (1 << λ);
         }
     }
@@ -149,7 +134,7 @@ impl<B: BitRead<BE>> OmegaReadParam<BE> for B {
                 return Ok(value);
             }
         }
-        read_omega_fallback(self)
+        default_read_omega(self)
     }
 }
 
@@ -161,12 +146,57 @@ impl<B: BitRead<LE>> OmegaReadParam<LE> for B {
                 return Ok(value);
             }
         }
-        read_omega_fallback(self)
+        default_read_omega(self)
+    }
+}
+
+/// Trait for writing ω codes.
+///
+/// This is the trait you should usually pull in scope to write ω codes.
+pub trait OmegaWrite<E: Endianness>: BitWrite<E> {
+    fn write_omega(&mut self, value: u64) -> Result<usize, Self::Error>;
+}
+
+/// Parametric trait for writing ω codes.
+///
+/// This trait is is more general than [`OmegaWrite`], as it makes it possible
+/// to specify how to use tables using const parameters.
+///
+/// We provide an implementation of this trait for [`BitWrite`]. An implementation
+/// of [`OmegaWrite`] using default values is usually provided exploiting the
+/// [`crate::codes::params::WriteParams`] mechanism.
+pub trait OmegaWriteParam<E: Endianness>: BitWrite<E> {
+    fn write_omega_param<const USE_TABLES: bool>(&mut self, n: u64) -> Result<usize, Self::Error>;
+}
+
+impl<B: BitWrite<BE>> OmegaWriteParam<BE> for B {
+    #[inline(always)]
+    fn write_omega_param<const USE_TABLES: bool>(&mut self, n: u64) -> Result<usize, Self::Error> {
+        debug_assert!(n < u64::MAX);
+        if USE_TABLES {
+            if let Ok(Some(len)) = omega_tables::write_table_be(self, n) {
+                return Ok(len);
+            }
+        }
+        Ok(recursive_omega_write::<BE, _>(n + 1, self)? + self.write_bits(0, 1)?)
+    }
+}
+
+impl<B: BitWrite<LE>> OmegaWriteParam<LE> for B {
+    #[inline(always)]
+    fn write_omega_param<const USE_TABLES: bool>(&mut self, n: u64) -> Result<usize, Self::Error> {
+        debug_assert!(n < u64::MAX);
+        if USE_TABLES {
+            if let Ok(Some(len)) = omega_tables::write_table_le(self, n) {
+                return Ok(len);
+            }
+        }
+        Ok(recursive_omega_write::<LE, _>(n + 1, self)? + self.write_bits(0, 1)?)
     }
 }
 
 #[inline(always)]
-fn recursive_write<E: Endianness, B: BitWrite<E> + ?Sized>(
+fn recursive_omega_write<E: Endianness, B: BitWrite<E>>(
     mut n: u64,
     writer: &mut B,
 ) -> Result<usize, B::Error> {
@@ -175,37 +205,17 @@ fn recursive_write<E: Endianness, B: BitWrite<E> + ?Sized>(
     }
     let λ = n.ilog2();
     if E::IS_LITTLE {
+        // Little-endian case: rotate left the lower λ + 1 bits (the bit in
+        // position λ is a one) so that the lowest bit can be peeked to find the
+        // block.
         n = (n << 1) | 1;
     }
     #[cfg(feature = "checks")]
     {
+        // Clean up n in case checks are enabled
         n &= u64::MAX >> (u64::BITS - 1 - λ);
     }
-    Ok(recursive_write::<E, _>(λ as u64, writer)? + writer.write_bits(n, λ as usize + 1)?)
-}
-
-impl<B: BitWrite<BE>> OmegaWriteParam<BE> for B {
-    #[inline(always)]
-    fn write_omega_param<const USE_TABLES: bool>(&mut self, n: u64) -> Result<usize, Self::Error> {
-        if USE_TABLES {
-            if let Ok(Some(len)) = omega_tables::write_table_be(self, n) {
-                return Ok(len);
-            }
-        }
-        Ok(recursive_write::<BE, _>(n + 1, self)? + self.write_bits(0, 1)?)
-    }
-}
-
-impl<B: BitWrite<LE>> OmegaWriteParam<LE> for B {
-    #[inline(always)]
-    fn write_omega_param<const USE_TABLES: bool>(&mut self, n: u64) -> Result<usize, Self::Error> {
-        if USE_TABLES {
-            if let Ok(Some(len)) = omega_tables::write_table_le(self, n) {
-                return Ok(len);
-            }
-        }
-        Ok(recursive_write::<LE, _>(n + 1, self)? + self.write_bits(0, 1)?)
-    }
+    Ok(recursive_omega_write::<E, _>(λ as u64, writer)? + writer.write_bits(n, λ as usize + 1)?)
 }
 
 #[cfg(test)]
