@@ -757,11 +757,11 @@ def read_omega(bitstream, be):
 def read_omega_partial(bitstream, be):
     """Read an omega code with partial decoding support.
 
-    Returns (value, bits_consumed, partial_n, partial_bits_consumed) where:
-    - If the code is complete: (value, bits_consumed, 0, 0)
-    - If the code is incomplete: (None, None, partial_n, partial_bits_consumed)
-      where partial_n is the state after reading complete blocks and
-      partial_bits_consumed is how many bits were consumed for those blocks.
+    Returns (value_or_n, len_signed) where:
+    - If complete: (decoded_value, +bits_consumed)
+    - If incomplete: (partial_n, -partial_len)
+
+    This matches the encoding used in the generated tables.
     """
     n = 1
     bits_consumed = 0
@@ -770,15 +770,15 @@ def read_omega_partial(bitstream, be):
         if be:
             if not bitstream:
                 # No more bits, return partial state
-                return None, None, n, bits_consumed
+                return n, -bits_consumed if bits_consumed > 0 else 0
             if bitstream[0] == "0":
                 # Complete code
-                return n - 1, bits_consumed + 1, 0, 0
+                return n - 1, bits_consumed + 1
 
             l = n
             if len(bitstream) < l + 1:
                 # Incomplete block, return partial state
-                return None, None, n, bits_consumed
+                return n, -bits_consumed if bits_consumed > 0 else 0
             block = bitstream[0 : l + 1]
             bitstream = bitstream[l + 1 :]
             bits_consumed += l + 1
@@ -786,15 +786,15 @@ def read_omega_partial(bitstream, be):
         else:  # LE
             if not bitstream:
                 # No more bits, return partial state
-                return None, None, n, bits_consumed
+                return n, -bits_consumed if bits_consumed > 0 else 0
             if bitstream[-1] == "0":
                 # Complete code
-                return n - 1, bits_consumed + 1, 0, 0
+                return n - 1, bits_consumed + 1
 
             l = n
             if len(bitstream) < l + 1:
                 # Incomplete block, return partial state
-                return None, None, n, bits_consumed
+                return n, -bits_consumed if bits_consumed > 0 else 0
             block = bitstream[-(l + 1) :]
             bitstream = bitstream[: -(l + 1)]
             bits_consumed += l + 1
@@ -805,12 +805,12 @@ def read_omega_partial(bitstream, be):
 
 def read_omega(bitstream, be):
     """Read an omega code (wrapper around read_omega_partial for compatibility)"""
-    value, bits_consumed, _, _ = read_omega_partial(bitstream, be)
-    if value is None:
+    value_or_n, len_signed = read_omega_partial(bitstream, be)
+    if len_signed <= 0:
         raise ValueError()
-    return value, bitstream[bits_consumed:] if be else bitstream[
-        :-bits_consumed
-    ] if bits_consumed > 0 else bitstream
+    return value_or_n, bitstream[len_signed:] if be else bitstream[
+        :-len_signed
+    ] if len_signed > 0 else bitstream
 
 
 def _recursive_write_omega(value, bitstream, be):
@@ -954,17 +954,21 @@ pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> (i8, u64) {
 #[inline(always)]
 /// Compute the length of the code representing a value using a decoding table.
 ///
-/// If the result is `Some` the lookup was successful, and
-/// the length of the code is returned. Returns `None` for partial codes.
-pub fn len_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> Option<usize> {
+/// Returns `(len_signed, value_or_n)` where:
+/// - If len_signed > 0: complete length available
+/// - If len_signed < 0: partial state (value_or_n is partial_n, -len_signed is partial_len)
+///
+/// For partial codes, total length = -len_signed + recursive_len_from_state(value_or_n)
+pub fn len_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> (i8, u64) {
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
         let idx: u64 = idx.cast();
         let len_signed = READ_LEN_%(BO)s[idx as usize];
-        if len_signed > 0 {
-            return Some(len_signed as usize);
-        }
+        let value_or_n = READ_%(BO)s[idx as usize] as u64;
+        (len_signed, value_or_n)
+    } else {
+        // Not enough bits available
+        (0, 1)
     }
-    None
 }
 """
                 % {"bo": bo, "BO": BO}
@@ -1000,15 +1004,8 @@ pub fn write_table_%(bo)s<B: BitWrite<%(BO)s>>(backend: &mut B, value: u64) -> R
             codes = []
             for value in range(0, 2**read_bits):
                 bits = ("{:0%sb}" % read_bits).format(value)
-                decoded_value, bits_consumed, partial_n, partial_len = (
-                    read_omega_partial(bits, BO == "BE")
-                )
-                if decoded_value is not None:
-                    # Complete code: store value and positive length
-                    codes.append((decoded_value, bits_consumed))
-                else:
-                    # Incomplete code: store partial_n and negative partial_len
-                    codes.append((partial_n, -partial_len if partial_len > 0 else 0))
+                value_or_n, len_signed = read_omega_partial(bits, BO == "BE")
+                codes.append((value_or_n, len_signed))
 
             read_max_val = max(x[0] for x in codes)
             read_max_len = max(abs(x[1]) for x in codes)
@@ -1108,7 +1105,7 @@ def generate_default_tables():
     gen_omega(
         read_bits=12,  # Necessary for all architectures
         write_max_val=1023,  # Very useful
-        merged_table=False,  # A bit better on ARM, very slightly worse on i7, same on Xeon
+        merged_table=False,  # TODO: test on different architectures
     )
     subprocess.check_call(
         "cargo fmt",

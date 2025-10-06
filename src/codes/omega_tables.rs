@@ -34,17 +34,21 @@ pub fn read_table_le<B: BitRead<LE>>(backend: &mut B) -> (i8, u64) {
 #[inline(always)]
 /// Compute the length of the code representing a value using a decoding table.
 ///
-/// If the result is `Some` the lookup was successful, and
-/// the length of the code is returned. Returns `None` for partial codes.
-pub fn len_table_le<B: BitRead<LE>>(backend: &mut B) -> Option<usize> {
+/// Returns `(len_signed, value_or_n)` where:
+/// - If len_signed > 0: complete length available
+/// - If len_signed < 0: partial state (value_or_n is partial_n, -len_signed is partial_len)
+///
+/// For partial codes, total length = -len_signed + recursive_len_from_state(value_or_n)
+pub fn len_table_le<B: BitRead<LE>>(backend: &mut B) -> (i8, u64) {
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
         let idx: u64 = idx.cast();
         let len_signed = READ_LEN_LE[idx as usize];
-        if len_signed > 0 {
-            return Some(len_signed as usize);
-        }
+        let value_or_n = READ_LE[idx as usize] as u64;
+        (len_signed, value_or_n)
+    } else {
+        // Not enough bits available
+        (0, 1)
     }
-    None
 }
 
 #[inline(always)]
@@ -72,17 +76,21 @@ pub fn read_table_be<B: BitRead<BE>>(backend: &mut B) -> (i8, u64) {
 #[inline(always)]
 /// Compute the length of the code representing a value using a decoding table.
 ///
-/// If the result is `Some` the lookup was successful, and
-/// the length of the code is returned. Returns `None` for partial codes.
-pub fn len_table_be<B: BitRead<BE>>(backend: &mut B) -> Option<usize> {
+/// Returns `(len_signed, value_or_n)` where:
+/// - If len_signed > 0: complete length available
+/// - If len_signed < 0: partial state (value_or_n is partial_n, -len_signed is partial_len)
+///
+/// For partial codes, total length = -len_signed + recursive_len_from_state(value_or_n)
+pub fn len_table_be<B: BitRead<BE>>(backend: &mut B) -> (i8, u64) {
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
         let idx: u64 = idx.cast();
         let len_signed = READ_LEN_BE[idx as usize];
-        if len_signed > 0 {
-            return Some(len_signed as usize);
-        }
+        let value_or_n = READ_BE[idx as usize] as u64;
+        (len_signed, value_or_n)
+    } else {
+        // Not enough bits available
+        (0, 1)
     }
-    None
 }
 
 #[inline(always)]
