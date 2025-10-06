@@ -48,6 +48,15 @@
 //! code for 10 is `0011111`, which is formed by the blocks `11`, `0111`, and
 //! `0`.
 //!
+//! # Table-Based Optimization
+//!
+//! Unlike [γ](super::gamma), [δ](super::delta), and [ζ](super::zeta) codes, ω
+//! codes use a special optimization for partial decoding. Due to the recursive
+//! nature of ω codes, when a complete codeword cannot be read from the table
+//! the table still provides partial information about the blocks that were
+//! successfully decoded. This partial state is used to continue decoding
+//! efficiently, avoiding re-reading the initial blocks.
+//!
 //! # References
 //!
 //! Peter Elias. “[Universal codeword sets and representations of the

@@ -55,7 +55,7 @@ def get_best_fitting_type(n_bits, signed=False):
 
 
 read_func_merged_table = """
-/// Read a value using a decoding table.
+/// Reads a value using a decoding table.
 ///
 /// If the result is `Some` the decoding was successful, and
 /// the decoded value and the length of the code are returned.
@@ -74,7 +74,7 @@ pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> Option<(u64, us
 """
 
 read_func_two_table = """
-/// Read a value using a decoding table.
+/// Reads a value using a decoding table.
 ///
 /// If the result is `Some` the decoding was successful, and
 /// the decoded value and the length of the code are returned.
@@ -93,7 +93,7 @@ pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> Option<(u64, us
 """
 
 write_func_merged_table = """
-/// Write a value using an encoding table.
+/// Writes a value using an encoding table.
 ///
 /// If the result is `Some` the encoding was successful, and
 /// length of the code is returned.
@@ -744,7 +744,7 @@ def read_omega_partial(bitstream, be):
 
     Returns (value_or_n, len_signed) where:
     - If complete: (decoded_value, +bits_consumed)
-    - If incomplete: (partial_n, -partial_len)
+    - If incomplete: (partially_decoded_value, -bits_consumed)
 
     This matches the encoding used in the generated tables.
     """
@@ -811,7 +811,6 @@ def _recursive_write_omega(value, bitstream, be):
         # position λ is a one) so that the lowest bit can be peeked to find the
         # block.
         value = (value << 1) | 1
-        # Clean up value in case checks are enabled
         mask = (1 << (l + 1)) - 1
         value &= mask
         return ("{:0%sb}" % (l + 1)).format(value) + bitstream
@@ -914,16 +913,17 @@ def gen_omega(read_bits, write_max_val, len_max_val=None, merged_table=False):
             BO = bo.upper()
             f.write(
                 """
-/// Read from the decoding table.
+/// Reads from the decoding table.
 ///
 /// Returns `(len_signed, value)` where:
 /// - If len_signed > 0: complete code, value is decoded value, len_signed is code length
 /// - If len_signed < 0: partial code, value is partial_n, -len_signed is partial_len
-/// - If len_signed = 0: no valid decoding (should not occur with >= 2 bit tables)
+/// - If len_signed = 0: no valid decoding (cannot occur with >= 2 bit tables)
 ///
-/// The backend position is ALWAYS advanced by abs(len_signed) bits.
+/// The backend position is always advanced by abs(len_signed) bits.
 #[inline(always)]
 pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> (i8, u64) {
+    debug_assert!(READ_BITS >= 2);
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
         let idx: u64 = idx.cast();
         let len_signed = READ_LEN_%(BO)s[idx as usize];
@@ -996,9 +996,7 @@ pub fn write_table_%(bo)s<B: BitWrite<%(BO)s>>(backend: &mut B, value: u64) -> R
             )
             f.write("/// Positive: complete code length\n")
             f.write("/// Negative: -partial_len (bits consumed by complete blocks)\n")
-            f.write(
-                "/// Zero: no valid decoding (should not occur with >= 2 bit tables)\n"
-            )
+            f.write("/// Zero: no valid decoding (cannot occur with >= 2 bit tables)\n")
             f.write(
                 "pub const READ_LEN_%s: &[%s] = &["
                 % (BO, get_best_fitting_type(log2(read_max_len + 1), signed=True))

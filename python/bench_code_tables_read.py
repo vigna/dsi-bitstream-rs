@@ -56,11 +56,12 @@ for bits in range(1, 18):
             k=3,
             merged_table=merged_table,
         )
-        gen_omega(
-            read_bits=bits,
-            write_max_val=255,  # unused
-            merged_table=merged_table,
-        )
+        if bits > 1:
+            gen_omega(
+                read_bits=bits,
+                write_max_val=255,  # unused
+                merged_table=merged_table,
+            )
 
         # Run the benchmark with native cpu optimizations
         stdout = subprocess.check_output(
@@ -82,7 +83,8 @@ for bits in range(1, 18):
 
             # Run the benchmark with native cpu optimizations
             stdout += subprocess.check_output(
-                "cargo run --release --no-default-features --features reads,%s,delta_gamma" % read_word,
+                "cargo run --release --no-default-features --features reads,%s,delta_gamma"
+                % read_word,
                 shell=True,
                 env={
                     **os.environ,

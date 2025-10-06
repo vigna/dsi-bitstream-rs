@@ -9,16 +9,17 @@ pub const READ_BITS: usize = 12;
 /// Maximum value writable using the table(s)
 pub const WRITE_MAX: u64 = 1023;
 
-#[inline(always)]
-/// Read from the decoding table.
+/// Reads from the decoding table.
 ///
 /// Returns `(len_signed, value)` where:
 /// - If len_signed > 0: complete code, value is decoded value, len_signed is code length
 /// - If len_signed < 0: partial code, value is partial_n, -len_signed is partial_len
-/// - If len_signed = 0: no valid decoding (should not occur with >= 2 bit tables)
+/// - If len_signed = 0: no valid decoding (cannot occur with >= 2 bit tables)
 ///
-/// The backend position is ALWAYS advanced by abs(len_signed) bits.
+/// The backend position is always advanced by abs(len_signed) bits.
+#[inline(always)]
 pub fn read_table_le<B: BitRead<LE>>(backend: &mut B) -> (i8, u64) {
+    debug_assert!(READ_BITS >= 2);
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
         let idx: u64 = idx.cast();
         let len_signed = READ_LEN_LE[idx as usize];
@@ -32,16 +33,17 @@ pub fn read_table_le<B: BitRead<LE>>(backend: &mut B) -> (i8, u64) {
     }
 }
 
-#[inline(always)]
-/// Read from the decoding table.
+/// Reads from the decoding table.
 ///
 /// Returns `(len_signed, value)` where:
 /// - If len_signed > 0: complete code, value is decoded value, len_signed is code length
 /// - If len_signed < 0: partial code, value is partial_n, -len_signed is partial_len
-/// - If len_signed = 0: no valid decoding (should not occur with >= 2 bit tables)
+/// - If len_signed = 0: no valid decoding (cannot occur with >= 2 bit tables)
 ///
-/// The backend position is ALWAYS advanced by abs(len_signed) bits.
+/// The backend position is always advanced by abs(len_signed) bits.
+#[inline(always)]
 pub fn read_table_be<B: BitRead<BE>>(backend: &mut B) -> (i8, u64) {
+    debug_assert!(READ_BITS >= 2);
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
         let idx: u64 = idx.cast();
         let len_signed = READ_LEN_BE[idx as usize];
@@ -55,11 +57,11 @@ pub fn read_table_be<B: BitRead<BE>>(backend: &mut B) -> (i8, u64) {
     }
 }
 
-#[inline(always)]
 /// Write a value using an encoding table.
 ///
 /// If the result is `Some` the encoding was successful, and
 /// length of the code is returned.
+#[inline(always)]
 pub fn write_table_le<B: BitWrite<LE>>(
     backend: &mut B,
     value: u64,
@@ -73,11 +75,11 @@ pub fn write_table_le<B: BitWrite<LE>>(
     })
 }
 
-#[inline(always)]
 /// Write a value using an encoding table.
 ///
 /// If the result is `Some` the encoding was successful, and
 /// length of the code is returned.
+#[inline(always)]
 pub fn write_table_be<B: BitWrite<BE>>(
     backend: &mut B,
     value: u64,
@@ -233,7 +235,7 @@ pub const READ_BE: &[u8] = &[
 /// Precomputed signed lengths table for reading omega codes
 /// Positive: complete code length
 /// Negative: -partial_len (bits consumed by complete blocks)
-/// Zero: no valid decoding (should not occur with >= 2 bit tables)
+/// Zero: no valid decoding (cannot occur with >= 2 bit tables)
 pub const READ_LEN_BE: &[i8] = &[
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -516,7 +518,7 @@ pub const READ_LE: &[u8] = &[
 /// Precomputed signed lengths table for reading omega codes
 /// Positive: complete code length
 /// Negative: -partial_len (bits consumed by complete blocks)
-/// Zero: no valid decoding (should not occur with >= 2 bit tables)
+/// Zero: no valid decoding (cannot occur with >= 2 bit tables)
 pub const READ_LEN_LE: &[i8] = &[
     1, 3, 1, 3, 1, 6, 1, 7, 1, 3, 1, 3, 1, 6, 1, 7, 1, 3, 1, 3, 1, 6, 1, 7, 1, 3, 1, 3, 1, 6, 1, 7,
     1, 3, 1, 3, 1, 11, 1, 7, 1, 3, 1, 3, 1, 12, 1, 7, 1, 3, 1, 3, 1, -12, 1, 7, 1, 3, 1, 3, 1, -5,

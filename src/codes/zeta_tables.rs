@@ -9,11 +9,11 @@ pub const READ_BITS: usize = 12;
 /// Maximum value writable using the table(s)
 pub const WRITE_MAX: u64 = 1023;
 
-#[inline(always)]
-/// Read a value using a decoding table.
+/// Reads a value using a decoding table.
 ///
 /// If the result is `Some` the decoding was successful, and
 /// the decoded value and the length of the code are returned.
+#[inline(always)]
 pub fn read_table_le<B: BitRead<LE>>(backend: &mut B) -> Option<(u64, usize)> {
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
         let idx: u64 = idx.cast();
@@ -25,27 +25,12 @@ pub fn read_table_le<B: BitRead<LE>>(backend: &mut B) -> Option<(u64, usize)> {
     }
     None
 }
-#[inline(always)]
-/// Compute the length of the code representing a value using a decoding table.
-///
-/// If the result is `Some` the lookup was successful, and
-/// the length of the code is returned.
-pub fn len_table_le<B: BitRead<LE>>(backend: &mut B) -> Option<usize> {
-    if let Ok(idx) = backend.peek_bits(READ_BITS) {
-        let idx: u64 = idx.cast();
-        let len = READ_LEN_LE[idx as usize];
-        if len != MISSING_VALUE_LEN_LE {
-            return Some(len as usize);
-        }
-    }
-    None
-}
 
-#[inline(always)]
 /// Write a value using an encoding table.
 ///
 /// If the result is `Some` the encoding was successful, and
 /// length of the code is returned.
+#[inline(always)]
 pub fn write_table_le<B: BitWrite<LE>>(
     backend: &mut B,
     value: u64,
@@ -59,11 +44,11 @@ pub fn write_table_le<B: BitWrite<LE>>(
     })
 }
 
-#[inline(always)]
-/// Read a value using a decoding table.
+/// Reads a value using a decoding table.
 ///
 /// If the result is `Some` the decoding was successful, and
 /// the decoded value and the length of the code are returned.
+#[inline(always)]
 pub fn read_table_be<B: BitRead<BE>>(backend: &mut B) -> Option<(u64, usize)> {
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
         let idx: u64 = idx.cast();
@@ -75,27 +60,12 @@ pub fn read_table_be<B: BitRead<BE>>(backend: &mut B) -> Option<(u64, usize)> {
     }
     None
 }
-#[inline(always)]
-/// Compute the length of the code representing a value using a decoding table.
-///
-/// If the result is `Some` the lookup was successful, and
-/// the length of the code is returned.
-pub fn len_table_be<B: BitRead<BE>>(backend: &mut B) -> Option<usize> {
-    if let Ok(idx) = backend.peek_bits(READ_BITS) {
-        let idx: u64 = idx.cast();
-        let len = READ_LEN_BE[idx as usize];
-        if len != MISSING_VALUE_LEN_BE {
-            return Some(len as usize);
-        }
-    }
-    None
-}
 
-#[inline(always)]
 /// Write a value using an encoding table.
 ///
 /// If the result is `Some` the encoding was successful, and
 /// length of the code is returned.
+#[inline(always)]
 pub fn write_table_be<B: BitWrite<BE>>(
     backend: &mut B,
     value: u64,
