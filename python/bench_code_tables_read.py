@@ -64,7 +64,7 @@ for bits in range(1, 18):
 
         # Run the benchmark with native cpu optimizations
         stdout = subprocess.check_output(
-            "cargo run --release --features reads,%s" % read_word,
+            "cargo run --release --no-default-features --features reads,%s" % read_word,
             shell=True,
             env={
                 **os.environ,
@@ -82,7 +82,7 @@ for bits in range(1, 18):
 
             # Run the benchmark with native cpu optimizations
             stdout += subprocess.check_output(
-                "cargo run --release --features reads,%s,delta_gamma" % read_word,
+                "cargo run --release --no-default-features --features reads,%s,delta_gamma" % read_word,
                 shell=True,
                 env={
                     **os.environ,
