@@ -107,7 +107,19 @@ pub trait OmegaReadParam<E: Endianness>: BitRead<E> {
 /// for any endianness.
 #[inline(always)]
 fn default_read_omega<E: Endianness, B: BitRead<E>>(backend: &mut B) -> Result<u64, B::Error> {
-    let mut n = 1;
+    read_omega_from_state::<E, B>(backend, 1)
+}
+
+/// Internal implementation that continues reading from a given state.
+///
+/// This is used both by the default implementation (starting from state n=1)
+/// and by the table-accelerated version (continuing from partial state).
+/// The bits have already been skipped by the caller.
+#[inline(always)]
+fn read_omega_from_state<E: Endianness, B: BitRead<E>>(
+    backend: &mut B,
+    mut n: u64,
+) -> Result<u64, B::Error> {
     loop {
         let bit = backend.peek_bits(1)?.cast();
         if bit == 0 {
@@ -130,9 +142,15 @@ impl<B: BitRead<BE>> OmegaReadParam<BE> for B {
     #[inline(always)]
     fn read_omega_param<const USE_TABLES: bool>(&mut self) -> Result<u64, Self::Error> {
         if USE_TABLES {
-            if let Some((value, _)) = omega_tables::read_table_be(self) {
+            let (len_signed, value) = omega_tables::read_table_be(self);
+            if len_signed > 0 {
+                // Complete code - bits already skipped in read_table
                 return Ok(value);
+            } else if len_signed < 0 {
+                // Partial code - bits already skipped in read_table, continue from partial_n
+                return read_omega_from_state::<BE, _>(self, value);
             }
+            // len_signed == 0: fall through to default
         }
         default_read_omega(self)
     }
@@ -142,9 +160,15 @@ impl<B: BitRead<LE>> OmegaReadParam<LE> for B {
     #[inline(always)]
     fn read_omega_param<const USE_TABLES: bool>(&mut self) -> Result<u64, Self::Error> {
         if USE_TABLES {
-            if let Some((value, _)) = omega_tables::read_table_le(self) {
+            let (len_signed, value) = omega_tables::read_table_le(self);
+            if len_signed > 0 {
+                // Complete code - bits already skipped in read_table
                 return Ok(value);
+            } else if len_signed < 0 {
+                // Partial code - bits already skipped in read_table, continue from partial_n
+                return read_omega_from_state::<LE, _>(self, value);
             }
+            // len_signed == 0: fall through to default
         }
         default_read_omega(self)
     }

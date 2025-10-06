@@ -8,6 +8,8 @@
 * All codes now declare their range of validity (parameters
   and inputs), which is checked in the tests.
 
+* Elias Omega has tables supporting partial decoding.
+
 ## [0.5.0] - 2025-03-17
 
 ### New

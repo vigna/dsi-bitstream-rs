@@ -12,10 +12,11 @@
 To run just execute `$ python ./gen_code_tables.py`
 To provide a build folder, pass it as the first positional argument.
 
-This script is not implemented using the `build.rs` mechanism because 
+This script is not implemented using the `build.rs` mechanism because
 it would significantly slow down the build process. Moreover, the tables
 will be generated very rarely.
 """
+
 import os
 import subprocess
 from math import log2, ceil, floor
@@ -23,19 +24,34 @@ from math import log2, ceil, floor
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ROOT = os.path.join(ROOT, "src", "codes")
 
-def get_best_fitting_type(n_bits):
+
+def get_best_fitting_type(n_bits, signed=False):
     """Find the smallest Rust type that can fit n_bits"""
-    if n_bits <= 8:
-        return "u8"
-    if n_bits <= 16:
-        return "u16"
-    if n_bits <= 32:
-        return "u32"
-    if n_bits <= 64:
-        return "u64"
-    if n_bits <= 128:
-        return "u128"
-    raise ValueError(n_bits)
+    if signed:
+        # For signed types, we need one more bit for the sign
+        if n_bits <= 7:
+            return "i8"
+        if n_bits <= 15:
+            return "i16"
+        if n_bits <= 31:
+            return "i32"
+        if n_bits <= 63:
+            return "i64"
+        if n_bits <= 127:
+            return "i128"
+        raise ValueError(n_bits)
+    else:
+        if n_bits <= 8:
+            return "u8"
+        if n_bits <= 16:
+            return "u16"
+        if n_bits <= 32:
+            return "u32"
+        if n_bits <= 64:
+            return "u64"
+        if n_bits <= 128:
+            return "u128"
+        raise ValueError(n_bits)
 
 
 read_func_merged_table = """
@@ -101,7 +117,7 @@ write_func_merged_table = """
 pub fn write_table_%(bo)s<B: BitWrite<%(BO)s>>(backend: &mut B, value: u64) -> Result<Option<usize>, B::Error> {
     Ok(if let Some((bits, len)) = WRITE_%(BO)s.get(value as usize) {
         backend.write_bits(*bits as u64, *len as usize)?;
-        Some(*len as usize)        
+        Some(*len as usize)
     } else {
         None
     })
@@ -124,6 +140,7 @@ pub fn write_table_%(bo)s<B: BitWrite<%(BO)s>>(backend: &mut B, value: u64) -> R
     })
 }
 """
+
 
 def gen_table(
     read_bits,
@@ -154,12 +171,8 @@ def gen_table(
 
         f.write("/// How many bits are needed to read the tables in this\n")
         f.write("pub const READ_BITS: usize = {};\n".format(read_bits))
-        f.write(
-            "/// Maximum value writable using the table(s)\n"
-        )
-        f.write(
-            "pub const WRITE_MAX: u64 = {};\n".format(write_max_val)
-        )
+        f.write("/// Maximum value writable using the table(s)\n")
+        f.write("pub const WRITE_MAX: u64 = {};\n".format(write_max_val))
 
         if merged_table:
             read_func_template = read_func_merged_table
@@ -189,22 +202,21 @@ def gen_table(
                 "/// The len we assign to a code that cannot be decoded through the table\n"
             )
             f.write(
-                "pub const MISSING_VALUE_LEN_{}: {} = {};\n".format(BO, len_ty, read_max_len + 1)
+                "pub const MISSING_VALUE_LEN_{}: {} = {};\n".format(
+                    BO, len_ty, read_max_len + 1
+                )
             )
-
 
             if merged_table:
                 f.write(
-                    "/// Precomputed table for reading {} codes\n".format(
-                        code_name
-                    )
+                    "/// Precomputed table for reading {} codes\n".format(code_name)
                 )
                 f.write(
                     "pub const READ_%s: &[(%s, %s)] = &["
                     % (
                         BO,
                         get_best_fitting_type(log2(read_max_val + 1)),
-                        get_best_fitting_type(log2(read_max_len + 2)),  
+                        get_best_fitting_type(log2(read_max_len + 2)),
                     )
                 )
                 for value, l in codes:
@@ -247,7 +259,9 @@ def gen_table(
         for bo in ["BE", "LE"]:
             if merged_table:
                 f.write(
-                    "/// Precomputed lengths table for writing {} codes\n".format(code_name)
+                    "/// Precomputed lengths table for writing {} codes\n".format(
+                        code_name
+                    )
                 )
                 f.write(
                     "pub const WRITE_%s: &[(%s, u8)] = &["
@@ -259,7 +273,9 @@ def gen_table(
                 f.write("];\n")
             else:
                 f.write(
-                    "///Table used to speed up the writing of {} codes\n".format(code_name)
+                    "///Table used to speed up the writing of {} codes\n".format(
+                        code_name
+                    )
                 )
                 f.write(
                     "pub const WRITE_%s: &[%s] = &["
@@ -274,7 +290,9 @@ def gen_table(
                 f.write("];\n")
 
                 f.write(
-                    "///Table used to speed up the writing of {} codes\n".format(code_name)
+                    "///Table used to speed up the writing of {} codes\n".format(
+                        code_name
+                    )
                 )
                 f.write(
                     "pub const WRITE_LEN_%s: &[%s] = &["
@@ -700,6 +718,7 @@ def gen_zeta(read_bits, write_max_val, len_max_val=None, k=3, merged_table=False
         f.write("/// The K of the zeta codes for these tables\n")
         f.write("pub const K: usize = {};".format(k))
 
+
 ################################################################################
 
 
@@ -733,6 +752,65 @@ def read_omega(bitstream, be):
 
             k = int(block, 2)
             n = (k >> 1) | (1 << l)
+
+
+def read_omega_partial(bitstream, be):
+    """Read an omega code with partial decoding support.
+
+    Returns (value, bits_consumed, partial_n, partial_bits_consumed) where:
+    - If the code is complete: (value, bits_consumed, 0, 0)
+    - If the code is incomplete: (None, None, partial_n, partial_bits_consumed)
+      where partial_n is the state after reading complete blocks and
+      partial_bits_consumed is how many bits were consumed for those blocks.
+    """
+    n = 1
+    bits_consumed = 0
+
+    while True:
+        if be:
+            if not bitstream:
+                # No more bits, return partial state
+                return None, None, n, bits_consumed
+            if bitstream[0] == "0":
+                # Complete code
+                return n - 1, bits_consumed + 1, 0, 0
+
+            l = n
+            if len(bitstream) < l + 1:
+                # Incomplete block, return partial state
+                return None, None, n, bits_consumed
+            block = bitstream[0 : l + 1]
+            bitstream = bitstream[l + 1 :]
+            bits_consumed += l + 1
+            n = int(block, 2)
+        else:  # LE
+            if not bitstream:
+                # No more bits, return partial state
+                return None, None, n, bits_consumed
+            if bitstream[-1] == "0":
+                # Complete code
+                return n - 1, bits_consumed + 1, 0, 0
+
+            l = n
+            if len(bitstream) < l + 1:
+                # Incomplete block, return partial state
+                return None, None, n, bits_consumed
+            block = bitstream[-(l + 1) :]
+            bitstream = bitstream[: -(l + 1)]
+            bits_consumed += l + 1
+
+            k = int(block, 2)
+            n = (k >> 1) | (1 << l)
+
+
+def read_omega(bitstream, be):
+    """Read an omega code (wrapper around read_omega_partial for compatibility)"""
+    value, bits_consumed, _, _ = read_omega_partial(bitstream, be)
+    if value is None:
+        raise ValueError()
+    return value, bitstream[bits_consumed:] if be else bitstream[
+        :-bits_consumed
+    ] if bits_consumed > 0 else bitstream
 
 
 def _recursive_write_omega(value, bitstream, be):
@@ -819,19 +897,191 @@ for i in range(256):
 
 
 def gen_omega(read_bits, write_max_val, len_max_val=None, merged_table=False):
-    """Configuration of `gen_table` for omega"""
+    """Configuration of `gen_table` for omega with partial decoding support"""
     assert read_bits > 0
     len_max_val = len_max_val or write_max_val
-    return gen_table(
-        read_bits,
-        write_max_val,
-        len_max_val,
-        "omega",
-        len_omega,
-        read_omega,
-        write_omega,
-        merged_table,
-    )
+    code_name = "omega"
+
+    with open(os.path.join(ROOT, "{}_tables.rs".format(code_name)), "w") as f:
+        f.write(
+            "#![doc(hidden)]\n// THIS FILE HAS BEEN GENERATED BY THE SCRIPT {}\n".format(
+                os.path.basename(__file__)
+            )
+        )
+        f.write("// ~~~~~~~~~~~~~~~~~~~ DO NOT MODIFY ~~~~~~~~~~~~~~~~~~~~~~\n")
+        f.write(
+            "// Methods for reading and writing values using precomputed tables for {} codes\n".format(
+                code_name
+            )
+        )
+        f.write("use crate::traits::{BitRead, BitWrite, BE, LE};\n")
+        f.write("use common_traits::*;\n")
+
+        f.write("/// How many bits are needed to read the tables in this\n")
+        f.write("pub const READ_BITS: usize = {};\n".format(read_bits))
+        f.write("/// Maximum value writable using the table(s)\n")
+        f.write("pub const WRITE_MAX: u64 = {};\n".format(write_max_val))
+
+        # Generate read functions with partial decoding support
+        # Returns raw (len_signed, value) pair - no Option wrapper
+        # ALL bit skipping happens here, including for partial codes
+        for bo in ["le", "be"]:
+            BO = bo.upper()
+            f.write(
+                """
+#[inline(always)]
+/// Read from the decoding table.
+///
+/// Returns `(len_signed, value)` where:
+/// - If len_signed > 0: complete code, value is decoded value, len_signed is code length
+/// - If len_signed < 0: partial code, value is partial_n, -len_signed is partial_len
+/// - If len_signed = 0: no valid decoding (should not occur with >= 2 bit tables)
+///
+/// The backend position is ALWAYS advanced by abs(len_signed) bits.
+pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> (i8, u64) {
+    if let Ok(idx) = backend.peek_bits(READ_BITS) {
+        let idx: u64 = idx.cast();
+        let len_signed = READ_LEN_%(BO)s[idx as usize];
+        let value = READ_%(BO)s[idx as usize] as u64;
+        backend.skip_bits_after_peek(len_signed.unsigned_abs() as usize);
+
+        (len_signed, value)
+    } else {
+        // Not enough bits available - return initial state
+        (0, 1)
+    }
+}
+#[inline(always)]
+/// Compute the length of the code representing a value using a decoding table.
+///
+/// If the result is `Some` the lookup was successful, and
+/// the length of the code is returned. Returns `None` for partial codes.
+pub fn len_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> Option<usize> {
+    if let Ok(idx) = backend.peek_bits(READ_BITS) {
+        let idx: u64 = idx.cast();
+        let len_signed = READ_LEN_%(BO)s[idx as usize];
+        if len_signed > 0 {
+            return Some(len_signed as usize);
+        }
+    }
+    None
+}
+"""
+                % {"bo": bo, "BO": BO}
+            )
+
+        # Generate write functions
+        for bo in ["le", "be"]:
+            BO = bo.upper()
+            f.write(
+                """
+#[inline(always)]
+/// Write a value using an encoding table.
+///
+/// If the result is `Some` the encoding was successful, and
+/// length of the code is returned.
+pub fn write_table_%(bo)s<B: BitWrite<%(BO)s>>(backend: &mut B, value: u64) -> Result<Option<usize>, B::Error> {
+    Ok(if let Some(bits) = WRITE_%(BO)s.get(value as usize) {
+        let len = WRITE_LEN_%(BO)s[value as usize] as usize;
+        backend.write_bits(*bits as u64, len)?;
+        Some(len)
+    } else {
+        None
+    })
+}
+"""
+                % {"bo": bo, "BO": BO}
+            )
+
+        # Generate read tables with signed length encoding for partial decoding
+        # Positive length: complete code (READ = value, READ_LEN = length)
+        # Negative length: partial code (READ = partial_n, READ_LEN = -partial_len)
+        for BO in ["BE", "LE"]:
+            codes = []
+            for value in range(0, 2**read_bits):
+                bits = ("{:0%sb}" % read_bits).format(value)
+                decoded_value, bits_consumed, partial_n, partial_len = (
+                    read_omega_partial(bits, BO == "BE")
+                )
+                if decoded_value is not None:
+                    # Complete code: store value and positive length
+                    codes.append((decoded_value, bits_consumed))
+                else:
+                    # Incomplete code: store partial_n and negative partial_len
+                    codes.append((partial_n, -partial_len if partial_len > 0 else 0))
+
+            read_max_val = max(x[0] for x in codes)
+            read_max_len = max(abs(x[1]) for x in codes)
+
+            # Value table (stores decoded value OR partial_n)
+            f.write("/// Precomputed table for reading {} codes\n".format(code_name))
+            f.write("/// For complete codes: stores the decoded value\n")
+            f.write("/// For partial codes: stores the partial n state\n")
+            f.write(
+                "pub const READ_%s: &[%s] = &["
+                % (BO, get_best_fitting_type(log2(read_max_val + 1)))
+            )
+            for value_or_n, _ in codes:
+                f.write("{}, ".format(value_or_n))
+            f.write("];\n")
+
+            # Signed length table (positive = complete, negative = partial)
+            f.write(
+                "/// Precomputed signed lengths table for reading {} codes\n".format(
+                    code_name
+                )
+            )
+            f.write("/// Positive: complete code length\n")
+            f.write("/// Negative: -partial_len (bits consumed by complete blocks)\n")
+            f.write(
+                "/// Zero: no valid decoding (should not occur with >= 2 bit tables)\n"
+            )
+            f.write(
+                "pub const READ_LEN_%s: &[%s] = &["
+                % (BO, get_best_fitting_type(log2(read_max_len + 1), signed=True))
+            )
+            for _, len_signed in codes:
+                f.write("{}, ".format(len_signed))
+            f.write("];\n")
+
+        # Write tables
+        for bo in ["BE", "LE"]:
+            f.write(
+                "///Table used to speed up the writing of {} codes\n".format(code_name)
+            )
+            f.write(
+                "pub const WRITE_%s: &[%s] = &["
+                % (bo, get_best_fitting_type(len_omega(write_max_val)))
+            )
+            len_bits = []
+            for value in range(write_max_val + 1):
+                bits = write_omega(value, "", bo == "BE")
+                len_bits.append(len(bits))
+                f.write("{},".format(int(bits, 2)))
+            f.write("];\n")
+
+            f.write(
+                "///Table used to speed up the writing of {} codes\n".format(code_name)
+            )
+            f.write(
+                "pub const WRITE_LEN_%s: &[%s] = &["
+                % (bo, get_best_fitting_type(len_omega(write_max_val)))
+            )
+            for l in len_bits:
+                f.write("{}, ".format(l))
+            f.write("];\n")
+
+        # Len table
+        f.write(
+            "///Table used to speed up the skipping of {} codes\n".format(code_name)
+        )
+        f.write(
+            "pub const LEN: &[%s] = &["
+            % (get_best_fitting_type(ceil(log2(len_omega(len_max_val)))))
+        )
+        for value in range(write_max_val + 1):
+            f.write("{}, ".format(len_omega(value)))
+        f.write("];\n")
 
 
 ################################################################################
@@ -840,29 +1090,31 @@ def gen_omega(read_bits, write_max_val, len_max_val=None, merged_table=False):
 def generate_default_tables():
     # Generate the default tables
     gen_gamma(
-        read_bits=9, # No use on Xeon/ARM, little useful on i7
+        read_bits=9,  # No use on Xeon/ARM, little useful on i7
         write_max_val=63,
-        merged_table=False, # Irrelevant for speed, a bit smaller
+        merged_table=False,  # Irrelevant for speed, a bit smaller
     )
     gen_delta(
-        read_bits=11, # No use on any architecture if 9-bit gamma tables are available, but just in case someone selects it
-        write_max_val=1023, # Very useful, both tables (delta and gamma)
+        read_bits=11,  # No use on any architecture if 9-bit gamma tables are available, but just in case someone selects it
+        write_max_val=1023,  # Very useful, both tables (delta and gamma)
         merged_table=False,
     )
     gen_zeta(
-        read_bits=12, # Necessary for all architectures
-        write_max_val=1023, # Very useful   
+        read_bits=12,  # Necessary for all architectures
+        write_max_val=1023,  # Very useful
         k=3,
-        merged_table=False, # A bit better on ARM, very slightly worse on i7, same on Xeon
+        merged_table=False,  # A bit better on ARM, very slightly worse on i7, same on Xeon
     )
     gen_omega(
-        read_bits=12, # Necessary for all architectures
-        write_max_val=1023, # Very useful
-        merged_table=False, # A bit better on ARM, very slightly worse on i7, same on Xeon
+        read_bits=12,  # Necessary for all architectures
+        write_max_val=1023,  # Very useful
+        merged_table=False,  # A bit better on ARM, very slightly worse on i7, same on Xeon
     )
     subprocess.check_call(
-        "cargo fmt", shell=True,
+        "cargo fmt",
+        shell=True,
     )
+
 
 if __name__ == "__main__":
     generate_default_tables()
