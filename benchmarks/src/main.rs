@@ -227,7 +227,7 @@ pub fn main() {
             "omega",
             read_omega_param,
             write_omega_param,
-            gen_delta_data // TODO
+            gen_omega_data
         );
         // delta with gamma tables disabled
         bench!(

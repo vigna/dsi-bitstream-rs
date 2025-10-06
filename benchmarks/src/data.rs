@@ -128,3 +128,25 @@ pub fn gen_zeta3_data() -> (f64, Vec<u64>) {
 
     (ratio, zeta3_data)
 }
+
+/// Generate data to benchmark ω code.
+pub fn gen_omega_data() -> (f64, Vec<u64>) {
+    let mut rng = rand::rng();
+
+    let distr = rand::distr::Uniform::new(0.0, 1.0).unwrap();
+    // TODO: presently like
+    let omega_data = (0..N)
+        .map(|_| {
+            let p = rng.sample(distr);
+            let s = DELTA_CUM_DISTR.binary_search_by(|v| v.partial_cmp(&p).unwrap());
+            match s {
+                Ok(x) => x as u64,
+                Err(x) => x as u64 - 1,
+            }
+        })
+        .collect::<Vec<_>>();
+
+    let ratio = compute_hit_ratio!(omega_data, omega_tables, len_omega);
+
+    (ratio, omega_data)
+}
