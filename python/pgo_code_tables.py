@@ -8,13 +8,13 @@
 #
 
 """Benchmark the code with different number of bits for the codes tables and
-create a `table.csv` file with all the results
+output the results in CSV format on stdandard output.
 """
 import re
 import os
 import sys
 import subprocess
-from code_tables_generator import *
+from gen_code_tables import *
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 target_folder = os.path.join(ROOT, "target")
@@ -51,6 +51,7 @@ for bits in range(1, 18):
                 "GAMMA_CODE_TABLE_BITS":str(bits),
                 "DELTA_CODE_TABLE_BITS":str(bits),
                 "ZETA_CODE_TABLE_BITS":str(bits),
+                "OMEGA_CODE_TABLE_BITS":str(bits),
                 "MERGED_TABLES":str(2 - tables_num),
                 "RUSTFLAGS":"-Cprofile-generate={}".format(pgo_folder),
             },
@@ -74,6 +75,7 @@ for bits in range(1, 18):
                 "GAMMA_CODE_TABLE_BITS":str(bits),
                 "DELTA_CODE_TABLE_BITS":str(bits),
                 "ZETA_CODE_TABLE_BITS":str(bits),
+                "OMEGA_CODE_TABLE_BITS":str(bits),
                 "MERGED_TABLES":str(2 - tables_num),
                 "RUSTFLAGS":"-Cprofile-use={}".format(pgo_merged),
             },

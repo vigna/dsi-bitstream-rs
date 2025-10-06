@@ -222,6 +222,13 @@ pub fn main() {
             write_zeta3_param,
             gen_zeta3_data
         );
+        impl_code!(
+            calibration,
+            "omega",
+            read_omega_param,
+            write_omega_param,
+            gen_delta_data // TODO
+        );
         // delta with gamma tables disabled
         bench!(
             calibration,
