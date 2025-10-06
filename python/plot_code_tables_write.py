@@ -21,14 +21,14 @@ if len(sys.argv) != 2 or not sys.argv[1] in { "u16", "u32", "u64" }:
 
 write_word = sys.argv[1]
 
-nice = {"gamma":u"γ", "delta":"δ (no γ tables)", "delta_gamma":u"δ (γ tables)", "zeta3":u"ζ₃"}
+nice = { "gamma":u"γ", "delta":"δ (no γ tables)", "delta_gamma":u"δ (γ tables)", "zeta3":u"ζ₃", "omega":u"ω"}
 
 df = pd.read_csv(sys.stdin, index_col=None, header=0)
 x_label = "max_log2"
 df[x_label] = np.log2(df["max"])
 
 plots = []
-for code in ["gamma", "delta", "delta_gamma", "zeta3"]:
+for code in ["gamma", "delta", "delta_gamma", "zeta3", "omega"]:
     fig, ax = plt.subplots(1, 1, figsize=(10, 8), dpi=200, facecolor="white")
     for tables_n in [1, 2]:
         if tables_n == 1:
