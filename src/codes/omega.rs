@@ -146,11 +146,11 @@ impl<B: BitRead<BE>> OmegaReadParam<BE> for B {
             if len_signed > 0 {
                 // Complete code - bits already skipped in read_table
                 return Ok(value);
-            } else if len_signed < 0 {
+            } else {
+                debug_assert!(len_signed < 0);
                 // Partial code - bits already skipped in read_table, continue from partial_n
                 return read_omega_from_state::<BE, _>(self, value);
             }
-            // len_signed == 0: fall through to default
         }
         default_read_omega(self)
     }
@@ -164,7 +164,8 @@ impl<B: BitRead<LE>> OmegaReadParam<LE> for B {
             if len_signed > 0 {
                 // Complete code - bits already skipped in read_table
                 return Ok(value);
-            } else if len_signed < 0 {
+            } else {
+                debug_assert!(len_signed < 0);
                 // Partial code - bits already skipped in read_table, continue from partial_n
                 return read_omega_from_state::<LE, _>(self, value);
             }

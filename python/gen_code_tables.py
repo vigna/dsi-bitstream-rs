@@ -55,11 +55,11 @@ def get_best_fitting_type(n_bits, signed=False):
 
 
 read_func_merged_table = """
-#[inline(always)]
 /// Read a value using a decoding table.
 ///
 /// If the result is `Some` the decoding was successful, and
 /// the decoded value and the length of the code are returned.
+#[inline(always)]
 pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> Option<(u64, usize)> {
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
         let idx: u64 = idx.cast();
@@ -74,11 +74,11 @@ pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> Option<(u64, us
 """
 
 read_func_two_table = """
-#[inline(always)]
 /// Read a value using a decoding table.
 ///
 /// If the result is `Some` the decoding was successful, and
 /// the decoded value and the length of the code are returned.
+#[inline(always)]
 pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> Option<(u64, usize)> {
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
         let idx: u64 = idx.cast();
@@ -90,30 +90,15 @@ pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> Option<(u64, us
     }
     None
 }
-#[inline(always)]
-/// Compute the length of the code representing a value using a decoding table.
-///
-/// If the result is `Some` the lookup was successful, and
-/// the length of the code is returned.
-pub fn len_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> Option<usize> {
-    if let Ok(idx) = backend.peek_bits(READ_BITS) {
-        let idx: u64 = idx.cast();
-        let len = READ_LEN_%(BO)s[idx as usize];
-        if len != MISSING_VALUE_LEN_%(BO)s {
-            return Some(len as usize);
-        }
-    }
-    None
-}
 """
 
 write_func_merged_table = """
-#[inline(always)]
-#[allow(clippy::unnecessary_cast)]  // rationale: "*bits as u64" is flaky redundant
 /// Write a value using an encoding table.
 ///
 /// If the result is `Some` the encoding was successful, and
 /// length of the code is returned.
+#[inline(always)]
+#[allow(clippy::unnecessary_cast)]  // rationale: "*bits as u64" is flaky redundant
 pub fn write_table_%(bo)s<B: BitWrite<%(BO)s>>(backend: &mut B, value: u64) -> Result<Option<usize>, B::Error> {
     Ok(if let Some((bits, len)) = WRITE_%(BO)s.get(value as usize) {
         backend.write_bits(*bits as u64, *len as usize)?;
@@ -125,11 +110,11 @@ pub fn write_table_%(bo)s<B: BitWrite<%(BO)s>>(backend: &mut B, value: u64) -> R
 """
 
 write_func_two_table = """
-#[inline(always)]
 /// Write a value using an encoding table.
 ///
 /// If the result is `Some` the encoding was successful, and
 /// length of the code is returned.
+#[inline(always)]
 pub fn write_table_%(bo)s<B: BitWrite<%(BO)s>>(backend: &mut B, value: u64) -> Result<Option<usize>, B::Error> {
     Ok(if let Some(bits) = WRITE_%(BO)s.get(value as usize) {
         let len = WRITE_LEN_%(BO)s[value as usize] as usize;
@@ -929,7 +914,6 @@ def gen_omega(read_bits, write_max_val, len_max_val=None, merged_table=False):
             BO = bo.upper()
             f.write(
                 """
-#[inline(always)]
 /// Read from the decoding table.
 ///
 /// Returns `(len_signed, value)` where:
@@ -938,6 +922,7 @@ def gen_omega(read_bits, write_max_val, len_max_val=None, merged_table=False):
 /// - If len_signed = 0: no valid decoding (should not occur with >= 2 bit tables)
 ///
 /// The backend position is ALWAYS advanced by abs(len_signed) bits.
+#[inline(always)]
 pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> (i8, u64) {
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
         let idx: u64 = idx.cast();
@@ -951,25 +936,6 @@ pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> (i8, u64) {
         (0, 1)
     }
 }
-#[inline(always)]
-/// Compute the length of the code representing a value using a decoding table.
-///
-/// Returns `(len_signed, value_or_n)` where:
-/// - If len_signed > 0: complete length available
-/// - If len_signed < 0: partial state (value_or_n is partial_n, -len_signed is partial_len)
-///
-/// For partial codes, total length = -len_signed + recursive_len_from_state(value_or_n)
-pub fn len_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> (i8, u64) {
-    if let Ok(idx) = backend.peek_bits(READ_BITS) {
-        let idx: u64 = idx.cast();
-        let len_signed = READ_LEN_%(BO)s[idx as usize];
-        let value_or_n = READ_%(BO)s[idx as usize] as u64;
-        (len_signed, value_or_n)
-    } else {
-        // Not enough bits available
-        (0, 1)
-    }
-}
 """
                 % {"bo": bo, "BO": BO}
             )
@@ -979,11 +945,11 @@ pub fn len_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> (i8, u64) {
             BO = bo.upper()
             f.write(
                 """
-#[inline(always)]
 /// Write a value using an encoding table.
 ///
 /// If the result is `Some` the encoding was successful, and
 /// length of the code is returned.
+#[inline(always)]
 pub fn write_table_%(bo)s<B: BitWrite<%(BO)s>>(backend: &mut B, value: u64) -> Result<Option<usize>, B::Error> {
     Ok(if let Some(bits) = WRITE_%(BO)s.get(value as usize) {
         let len = WRITE_LEN_%(BO)s[value as usize] as usize;
