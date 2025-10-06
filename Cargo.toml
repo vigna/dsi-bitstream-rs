@@ -61,7 +61,3 @@ harness = false
 [[bench]]
 name = "vbyte"
 harness = false
-
-[[bench]]
-name = "universal"
-harness = false
