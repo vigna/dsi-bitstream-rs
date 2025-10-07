@@ -2,6 +2,8 @@
 
 ## [0.5.1] -
 
+### New
+
 * New `MinimalBinary` struct providing static and dynamic
   dispatching of minimal binary codes.
 
@@ -35,7 +37,7 @@
 
 ### Changed
 
-* made mem_dbg optional.
+* Made mem_dbg optional.
 
 ## [0.4.1] - 2024-04-07
 

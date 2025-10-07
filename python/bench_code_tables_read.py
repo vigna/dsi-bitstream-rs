@@ -26,7 +26,7 @@ if len(sys.argv) != 2 or sys.argv[1] not in {"u16", "u32", "u64"}:
 read_word = sys.argv[1]
 first_time = True
 
-for bits in range(1, 18):
+for bits in range(1, 17):
     print(
         "\nBenchmarking with read word = %s, table bits = %d\n" % (read_word, bits),
         file=sys.stderr,
