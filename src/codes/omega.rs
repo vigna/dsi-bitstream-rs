@@ -57,11 +57,6 @@
 //! successfully decoded. This partial state is used to continue decoding
 //! efficiently, avoiding re-reading the initial blocks.
 //!
-//! For performance, partial codes are identified by setting the highest bit
-//! (0x80) in the length byte. This allows extracting the actual length with
-//! a simple bitwise AND operation (`len & 0x7F`) instead of computing the
-//! absolute value of a negative number.
-//!
 //! # References
 //!
 //! Peter Elias. “[Universal codeword sets and representations of the

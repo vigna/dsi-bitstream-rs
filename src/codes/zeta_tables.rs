@@ -16,11 +16,11 @@ pub const WRITE_MAX: u64 = 1023;
 #[inline(always)]
 pub fn read_table_le<B: BitRead<LE>>(backend: &mut B) -> Option<(u64, usize)> {
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
-        let idx: u64 = idx.cast();
-        let len = READ_LEN_LE[idx as usize];
+        let idx = idx.cast() as usize;
+        let len = READ_LEN_LE[idx];
         if len != MISSING_VALUE_LEN_LE {
             backend.skip_bits_after_peek(len as usize);
-            return Some((READ_LE[idx as usize] as u64, len as usize));
+            return Some((READ_LE[idx] as u64, len as usize));
         }
     }
     None
@@ -51,11 +51,11 @@ pub fn write_table_le<B: BitWrite<LE>>(
 #[inline(always)]
 pub fn read_table_be<B: BitRead<BE>>(backend: &mut B) -> Option<(u64, usize)> {
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
-        let idx: u64 = idx.cast();
-        let len = READ_LEN_BE[idx as usize];
+        let idx = idx.cast() as usize;
+        let len = READ_LEN_BE[idx];
         if len != MISSING_VALUE_LEN_BE {
             backend.skip_bits_after_peek(len as usize);
-            return Some((READ_BE[idx as usize] as u64, len as usize));
+            return Some((READ_BE[idx] as u64, len as usize));
         }
     }
     None

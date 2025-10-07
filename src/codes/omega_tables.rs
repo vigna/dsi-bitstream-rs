@@ -6,6 +6,10 @@ use crate::traits::{BitRead, BitWrite, BE, LE};
 use common_traits::*;
 /// How many bits are needed to read the tables in this
 pub const READ_BITS: usize = 12;
+const _: () = assert!(
+    READ_BITS >= 2,
+    "Tables for Elias ω code must use at least 2 bits"
+);
 /// Maximum value writable using the table(s)
 pub const WRITE_MAX: u64 = 1023;
 
@@ -23,9 +27,9 @@ pub const WRITE_MAX: u64 = 1023;
 pub fn read_table_le<B: BitRead<LE>>(backend: &mut B) -> (u8, u64) {
     debug_assert!(READ_BITS >= 2);
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
-        let idx: u64 = idx.cast();
-        let len_with_flag = READ_LEN_LE[idx as usize];
-        let value = READ_LE[idx as usize] as u64;
+        let idx = idx.cast() as usize;
+        let len_with_flag = READ_LEN_LE[idx];
+        let value = READ_LE[idx] as u64;
         backend.skip_bits_after_peek((len_with_flag & 0x7F) as usize);
 
         (len_with_flag, value)
@@ -49,9 +53,9 @@ pub fn read_table_le<B: BitRead<LE>>(backend: &mut B) -> (u8, u64) {
 pub fn read_table_be<B: BitRead<BE>>(backend: &mut B) -> (u8, u64) {
     debug_assert!(READ_BITS >= 2);
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
-        let idx: u64 = idx.cast();
-        let len_with_flag = READ_LEN_BE[idx as usize];
-        let value = READ_BE[idx as usize] as u64;
+        let idx = idx.cast() as usize;
+        let len_with_flag = READ_LEN_BE[idx];
+        let value = READ_BE[idx] as u64;
         backend.skip_bits_after_peek((len_with_flag & 0x7F) as usize);
 
         (len_with_flag, value)

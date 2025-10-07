@@ -62,8 +62,8 @@ read_func_merged_table = """
 #[inline(always)]
 pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> Option<(u64, usize)> {
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
-        let idx: u64 = idx.cast();
-        let (value, len) = READ_%(BO)s[idx as usize];
+        let idx = idx.cast() as usize;
+        let (value, len) = READ_%(BO)s[idx];
         if len != MISSING_VALUE_LEN_%(BO)s {
             backend.skip_bits_after_peek(len as usize);
             return Some((value as u64, len as usize));
@@ -81,11 +81,11 @@ read_func_two_table = """
 #[inline(always)]
 pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> Option<(u64, usize)> {
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
-        let idx: u64 = idx.cast();
-        let len = READ_LEN_%(BO)s[idx as usize];
+        let idx = idx.cast() as usize;
+        let len = READ_LEN_%(BO)s[idx];
         if len != MISSING_VALUE_LEN_%(BO)s {
             backend.skip_bits_after_peek(len as usize);
-            return Some((READ_%(BO)s[idx as usize] as u64, len as usize));
+            return Some((READ_%(BO)s[idx] as u64, len as usize));
         }
     }
     None
@@ -794,9 +794,7 @@ def read_omega(bitstream, be):
     value_or_n, len_with_flag = read_omega_partial(bitstream, be)
     if len_with_flag == 0 or (len_with_flag & 0x80):
         raise ValueError()
-    return value_or_n, bitstream[len_with_flag:] if be else bitstream[
-        :-len_with_flag
-    ]
+    return value_or_n, bitstream[len_with_flag:] if be else bitstream[:-len_with_flag]
 
 
 def _recursive_write_omega(value, bitstream, be):
@@ -904,6 +902,11 @@ def gen_omega(read_bits, write_max_val, len_max_val=None, merged_table=False):
 
         f.write("/// How many bits are needed to read the tables in this\n")
         f.write("pub const READ_BITS: usize = {};\n".format(read_bits))
+        f.write(
+            'const _: () = assert!(READ_BITS >= 2, "Tables for Elias ω code must use at least 2 bits");\n'.format(
+                read_bits
+            )
+        )
         f.write("/// Maximum value writable using the table(s)\n")
         f.write("pub const WRITE_MAX: u64 = {};\n".format(write_max_val))
 
@@ -928,9 +931,9 @@ def gen_omega(read_bits, write_max_val, len_max_val=None, merged_table=False):
 pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> (u8, u64) {
     debug_assert!(READ_BITS >= 2);
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
-        let idx: u64 = idx.cast();
-        let len_with_flag = READ_LEN_%(BO)s[idx as usize];
-        let value = READ_%(BO)s[idx as usize] as u64;
+        let idx = idx.cast() as usize;
+        let len_with_flag = READ_LEN_%(BO)s[idx];
+        let value = READ_%(BO)s[idx] as u64;
         backend.skip_bits_after_peek((len_with_flag & 0x7F) as usize);
 
         (len_with_flag, value)
@@ -993,16 +996,19 @@ pub fn write_table_%(bo)s<B: BitWrite<%(BO)s>>(backend: &mut B, value: u64) -> R
 
             # Length table with high bit flag (0x80) instead of sign
             f.write(
-                "/// Precomputed lengths table for reading {} codes\n".format(
-                    code_name
-                )
+                "/// Precomputed lengths table for reading {} codes\n".format(code_name)
             )
             f.write("/// High bit clear (< 0x80): complete code length\n")
-            f.write("/// High bit set (>= 0x80): (value & 0x7F) is partial_len (bits consumed by complete blocks)\n")
+            f.write(
+                "/// High bit set (>= 0x80): (value & 0x7F) is partial_len (bits consumed by complete blocks)\n"
+            )
             f.write("/// Zero: no valid decoding (cannot occur with >= 2 bit tables)\n")
             f.write(
                 "pub const READ_LEN_%s: &[%s] = &["
-                % (BO, get_best_fitting_type(log2(read_max_len + 1) + 1))  # +1 for the flag bit
+                % (
+                    BO,
+                    get_best_fitting_type(log2(read_max_len + 1) + 1),
+                )  # +1 for the flag bit
             )
             for _, len_with_flag in codes:
                 f.write("{}, ".format(len_with_flag))
@@ -1072,7 +1078,7 @@ def generate_default_tables():
     gen_omega(
         read_bits=12,  # Necessary for all architectures
         write_max_val=1023,  # Very useful
-        merged_table=False,  # TODO: test on different architectures
+        merged_table=False,
     )
     subprocess.check_call(
         "cargo fmt",
