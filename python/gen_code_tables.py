@@ -21,8 +21,9 @@ import os
 import subprocess
 from math import log2, ceil, floor
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-ROOT = os.path.join(ROOT, "src", "codes")
+ROOT = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "src", "codes"
+)
 
 
 def get_best_fitting_type(n_bits, signed=False):
