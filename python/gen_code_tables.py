@@ -903,9 +903,7 @@ def gen_omega(read_bits, write_max_val, len_max_val=None, merged_table=False):
         f.write("/// How many bits are needed to read the tables in this\n")
         f.write("pub const READ_BITS: usize = {};\n".format(read_bits))
         f.write(
-            'const _: () = assert!(READ_BITS >= 2, "Tables for Elias ω code must use at least 2 bits");\n'.format(
-                read_bits
-            )
+            'const _: () = assert!(READ_BITS >= 2, "Tables for Elias ω code must use at least 2 bits");\n'
         )
         f.write("/// Maximum value writable using the table(s)\n")
         f.write("pub const WRITE_MAX: u64 = {};\n".format(write_max_val))

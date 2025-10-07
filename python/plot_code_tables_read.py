@@ -18,14 +18,20 @@ import matplotlib.pyplot as plt
 
 # plt.rcParams['text.usetex'] = True
 
-if len(sys.argv) != 2 or not sys.argv[1] in { "u16", "u32", "u64" }:
+if len(sys.argv) != 2 or sys.argv[1] not in {"u16", "u32", "u64"}:
     sys.exit("Usage: %s [u16 | u32 | u64]" % sys.argv[0])
 
 colors = matplotlib.cm.tab10.colors
 
 read_word = sys.argv[1]
 
-nice = { "gamma":u"γ", "delta":"δ (no γ tables)", "delta_gamma":u"δ (γ tables)", "zeta3":u"ζ₃", "omega":u"ω"}
+nice = {
+    "gamma": "γ",
+    "delta": "δ (no γ tables)",
+    "delta_gamma": "δ (γ tables)",
+    "zeta3": "ζ₃",
+    "omega": "ω",
+}
 
 df = pd.read_csv(sys.stdin, index_col=None, header=0)
 
@@ -60,7 +66,7 @@ for code in ["gamma", "delta", "delta_gamma", "zeta3", "omega"]:
                     ),
                     marker=marker,
                     linestyle="dotted" if ty == "read_unbuff" else "solid",
-                    color = colors[color],
+                    color=colors[color],
                 )
                 color += 1
                 ax.fill_between(
@@ -88,7 +94,7 @@ for code in ["gamma", "delta", "delta_gamma", "zeta3", "omega"]:
                 ),
                 marker="^",
                 linestyle="dotted" if ty == "read_unbuff" else "solid",
-                color = colors[color % 10],
+                color=colors[color % 10],
             )
             color += 1
             ax.fill_between(
@@ -148,14 +154,10 @@ for code in ["gamma", "delta", "delta_gamma", "zeta3", "omega"]:
     )
     ax.set_xlabel("table bits")
     ax.set_ylabel("ns")
-    plots.append((
-        fig,
-        ax,
-        "%s_read_tables.svg" % code
-    ))
+    plots.append((fig, ax, "%s_read_tables.svg" % code))
 
-min_x,max_x = np.inf, -np.inf
-min_y,max_y = np.inf, -np.inf
+min_x, max_x = np.inf, -np.inf
+min_y, max_y = np.inf, -np.inf
 
 for fig, ax, name in plots:
     min_x = min(min_x, ax.get_xlim()[0])
