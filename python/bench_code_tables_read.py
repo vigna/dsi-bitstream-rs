@@ -56,6 +56,8 @@ for bits in range(1, 17):
             k=3,
             merged_table=merged_table,
         )
+        # Kludge: this will leave the original tables intact,
+        # but avoids failing the static assert for READ_LEN >= 2
         if bits > 1:
             gen_omega(
                 read_bits=bits,
@@ -98,6 +100,9 @@ for bits in range(1, 17):
             first_time = False
         # Dump all lines and add the `n_bits` column
         for line in stdout.split("\n")[1:]:
+            if bits == 1 and "omega" in line:
+                # Omega tables require at least 2 bits
+                continue
             if len(line.strip()) != 0:
                 print("{},{},{}".format(bits, tables_num, line))
 
