@@ -742,11 +742,12 @@ def read_omega(bitstream, be):
 def read_omega_partial(bitstream, be):
     """Read an omega code with partial decoding support.
 
-    Returns (value_or_n, len_signed) where:
-    - If complete: (decoded_value, +bits_consumed)
-    - If incomplete: (partially_decoded_value, -bits_consumed)
+    Returns (value_or_n, len_with_flag) where:
+    - If complete: (decoded_value, bits_consumed)
+    - If incomplete: (partially_decoded_value, bits_consumed | 0x80)
 
-    This matches the encoding used in the generated tables.
+    The highest bit (0x80) is set for partial codes instead of using negative values.
+    This allows using a bitwise AND to extract the length instead of abs().
     """
     n = 1
     bits_consumed = 0
@@ -755,7 +756,7 @@ def read_omega_partial(bitstream, be):
         if be:
             if not bitstream:
                 # No more bits, return partial state
-                return n, -bits_consumed if bits_consumed > 0 else 0
+                return n, bits_consumed | 0x80 if bits_consumed > 0 else 0
             if bitstream[0] == "0":
                 # Complete code
                 return n - 1, bits_consumed + 1
@@ -763,7 +764,7 @@ def read_omega_partial(bitstream, be):
             l = n
             if len(bitstream) < l + 1:
                 # Incomplete block, return partial state
-                return n, -bits_consumed if bits_consumed > 0 else 0
+                return n, bits_consumed | 0x80 if bits_consumed > 0 else 0
             block = bitstream[0 : l + 1]
             bitstream = bitstream[l + 1 :]
             bits_consumed += l + 1
@@ -771,7 +772,7 @@ def read_omega_partial(bitstream, be):
         else:  # LE
             if not bitstream:
                 # No more bits, return partial state
-                return n, -bits_consumed if bits_consumed > 0 else 0
+                return n, bits_consumed | 0x80 if bits_consumed > 0 else 0
             if bitstream[-1] == "0":
                 # Complete code
                 return n - 1, bits_consumed + 1
@@ -779,7 +780,7 @@ def read_omega_partial(bitstream, be):
             l = n
             if len(bitstream) < l + 1:
                 # Incomplete block, return partial state
-                return n, -bits_consumed if bits_consumed > 0 else 0
+                return n, bits_consumed | 0x80 if bits_consumed > 0 else 0
             block = bitstream[-(l + 1) :]
             bitstream = bitstream[: -(l + 1)]
             bits_consumed += l + 1
@@ -790,12 +791,12 @@ def read_omega_partial(bitstream, be):
 
 def read_omega(bitstream, be):
     """Read an omega code (wrapper around read_omega_partial for compatibility)"""
-    value_or_n, len_signed = read_omega_partial(bitstream, be)
-    if len_signed <= 0:
+    value_or_n, len_with_flag = read_omega_partial(bitstream, be)
+    if len_with_flag == 0 or (len_with_flag & 0x80):
         raise ValueError()
-    return value_or_n, bitstream[len_signed:] if be else bitstream[
-        :-len_signed
-    ] if len_signed > 0 else bitstream
+    return value_or_n, bitstream[len_with_flag:] if be else bitstream[
+        :-len_with_flag
+    ]
 
 
 def _recursive_write_omega(value, bitstream, be):
@@ -907,7 +908,7 @@ def gen_omega(read_bits, write_max_val, len_max_val=None, merged_table=False):
         f.write("pub const WRITE_MAX: u64 = {};\n".format(write_max_val))
 
         # Generate read functions with partial decoding support
-        # Returns raw (len_signed, value) pair - no Option wrapper
+        # Returns raw (len_with_flag, value) pair - no Option wrapper
         # ALL bit skipping happens here, including for partial codes
         for bo in ["le", "be"]:
             BO = bo.upper()
@@ -915,22 +916,24 @@ def gen_omega(read_bits, write_max_val, len_max_val=None, merged_table=False):
                 """
 /// Reads from the decoding table.
 ///
-/// Returns `(len_signed, value)` where:
-/// - If len_signed > 0: complete code, value is decoded value, len_signed is code length
-/// - If len_signed < 0: partial code, value is partial_n, -len_signed is partial_len
-/// - If len_signed = 0: no valid decoding (cannot occur with >= 2 bit tables)
+/// Returns `(len_with_flag, value)` where:
+/// - If len_with_flag & 0x80 == 0: complete code, value is decoded value, len_with_flag is code length
+/// - If len_with_flag & 0x80 != 0: partial code, value is partial_n, (len_with_flag & 0x7F) is partial_len
+/// - If len_with_flag = 0: no valid decoding (cannot occur with >= 2 bit tables)
 ///
-/// The backend position is always advanced by abs(len_signed) bits.
+/// The backend position is always advanced by (len_with_flag & 0x7F) bits.
+/// Using the high bit flag instead of negative values allows extracting the length
+/// with a bitwise AND instead of abs(), which is typically faster.
 #[inline(always)]
-pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> (i8, u64) {
+pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> (u8, u64) {
     debug_assert!(READ_BITS >= 2);
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
         let idx: u64 = idx.cast();
-        let len_signed = READ_LEN_%(BO)s[idx as usize];
+        let len_with_flag = READ_LEN_%(BO)s[idx as usize];
         let value = READ_%(BO)s[idx as usize] as u64;
-        backend.skip_bits_after_peek(len_signed.unsigned_abs() as usize);
+        backend.skip_bits_after_peek((len_with_flag & 0x7F) as usize);
 
-        (len_signed, value)
+        (len_with_flag, value)
     } else {
         // Not enough bits available - return initial state
         (0, 1)
@@ -963,18 +966,18 @@ pub fn write_table_%(bo)s<B: BitWrite<%(BO)s>>(backend: &mut B, value: u64) -> R
                 % {"bo": bo, "BO": BO}
             )
 
-        # Generate read tables with signed length encoding for partial decoding
-        # Positive length: complete code (READ = value, READ_LEN = length)
-        # Negative length: partial code (READ = partial_n, READ_LEN = -partial_len)
+        # Generate read tables with high-bit flag encoding for partial decoding
+        # If high bit clear: complete code (READ = value, READ_LEN = length)
+        # If high bit set: partial code (READ = partial_n, READ_LEN = partial_len | 0x80)
         for BO in ["BE", "LE"]:
             codes = []
             for value in range(0, 2**read_bits):
                 bits = ("{:0%sb}" % read_bits).format(value)
-                value_or_n, len_signed = read_omega_partial(bits, BO == "BE")
-                codes.append((value_or_n, len_signed))
+                value_or_n, len_with_flag = read_omega_partial(bits, BO == "BE")
+                codes.append((value_or_n, len_with_flag))
 
             read_max_val = max(x[0] for x in codes)
-            read_max_len = max(abs(x[1]) for x in codes)
+            read_max_len = max(x[1] & 0x7F for x in codes)
 
             # Value table (stores decoded value OR partial_n)
             f.write("/// Precomputed table for reading {} codes\n".format(code_name))
@@ -988,21 +991,21 @@ pub fn write_table_%(bo)s<B: BitWrite<%(BO)s>>(backend: &mut B, value: u64) -> R
                 f.write("{}, ".format(value_or_n))
             f.write("];\n")
 
-            # Signed length table (positive = complete, negative = partial)
+            # Length table with high bit flag (0x80) instead of sign
             f.write(
-                "/// Precomputed signed lengths table for reading {} codes\n".format(
+                "/// Precomputed lengths table for reading {} codes\n".format(
                     code_name
                 )
             )
-            f.write("/// Positive: complete code length\n")
-            f.write("/// Negative: -partial_len (bits consumed by complete blocks)\n")
+            f.write("/// High bit clear (< 0x80): complete code length\n")
+            f.write("/// High bit set (>= 0x80): (value & 0x7F) is partial_len (bits consumed by complete blocks)\n")
             f.write("/// Zero: no valid decoding (cannot occur with >= 2 bit tables)\n")
             f.write(
                 "pub const READ_LEN_%s: &[%s] = &["
-                % (BO, get_best_fitting_type(log2(read_max_len + 1), signed=True))
+                % (BO, get_best_fitting_type(log2(read_max_len + 1) + 1))  # +1 for the flag bit
             )
-            for _, len_signed in codes:
-                f.write("{}, ".format(len_signed))
+            for _, len_with_flag in codes:
+                f.write("{}, ".format(len_with_flag))
             f.write("];\n")
 
         # Write tables

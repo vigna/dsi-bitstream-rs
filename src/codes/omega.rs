@@ -57,6 +57,11 @@
 //! successfully decoded. This partial state is used to continue decoding
 //! efficiently, avoiding re-reading the initial blocks.
 //!
+//! For performance, partial codes are identified by setting the highest bit
+//! (0x80) in the length byte. This allows extracting the actual length with
+//! a simple bitwise AND operation (`len & 0x7F`) instead of computing the
+//! absolute value of a negative number.
+//!
 //! # References
 //!
 //! Peter Elias. “[Universal codeword sets and representations of the
@@ -151,12 +156,11 @@ impl<B: BitRead<BE>> OmegaReadParam<BE> for B {
     #[inline(always)]
     fn read_omega_param<const USE_TABLES: bool>(&mut self) -> Result<u64, Self::Error> {
         if USE_TABLES {
-            let (len_signed, value) = omega_tables::read_table_be(self);
-            if len_signed > 0 {
+            let (len_with_flag, value) = omega_tables::read_table_be(self);
+            if (len_with_flag & 0x80) == 0 {
                 // Complete code - bits already skipped in read_table
                 return Ok(value);
             } else {
-                debug_assert!(len_signed < 0);
                 // Partial code - bits already skipped in read_table, continue from partial_n
                 return read_omega_from_state::<BE, _>(self, value);
             }
@@ -169,16 +173,14 @@ impl<B: BitRead<LE>> OmegaReadParam<LE> for B {
     #[inline(always)]
     fn read_omega_param<const USE_TABLES: bool>(&mut self) -> Result<u64, Self::Error> {
         if USE_TABLES {
-            let (len_signed, value) = omega_tables::read_table_le(self);
-            if len_signed > 0 {
+            let (len_with_flag, value) = omega_tables::read_table_le(self);
+            if (len_with_flag & 0x80) == 0 {
                 // Complete code - bits already skipped in read_table
                 return Ok(value);
             } else {
-                debug_assert!(len_signed < 0);
                 // Partial code - bits already skipped in read_table, continue from partial_n
                 return read_omega_from_state::<LE, _>(self, value);
             }
-            // len_signed == 0: fall through to default
         }
         default_read_omega(self)
     }
