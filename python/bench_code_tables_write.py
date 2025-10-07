@@ -20,7 +20,7 @@ from gen_code_tables import *
 if not os.path.exists("benchmarks") or not os.path.exists("python"):
     sys.exit("You must run this script in the main project directory.")
 
-if len(sys.argv) != 2 or not sys.argv[1] in {"u16", "u32", "u64"}:
+if len(sys.argv) != 2 or sys.argv[1] not in {"u16", "u32", "u64"}:
     sys.exit("Usage: %s [u16 | u32 | u64]" % sys.argv[0])
 
 write_word = sys.argv[1]
@@ -84,7 +84,8 @@ for bits in range(1, 17):
 
             # Run the benchmark with native cpu optimizations
             stdout += subprocess.check_output(
-                "cargo run --release --no-default-features --features delta_gamma,%s" % write_word,
+                "cargo run --release --no-default-features --features delta_gamma,%s"
+                % write_word,
                 shell=True,
                 env={
                     **os.environ,
