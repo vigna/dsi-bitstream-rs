@@ -15,7 +15,7 @@
 //! exponent one). Moreover, the functions return the hit ratio, that is, the
 //! ratio of values that is decodable using tables.
 use super::*;
-use rand::{rngs::SmallRng, SeedableRng};
+use rand::{rngs::SmallRng, SeedableRng, Rng};
 
 // Given data to benchmark a code, tables for that code, and a length
 // function for the code, this macro computes the hit ratio, that is,
