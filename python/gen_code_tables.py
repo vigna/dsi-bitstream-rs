@@ -928,7 +928,6 @@ def gen_omega(read_bits, write_max_val, len_max_val=None, merged_table=False):
 /// with a bitwise AND instead of abs(), which is typically faster.
 #[inline(always)]
 pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> (u8, u64) {
-    debug_assert!(READ_BITS >= 2);
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
         let idx = idx.cast() as usize;
         let len_with_flag = READ_LEN_%(BO)s[idx];

@@ -25,7 +25,6 @@ pub const WRITE_MAX: u64 = 1023;
 /// with a bitwise AND instead of abs(), which is typically faster.
 #[inline(always)]
 pub fn read_table_le<B: BitRead<LE>>(backend: &mut B) -> (u8, u64) {
-    debug_assert!(READ_BITS >= 2);
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
         let idx = idx.cast() as usize;
         let len_with_flag = READ_LEN_LE[idx];
@@ -51,7 +50,6 @@ pub fn read_table_le<B: BitRead<LE>>(backend: &mut B) -> (u8, u64) {
 /// with a bitwise AND instead of abs(), which is typically faster.
 #[inline(always)]
 pub fn read_table_be<B: BitRead<BE>>(backend: &mut B) -> (u8, u64) {
-    debug_assert!(READ_BITS >= 2);
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
         let idx = idx.cast() as usize;
         let len_with_flag = READ_LEN_BE[idx];
