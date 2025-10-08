@@ -21,6 +21,7 @@ u16 = []
 u32 = []
 u64 = []
 delta_gamma = []
+univ = [] # Test using a Zipf distribution of exponent one instead of using implied distributions
 
 [[bin]]
 name = "main"

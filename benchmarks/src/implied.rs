@@ -45,8 +45,8 @@ fn bench<E: Endianness>(
     let samples_univ = if univ {
         let distr = rand_distr::Zipf::new((usize::MAX - 2) as f64, 1.0).unwrap();
         rng.sample_iter(distr)
-            .take(N)
             .map(|x| x.floor() as u64)
+            .take(N)
             .collect::<Vec<_>>()
     } else {
         vec![]
