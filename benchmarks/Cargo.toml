@@ -28,8 +28,8 @@ name = "main"
 path = "src/main.rs"
 
 [[bin]]
-name = "implied"
-path = "src/implied.rs"
+name = "comp"
+path = "src/comp.rs"
 
 [profile.release]
 opt-level = 3             # like --release
