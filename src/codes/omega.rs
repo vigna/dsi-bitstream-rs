@@ -36,7 +36,7 @@
 //! The value associated with a codeword is 0 if the code is `0`, and otherwise
 //! the value of the last block, decremented by one.
 //!
-//! For example, `1110010`, which is formed by the blocks `11`, `1011`, and `0`,
+//! For example, `1110110`, which is formed by the blocks `11`, `1011`, and `0`,
 //! represents the number 10.
 //!
 //! As discussed in the [codes module documentation](crate::codes), to make the
