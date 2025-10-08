@@ -79,7 +79,10 @@
 //! codes. It implements all the dispatch traits, so it can be used to read or
 //! write any code both in a generic and in a specific way. It also implements
 //! the [`CodeLen`] trait, which provides a method to compute the length of a
-//! codeword.
+//! codeword. The only exception is for [minimal binary
+//! codes](crate::codes::minimal_binary), which have a separate
+//! [`MinimalBinary`] structure with the same functionality, as they cannot
+//! represent all integers.
 //!
 //! If Rust would support const enums in traits, one could create structures
 //! with const enum type parameters of type [`Codes`], and then the compiler

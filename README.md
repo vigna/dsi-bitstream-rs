@@ -21,11 +21,10 @@ traits make it possible to read and write instantaneous codes, like the
 [exponential Golomb codes] used in [H.264 (MPEG-4)] and [H.265].
 
 ```rust
-# fn main() -> Result<(), Box<dyn std::error::Error>> {
 use dsi_bitstream::prelude::*;
 // To write a bit stream, we need first a WordWrite around an output backend
 // (in this case, a vector), which is word-based for efficiency.
-// It could be a file, etc. 
+// It could be a file, etc.
 let mut word_write = MemWordWriterVec::new(Vec::<u64>::new());
 // Let us create a little-endian bit writer. The write word size will be inferred.
 let mut writer = BufBitWriter::<LE, _>::new(word_write);
@@ -43,7 +42,7 @@ writer.flush();
 let data = writer.into_inner()?.into_inner();
 
 // Reading back the data is similar, but since a reader has a bit buffer
-// twice as large as the read word size, it is more efficient to use a 
+// twice as large as the read word size, it is more efficient to use a
 // u32 as read word, so we need to transmute the data.
 let data = unsafe { std::mem::transmute::<_, Vec<u32>>(data) };
 let mut reader = BufBitReader::<LE, _>::new(MemWordReader::new(data));
@@ -51,9 +50,7 @@ assert_eq!(reader.read_bits(10)?, 0);
 assert_eq!(reader.read_unary()?, 0);
 assert_eq!(reader.read_gamma()?, 1);
 assert_eq!(reader.read_delta()?, 2);
-
-# Ok(())
-# }
+# Ok::<(), Box<dyn std::error::Error>>(())
 ```
 
 In this case, the backend is already word-based, but if you have a byte-based
@@ -64,7 +61,6 @@ You can also use references to backends instead of owned values,
 but this approach is less efficient:
 
 ```rust
-# fn main() -> Result<(), Box<dyn std::error::Error>> {
 use dsi_bitstream::prelude::*;
 let mut data = Vec::<u64>::new();
 let mut word_write = MemWordWriterVec::new(&mut data);
@@ -82,8 +78,7 @@ assert_eq!(reader.read_bits(10)?, 0);
 assert_eq!(reader.read_unary()?, 0);
 assert_eq!(reader.read_gamma()?, 1);
 assert_eq!(reader.read_delta()?, 2);
-# Ok(())
-# }
+# Ok::<(), Box<dyn std::error::Error>>(())
 ```
 
 Please read the documentation of the [`traits`] module and the [`impls`] module

@@ -174,12 +174,13 @@ impl<
 
     /// Returns a vector of all codes and their space usage, in ascending order by space usage.
     pub fn get_codes(&self) -> Vec<(Codes, u64)> {
-        let mut codes = vec![];
-        codes.push((Codes::Unary, self.unary));
-        codes.push((Codes::Gamma, self.gamma));
-        codes.push((Codes::Delta, self.delta));
-        codes.push((Codes::Omega, self.omega));
-        codes.push((Codes::VByteBe, self.vbyte));
+        let mut codes = vec![
+            (Codes::Unary, self.unary),
+            (Codes::Gamma, self.gamma),
+            (Codes::Delta, self.delta),
+            (Codes::Omega, self.omega),
+            (Codes::VByteBe, self.vbyte),
+        ];
         for (k, val) in self.zeta.iter().enumerate() {
             codes.push((Codes::Zeta { k: (k + 1) as _ }, *val));
         }

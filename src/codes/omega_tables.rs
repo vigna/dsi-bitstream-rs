@@ -91,6 +91,9 @@ pub fn write_table_le<B: BitWrite<LE>>(
             // Clean up after the lowest λ bits in case checks are enabled
             value &= u64::MAX >> (u64::BITS - (λ as u32));
         }
+        // Little-endian case: rotate left the lower λ + 1 bits (the bit in
+        // position λ is a one) so that the lowest bit can be peeked to find the
+        // block.
         backend.write_bits(value << 1 | 1, λ + 1)?;
         backend.write_bits(0, 1)?;
         Some(λ + len + 1)
