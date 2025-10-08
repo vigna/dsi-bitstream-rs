@@ -8,9 +8,13 @@ use common_traits::*;
 pub const READ_BITS: usize = 12;
 const _: () = assert!(
     READ_BITS >= 2,
-    "Tables for Elias ω code must use at least 2 bits"
+    "Read tables for Elias ω must use at least 2 bits"
 );
 /// Maximum value writable using the table(s)
+const _: () = assert!(
+    WRITE_MAX >= 62,
+    "Write tables for Elias ω must represent 62"
+);
 pub const WRITE_MAX: u64 = 1023;
 
 /// Reads from the decoding table.
