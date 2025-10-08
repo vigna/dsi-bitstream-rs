@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash -e
 
 # Run all benchmarks and generate plots (to be run from project root)
 # Usage: gen_plots.sh [implied|univ]

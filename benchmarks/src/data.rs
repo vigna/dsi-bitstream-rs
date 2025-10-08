@@ -15,7 +15,7 @@
 //! exponent one). Moreover, the functions return the hit ratio, that is, the
 //! ratio of values that is decodable using tables.
 use super::*;
-use rand::{rngs::SmallRng, SeedableRng, Rng};
+use rand::{rngs::SmallRng, SeedableRng};
 
 // Given data to benchmark a code, tables for that code, and a length
 // function for the code, this macro computes the hit ratio, that is,
@@ -47,6 +47,7 @@ pub fn gen_data(_len: fn(u64) -> usize) -> Vec<u64> {
     let samples = sample_implied_distribution(&_len, &mut rng);
     #[cfg(feature = "univ")]
     let samples = {
+        use rand::Rng;
         let distr = rand_distr::Zipf::new((usize::MAX - 2) as f64, 1.0).unwrap();
         (&mut rng).sample_iter(distr).map(|x| x.floor() as u64)
     };
