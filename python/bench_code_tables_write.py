@@ -20,10 +20,15 @@ from gen_code_tables import *
 if not os.path.exists("benchmarks") or not os.path.exists("python"):
     sys.exit("You must run this script in the main project directory.")
 
-if len(sys.argv) != 2 or sys.argv[1] not in {"u16", "u32", "u64"}:
-    sys.exit("Usage: %s [u16 | u32 | u64]" % sys.argv[0])
+if len(sys.argv) < 2 or len(sys.argv) > 3 or sys.argv[1] not in {"u16", "u32", "u64"}:
+    sys.exit("Usage: %s [u16 | u32 | u64] [implied | univ]" % sys.argv[0])
 
 write_word = sys.argv[1]
+dist = sys.argv[2] if len(sys.argv) == 3 else "univ"
+
+if dist not in {"implied", "univ"}:
+    sys.exit("Distribution must be 'implied' or 'univ'")
+
 first_time = True
 
 for bits in range(1, 17):
@@ -64,8 +69,11 @@ for bits in range(1, 17):
         )
 
         # Run the benchmark with native cpu optimizations
+        features = write_word
+        if dist == "univ":
+            features = "univ," + features
         stdout = subprocess.check_output(
-            "cargo run --release --no-default-features --features univ,%s" % write_word,
+            "cargo run --release --no-default-features --features %s" % features,
             shell=True,
             env={
                 **os.environ,
@@ -83,9 +91,11 @@ for bits in range(1, 17):
             )
 
             # Run the benchmark with native cpu optimizations
+            features = "delta_gamma,%s" % write_word
+            if dist == "univ":
+                features = "univ," + features
             stdout += subprocess.check_output(
-                "cargo run --release --no-default-features --features univ,delta_gamma,%s"
-                % write_word,
+                "cargo run --release --no-default-features --features %s" % features,
                 shell=True,
                 env={
                     **os.environ,

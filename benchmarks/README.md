@@ -27,13 +27,14 @@ code, without the preamble with column names.
 A more comprehensive set of tests, with associated graphs, can be obtained with
 
 ```shell
-./python/gen_plots.sh
+./python/gen_plots.sh DIST
 ```
 
 which starts a few Python scripts (you can run selectively the scripts
-for a more fine-grained control). Note that the script will modify
-the sources of the `dsi-bitstream` crate in the directory above, and
-you will have to restore them manually.
+for a more fine-grained control). `DIST` can be either `implied` or
+`univ`. Note that the script will modify the sources of the
+`dsi-bitstream` crate in the directory above, and you will have to restore
+them manually.
 
 The script will go through the following combinations (with the `delta_gamma`
 feature or not):
