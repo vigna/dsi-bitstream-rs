@@ -191,6 +191,10 @@ macro_rules! impl_code {
     };
 }
 
+/// Benchmarks the speed of codes with decoding tables.
+///
+/// This main is usually run by the bench_code_tables_* scripts, which
+/// take care of modifying the table sizes.
 pub fn main() {
     // tricks to reduce the noise
     #[cfg(target_os = "linux")]

@@ -190,7 +190,12 @@ impl<
             codes.push((Codes::ExpGolomb { k: k as _ }, *val));
         }
         for (log2_b, val) in self.rice.iter().enumerate() {
-            codes.push((Codes::Rice { log2_b: log2_b as _ }, *val));
+            codes.push((
+                Codes::Rice {
+                    log2_b: log2_b as _,
+                },
+                *val,
+            ));
         }
         for (k, val) in self.pi.iter().enumerate() {
             codes.push((Codes::Pi { k: (k + 2) as _ }, *val));

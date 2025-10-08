@@ -133,6 +133,8 @@ fn bench<E: Endianness>(
     }
 }
 
+/// Compares all codes using their implied distribution and a Zipf distribution
+/// of exponent one.
 pub fn main() {
     // tricks to reduce the noise
     #[cfg(target_os = "linux")]
