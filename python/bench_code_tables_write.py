@@ -8,8 +8,8 @@
 # SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
 #
 
-"""Benchmark the code with different number of bits for the codes tables and
-create a `table.csv` file with all the results
+"""Benchmarks codes with different number of bits for the codes tables
+and writes results on standard output in CSV format.
 """
 
 import os

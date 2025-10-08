@@ -9,12 +9,13 @@
 #
 
 """
-To run just execute `$ python ./gen_code_tables.py`
-To provide a build folder, pass it as the first positional argument.
+Generates read/write tables for various codes.
 
-This script is not implemented using the `build.rs` mechanism because
-it would significantly slow down the build process. Moreover, the tables
-will be generated very rarely.
+The function generate_default_tables contains a number
+of settable parameters.
+
+This script must be executed in the root folder. To provide a
+build folder, pass it as the first positional argument.
 """
 
 import os

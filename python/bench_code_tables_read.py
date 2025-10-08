@@ -8,8 +8,8 @@
 # SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
 #
 
-"""Benchmark the code with different number of bits for the codes tables and
-create a `table.csv` file with all the results
+"""Benchmarks codes with different number of bits for the codes tables
+and writes results on standard output in CSV format.
 """
 
 import os
@@ -67,7 +67,8 @@ for bits in range(1, 17):
 
         # Run the benchmark with native cpu optimizations
         stdout = subprocess.check_output(
-            "cargo run --release --no-default-features --features univ,reads,%s" % read_word,
+            "cargo run --release --no-default-features --features univ,reads,%s"
+            % read_word,
             shell=True,
             env={
                 **os.environ,
