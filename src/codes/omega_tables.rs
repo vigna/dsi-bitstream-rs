@@ -70,14 +70,21 @@ pub fn read_table_be<B: BitRead<BE>>(backend: &mut B) -> (u8, u64) {
 #[inline(always)]
 pub fn write_table_le<B: BitWrite<LE>>(
     backend: &mut B,
-    value: u64,
+    mut value: u64,
 ) -> Result<Option<usize>, B::Error> {
     Ok(if let Some(bits) = WRITE_LE.get(value as usize) {
         let len = WRITE_LEN_LE[value as usize] as usize;
         backend.write_bits(*bits as u64, len)?;
         Some(len)
     } else {
-        None
+        value += 1;
+        let λ = value.ilog2() as usize;
+        let bits = WRITE_LE[λ - 1];
+        let len = WRITE_LEN_LE[λ - 1] as usize;
+        backend.write_bits(bits as u64, len - 1)?;
+        backend.write_bits(value << 1 | 1, λ + 1)?;
+        backend.write_bits(0, 1)?;
+        Some(λ + len + 1)
     })
 }
 
@@ -88,14 +95,21 @@ pub fn write_table_le<B: BitWrite<LE>>(
 #[inline(always)]
 pub fn write_table_be<B: BitWrite<BE>>(
     backend: &mut B,
-    value: u64,
+    mut value: u64,
 ) -> Result<Option<usize>, B::Error> {
     Ok(if let Some(bits) = WRITE_BE.get(value as usize) {
         let len = WRITE_LEN_BE[value as usize] as usize;
         backend.write_bits(*bits as u64, len)?;
         Some(len)
     } else {
-        None
+        value += 1;
+        let λ = value.ilog2() as usize;
+        let bits = WRITE_BE[λ - 1];
+        let len = WRITE_LEN_BE[λ - 1] as usize;
+        backend.write_bits(bits as u64 >> 1, len - 1)?;
+        backend.write_bits(value, λ + 1)?;
+        backend.write_bits(0, 1)?;
+        Some(λ + len + 1)
     })
 }
 /// Precomputed table for reading omega codes
