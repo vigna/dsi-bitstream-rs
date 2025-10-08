@@ -961,7 +961,19 @@ pub fn write_table_%(bo)s<B: BitWrite<%(BO)s>>(backend: &mut B, value: u64) -> R
         backend.write_bits(*bits as u64, len)?;
         Some(len)
     } else {
-        None
+        value += 1;
+        let λ = value.ilog2() as usize;
+        let bits = WRITE_LE[λ - 1];
+        let len = WRITE_LEN_LE[λ - 1] as usize;
+        if E::IS_LITTLE {
+            backend.write_bits(bits as u64, len - 1)?;
+            backend.write_bits(value << 1 | 1, λ + 1)?;
+        } else {
+            backend.write_bits(bits as u64 >> 1, len - 1)?;
+            backend.write_bits(value, λ + 1)?;
+        }
+        backend.write_bits(0, 1)?;
+        Some(λ + len + 1)
     })
 }
 """
