@@ -169,45 +169,35 @@ impl<
 
     /// Return the best code for the stream and its space usage.
     pub fn best_code(&self) -> (Codes, u64) {
-        let mut best = self.unary;
-        let mut best_code = Codes::Unary;
+        self.get_codes()[0]
+    }
 
-        macro_rules! check {
-            ($code:expr, $len:expr) => {
-                if $len < best {
-                    best = $len;
-                    best_code = $code;
-                }
-            };
-        }
-
-        check!(Codes::Gamma, self.gamma);
-        check!(Codes::Delta, self.delta);
-        check!(Codes::Omega, self.omega);
-        check!(Codes::VByteBe, self.vbyte);
-
+    /// Returns a vector of all codes and their space usage, in ascending order by space usage.
+    pub fn get_codes(&self) -> Vec<(Codes, u64)> {
+        let mut codes = vec![];
+        codes.push((Codes::Unary, self.unary));
+        codes.push((Codes::Gamma, self.gamma));
+        codes.push((Codes::Delta, self.delta));
+        codes.push((Codes::Omega, self.omega));
+        codes.push((Codes::VByteBe, self.vbyte));
         for (k, val) in self.zeta.iter().enumerate() {
-            check!(Codes::Zeta { k: (k + 1) as _ }, *val);
+            codes.push((Codes::Zeta { k: (k + 1) as _ }, *val));
         }
         for (b, val) in self.golomb.iter().enumerate() {
-            check!(Codes::Golomb { b: (b + 1) as _ }, *val);
+            codes.push((Codes::Golomb { b: (b + 1) as _ }, *val));
         }
         for (k, val) in self.exp_golomb.iter().enumerate() {
-            check!(Codes::ExpGolomb { k: k as _ }, *val);
+            codes.push((Codes::ExpGolomb { k: k as _ }, *val));
         }
         for (log2_b, val) in self.rice.iter().enumerate() {
-            check!(
-                Codes::Rice {
-                    log2_b: log2_b as _
-                },
-                *val
-            );
+            codes.push((Codes::Rice { log2_b: log2_b as _ }, *val));
         }
         for (k, val) in self.pi.iter().enumerate() {
-            check!(Codes::Pi { k: (k + 2) as _ }, *val);
+            codes.push((Codes::Pi { k: (k + 2) as _ }, *val));
         }
-
-        (best_code, best)
+        // sort them by length
+        codes.sort_by_key(|&(_, len)| len);
+        codes
     }
 }
 
