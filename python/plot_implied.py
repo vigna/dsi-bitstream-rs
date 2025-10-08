@@ -12,19 +12,29 @@ header = [x.strip() for x in data[0].split("\t")]
 
 data = [dict(zip(header, [x.strip() for x in line.split("\t")])) for line in data[1:]]
 
+codes_type = {}
+for d in data:
+    codes_type.setdefault(d["code"], set()).add(d["rw"].removeprefix("read:").removeprefix("write:"))
+
+for d in data:
+    if "univ" in codes_type[d["code"]]:
+        d["name"] = d["code"] + "-" + d["rw"].removeprefix("read:").removeprefix("write:")
+    else:
+        d["name"] = d["code"]
+
 # Separate read and write operations
-read_ops = [d for d in data if d["rw"] == "read"]
-write_ops = [d for d in data if d["rw"] == "write"]
+read_ops = [d for d in data if d["rw"].startswith("read:")]
+write_ops = [d for d in data if d["rw"].startswith("write:")]
 
 
 def create_plot(operations, title):
     # Get unique codes and their best performance
-    codes = list(set(d["code"] for d in operations))
+    codes = list(set(d["name"] for d in operations))
 
     # For each code, find the best (minimum) median between BE and LE
     code_performance = {}
     for code in codes:
-        code_data = [d for d in operations if d["code"] == code]
+        code_data = [d for d in operations if d["name"] == code]
         best_median = min(float(d["median"]) for d in code_data)
         code_performance[code] = best_median
 
@@ -43,7 +53,7 @@ def create_plot(operations, title):
         (d["median"], d["25%"], d["75%"])
         for code in codes
         for d in operations
-        if d["code"] == code and d["endianness"] == "little"
+        if d["name"] == code and d["endianness"] == "little"
     ]
     medians_le, q25_le, q75_le = zip(*little_endian)
     medians_le = [float(x) for x in medians_le]
@@ -61,7 +71,7 @@ def create_plot(operations, title):
         (d["median"], d["25%"], d["75%"])
         for code in codes
         for d in operations
-        if d["code"] == code and d["endianness"] == "big"
+        if d["name"] == code and d["endianness"] == "big"
     ]
     medians_be, q25_be, q75_be = zip(*big_endian)
     medians_be = [float(x) for x in medians_be]
