@@ -18,12 +18,18 @@ import matplotlib.pyplot as plt
 
 # plt.rcParams['text.usetex'] = True
 
-if len(sys.argv) != 2 or sys.argv[1] not in {"u16", "u32", "u64"}:
-    sys.exit("Usage: %s [u16 | u32 | u64]" % sys.argv[0])
+if len(sys.argv) < 2 or len(sys.argv) > 3 or sys.argv[1] not in {"u16", "u32", "u64"}:
+    sys.exit("Usage: %s [u16 | u32 | u64] [implied | univ]" % sys.argv[0])
 
 colors = matplotlib.cm.tab10.colors
 
 read_word = sys.argv[1]
+dist = sys.argv[2] if len(sys.argv) == 3 else "univ"
+
+if dist not in {"implied", "univ"}:
+    sys.exit("Distribution must be 'implied' or 'univ'")
+
+dist_label = "(implied distribution)" if dist == "implied" else "(universal distribution)"
 
 nice = {
     "gamma": "γ",
@@ -146,11 +152,11 @@ for code in ["gamma", "delta", "delta_gamma", "zeta3", "omega"]:
     ax.set_xticks(ratios.index)
     ax.set_title(
         (
-            "Performance of reads (buff: %s) in %s code as a function of the table size\n"
+            "Performance of reads (buff: %s) in %s code as a function of the table size %s\n"
             "Shaded areas are the 25%% and 75%% percentiles and the plots "
             "are medians"
         )
-        % (read_word, nice[code])
+        % (read_word, nice[code], dist_label)
     )
     ax.set_xlabel("table bits")
     ax.set_ylabel("ns")
