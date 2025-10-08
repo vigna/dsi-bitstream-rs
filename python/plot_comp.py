@@ -158,12 +158,12 @@ for rw, title, filename in [
     ),
     (
         "read:univ",
-        "Read (u32 read word) on 1/x distribution",
+        "Read (u32 read word) on distribution ≈1/x (first billion integers)",
         "read_univ_performance.svg",
     ),
     (
         "write:univ",
-        "Write (u64 write word) on 1/x distribution",
+        "Write (u64 write word) on distribution ≈1/x (first billion integers)",
         "write_univ_performance.svg",
     ),
 ]:

@@ -29,7 +29,7 @@ dist = sys.argv[2] if len(sys.argv) == 3 else "univ"
 if dist not in {"implied", "univ"}:
     sys.exit("Distribution must be 'implied' or 'univ'")
 
-dist_label = "(implied distribution)" if dist == "implied" else "(universal distribution)"
+dist_label = "(implied distribution)" if dist == "implied" else "(distribution ≈1/x, first billion integers)"
 
 nice = {
     "gamma": "γ",

@@ -39,7 +39,8 @@ macro_rules! compute_hit_ratio {
 
 /// Generates N samples from the implied distribution of a code using the given
 /// length function (if the `univ` feature is not enabled) or from a universal
-/// distribution (if the `univ` feature is enabled).
+/// distribution ≈1/x on the first billion integers (if the `univ` feature is
+/// enabled).
 pub fn gen_data(_len: fn(u64) -> usize) -> Vec<u64> {
     let mut rng = SmallRng::seed_from_u64(42);
 
@@ -48,8 +49,8 @@ pub fn gen_data(_len: fn(u64) -> usize) -> Vec<u64> {
     #[cfg(feature = "univ")]
     let samples = {
         use rand::Rng;
-        let distr = rand_distr::Zipf::new((usize::MAX - 2) as f64, 1.0).unwrap();
-        (&mut rng).sample_iter(distr).map(|x| x.floor() as u64)
+        let distr = rand_distr::Zipf::new(1E9 as f64, 1.0).unwrap();
+        (&mut rng).sample_iter(distr).map(|x| x as u64 - 1)
     };
 
     return samples.take(N).collect();
