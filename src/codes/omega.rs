@@ -236,15 +236,15 @@ fn recursive_omega_write<E: Endianness, B: BitWrite<E>>(
     }
     let λ = n.ilog2();
     if E::IS_LITTLE {
+        #[cfg(feature = "checks")]
+        {
+            // Clean up after the lowest λ bits in case checks are enabled
+            n &= u64::MAX >> (u64::BITS - λ);
+        }
         // Little-endian case: rotate left the lower λ + 1 bits (the bit in
         // position λ is a one) so that the lowest bit can be peeked to find the
         // block.
         n = (n << 1) | 1;
-    }
-    #[cfg(feature = "checks")]
-    {
-        // Clean up n in case checks are enabled
-        n &= u64::MAX >> (u64::BITS - 1 - λ);
     }
     Ok(recursive_omega_write::<E, _>(λ as u64, writer)? + writer.write_bits(n, λ as usize + 1)?)
 }
