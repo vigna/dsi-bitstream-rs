@@ -62,11 +62,14 @@ for bits in range(1, 17):
             k=3,
             merged_table=merged_table,
         )
-        gen_omega(
-            read_bits=11,  # unused
-            write_max_val=value_max,
-            merged_table=merged_table,
-        )
+        # Kludge: this will leave the original tables intact,
+        # but avoids failing the static assert for
+        if value_max >= 62:
+            gen_omega(
+                read_bits=11,  # unused
+                write_max_val=value_max,
+                merged_table=merged_table,
+            )
 
         # Run the benchmark with native cpu optimizations
         features = write_word
@@ -110,6 +113,9 @@ for bits in range(1, 17):
             first_time = False
         # Dump all lines and add the `max` column
         for line in stdout.split("\n")[1:]:
+            if value_max < 62 and "omega" in line:
+                # ω write tables must represent 62
+                continue
             if len(line.strip()) != 0:
                 print("{},{},{}".format(value_max + 1, tables_num, line))
 

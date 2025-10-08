@@ -110,8 +110,8 @@ for bits in range(1, 17):
             first_time = False
         # Dump all lines and add the `n_bits` column
         for line in stdout.split("\n")[1:]:
-            if bits == 1 and "omega" in line:
-                # Omega tables require at least 2 bits
+            if bits < 2 and "omega" in line:
+                # ω read tables must be at least 2 bits wide
                 continue
             if len(line.strip()) != 0:
                 print("{},{},{}".format(bits, tables_num, line))
