@@ -945,19 +945,16 @@ pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> (u8, u64) {
                 % {"bo": bo, "BO": BO}
             )
 
-        # Generate write functions
-        for bo in ["le", "be"]:
-            BO = bo.upper()
-            f.write(
-                """
+        f.write(
+            """
 /// Write a value using an encoding table.
 ///
 /// If the result is `Some` the encoding was successful, and
 /// length of the code is returned.
 #[inline(always)]
-pub fn write_table_%(bo)s<B: BitWrite<%(BO)s>>(backend: &mut B, value: u64) -> Result<Option<usize>, B::Error> {
-    Ok(if let Some(bits) = WRITE_%(BO)s.get(value as usize) {
-        let len = WRITE_LEN_%(BO)s[value as usize] as usize;
+pub fn write_table_le<B: BitWrite<LE>>(backend: &mut B, mut value: u64) -> Result<Option<usize>, B::Error> {
+    Ok(if let Some(bits) = WRITE_LE.get(value as usize) {
+    let len = WRITE_LEN_LE[value as usize] as usize;
         backend.write_bits(*bits as u64, len)?;
         Some(len)
     } else {
@@ -965,20 +962,37 @@ pub fn write_table_%(bo)s<B: BitWrite<%(BO)s>>(backend: &mut B, value: u64) -> R
         let λ = value.ilog2() as usize;
         let bits = WRITE_LE[λ - 1];
         let len = WRITE_LEN_LE[λ - 1] as usize;
-        if E::IS_LITTLE {
-            backend.write_bits(bits as u64, len - 1)?;
-            backend.write_bits(value << 1 | 1, λ + 1)?;
-        } else {
-            backend.write_bits(bits as u64 >> 1, len - 1)?;
-            backend.write_bits(value, λ + 1)?;
-        }
+        backend.write_bits(bits as u64, len - 1)?;
+        backend.write_bits(value << 1 | 1, λ + 1)?;
+        backend.write_bits(0, 1)?;
+        Some(λ + len + 1)
+    })
+}
+
+/// Write a value using an encoding table.
+///
+/// If the result is `Some` the encoding was successful, and
+/// length of the code is returned.
+#[inline(always)]
+pub fn write_table_be<B: BitWrite<BE>>(backend: &mut B, mut value: u64) -> Result<Option<usize>, B::Error> {
+    Ok(if let Some(bits) = WRITE_BE.get(value as usize) {
+    let len = WRITE_LEN_BE[value as usize] as usize;
+        backend.write_bits(*bits as u64, len)?;
+        Some(len)
+    } else {
+        value += 1;
+        let λ = value.ilog2() as usize;
+        let bits = WRITE_BE[λ - 1];
+        let len = WRITE_LEN_BE[λ - 1] as usize;
+        backend.write_bits(bits as u64 >> 1, len - 1)?;
+        backend.write_bits(value, λ + 1)?;
         backend.write_bits(0, 1)?;
         Some(λ + len + 1)
     })
 }
 """
-                % {"bo": bo, "BO": BO}
-            )
+            % {"bo": bo, "BO": BO}
+        )
 
         # Generate read tables with high-bit flag encoding for partial decoding
         # If high bit clear: complete code (READ = value, READ_LEN = length)
