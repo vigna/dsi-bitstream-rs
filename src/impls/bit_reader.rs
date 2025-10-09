@@ -7,9 +7,9 @@
  */
 
 use core::convert::Infallible;
+use core::error::Error;
 #[cfg(feature = "mem_dbg")]
 use mem_dbg::{MemDbg, MemSize};
-use std::error::Error;
 
 use crate::codes::params::{DefaultReadParams, ReadParams};
 use crate::traits::*;
@@ -45,6 +45,7 @@ pub struct BitReader<E: Endianness, WR, RP: ReadParams = DefaultReadParams> {
 
 impl<E: Endianness, WR, RP: ReadParams> BitReader<E, WR, RP> {
     pub fn new(data: WR) -> Self {
+        #[cfg(feature = "std")]
         check_tables(32);
         Self {
             data,
@@ -275,6 +276,7 @@ impl<
     }
 }
 
+#[cfg(feature = "std")]
 impl<
         E: Error + Send + Sync + 'static,
         WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>,
@@ -303,6 +305,7 @@ impl<
     }
 }
 
+#[cfg(feature = "std")]
 impl<
         E: Error + Send + Sync + 'static,
         WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>,

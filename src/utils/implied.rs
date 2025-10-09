@@ -4,10 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
+#[cfg(feature = "alloc")]
 use crate::utils::FindChangePoints;
-
+#[cfg(feature = "alloc")]
 use rand::distr::weighted::WeightedIndex;
+#[cfg(feature = "alloc")]
 use rand::prelude::*;
+
+#[cfg(feature = "alloc")]
+use alloc::vec::Vec;
 
 /// Given the len function of a code, generates data that allows to sample
 /// its implied distribution, i.e. a code-word with length l has
@@ -21,6 +26,7 @@ use rand::prelude::*;
 ///
 /// Since we cannot write more than 64 bits at once, the codes are limited to
 /// 128 bits.
+#[cfg(feature = "alloc")]
 pub fn get_implied_distribution(f: impl Fn(u64) -> usize) -> (Vec<(u64, usize)>, Vec<f64>) {
     let change_points = FindChangePoints::new(f)
         .take_while(|(_input, len)| *len <= 128)
@@ -75,6 +81,7 @@ impl Iterator for InfiniteIterator {
 ///
 /// assert_eq!(vals.len(), 1000);
 /// ```
+#[cfg(feature = "alloc")]
 pub fn sample_implied_distribution(
     f: impl Fn(u64) -> usize,
     rng: &mut impl Rng,

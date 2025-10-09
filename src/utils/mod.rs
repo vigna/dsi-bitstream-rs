@@ -43,4 +43,6 @@ mod implied;
 pub use implied::*;
 
 pub mod stats;
-pub use stats::{CodesStats, CodesStatsWrapper};
+pub use stats::CodesStats;
+#[cfg(feature = "std")]
+pub use stats::CodesStatsWrapper;

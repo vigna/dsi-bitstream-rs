@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
+#![cfg(feature = "alloc")]
 use common_traits::{DoubleType, UnsignedInt};
 use dsi_bitstream::prelude::{
     BitRead, BitWrite, BufBitReader, BufBitWriter, MemWordReader, MemWordWriterVec,

@@ -28,6 +28,7 @@ jobs:
         features:
           - ''
           - '--no-default-features'
+          - '--no-default-features --features alloc'
           - '--all-features'
 
     steps:

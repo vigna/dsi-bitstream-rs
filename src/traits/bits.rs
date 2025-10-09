@@ -6,13 +6,12 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
+use core::error::Error;
 use core::fmt::{Display, Formatter};
-use std::error::Error;
 
-use crate::{
-    prelude::{delta_tables, gamma_tables, zeta_tables},
-    traits::*,
-};
+#[cfg(feature = "std")]
+use crate::prelude::{delta_tables, gamma_tables, zeta_tables};
+use crate::traits::*;
 use common_traits::CastableInto;
 
 pub trait Peek<const N: usize> {}
@@ -186,6 +185,7 @@ pub trait BitSeek {
 ///
 /// It **strongly suggested** that this function is called by the
 /// creation methods of types implementing [`BitRead`].
+#[cfg(feature = "std")]
 pub fn check_tables(peek_bits: usize) {
     if peek_bits < gamma_tables::READ_BITS {
         eprintln!(

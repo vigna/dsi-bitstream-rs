@@ -6,7 +6,7 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
-use std::error::Error;
+use core::error::Error;
 
 use common_traits::*;
 
@@ -48,4 +48,21 @@ pub trait WordSeek {
 
     /// Set the current position in words from the start of the file to `word_pos`.
     fn set_word_pos(&mut self, word_pos: u64) -> Result<(), Self::Error>;
+}
+
+#[derive(Debug, Clone, PartialEq)]
+/// Replacement of [`std::io::Error`] for `no_std` environments
+pub enum WordError {
+    UnexpectedEof { word_pos: usize },
+}
+
+impl core::error::Error for WordError {}
+impl core::fmt::Display for WordError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            WordError::UnexpectedEof { word_pos } => {
+                write!(f, "Unexpected end of data at word position {}", word_pos)
+            }
+        }
+    }
 }

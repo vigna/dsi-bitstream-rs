@@ -25,7 +25,10 @@ use dsi_bitstream::prelude::*;
 // To write a bit stream, we need first a WordWrite around an output backend
 // (in this case, a vector), which is word-based for efficiency.
 // It could be a file, etc.
+#[cfg(feature = "alloc")]
 let mut word_write = MemWordWriterVec::new(Vec::<u64>::new());
+#[cfg(not(feature = "alloc"))]
+let mut word_write = MemWordWriterSlice::new([0_u64; 10]);
 // Let us create a little-endian bit writer. The write word size will be inferred.
 let mut writer = BufBitWriter::<LE, _>::new(word_write);
 // Write 0 using 10 bits
@@ -44,7 +47,7 @@ let data = writer.into_inner()?.into_inner();
 // Reading back the data is similar, but since a reader has a bit buffer
 // twice as large as the read word size, it is more efficient to use a
 // u32 as read word, so we need to transmute the data.
-let data = unsafe { std::mem::transmute::<_, Vec<u32>>(data) };
+let data = unsafe{data.align_to::<u32>().1};
 let mut reader = BufBitReader::<LE, _>::new(MemWordReader::new(data));
 assert_eq!(reader.read_bits(10)?, 0);
 assert_eq!(reader.read_unary()?, 0);
@@ -62,17 +65,22 @@ but this approach is less efficient:
 
 ```rust
 use dsi_bitstream::prelude::*;
-let mut data = Vec::<u64>::new();
-let mut word_write = MemWordWriterVec::new(&mut data);
+#[cfg(feature = "alloc")]
+let mut word_write = MemWordWriterVec::new( Vec::<u64>::new());
+#[cfg(not(feature = "alloc"))]
+let mut word_write = MemWordWriterSlice::new([0_u64; 10]);
 let mut writer = BufBitWriter::<LE, _>::new(word_write);
 writer.write_bits(0, 10)?;
 writer.write_unary(0)?;
 writer.write_gamma(1)?;
 writer.write_delta(2)?;
 writer.flush();
-drop(writer); // We must drop the writer release the borrow on data
 
-let data = unsafe { std::mem::transmute::<_, Vec<u32>>(data) };
+// Let's recover the data
+let data = writer.into_inner()?.into_inner();
+
+// as in the example above, convert to u32 for better read performance 
+let data = unsafe{data.align_to::<u32>().1};
 let mut reader = BufBitReader::<LE, _>::new(MemWordReader::new(&data));
 assert_eq!(reader.read_bits(10)?, 0);
 assert_eq!(reader.read_unary()?, 0);

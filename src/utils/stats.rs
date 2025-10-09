@@ -8,16 +8,27 @@
 #[cfg(feature = "mem_dbg")]
 use mem_dbg::{MemDbg, MemSize};
 
-use crate::dispatch::{CodesRead, CodesWrite};
-use crate::prelude::Endianness;
 use crate::prelude::{
     bit_len_vbyte, len_delta, len_exp_golomb, len_gamma, len_golomb, len_omega, len_pi, len_rice,
     len_zeta, Codes,
 };
-use crate::prelude::{DynamicCodeRead, DynamicCodeWrite, StaticCodeRead, StaticCodeWrite};
-use anyhow::Result;
 use core::fmt::Debug;
+
+#[cfg(feature = "std")]
+use crate::dispatch::{CodesRead, CodesWrite};
+#[cfg(feature = "std")]
+use crate::prelude::Endianness;
+#[cfg(feature = "std")]
+use crate::prelude::{DynamicCodeRead, DynamicCodeWrite, StaticCodeRead, StaticCodeWrite};
+#[cfg(feature = "std")]
+use anyhow::Result;
+#[cfg(feature = "std")]
 use std::sync::Mutex;
+
+#[cfg(feature = "alloc")]
+use alloc::vec;
+#[cfg(feature = "alloc")]
+use alloc::vec::Vec;
 
 /// Keeps track of the space needed to store a stream of integers using
 /// different codes.
@@ -169,10 +180,54 @@ impl<
 
     /// Return the best code for the stream and its space usage.
     pub fn best_code(&self) -> (Codes, u64) {
-        self.get_codes()[0]
+        let mut best = (Codes::Unary, self.unary);
+        if self.gamma < best.1 {
+            best = (Codes::Gamma, self.gamma);
+        }
+        if self.delta < best.1 {
+            best = (Codes::Delta, self.delta);
+        }
+        if self.omega < best.1 {
+            best = (Codes::Omega, self.omega);
+        }
+        if self.vbyte < best.1 {
+            best = (Codes::VByteBe, self.vbyte);
+        }
+        for (k, val) in self.zeta.iter().enumerate() {
+            if *val < best.1 {
+                best = (Codes::Zeta { k: (k + 1) as _ }, *val);
+            }
+        }
+        for (b, val) in self.golomb.iter().enumerate() {
+            if *val < best.1 {
+                best = (Codes::Golomb { b: (b + 1) as _ }, *val);
+            }
+        }
+        for (k, val) in self.exp_golomb.iter().enumerate() {
+            if *val < best.1 {
+                best = (Codes::ExpGolomb { k: k as _ }, *val);
+            }
+        }
+        for (log2_b, val) in self.rice.iter().enumerate() {
+            if *val < best.1 {
+                best = (
+                    Codes::Rice {
+                        log2_b: log2_b as _,
+                    },
+                    *val,
+                );
+            }
+        }
+        for (k, val) in self.pi.iter().enumerate() {
+            if *val < best.1 {
+                best = (Codes::Pi { k: (k + 2) as _ }, *val);
+            }
+        }
+        best
     }
 
     /// Returns a vector of all codes and their space usage, in ascending order by space usage.
+    #[cfg(feature = "alloc")]
     pub fn get_codes(&self) -> Vec<(Codes, u64)> {
         let mut codes = vec![
             (Codes::Unary, self.unary),
@@ -255,6 +310,7 @@ impl<
 
 #[derive(Debug)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
+#[cfg(feature = "std")]
 /// A struct that can wrap `Code` and compute `CodesStats` for a given stream.
 pub struct CodesStatsWrapper<
     W,
@@ -276,6 +332,7 @@ pub struct CodesStatsWrapper<
     wrapped: W,
 }
 
+#[cfg(feature = "std")]
 impl<
         W,
         const ZETA: usize,
@@ -304,6 +361,7 @@ impl<
     }
 }
 
+#[cfg(feature = "std")]
 impl<
         W: DynamicCodeRead,
         const ZETA: usize,
@@ -324,6 +382,7 @@ impl<
     }
 }
 
+#[cfg(feature = "std")]
 impl<
         W: StaticCodeRead<E, CR>,
         const ZETA: usize,
@@ -343,6 +402,7 @@ impl<
     }
 }
 
+#[cfg(feature = "std")]
 impl<
         W: DynamicCodeWrite,
         const ZETA: usize,
@@ -364,6 +424,7 @@ impl<
     }
 }
 
+#[cfg(feature = "std")]
 impl<
         W: StaticCodeWrite<E, CW>,
         const ZETA: usize,

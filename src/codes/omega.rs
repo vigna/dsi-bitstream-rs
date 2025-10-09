@@ -278,8 +278,8 @@ mod test {
                 0b0_11101000010010000001_00111_001_01,
             ),
         ] {
-            let mut data = vec![0_u64];
-            let mut writer = <BufBitWriter<BE, _>>::new(MemWordWriterVec::new(&mut data));
+            let mut data = [0_u64];
+            let mut writer = <BufBitWriter<BE, _>>::new(MemWordWriterSlice::new(&mut data));
             writer.write_omega(value).unwrap();
             drop(writer);
             assert_eq!(
@@ -291,8 +291,8 @@ mod test {
                 expected_be,
             );
 
-            let mut data = vec![0_u64];
-            let mut writer = <BufBitWriter<LE, _>>::new(MemWordWriterVec::new(&mut data));
+            let mut data = [0_u64];
+            let mut writer = <BufBitWriter<LE, _>>::new(MemWordWriterSlice::new(&mut data));
             writer.write_omega(value).unwrap();
             drop(writer);
             assert_eq!(

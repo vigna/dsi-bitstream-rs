@@ -94,7 +94,8 @@ for code in ["gamma", "delta", "delta_gamma", "zeta3", "omega"]:
             m = min(values.ns_median)
             ax.errorbar(
                 values.index,
-                values.ns_median,  # values.ns_std,
+                values.ns_median,  
+                #yerr=values.ns_std,
                 label="{}::{} (min: {:.3f}ns)".format(
                     "::".join(pat.split("::")[1:]), ty, m
                 ),

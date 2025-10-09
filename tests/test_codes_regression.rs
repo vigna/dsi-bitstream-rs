@@ -6,6 +6,8 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
+#![cfg(feature = "alloc")]
+
 use dsi_bitstream::prelude::*;
 use std::error::Error;
 

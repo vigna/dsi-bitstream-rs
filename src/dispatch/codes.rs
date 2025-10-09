@@ -327,14 +327,24 @@ impl CodeLen for Codes {
 /// Error type for parsing a code from a string.
 pub enum CodeError {
     ParseError(core::num::ParseIntError),
-    UnknownCode(String),
+    UnknownCode([u8; 32]),
 }
+#[cfg(feature = "std")]
 impl std::error::Error for CodeError {}
 impl core::fmt::Display for CodeError {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         match self {
             CodeError::ParseError(e) => write!(f, "Parse error: {}", e),
-            CodeError::UnknownCode(s) => write!(f, "Unknown code: {}", s),
+            CodeError::UnknownCode(s) => {
+                write!(f, "Unknown code: ")?;
+                for c in s {
+                    if *c == 0 {
+                        break;
+                    }
+                    write!(f, "{}", *c as char)?;
+                }
+                Ok(())
+            }
         }
     }
 }
@@ -363,7 +373,16 @@ impl core::fmt::Display for Codes {
     }
 }
 
-impl std::str::FromStr for Codes {
+fn array_format_error(s: &str) -> [u8; 32] {
+    let mut error_buffer = [0u8; 32];
+    const ERROR_PREFIX: &[u8] = b"Could not parse ";
+    error_buffer[..ERROR_PREFIX.len()].copy_from_slice(ERROR_PREFIX);
+    error_buffer[ERROR_PREFIX.len()..ERROR_PREFIX.len() + s.len().min(32 - ERROR_PREFIX.len())]
+        .copy_from_slice(&s.as_bytes()[..s.len().min(32 - ERROR_PREFIX.len())]);
+    error_buffer
+}
+
+impl core::str::FromStr for Codes {
     type Err = CodeError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -378,20 +397,20 @@ impl std::str::FromStr for Codes {
                 let mut parts = s.split('(');
                 let name = parts
                     .next()
-                    .ok_or_else(|| CodeError::UnknownCode(format!("Could not parse {}", s)))?;
+                    .ok_or_else(|| CodeError::UnknownCode(array_format_error(s)))?;
                 let k = parts
                     .next()
-                    .ok_or_else(|| CodeError::UnknownCode(format!("Could not parse {}", s)))?
+                    .ok_or_else(|| CodeError::UnknownCode(array_format_error(s)))?
                     .split(')')
                     .next()
-                    .ok_or_else(|| CodeError::UnknownCode(format!("Could not parse {}", s)))?;
+                    .ok_or_else(|| CodeError::UnknownCode(array_format_error(s)))?;
                 match name {
                     "Zeta" => Ok(Codes::Zeta { k: k.parse()? }),
                     "Pi" => Ok(Codes::Pi { k: k.parse()? }),
                     "Golomb" => Ok(Codes::Golomb { b: k.parse()? }),
                     "ExpGolomb" => Ok(Codes::ExpGolomb { k: k.parse()? }),
                     "Rice" => Ok(Codes::Rice { log2_b: k.parse()? }),
-                    _ => Err(CodeError::UnknownCode(format!("Could not parse {}", name))),
+                    _ => Err(CodeError::UnknownCode(array_format_error(name))),
                 }
             }
         }

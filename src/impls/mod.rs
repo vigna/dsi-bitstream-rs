@@ -46,6 +46,9 @@ run the benchmarks in the `benchmarks` directory.
 ### Reading from a file
 
 ```rust
+# #[cfg(not(feature = "std"))]
+# fn main() {}
+# #[cfg(feature = "std")]
 # fn main() -> Result<(), Box<dyn std::error::Error>> {
 use dsi_bitstream::prelude::*;
 use std::io::BufReader;
@@ -61,6 +64,9 @@ reader.read_gamma()?;
 ### Writing to and reading from a vector
 
 ```rust
+# #[cfg(not(feature = "std"))]
+# fn main() {}
+# #[cfg(feature = "std")]
 # fn main() -> Result<(), Box<dyn std::error::Error>> {
 use dsi_bitstream::prelude::*;
 

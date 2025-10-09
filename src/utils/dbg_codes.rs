@@ -37,23 +37,27 @@ where
 
     fn peek_bits(&mut self, n_bits: usize) -> Result<Self::PeekWord, Self::Error> {
         let value = self.reader.peek_bits(n_bits)?;
+        #[cfg(feature = "std")]
         eprintln!("peek_bits({}): {}", n_bits, value);
         Ok(value)
     }
 
     fn skip_bits(&mut self, n_bits: usize) -> Result<(), Self::Error> {
+        #[cfg(feature = "std")]
         eprintln!("skip_bits({})", n_bits);
         self.reader.skip_bits(n_bits)
     }
 
     fn read_bits(&mut self, n_bits: usize) -> Result<u64, Self::Error> {
         let value = self.reader.read_bits(n_bits)?;
+        #[cfg(feature = "std")]
         eprintln!("read_bits({}): {}", n_bits, value);
         Ok(value)
     }
 
     fn read_unary(&mut self) -> Result<u64, Self::Error> {
         let value = self.reader.read_unary()?;
+        #[cfg(feature = "std")]
         eprintln!("{{U:{}}}", value);
         Ok(value)
     }
@@ -69,6 +73,7 @@ where
 {
     fn read_gamma(&mut self) -> Result<u64, R::Error> {
         let value = self.reader.read_gamma()?;
+        #[cfg(feature = "std")]
         eprintln!("{{g:{}}}", value);
         Ok(value)
     }
@@ -80,6 +85,7 @@ where
 {
     fn read_delta(&mut self) -> Result<u64, R::Error> {
         let value = self.reader.read_delta()?;
+        #[cfg(feature = "std")]
         eprintln!("{{d:{}}}", value);
         Ok(value)
     }
@@ -91,12 +97,14 @@ where
 {
     fn read_zeta3(&mut self) -> Result<u64, R::Error> {
         let value = self.reader.read_zeta3()?;
+        #[cfg(feature = "std")]
         eprintln!("{{z3:{}}}", value);
         Ok(value)
     }
 
     fn read_zeta(&mut self, k: usize) -> Result<u64, R::Error> {
         let value = self.reader.read_zeta(k)?;
+        #[cfg(feature = "std")]
         eprintln!("{{z{}:{}}}", k, value);
         Ok(value)
     }
@@ -124,11 +132,13 @@ impl<E: Endianness, W: BitWrite<E>> BitWrite<E> for DbgBitWriter<E, W> {
     type Error = W::Error;
 
     fn write_bits(&mut self, value: u64, n_bits: usize) -> Result<usize, Self::Error> {
+        #[cfg(feature = "std")]
         eprintln!("write_bits({}, {})", value, n_bits);
         self.writer.write_bits(value, n_bits)
     }
 
     fn write_unary(&mut self, value: u64) -> Result<usize, Self::Error> {
+        #[cfg(feature = "std")]
         eprintln!("{{U:{}}}", value);
         self.writer.write_unary(value)
     }
@@ -140,6 +150,7 @@ impl<E: Endianness, W: BitWrite<E>> BitWrite<E> for DbgBitWriter<E, W> {
 
 impl<E: Endianness, W: GammaWrite<E>> GammaWrite<E> for DbgBitWriter<E, W> {
     fn write_gamma(&mut self, value: u64) -> Result<usize, W::Error> {
+        #[cfg(feature = "std")]
         eprintln!("{{g:{}}}", value);
         self.writer.write_gamma(value)
     }
@@ -147,6 +158,7 @@ impl<E: Endianness, W: GammaWrite<E>> GammaWrite<E> for DbgBitWriter<E, W> {
 
 impl<E: Endianness, W: DeltaWrite<E>> DeltaWrite<E> for DbgBitWriter<E, W> {
     fn write_delta(&mut self, value: u64) -> Result<usize, W::Error> {
+        #[cfg(feature = "std")]
         eprintln!("{{d:{}}}", value);
         self.writer.write_delta(value)
     }
@@ -154,10 +166,12 @@ impl<E: Endianness, W: DeltaWrite<E>> DeltaWrite<E> for DbgBitWriter<E, W> {
 
 impl<E: Endianness, W: ZetaWrite<E>> ZetaWrite<E> for DbgBitWriter<E, W> {
     fn write_zeta(&mut self, value: u64, k: usize) -> Result<usize, W::Error> {
+        #[cfg(feature = "std")]
         eprintln!("{{z{}:{}}}", value, k);
         self.writer.write_zeta(value, k)
     }
     fn write_zeta3(&mut self, value: u64) -> Result<usize, W::Error> {
+        #[cfg(feature = "std")]
         eprintln!("{{z3:{}}}", value);
         self.writer.write_zeta3(value)
     }

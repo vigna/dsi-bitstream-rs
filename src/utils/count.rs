@@ -48,6 +48,7 @@ impl<E: Endianness, BW: BitWrite<E>, const PRINT: bool> BitWrite<E>
         self.bit_write.write_bits(value, n_bits).inspect(|x| {
             self.bits_written += *x;
             if PRINT {
+                #[cfg(feature = "std")]
                 eprintln!(
                     "write_bits({:#016x}, {}) = {} (total = {})",
                     value, n_bits, x, self.bits_written
@@ -60,6 +61,7 @@ impl<E: Endianness, BW: BitWrite<E>, const PRINT: bool> BitWrite<E>
         self.bit_write.write_unary(value).inspect(|x| {
             self.bits_written += *x;
             if PRINT {
+                #[cfg(feature = "std")]
                 eprintln!(
                     "write_unary({}) = {} (total = {})",
                     value, x, self.bits_written
@@ -72,6 +74,7 @@ impl<E: Endianness, BW: BitWrite<E>, const PRINT: bool> BitWrite<E>
         self.bit_write.flush().inspect(|x| {
             self.bits_written += *x;
             if PRINT {
+                #[cfg(feature = "std")]
                 eprintln!("flush() = {} (total = {})", x, self.bits_written);
             }
         })
@@ -85,6 +88,7 @@ impl<E: Endianness, BW: BitWrite<E> + GammaWrite<E>, const PRINT: bool> GammaWri
         self.bit_write.write_gamma(value).inspect(|x| {
             self.bits_written += *x;
             if PRINT {
+                #[cfg(feature = "std")]
                 eprintln!(
                     "write_gamma({}) = {} (total = {})",
                     value, x, self.bits_written
@@ -101,6 +105,7 @@ impl<E: Endianness, BW: BitWrite<E> + DeltaWrite<E>, const PRINT: bool> DeltaWri
         self.bit_write.write_delta(value).inspect(|x| {
             self.bits_written += *x;
             if PRINT {
+                #[cfg(feature = "std")]
                 eprintln!(
                     "write_delta({}) = {} (total = {})",
                     value, x, self.bits_written
@@ -117,6 +122,7 @@ impl<E: Endianness, BW: BitWrite<E> + ZetaWrite<E>, const PRINT: bool> ZetaWrite
         self.bit_write.write_zeta(value, k).inspect(|x| {
             self.bits_written += *x;
             if PRINT {
+                #[cfg(feature = "std")]
                 eprintln!(
                     "write_zeta({}, {}) = {} (total = {})",
                     value, x, k, self.bits_written
@@ -129,6 +135,7 @@ impl<E: Endianness, BW: BitWrite<E> + ZetaWrite<E>, const PRINT: bool> ZetaWrite
         self.bit_write.write_zeta3(value).inspect(|x| {
             self.bits_written += *x;
             if PRINT {
+                #[cfg(feature = "std")]
                 eprintln!(
                     "write_zeta({}) = {} (total = {})",
                     value, x, self.bits_written
@@ -183,8 +190,10 @@ impl<E: Endianness, BR: BitRead<E>, const PRINT: bool> BitRead<E> for CountBitRe
 
     fn read_bits(&mut self, n_bits: usize) -> Result<u64, Self::Error> {
         self.bit_read.read_bits(n_bits).inspect(|x| {
+            let _ = x;
             self.bits_read += n_bits;
             if PRINT {
+                #[cfg(feature = "std")]
                 eprintln!(
                     "read_bits({}) = {:#016x} (total = {})",
                     n_bits, x, self.bits_read
@@ -197,6 +206,7 @@ impl<E: Endianness, BR: BitRead<E>, const PRINT: bool> BitRead<E> for CountBitRe
         self.bit_read.read_unary().inspect(|x| {
             self.bits_read += *x as usize + 1;
             if PRINT {
+                #[cfg(feature = "std")]
                 eprintln!("read_unary() = {} (total = {})", x, self.bits_read);
             }
         })
@@ -209,6 +219,7 @@ impl<E: Endianness, BR: BitRead<E>, const PRINT: bool> BitRead<E> for CountBitRe
     fn skip_bits(&mut self, n_bits: usize) -> Result<(), Self::Error> {
         self.bits_read += n_bits;
         if PRINT {
+            #[cfg(feature = "std")]
             eprintln!("skip_bits({}) (total = {})", n_bits, self.bits_read);
         }
         self.bit_read.skip_bits(n_bits)
@@ -226,6 +237,7 @@ impl<E: Endianness, BR: BitRead<E> + GammaRead<E>, const PRINT: bool> GammaRead<
         self.bit_read.read_gamma().inspect(|x| {
             self.bits_read += len_gamma(*x);
             if PRINT {
+                #[cfg(feature = "std")]
                 eprintln!("read_gamma() = {} (total = {})", x, self.bits_read);
             }
         })
@@ -239,6 +251,7 @@ impl<E: Endianness, BR: BitRead<E> + DeltaRead<E>, const PRINT: bool> DeltaRead<
         self.bit_read.read_delta().inspect(|x| {
             self.bits_read += len_delta(*x);
             if PRINT {
+                #[cfg(feature = "std")]
                 eprintln!("read_delta() = {} (total = {})", x, self.bits_read);
             }
         })
@@ -252,6 +265,7 @@ impl<E: Endianness, BR: BitRead<E> + ZetaRead<E>, const PRINT: bool> ZetaRead<E>
         self.bit_read.read_zeta(k).inspect(|x| {
             self.bits_read += len_zeta(*x, k);
             if PRINT {
+                #[cfg(feature = "std")]
                 eprintln!("read_zeta({}) = {} (total = {})", k, x, self.bits_read);
             }
         })
@@ -261,6 +275,7 @@ impl<E: Endianness, BR: BitRead<E> + ZetaRead<E>, const PRINT: bool> ZetaRead<E>
         self.bit_read.read_zeta3().inspect(|x| {
             self.bits_read += len_zeta(*x, 3);
             if PRINT {
+                #[cfg(feature = "std")]
                 eprintln!("read_zeta3() = {} (total = {})", x, self.bits_read);
             }
         })
@@ -282,6 +297,7 @@ impl<E: Endianness, BR: BitRead<E> + BitSeek, const PRINT: bool> BitSeek
 }
 
 #[cfg(test)]
+#[cfg(feature = "std")]
 #[test]
 fn test_count() -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
     use crate::prelude::*;

@@ -43,9 +43,9 @@ use crate::codes::*;
 use crate::impls::*;
 use crate::traits::*;
 use common_traits::*;
+use core::error::Error;
 #[cfg(feature = "mem_dbg")]
 use mem_dbg::{MemDbg, MemSize};
-use std::error::Error;
 
 /// Marker trait for read-parameters selector types.
 ///

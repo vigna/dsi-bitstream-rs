@@ -11,10 +11,10 @@ use common_traits::*;
 use crate::codes::params::{DefaultReadParams, ReadParams};
 use crate::traits::*;
 use core::convert::Infallible;
+use core::error::Error;
 use core::{mem, ptr};
 #[cfg(feature = "mem_dbg")]
 use mem_dbg::{MemDbg, MemSize};
-use std::error::Error;
 
 /// An internal shortcut to the double type of the word of a
 /// [`WordRead`].
@@ -94,6 +94,7 @@ where
     /// ```
     #[must_use]
     pub fn new(backend: WR) -> Self {
+        #[cfg(feature = "std")]
         check_tables(WR::Word::BITS + 1);
         Self {
             backend,
@@ -612,6 +613,7 @@ where
     }
 }
 
+#[cfg(feature = "std")]
 impl<WR: WordRead, RP: ReadParams> std::io::Read for BufBitReader<LE, WR, RP>
 where
     WR::Word: DoubleType + UpcastableInto<u64>,
@@ -639,6 +641,7 @@ where
     }
 }
 
+#[cfg(feature = "std")]
 impl<WR: WordRead, RP: ReadParams> std::io::Read for BufBitReader<BE, WR, RP>
 where
     WR::Word: DoubleType + UpcastableInto<u64>,
@@ -667,6 +670,7 @@ where
 }
 
 #[cfg(test)]
+#[cfg(feature = "std")]
 mod test {
     use super::*;
     use crate::prelude::{MemWordReader, MemWordWriterVec};

@@ -55,10 +55,16 @@ where
     ///
     /// ### Example
     /// ```
+    /// #[cfg(not(feature = "std"))]
+    /// # fn main() {}
+    /// # #[cfg(feature = "std")]
+    /// # fn main() {
     /// use dsi_bitstream::prelude::*;
     /// let buffer = Vec::<usize>::new();
     /// let word_writer = MemWordWriterVec::new(buffer);
     /// let mut buf_bit_writer = <BufBitWriter<BE, _>>::new(word_writer);
+    /// # }
+    /// ```
     pub fn new(backend: WW) -> Self {
         Self {
             backend,
@@ -432,6 +438,7 @@ where
     }
 }
 
+#[cfg(feature = "std")]
 impl<WW: WordWrite, WP: WriteParams> std::io::Write for BufBitWriter<BE, WW, WP>
 where
     u64: CastableInto<WW::Word>,
@@ -466,6 +473,7 @@ where
     }
 }
 
+#[cfg(feature = "std")]
 impl<WW: WordWrite, WP: WriteParams> std::io::Write for BufBitWriter<LE, WW, WP>
 where
     u64: CastableInto<WW::Word>,
@@ -501,6 +509,7 @@ where
 }
 
 #[cfg(test)]
+#[cfg(feature = "std")]
 mod test {
     use super::*;
     use crate::prelude::MemWordWriterVec;

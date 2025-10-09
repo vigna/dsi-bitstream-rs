@@ -139,8 +139,8 @@ mod test {
     fn test_roundtrip() {
         let k = 3;
         for value in (0..64).map(|i| 1 << i).chain(0..1024).chain([u64::MAX - 1]) {
-            let mut data = vec![0_u64];
-            let mut writer = <BufBitWriter<BE, _>>::new(MemWordWriterVec::new(&mut data));
+            let mut data = [0_u64; 10];
+            let mut writer = <BufBitWriter<BE, _>>::new(MemWordWriterSlice::new(&mut data));
             let code_len = writer.write_pi(value, k).unwrap();
             assert_eq!(code_len, len_pi(value, k));
             drop(writer);
@@ -177,8 +177,8 @@ mod test {
             (3, 6, 0b1_01011 << (64 - 6)),
             (3, 7, 0b101_1000 << (64 - 7)),
         ] {
-            let mut data = vec![0_u64];
-            let mut writer = <BufBitWriter<BE, _>>::new(MemWordWriterVec::new(&mut data));
+            let mut data = [0_u64; 10];
+            let mut writer = <BufBitWriter<BE, _>>::new(MemWordWriterSlice::new(&mut data));
             let code_len = writer.write_pi(value, k).unwrap();
             assert_eq!(code_len, len_pi(value, k));
             drop(writer);
@@ -201,15 +201,16 @@ mod test {
         // BE: π₀ = ζ₁ and π₁ = ζ₂
         for k in 0..2 {
             for value in 0..100 {
-                let mut data_pi = vec![0_u64];
-                let mut data_zeta = vec![0_u64];
+                let mut data_pi = [0_u64; 10];
+                let mut data_zeta = [0_u64; 10];
 
-                let mut writer = <BufBitWriter<BE, _>>::new(MemWordWriterVec::new(&mut data_pi));
+                let mut writer = <BufBitWriter<BE, _>>::new(MemWordWriterSlice::new(&mut data_pi));
                 let code_len = writer.write_pi(value, k).unwrap();
                 assert_eq!(code_len, len_pi(value, k));
                 drop(writer);
 
-                let mut writer = <BufBitWriter<BE, _>>::new(MemWordWriterVec::new(&mut data_zeta));
+                let mut writer =
+                    <BufBitWriter<BE, _>>::new(MemWordWriterSlice::new(&mut data_zeta));
                 let code_len = writer.write_zeta(value, 1 << k).unwrap();
                 assert_eq!(code_len, len_zeta(value, 1 << k));
                 drop(writer);
@@ -220,15 +221,15 @@ mod test {
 
         // LE: π₀ = ζ₁; π₁ and ζ₂ have the same lengths but permuted bits
         for value in 0..100 {
-            let mut data_pi = vec![0_u64];
-            let mut data_zeta = vec![0_u64];
+            let mut data_pi = [0_u64; 10];
+            let mut data_zeta = [0_u64; 10];
 
-            let mut writer = <BufBitWriter<LE, _>>::new(MemWordWriterVec::new(&mut data_pi));
+            let mut writer = <BufBitWriter<LE, _>>::new(MemWordWriterSlice::new(&mut data_pi));
             let code_len = writer.write_pi(value, 0).unwrap();
             assert_eq!(code_len, len_pi(value, 0));
             drop(writer);
 
-            let mut writer = <BufBitWriter<LE, _>>::new(MemWordWriterVec::new(&mut data_zeta));
+            let mut writer = <BufBitWriter<LE, _>>::new(MemWordWriterSlice::new(&mut data_zeta));
             let code_len = writer.write_zeta(value, 1).unwrap();
             assert_eq!(code_len, len_zeta(value, 1));
             drop(writer);

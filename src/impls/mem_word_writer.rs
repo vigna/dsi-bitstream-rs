@@ -6,6 +6,7 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
+#[cfg(feature = "alloc")]
 use core::convert::Infallible;
 #[cfg(feature = "mem_dbg")]
 use mem_dbg::{MemDbg, MemSize};
@@ -149,44 +150,37 @@ impl<W: Word, B: AsMut<alloc::vec::Vec<W>> + AsRef<alloc::vec::Vec<W>>> MemWordW
 }
 
 impl<W: Word, B: AsMut<[W]>> WordRead for MemWordWriterSlice<W, B> {
-    type Error = std::io::Error;
+    type Error = WordError;
     type Word = W;
 
     #[inline]
-    fn read_word(&mut self) -> Result<W, std::io::Error> {
+    fn read_word(&mut self) -> Result<W, WordError> {
         match self.data.as_mut().get(self.word_index) {
             Some(word) => {
                 self.word_index += 1;
                 Ok(*word)
             }
-            None => Err(std::io::Error::new(
-                std::io::ErrorKind::UnexpectedEof,
-                "Cannot read next word as the underlying memory ended",
-            )),
+            None => Err(WordError::UnexpectedEof {
+                word_pos: self.word_index,
+            }),
         }
     }
 }
 
 impl<W: Word, B: AsRef<[W]> + AsMut<[W]>> WordSeek for MemWordWriterSlice<W, B> {
-    type Error = std::io::Error;
+    type Error = WordError;
 
     #[inline(always)]
-    fn word_pos(&mut self) -> Result<u64, std::io::Error> {
+    fn word_pos(&mut self) -> Result<u64, WordError> {
         Ok(self.word_index as u64)
     }
 
     #[inline(always)]
-    fn set_word_pos(&mut self, word_index: u64) -> Result<(), std::io::Error> {
+    fn set_word_pos(&mut self, word_index: u64) -> Result<(), WordError> {
         if word_index > self.data.as_ref().len() as u64 {
-            Err(std::io::Error::new(
-                std::io::ErrorKind::UnexpectedEof,
-                format_args!(
-                    "Position beyond end of vector: {} > {}",
-                    word_index,
-                    self.data.as_ref().len()
-                )
-                .to_string(),
-            ))
+            Err(WordError::UnexpectedEof {
+                word_pos: self.word_index,
+            })
         } else {
             self.word_index = word_index as usize;
             Ok(())
@@ -195,21 +189,20 @@ impl<W: Word, B: AsRef<[W]> + AsMut<[W]>> WordSeek for MemWordWriterSlice<W, B> 
 }
 
 impl<W: Word, B: AsMut<[W]>> WordWrite for MemWordWriterSlice<W, B> {
-    type Error = std::io::Error;
+    type Error = WordError;
     type Word = W;
 
     #[inline]
-    fn write_word(&mut self, word: W) -> Result<(), std::io::Error> {
+    fn write_word(&mut self, word: W) -> Result<(), WordError> {
         match self.data.as_mut().get_mut(self.word_index) {
             Some(word_ref) => {
                 self.word_index += 1;
                 *word_ref = word;
                 Ok(())
             }
-            None => Err(std::io::Error::new(
-                std::io::ErrorKind::UnexpectedEof,
-                "Cannot write next word as the underlying memory ended",
-            )),
+            None => Err(WordError::UnexpectedEof {
+                word_pos: self.word_index,
+            }),
         }
     }
 
@@ -240,20 +233,19 @@ impl<W: Word, B: AsMut<alloc::vec::Vec<W>>> WordWrite for MemWordWriterVec<W, B>
 
 #[cfg(feature = "alloc")]
 impl<W: Word, B: AsMut<alloc::vec::Vec<W>>> WordRead for MemWordWriterVec<W, B> {
-    type Error = std::io::Error;
+    type Error = WordError;
     type Word = W;
 
     #[inline]
-    fn read_word(&mut self) -> Result<W, std::io::Error> {
+    fn read_word(&mut self) -> Result<W, WordError> {
         match self.data.as_mut().get(self.word_index) {
             Some(word) => {
                 self.word_index += 1;
                 Ok(*word)
             }
-            None => Err(std::io::Error::new(
-                std::io::ErrorKind::UnexpectedEof,
-                "Cannot read next word as the underlying memory ended",
-            )),
+            None => Err(WordError::UnexpectedEof {
+                word_pos: self.word_index,
+            }),
         }
     }
 }
@@ -262,25 +254,19 @@ impl<W: Word, B: AsMut<alloc::vec::Vec<W>>> WordRead for MemWordWriterVec<W, B> 
 impl<W: Word, B: AsMut<alloc::vec::Vec<W>> + AsRef<alloc::vec::Vec<W>>> WordSeek
     for MemWordWriterVec<W, B>
 {
-    type Error = std::io::Error;
+    type Error = WordError;
 
     #[inline(always)]
-    fn word_pos(&mut self) -> Result<u64, std::io::Error> {
+    fn word_pos(&mut self) -> Result<u64, WordError> {
         Ok(self.word_index as u64)
     }
 
     #[inline(always)]
-    fn set_word_pos(&mut self, word_index: u64) -> Result<(), std::io::Error> {
+    fn set_word_pos(&mut self, word_index: u64) -> Result<(), WordError> {
         if word_index > self.data.as_ref().len() as u64 {
-            Err(std::io::Error::new(
-                std::io::ErrorKind::UnexpectedEof,
-                format_args!(
-                    "Position beyond end of vector: {} > {}",
-                    word_index,
-                    self.data.as_ref().len()
-                )
-                .to_string(),
-            ))
+            Err(WordError::UnexpectedEof {
+                word_pos: self.word_index,
+            })
         } else {
             self.word_index = word_index as usize;
             Ok(())

@@ -247,6 +247,7 @@ impl<E: Endianness, B: BitWrite<E>> VByteLeWrite<E> for B {
 ///
 /// This method just delegates to the correct endianness-specific method.
 #[inline(always)]
+#[cfg(feature = "std")]
 pub fn vbyte_write<E: Endianness, W: std::io::Write>(
     value: u64,
     writer: &mut W,
@@ -261,6 +262,7 @@ pub fn vbyte_write<E: Endianness, W: std::io::Write>(
 /// Encode a natural number to a big-endian byte stream using variable-length
 /// byte codes and return the number of bytes written.
 #[inline(always)]
+#[cfg(feature = "std")]
 pub fn vbyte_write_be<W: std::io::Write>(mut value: u64, w: &mut W) -> std::io::Result<usize> {
     let mut buf = [0u8; 10];
     let mut pos = buf.len() - 1;
@@ -280,6 +282,7 @@ pub fn vbyte_write_be<W: std::io::Write>(mut value: u64, w: &mut W) -> std::io::
 /// Encode a natural number to a little-endian byte stream using variable-length
 /// byte codes and return the number of bytes written.
 #[inline(always)]
+#[cfg(feature = "std")]
 pub fn vbyte_write_le<W: std::io::Write>(mut value: u64, writer: &mut W) -> std::io::Result<usize> {
     let mut len = 1;
     loop {
@@ -298,6 +301,7 @@ pub fn vbyte_write_le<W: std::io::Write>(mut value: u64, writer: &mut W) -> std:
 }
 
 #[inline(always)]
+#[cfg(feature = "std")]
 /// Decode a natural number from a byte stream using variable-length byte codes.
 ///
 /// This method just delegates to the correct endianness-specific method.
@@ -312,6 +316,7 @@ pub fn vbyte_read<E: Endianness, R: std::io::Read>(reader: &mut R) -> std::io::R
 /// Decode a natural number from a big-endian byte stream using variable-length
 /// byte codes.
 #[inline(always)]
+#[cfg(feature = "std")]
 pub fn vbyte_read_be<R: std::io::Read>(reader: &mut R) -> std::io::Result<u64> {
     let mut buf = [0u8; 1];
     let mut value: u64;
@@ -328,6 +333,7 @@ pub fn vbyte_read_be<R: std::io::Read>(reader: &mut R) -> std::io::Result<u64> {
 /// Decode a natural number from a little-endian byte stream using
 /// variable-length byte codes.
 #[inline(always)]
+#[cfg(feature = "std")]
 pub fn vbyte_read_le<R: std::io::Read>(reader: &mut R) -> std::io::Result<u64> {
     let mut result = 0;
     let mut shift = 0;
@@ -346,7 +352,9 @@ pub fn vbyte_read_le<R: std::io::Read>(reader: &mut R) -> std::io::Result<u64> {
 }
 
 #[cfg(test)]
+#[cfg(feature = "std")]
 mod test {
+    #[allow(unused_imports)]
     use super::*;
 
     const UPPER_BOUND_1: u64 = 128;
