@@ -1101,8 +1101,8 @@ def generate_default_tables():
         merged_table=False,  # Irrelevant for speed, a bit smaller
     )
     gen_delta(
-        read_bits=11,  # No use on any architecture if 9-bit gamma tables are available, but just in case someone selects it
-        write_max_val=1023,  # Very useful, both tables (delta and gamma)
+        read_bits=10,  # No use on any architecture if 9-bit gamma tables are available, but just in case someone selects it
+        write_max_val=255,  # Very useful, both tables (delta and gamma)
         merged_table=False,
     )
     gen_zeta(
@@ -1112,8 +1112,8 @@ def generate_default_tables():
         merged_table=False,  # A bit better on ARM, very slightly worse on i7, same on Xeon
     )
     gen_omega(
-        read_bits=12,  # Necessary for all architectures
-        write_max_val=1023,  # Very useful
+        read_bits=10,  # Very useful on all architectures; 7 is a valid alternative value to save cache lines (and is sufficient on the implied distribution)
+        write_max_val=63,  # Very useful
         merged_table=False,
     )
     subprocess.check_call(

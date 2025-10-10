@@ -37,6 +37,10 @@ where `RP`/`WP` is set to your selector types. Then, by specifying your type as 
 parameter `RP`/`WP` when creating such readers and writers you will use
 automatically your blanket implementations instead of the ones provided by this module.
 
+Note that the default implementations provided by this module are targeted at
+`u32` read words and `u64` write words. If you use different word sizes,
+you may want to write your own selector types.
+
 */
 
 use crate::codes::*;
@@ -74,8 +78,8 @@ macro_rules! impl_default_read_codes {
         {
             #[inline(always)]
             fn read_gamma(&mut self) -> Result<u64, Self::Error> {
-                // From our tests, the ARM architecture is faster
-                // without tables for ɣ codes.
+                // From our tests on all architectures ɣ codes are faster
+                // without tables
                 self.read_gamma_param::<false>()
             }
         }
