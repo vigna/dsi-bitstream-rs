@@ -1,5 +1,13 @@
 # Change Log
 
+## [0.5.2] - 2025-10-10
+
+### Changed
+
+* Regenerated comparative performance graphs.
+
+* We moved to the 2024 edition.
+
 ## [0.5.1] - 2025-10-10
 
 ### New
