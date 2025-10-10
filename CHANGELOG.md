@@ -1,16 +1,26 @@
 # Change Log
 
-## [0.5.1] - 2025-10-08
+## [0.5.1] - 2025-10-10
 
 ### New
 
-* New `MinimalBinary` struct providing static and dynamic
-  dispatching of minimal binary codes.
+* New `MinimalBinary` struct providing static and dynamic dispatching of minimal
+  binary codes.
 
-* All codes now declare their range of validity (parameters
-  and inputs), which is checked in the tests.
+* All codes now declare their range of validity (parameters and inputs), which
+  is checked in the tests.
 
 * Elias Omega has tables supporting partial (de)coding.
+
+* New benchmarks using a distribution ≈1/x on the first billion integers.
+
+* Revised table sizes using new benchmarks.
+
+### Changed
+
+* All benchmarks now use either the implied distribution or a distribution ≈1/x
+  on the first billion integers. Previously there were a few handcrafted
+  distributions.
 
 ## [0.5.0] - 2025-03-17
 

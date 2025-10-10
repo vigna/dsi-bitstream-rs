@@ -138,7 +138,7 @@ pub mod omega_tables;
 
 /// Extension trait mapping natural numbers bijectively to integers.
 ///
-/// The method [`to_int`](#tymethod.to_int) will map a natural number `x` to `x
+/// The method [`to_int`](#method.to_int) will map a natural number `x` to `x
 /// / 2` if `x` is even, and to `−(x + 1) / 2` if `x` is odd. The inverse
 /// transformation is provided by the [`ToNat`] trait.
 ///
@@ -172,7 +172,7 @@ impl ToInt for usize {}
 
 /// Extension trait mapping signed integers bijectively to natural numbers.
 ///
-/// The method [`to_nat`](#tymethod.to_nat) will map an nonnegative integer `x`
+/// The method [`to_nat`](#method.to_nat) will map an nonnegative integer `x`
 /// to `2x` and a negative integer `x` to `−2x − 1`. The inverse transformation
 /// is provided by the [`ToInt`] trait.
 ///
