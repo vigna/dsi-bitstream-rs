@@ -27,7 +27,7 @@
 //! integers](https://doi.org/10.1109/TIT.1975.1055349)”. IEEE Transactions on
 //! Information Theory, 21(2):194−203, March 1975.
 
-use super::{delta_tables, len_gamma_param, GammaReadParam, GammaWriteParam};
+use super::{GammaReadParam, GammaWriteParam, delta_tables, len_gamma_param};
 use crate::traits::*;
 
 /// Returns the length of the δ code for `n`.

@@ -56,10 +56,10 @@ impl<E: Endianness, WR, RP: ReadParams> BitReader<E, WR, RP> {
 }
 
 impl<
-        E: Error + Send + Sync + 'static,
-        WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>,
-        RP: ReadParams,
-    > BitRead<BE> for BitReader<BE, WR, RP>
+    E: Error + Send + Sync + 'static,
+    WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>,
+    RP: ReadParams,
+> BitRead<BE> for BitReader<BE, WR, RP>
 {
     type Error = <WR as WordRead>::Error;
     type PeekWord = u32;
@@ -178,10 +178,10 @@ impl<WR: WordSeek, RP: ReadParams> BitSeek for BitReader<BE, WR, RP> {
 }
 
 impl<
-        E: Error + Send + Sync + 'static,
-        WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>,
-        RP: ReadParams,
-    > BitRead<LE> for BitReader<LE, WR, RP>
+    E: Error + Send + Sync + 'static,
+    WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>,
+    RP: ReadParams,
+> BitRead<LE> for BitReader<LE, WR, RP>
 {
     type Error = <WR as WordRead>::Error;
     type PeekWord = u32;
@@ -278,10 +278,10 @@ impl<
 
 #[cfg(feature = "std")]
 impl<
-        E: Error + Send + Sync + 'static,
-        WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>,
-        RP: ReadParams,
-    > std::io::Read for BitReader<LE, WR, RP>
+    E: Error + Send + Sync + 'static,
+    WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>,
+    RP: ReadParams,
+> std::io::Read for BitReader<LE, WR, RP>
 {
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
         let mut iter = buf.chunks_exact_mut(8);
@@ -307,10 +307,10 @@ impl<
 
 #[cfg(feature = "std")]
 impl<
-        E: Error + Send + Sync + 'static,
-        WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>,
-        RP: ReadParams,
-    > std::io::Read for BitReader<BE, WR, RP>
+    E: Error + Send + Sync + 'static,
+    WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>,
+    RP: ReadParams,
+> std::io::Read for BitReader<BE, WR, RP>
 {
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
         let mut iter = buf.chunks_exact_mut(8);

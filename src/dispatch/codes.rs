@@ -178,7 +178,7 @@ impl Codes {
                 return Err(anyhow::anyhow!(
                     "Code {:?} not supported as const code",
                     self
-                ))
+                ));
             }
         })
     }

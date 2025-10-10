@@ -329,10 +329,10 @@ where
 }
 
 impl<
-        E: Error + Send + Sync + 'static,
-        WR: WordRead<Error = E> + WordSeek<Error = E>,
-        RP: ReadParams,
-    > BitSeek for BufBitReader<BE, WR, RP>
+    E: Error + Send + Sync + 'static,
+    WR: WordRead<Error = E> + WordSeek<Error = E>,
+    RP: ReadParams,
+> BitSeek for BufBitReader<BE, WR, RP>
 where
     WR::Word: DoubleType,
 {
@@ -582,10 +582,10 @@ where
 }
 
 impl<
-        E: Error + Send + Sync + 'static,
-        WR: WordRead<Error = E> + WordSeek<Error = E>,
-        RP: ReadParams,
-    > BitSeek for BufBitReader<LE, WR, RP>
+    E: Error + Send + Sync + 'static,
+    WR: WordRead<Error = E> + WordSeek<Error = E>,
+    RP: ReadParams,
+> BitSeek for BufBitReader<LE, WR, RP>
 where
     WR::Word: DoubleType,
 {
@@ -715,11 +715,11 @@ mod test {
                 use crate::{
                     codes::{GammaRead, GammaWrite},
                     prelude::{
-                        len_delta, len_gamma, BufBitWriter, DeltaRead, DeltaWrite, MemWordReader,
+                        BufBitWriter, DeltaRead, DeltaWrite, MemWordReader, len_delta, len_gamma,
                     },
                 };
                 use rand::Rng;
-                use rand::{rngs::SmallRng, SeedableRng};
+                use rand::{SeedableRng, rngs::SmallRng};
 
                 let mut buffer_be: Vec<$word> = vec![];
                 let mut buffer_le: Vec<$word> = vec![];

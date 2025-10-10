@@ -32,7 +32,7 @@
 //! Web](https://doi.org/10.1080/15427951.2005.10129113)”. Internet Math.,
 //! 2(4):405−427, 2005.
 
-use super::{len_minimal_binary, zeta_tables, MinimalBinaryRead, MinimalBinaryWrite};
+use super::{MinimalBinaryRead, MinimalBinaryWrite, len_minimal_binary, zeta_tables};
 use crate::traits::*;
 
 /// Returns the length of the ζ code with parameter `k` for `n`.

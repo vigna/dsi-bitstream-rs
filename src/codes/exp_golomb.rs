@@ -28,7 +28,7 @@
 //! [H.265](https://en.wikipedia.org/wiki/High_Efficiency_Video_Coding)
 //! standards.
 
-use super::gamma::{len_gamma, GammaRead, GammaWrite};
+use super::gamma::{GammaRead, GammaWrite, len_gamma};
 use crate::traits::*;
 
 /// Returns the length of the exponential Golomb code for `n` with parameter `k`.

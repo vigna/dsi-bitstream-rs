@@ -36,7 +36,7 @@
 
 use crate::traits::*;
 
-use super::{len_rice, RiceRead, RiceWrite};
+use super::{RiceRead, RiceWrite, len_rice};
 
 /// Return the length of the π code for `n` with parameter `k`.
 ///

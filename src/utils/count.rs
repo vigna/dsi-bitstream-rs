@@ -6,8 +6,8 @@
 
 use crate::{
     prelude::{
-        len_delta, len_gamma, len_zeta, DeltaRead, DeltaWrite, GammaRead, GammaWrite, ZetaRead,
-        ZetaWrite,
+        DeltaRead, DeltaWrite, GammaRead, GammaWrite, ZetaRead, ZetaWrite, len_delta, len_gamma,
+        len_zeta,
     },
     traits::*,
 };

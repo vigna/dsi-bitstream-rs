@@ -8,12 +8,12 @@
 //! - if continuation bits at start, test if chains vs leading_ones and jump table
 //!
 use anyhow::Result;
-use criterion::{criterion_group, criterion_main, Criterion};
+use criterion::{Criterion, criterion_group, criterion_main};
 use dsi_bitstream::prelude::*;
 use dsi_bitstream::traits::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
-use rand::rngs::SmallRng;
 use rand::Rng;
 use rand::SeedableRng;
+use rand::rngs::SmallRng;
 use std::hint::black_box;
 use std::io::{Read, Write};
 use std::marker::PhantomData;

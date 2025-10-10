@@ -153,7 +153,7 @@ def gen_table(
                 code_name
             )
         )
-        f.write("use crate::traits::{BitRead, BitWrite, BE, LE};\n")
+        f.write("use crate::traits::{BE, BitRead, BitWrite, LE};\n")
         f.write("use common_traits::*;\n")
 
         f.write("/// How many bits are needed to read the tables in this\n")

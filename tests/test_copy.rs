@@ -9,7 +9,7 @@ use common_traits::{DoubleType, UnsignedInt};
 use dsi_bitstream::prelude::{
     BitRead, BitWrite, BufBitReader, BufBitWriter, MemWordReader, MemWordWriterVec,
 };
-use dsi_bitstream::traits::{Endianness, BE, LE};
+use dsi_bitstream::traits::{BE, Endianness, LE};
 use rand::rngs::SmallRng;
 use rand::{Rng, SeedableRng};
 use std::error::Error;
@@ -78,8 +78,8 @@ where
 
 const MAX_LEN: u64 = 500;
 
-fn test_endianness<E: Endianness, W: UnsignedInt + DoubleType + 'static>(
-) -> Result<(), Box<dyn Error + Send + Sync + 'static>>
+fn test_endianness<E: Endianness, W: UnsignedInt + DoubleType + 'static>()
+-> Result<(), Box<dyn Error + Send + Sync + 'static>>
 where
     BufBitReader<E, MemWordReader<W, Vec<W>>>: BitRead<E>,
     BufBitWriter<E, MemWordWriterVec<W, Vec<W>>>: BitWrite<E>,

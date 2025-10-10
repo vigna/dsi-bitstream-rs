@@ -236,7 +236,7 @@ pub mod codes;
 pub use codes::*;
 
 pub mod r#static;
-pub use r#static::{code_consts, ConstCode};
+pub use r#static::{ConstCode, code_consts};
 
 pub mod dynamic;
 pub use dynamic::{FuncCodeLen, FuncCodeReader, FuncCodeWriter};

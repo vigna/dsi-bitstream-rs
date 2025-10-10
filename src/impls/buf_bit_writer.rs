@@ -561,11 +561,11 @@ mod test {
                 use crate::{
                     codes::{GammaRead, GammaWrite},
                     prelude::{
-                        len_delta, len_gamma, BufBitReader, DeltaRead, DeltaWrite, MemWordReader,
+                        BufBitReader, DeltaRead, DeltaWrite, MemWordReader, len_delta, len_gamma,
                     },
                 };
                 use rand::Rng;
-                use rand::{rngs::SmallRng, SeedableRng};
+                use rand::{SeedableRng, rngs::SmallRng};
 
                 let mut buffer_be: Vec<$word> = vec![];
                 let mut buffer_le: Vec<$word> = vec![];

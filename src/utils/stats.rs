@@ -9,8 +9,8 @@
 use mem_dbg::{MemDbg, MemSize};
 
 use crate::prelude::{
-    bit_len_vbyte, len_delta, len_exp_golomb, len_gamma, len_golomb, len_omega, len_pi, len_rice,
-    len_zeta, Codes,
+    Codes, bit_len_vbyte, len_delta, len_exp_golomb, len_gamma, len_golomb, len_omega, len_pi,
+    len_rice, len_zeta,
 };
 use core::fmt::Debug;
 
@@ -87,12 +87,12 @@ pub struct CodesStats<
 }
 
 impl<
-        const ZETA: usize,
-        const GOLOMB: usize,
-        const EXP_GOLOMB: usize,
-        const RICE: usize,
-        const PI: usize,
-    > core::default::Default for CodesStats<ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
+    const ZETA: usize,
+    const GOLOMB: usize,
+    const EXP_GOLOMB: usize,
+    const RICE: usize,
+    const PI: usize,
+> core::default::Default for CodesStats<ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
 {
     fn default() -> Self {
         Self {
@@ -112,12 +112,12 @@ impl<
 }
 
 impl<
-        const ZETA: usize,
-        const GOLOMB: usize,
-        const EXP_GOLOMB: usize,
-        const RICE: usize,
-        const PI: usize,
-    > CodesStats<ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
+    const ZETA: usize,
+    const GOLOMB: usize,
+    const EXP_GOLOMB: usize,
+    const RICE: usize,
+    const PI: usize,
+> CodesStats<ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
 {
     /// Update the stats with the lengths of the codes for `n` and return
     /// `n` for convenience.
@@ -264,12 +264,12 @@ impl<
 
 /// Combines additively this stats with another one.
 impl<
-        const ZETA: usize,
-        const GOLOMB: usize,
-        const EXP_GOLOMB: usize,
-        const RICE: usize,
-        const PI: usize,
-    > core::ops::AddAssign for CodesStats<ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
+    const ZETA: usize,
+    const GOLOMB: usize,
+    const EXP_GOLOMB: usize,
+    const RICE: usize,
+    const PI: usize,
+> core::ops::AddAssign for CodesStats<ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
 {
     fn add_assign(&mut self, rhs: Self) {
         self.add(&rhs);
@@ -278,12 +278,12 @@ impl<
 
 /// Combines additively this stats with another one creating a new one.
 impl<
-        const ZETA: usize,
-        const GOLOMB: usize,
-        const EXP_GOLOMB: usize,
-        const RICE: usize,
-        const PI: usize,
-    > core::ops::Add for CodesStats<ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
+    const ZETA: usize,
+    const GOLOMB: usize,
+    const EXP_GOLOMB: usize,
+    const RICE: usize,
+    const PI: usize,
+> core::ops::Add for CodesStats<ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
 {
     type Output = Self;
 
@@ -296,12 +296,12 @@ impl<
 
 /// Allow to call .sum() on an iterator of CodesStats.
 impl<
-        const ZETA: usize,
-        const GOLOMB: usize,
-        const EXP_GOLOMB: usize,
-        const RICE: usize,
-        const PI: usize,
-    > core::iter::Sum for CodesStats<ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
+    const ZETA: usize,
+    const GOLOMB: usize,
+    const EXP_GOLOMB: usize,
+    const RICE: usize,
+    const PI: usize,
+> core::iter::Sum for CodesStats<ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
 {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
         iter.fold(Self::default(), |a, b| a + b)
@@ -334,13 +334,13 @@ pub struct CodesStatsWrapper<
 
 #[cfg(feature = "std")]
 impl<
-        W,
-        const ZETA: usize,
-        const GOLOMB: usize,
-        const EXP_GOLOMB: usize,
-        const RICE: usize,
-        const PI: usize,
-    > CodesStatsWrapper<W, ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
+    W,
+    const ZETA: usize,
+    const GOLOMB: usize,
+    const EXP_GOLOMB: usize,
+    const RICE: usize,
+    const PI: usize,
+> CodesStatsWrapper<W, ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
 {
     /// Create a new `CodesStatsWrapper` with the given wrapped value.
     pub fn new(wrapped: W) -> Self {
@@ -363,13 +363,13 @@ impl<
 
 #[cfg(feature = "std")]
 impl<
-        W: DynamicCodeRead,
-        const ZETA: usize,
-        const GOLOMB: usize,
-        const EXP_GOLOMB: usize,
-        const RICE: usize,
-        const PI: usize,
-    > DynamicCodeRead for CodesStatsWrapper<W, ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
+    W: DynamicCodeRead,
+    const ZETA: usize,
+    const GOLOMB: usize,
+    const EXP_GOLOMB: usize,
+    const RICE: usize,
+    const PI: usize,
+> DynamicCodeRead for CodesStatsWrapper<W, ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
 {
     #[inline]
     fn read<E: Endianness, CR: CodesRead<E> + ?Sized>(
@@ -384,15 +384,15 @@ impl<
 
 #[cfg(feature = "std")]
 impl<
-        W: StaticCodeRead<E, CR>,
-        const ZETA: usize,
-        const GOLOMB: usize,
-        const EXP_GOLOMB: usize,
-        const RICE: usize,
-        const PI: usize,
-        E: Endianness,
-        CR: CodesRead<E> + ?Sized,
-    > StaticCodeRead<E, CR> for CodesStatsWrapper<W, ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
+    W: StaticCodeRead<E, CR>,
+    const ZETA: usize,
+    const GOLOMB: usize,
+    const EXP_GOLOMB: usize,
+    const RICE: usize,
+    const PI: usize,
+    E: Endianness,
+    CR: CodesRead<E> + ?Sized,
+> StaticCodeRead<E, CR> for CodesStatsWrapper<W, ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
 {
     #[inline]
     fn read(&self, reader: &mut CR) -> Result<u64, CR::Error> {
@@ -404,13 +404,13 @@ impl<
 
 #[cfg(feature = "std")]
 impl<
-        W: DynamicCodeWrite,
-        const ZETA: usize,
-        const GOLOMB: usize,
-        const EXP_GOLOMB: usize,
-        const RICE: usize,
-        const PI: usize,
-    > DynamicCodeWrite for CodesStatsWrapper<W, ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
+    W: DynamicCodeWrite,
+    const ZETA: usize,
+    const GOLOMB: usize,
+    const EXP_GOLOMB: usize,
+    const RICE: usize,
+    const PI: usize,
+> DynamicCodeWrite for CodesStatsWrapper<W, ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
 {
     #[inline]
     fn write<E: Endianness, CW: CodesWrite<E> + ?Sized>(
@@ -426,15 +426,15 @@ impl<
 
 #[cfg(feature = "std")]
 impl<
-        W: StaticCodeWrite<E, CW>,
-        const ZETA: usize,
-        const GOLOMB: usize,
-        const EXP_GOLOMB: usize,
-        const RICE: usize,
-        const PI: usize,
-        E: Endianness,
-        CW: CodesWrite<E> + ?Sized,
-    > StaticCodeWrite<E, CW> for CodesStatsWrapper<W, ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
+    W: StaticCodeWrite<E, CW>,
+    const ZETA: usize,
+    const GOLOMB: usize,
+    const EXP_GOLOMB: usize,
+    const RICE: usize,
+    const PI: usize,
+    E: Endianness,
+    CW: CodesWrite<E> + ?Sized,
+> StaticCodeWrite<E, CW> for CodesStatsWrapper<W, ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
 {
     #[inline]
     fn write(&self, writer: &mut CW, value: u64) -> Result<usize, CW::Error> {

@@ -34,7 +34,7 @@
 //! (Corresp.)](https://doi.org/10.1109/TIT.1975.1055357)”. IEEE Transactions on
 //! Information Theory, 21(2):228−230, March 1975.
 
-use super::minimal_binary::{len_minimal_binary, MinimalBinaryRead, MinimalBinaryWrite};
+use super::minimal_binary::{MinimalBinaryRead, MinimalBinaryWrite, len_minimal_binary};
 use crate::traits::*;
 
 /// Returns the length of the Golomb code for `n` with modulo `b`.

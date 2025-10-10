@@ -123,11 +123,11 @@ fn test_vals_codes<E: Endianness>(
     val_codes: &mut [(
         u64,
         impl DynamicCodeRead
-            + DynamicCodeWrite
-            + for<'a> StaticCodeRead<E, BR<'a, E>>
-            + for<'b> StaticCodeWrite<E, BW<'b, E>>
-            + CodeLen
-            + fmt::Debug,
+        + DynamicCodeWrite
+        + for<'a> StaticCodeRead<E, BR<'a, E>>
+        + for<'b> StaticCodeWrite<E, BW<'b, E>>
+        + CodeLen
+        + fmt::Debug,
     )],
 ) -> Result<(), Box<dyn std::error::Error>>
 where

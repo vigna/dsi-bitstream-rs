@@ -98,34 +98,34 @@ pub mod params;
 
 pub mod gamma;
 pub use gamma::{
-    len_gamma, len_gamma_param, GammaRead, GammaReadParam, GammaWrite, GammaWriteParam,
+    GammaRead, GammaReadParam, GammaWrite, GammaWriteParam, len_gamma, len_gamma_param,
 };
 
 pub mod delta;
 pub use delta::{
-    len_delta, len_delta_param, DeltaRead, DeltaReadParam, DeltaWrite, DeltaWriteParam,
+    DeltaRead, DeltaReadParam, DeltaWrite, DeltaWriteParam, len_delta, len_delta_param,
 };
 
 pub mod omega;
-pub use omega::{len_omega, OmegaRead, OmegaReadParam, OmegaWrite, OmegaWriteParam};
+pub use omega::{OmegaRead, OmegaReadParam, OmegaWrite, OmegaWriteParam, len_omega};
 
 pub mod minimal_binary;
-pub use minimal_binary::{len_minimal_binary, MinimalBinaryRead, MinimalBinaryWrite};
+pub use minimal_binary::{MinimalBinaryRead, MinimalBinaryWrite, len_minimal_binary};
 
 pub mod zeta;
-pub use zeta::{len_zeta, len_zeta_param, ZetaRead, ZetaReadParam, ZetaWrite, ZetaWriteParam};
+pub use zeta::{ZetaRead, ZetaReadParam, ZetaWrite, ZetaWriteParam, len_zeta, len_zeta_param};
 
 pub mod pi;
-pub use pi::{len_pi, PiRead, PiWrite};
+pub use pi::{PiRead, PiWrite, len_pi};
 
 pub mod golomb;
-pub use golomb::{len_golomb, GolombRead, GolombWrite};
+pub use golomb::{GolombRead, GolombWrite, len_golomb};
 
 pub mod rice;
-pub use rice::{len_rice, RiceRead, RiceWrite};
+pub use rice::{RiceRead, RiceWrite, len_rice};
 
 pub mod exp_golomb;
-pub use exp_golomb::{len_exp_golomb, ExpGolombRead, ExpGolombWrite};
+pub use exp_golomb::{ExpGolombRead, ExpGolombWrite, len_exp_golomb};
 
 pub mod vbyte;
 pub use vbyte::*;
