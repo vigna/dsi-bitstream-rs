@@ -108,6 +108,8 @@ pub trait BitRead<E: Endianness> {
     fn skip_bits_after_peek(&mut self, n: usize);
 
     /// Read a unary code.
+    ///
+    /// Implementations are required to support the range [0 . . 2⁶⁴ – 1).
     fn read_unary(&mut self) -> Result<u64, Self::Error>;
 
     fn copy_to<F: Endianness, W: BitWrite<F>>(
@@ -145,6 +147,8 @@ pub trait BitWrite<E: Endianness> {
 
     /// Write `value` as a unary code to the stream and return the number of
     /// bits written, that is, `value` plus one.
+    ///
+    /// Implementations are required to support the range [0 . . 2⁶⁴ – 1).
     fn write_unary(&mut self, value: u64) -> Result<usize, Self::Error>;
 
     /// Flush the buffer, consuming the bit stream.

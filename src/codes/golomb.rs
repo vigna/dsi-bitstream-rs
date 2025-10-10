@@ -21,7 +21,10 @@
 //!
 //! For a faster, less precise alternative, see [Rice codes](super::rice).
 //!
-//! The supported range is [0 . . 2⁶⁴) for *b* in [0 . . 2⁶⁴).
+//! The supported range is [0 . . 2⁶⁴) for *b* in [0 . . 2⁶⁴), but writing
+//! 2⁶⁴ – 1 when *b* = 1 requires writing the unary code for 2⁶⁴ – 1, which
+//! might not be possible depending on the [`BitWrite`](crate::traits::BitWrite)
+//! implementation (and would require writing 2⁶⁴ bits anyway).
 //!
 //! # References
 //!

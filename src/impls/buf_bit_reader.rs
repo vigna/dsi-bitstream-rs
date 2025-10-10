@@ -39,7 +39,7 @@ type BB<WR> = <<WR as WordRead>::Word as DoubleType>::DoubleType;
 /// [`BitReader`](crate::impls::BitReader).
 ///
 /// The additional type parameter `RP` is used to select the parameters for the
-/// instantanous codes, but the casual user should be happy with the default
+/// instantaneous codes, but the casual user should be happy with the default
 /// value. See [`ReadParams`] for more details.
 ///
 /// For additional flexibility, this structures implements [`std::io::Read`].

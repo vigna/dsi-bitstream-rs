@@ -25,9 +25,6 @@ use mem_dbg::{MemDbg, MemSize};
 /// instantaneous codes, but the casual user should be happy with the default
 /// value. See [`WriteParams`] for more details.
 ///
-/// The supported range for [writing unary codes](BitWrite::write_unary) is
-/// [0 . . 2⁶⁴ – 1).
-///
 /// For additional flexibility, this structures implements [`std::io::Write`].
 /// Note that because of coherence rules it is not possible to implement
 /// [`std::io::Write`] for a generic [`BitWrite`].
