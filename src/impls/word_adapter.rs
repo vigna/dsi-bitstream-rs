@@ -86,7 +86,7 @@ impl<W: UnsignedInt + ToBytes + FromBytes + FiniteRangeNumber, B: Write> WordWri
     type Error = std::io::Error;
     type Word = W;
 
-    #[inline]
+    #[inline(always)]
     fn write_word(&mut self, word: W) -> Result<(), std::io::Error> {
         let _ = self.backend.write(word.to_ne_bytes().as_ref())?;
         Ok(())
