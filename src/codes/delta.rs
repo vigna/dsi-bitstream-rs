@@ -103,17 +103,17 @@ impl<B: GammaReadParam<BE>> DeltaReadParam<BE> for B {
     ) -> Result<u64, B::Error> {
         if USE_DELTA_TABLE {
             let (len_with_flag, value_or_gamma) = delta_tables::read_table_be(self);
-            if (len_with_flag & 0x80) != 0 {
+            if len_with_flag > 0 {
+                // Complete code - bits already skipped in read_table
+                return Ok(value_or_gamma);
+            } else if len_with_flag < 0 {
                 // Partial code: gamma decoded, need to read fixed part
                 // Bits already skipped in read_table
                 let gamma_len = value_or_gamma;
                 debug_assert!(gamma_len < 64);
                 return Ok(self.read_bits(gamma_len as usize)? + (1 << gamma_len) - 1);
-            } else if len_with_flag != 0 {
-                // Complete code - bits already skipped in read_table
-                return Ok(value_or_gamma);
             }
-            // len_with_flag == 0: no valid decoding (gamma not decoded), fall through
+            // len_with_flag == 0: no valid decoding, fall through
         }
         default_read_delta::<BE, _, USE_GAMMA_TABLE>(self)
     }
@@ -126,17 +126,17 @@ impl<B: GammaReadParam<LE>> DeltaReadParam<LE> for B {
     ) -> Result<u64, B::Error> {
         if USE_DELTA_TABLE {
             let (len_with_flag, value_or_gamma) = delta_tables::read_table_le(self);
-            if (len_with_flag & 0x80) != 0 {
+            if len_with_flag > 0 {
+                // Complete code - bits already skipped in read_table
+                return Ok(value_or_gamma);
+            } else if len_with_flag < 0 {
                 // Partial code: gamma decoded, need to read fixed part
                 // Bits already skipped in read_table
                 let gamma_len = value_or_gamma;
                 debug_assert!(gamma_len < 64);
                 return Ok(self.read_bits(gamma_len as usize)? + (1 << gamma_len) - 1);
-            } else if len_with_flag != 0 {
-                // Complete code - bits already skipped in read_table
-                return Ok(value_or_gamma);
             }
-            // len_with_flag == 0: no valid decoding (gamma not decoded), fall through
+            // len_with_flag == 0: no valid decoding, fall through
         }
         default_read_delta::<LE, _, USE_GAMMA_TABLE>(self)
     }

@@ -592,21 +592,19 @@ def gen_delta(read_bits, write_max_val, len_max_val=None, merged_table=False):
 /// Reads from the decoding table.
 ///
 /// Returns `(len_with_flag, value_or_gamma)` where:
-/// - If len_with_flag & 0x80 == 0: complete code, value_or_gamma is decoded value, len_with_flag is code length
-/// - If len_with_flag & 0x80 != 0: partial code (gamma decoded), value_or_gamma is gamma_len, (len_with_flag & 0x7F) is gamma code length
+/// - If len_with_flag >= 0: complete code, value_or_gamma is decoded value, len_with_flag is code length
+/// - If len_with_flag < 0: partial code (gamma decoded), value_or_gamma is gamma_len, (len_with_flag & 0x7F) is gamma code length
 /// - If len_with_flag = 0: no valid decoding (gamma not decoded)
 ///
-/// The backend position is always advanced by (len_with_flag & 0x7F) bits when len_with_flag != 0.
-/// Using the high bit flag instead of negative values allows extracting the length
-/// with a bitwise AND instead of abs(), which is typically faster.
+/// The backend position is always advanced by (len_with_flag & 0x7F) bits.
+/// Using signed i8 allows testing with `< 0` instead of masking, which is more efficient.
 #[inline(always)]
-pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> (u8, u64) {
+pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> (i8, u64) {
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
         let idx = idx.cast() as usize;
         let len_with_flag = READ_LEN_%(BO)s[idx];
         let value_or_gamma = READ_%(BO)s[idx] as u64;
         backend.skip_bits_after_peek((len_with_flag & 0x7F) as usize);
-
         (len_with_flag, value_or_gamma)
     } else {
         // Not enough bits available
@@ -677,24 +675,26 @@ pub fn write_table_be<B: BitWrite<BE>>(backend: &mut B, value: u64) -> Result<Op
                 f.write("{}, ".format(value_or_gamma))
             f.write("];\n")
 
-            # Length table with high bit flag (0x80) instead of sign
+            # Length table with high bit for partial codes (stored as i8)
             f.write(
                 "/// Precomputed lengths table for reading {} codes\n".format(code_name)
             )
-            f.write("/// High bit clear (< 0x80): complete code length\n")
+            f.write("/// Positive (< 0x80): complete code length\n")
             f.write(
-                "/// High bit set (>= 0x80): (value & 0x7F) is gamma code length (bits consumed)\n"
+                "/// Negative (>= 0x80 when viewed as u8): (value & 0x7F) is gamma code length (bits consumed)\n"
             )
             f.write("/// Zero: no valid decoding (gamma not decoded)\n")
             f.write(
                 "pub const READ_LEN_%s: &[%s] = &["
                 % (
                     BO,
-                    get_best_fitting_type(log2(read_max_len + 1) + 1),
-                )  # +1 for the flag bit
+                    get_best_fitting_type(log2(read_max_len + 1), signed=True),
+                )
             )
             for _, len_with_flag in codes:
-                f.write("{}, ".format(len_with_flag))
+                # Keep the bit pattern as is: len or (0x80 | len)
+                # When interpreted as i8, 0x80+ becomes negative
+                f.write("{}, ".format(len_with_flag if len_with_flag < 128 else len_with_flag - 256))
             f.write("];\n")
 
         # Write tables
@@ -1120,15 +1120,14 @@ def gen_omega(read_bits, write_max_val, len_max_val=None, merged_table=False):
 /// Reads from the decoding table.
 ///
 /// Returns `(len_with_flag, value)` where:
-/// - If len_with_flag & 0x80 == 0: complete code, value is decoded value, len_with_flag is code length
-/// - If len_with_flag & 0x80 != 0: partial code, value is partial_n, (len_with_flag & 0x7F) is partial_len
+/// - If len_with_flag >= 0: complete code, value is decoded value, len_with_flag is code length
+/// - If len_with_flag < 0: partial code, value is partial_n, (len_with_flag & 0x7F) is partial_len
 /// - If len_with_flag = 0: no valid decoding (cannot occur with >= 2 bit tables)
 ///
 /// The backend position is always advanced by (len_with_flag & 0x7F) bits.
-/// Using the high bit flag instead of negative values allows extracting the length
-/// with a bitwise AND instead of abs(), which is typically faster.
+/// Using signed i8 allows testing with `< 0` instead of masking, which is more efficient.
 #[inline(always)]
-pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> (u8, u64) {
+pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> (i8, u64) {
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
         let idx = idx.cast() as usize;
         let len_with_flag = READ_LEN_%(BO)s[idx];
@@ -1227,24 +1226,26 @@ pub fn write_table_be<B: BitWrite<BE>>(backend: &mut B, mut value: u64) -> Resul
                 f.write("{}, ".format(value_or_n))
             f.write("];\n")
 
-            # Length table with high bit flag (0x80) instead of sign
+            # Length table with high bit for partial codes (stored as i8)
             f.write(
                 "/// Precomputed lengths table for reading {} codes\n".format(code_name)
             )
-            f.write("/// High bit clear (< 0x80): complete code length\n")
+            f.write("/// Positive (< 0x80): complete code length\n")
             f.write(
-                "/// High bit set (>= 0x80): (value & 0x7F) is partial_len (bits consumed by complete blocks)\n"
+                "/// Negative (>= 0x80 when viewed as u8): (value & 0x7F) is partial_len (bits consumed by complete blocks)\n"
             )
             f.write("/// Zero: no valid decoding (cannot occur with >= 2 bit tables)\n")
             f.write(
                 "pub const READ_LEN_%s: &[%s] = &["
                 % (
                     BO,
-                    get_best_fitting_type(log2(read_max_len + 1) + 1),
-                )  # +1 for the flag bit
+                    get_best_fitting_type(log2(read_max_len + 1), signed=True),
+                )
             )
             for _, len_with_flag in codes:
-                f.write("{}, ".format(len_with_flag))
+                # Keep the bit pattern as is: len or (0x80 | len)
+                # When interpreted as i8, 0x80+ becomes negative
+                f.write("{}, ".format(len_with_flag if len_with_flag < 128 else len_with_flag - 256))
             f.write("];\n")
 
         # Write tables

@@ -152,13 +152,14 @@ impl<B: BitRead<BE>> OmegaReadParam<BE> for B {
     fn read_omega_param<const USE_TABLES: bool>(&mut self) -> Result<u64, Self::Error> {
         if USE_TABLES {
             let (len_with_flag, value) = omega_tables::read_table_be(self);
-            if (len_with_flag & 0x80) == 0 {
+            if len_with_flag > 0 {
                 // Complete code - bits already skipped in read_table
                 return Ok(value);
-            } else {
+            } else if len_with_flag < 0 {
                 // Partial code - bits already skipped in read_table, continue from partial_n
                 return read_omega_from_state::<BE, _>(self, value);
             }
+            // len_with_flag == 0: not enough bits, fall through
         }
         default_read_omega(self)
     }
@@ -169,13 +170,14 @@ impl<B: BitRead<LE>> OmegaReadParam<LE> for B {
     fn read_omega_param<const USE_TABLES: bool>(&mut self) -> Result<u64, Self::Error> {
         if USE_TABLES {
             let (len_with_flag, value) = omega_tables::read_table_le(self);
-            if (len_with_flag & 0x80) == 0 {
+            if len_with_flag > 0 {
                 // Complete code - bits already skipped in read_table
                 return Ok(value);
-            } else {
+            } else if len_with_flag < 0 {
                 // Partial code - bits already skipped in read_table, continue from partial_n
                 return read_omega_from_state::<LE, _>(self, value);
             }
+            // len_with_flag == 0: not enough bits, fall through
         }
         default_read_omega(self)
     }
