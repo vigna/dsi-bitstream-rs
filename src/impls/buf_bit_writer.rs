@@ -8,11 +8,8 @@
 
 use core::any::TypeId;
 use core::{mem, ptr};
-use std::io::BufWriter;
-use std::path::Path;
 
 use crate::codes::params::{DefaultWriteParams, WriteParams};
-use crate::impls::WordAdapter;
 use crate::traits::*;
 use common_traits::{AsBytes, CastableInto, FiniteRangeNumber, Integer, Number};
 #[cfg(feature = "mem_dbg")]
@@ -61,9 +58,12 @@ pub struct BufBitWriter<E: Endianness, WW: WordWrite, WP: WriteParams = DefaultW
 /// let mut writer = buf_bit_writer::from_path::<LE, u32>("data.bin")?;
 /// # Ok::<(), Box<dyn std::error::Error>>(())
 /// ```
+#[cfg(feature = "std")]
 pub fn from_path<E: Endianness, W: Word>(
-    path: impl AsRef<Path>,
-) -> anyhow::Result<BufBitWriter<E, WordAdapter<W, BufWriter<std::fs::File>>, DefaultWriteParams>> {
+    path: impl AsRef<std::path::Path>,
+) -> anyhow::Result<
+    BufBitWriter<E, super::WordAdapter<W, std::io::BufWriter<std::fs::File>>, DefaultWriteParams>,
+> {
     Ok(from_file::<E, W>(std::fs::File::create(path)?))
 }
 
@@ -72,12 +72,13 @@ pub fn from_path<E: Endianness, W: Word>(
 /// endianness and read word.
 ///
 /// See also [`from_path`] for a version that takes a path.
+#[cfg(feature = "std")]
 pub fn from_file<E: Endianness, W: Word>(
     file: std::fs::File,
-) -> BufBitWriter<E, WordAdapter<W, BufWriter<std::fs::File>>, DefaultWriteParams> {
-    BufBitWriter::<E, WordAdapter<W, BufWriter<std::fs::File>>>::new(WordAdapter::new(
-        BufWriter::new(file),
-    ))
+) -> BufBitWriter<E, super::WordAdapter<W, std::io::BufWriter<std::fs::File>>, DefaultWriteParams> {
+    BufBitWriter::<E, super::WordAdapter<W, std::io::BufWriter<std::fs::File>>>::new(
+        super::WordAdapter::new(std::io::BufWriter::new(file)),
+    )
 }
 
 impl<E: Endianness, WW: WordWrite, WP: WriteParams> BufBitWriter<E, WW, WP> {

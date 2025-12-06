@@ -9,15 +9,12 @@
 use common_traits::*;
 
 use crate::codes::params::{DefaultReadParams, ReadParams};
-use crate::impls::WordAdapter;
 use crate::traits::*;
 use core::convert::Infallible;
 use core::error::Error;
 use core::{mem, ptr};
 #[cfg(feature = "mem_dbg")]
 use mem_dbg::{MemDbg, MemSize};
-use std::io::BufReader;
-use std::path::Path;
 
 /// An internal shortcut to the double type of the word of a
 /// [`WordRead`].
@@ -81,9 +78,12 @@ where
 /// let mut reader = buf_bit_reader::from_path::<LE, u32>("data.bin")?;
 /// # Ok::<(), Box<dyn std::error::Error>>(())
 /// ```
+#[cfg(feature = "std")]
 pub fn from_path<E: Endianness, W: Word + DoubleType>(
-    path: impl AsRef<Path>,
-) -> anyhow::Result<BufBitReader<E, WordAdapter<W, BufReader<std::fs::File>>, DefaultReadParams>> {
+    path: impl AsRef<std::path::Path>,
+) -> anyhow::Result<
+    BufBitReader<E, super::WordAdapter<W, std::io::BufReader<std::fs::File>>, DefaultReadParams>,
+> {
     Ok(from_file::<E, W>(std::fs::File::open(path)?))
 }
 
@@ -92,10 +92,11 @@ pub fn from_path<E: Endianness, W: Word + DoubleType>(
 /// endianness and read word.
 ///
 /// See also [`from_path`] for a version that takes a path.
+#[cfg(feature = "std")]
 pub fn from_file<E: Endianness, W: Word + DoubleType>(
     file: std::fs::File,
-) -> BufBitReader<E, WordAdapter<W, BufReader<std::fs::File>>, DefaultReadParams> {
-    BufBitReader::new(WordAdapter::new(BufReader::new(file)))
+) -> BufBitReader<E, super::WordAdapter<W, std::io::BufReader<std::fs::File>>, DefaultReadParams> {
+    BufBitReader::new(super::WordAdapter::new(std::io::BufReader::new(file)))
 }
 
 impl<E: Endianness, WR: WordRead + Clone, RP: ReadParams> core::clone::Clone
