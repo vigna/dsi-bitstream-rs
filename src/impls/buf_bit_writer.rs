@@ -55,7 +55,7 @@ pub struct BufBitWriter<E: Endianness, WW: WordWrite, WP: WriteParams = DefaultW
 ///
 /// ```no_run
 /// use dsi_bitstream::prelude::*;
-/// let mut writer = buf_bit_writer::from_path::<LE, u32>("data.bin")?;
+/// let mut writer = buf_bit_writer::from_path::<LE, u64>("data.bin")?;
 /// # Ok::<(), Box<dyn std::error::Error>>(())
 /// ```
 #[cfg(feature = "std")]

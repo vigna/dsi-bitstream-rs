@@ -54,11 +54,11 @@ where
         Codes::VByteLe,
     ];
     for i in 0..10_usize {
-        codes.push(Codes::Pi { k: i });
-        codes.push(Codes::ExpGolomb { k: i });
+        codes.push(Codes::Pi(i));
+        codes.push(Codes::ExpGolomb(i));
     }
     for i in 1..10_usize {
-        codes.push(Codes::Zeta { k: i });
+        codes.push(Codes::Zeta(i));
     }
     let vals = (0..64)
         .map(|i| 1 << i)
@@ -70,7 +70,7 @@ where
     }
 
     for k in 1..3 {
-        test_code_with_vals(Codes::ExpGolomb { k }, &[u64::MAX])?;
+        test_code_with_vals(Codes::ExpGolomb(k), &[u64::MAX])?;
     }
 
     test_code_with_vals(Codes::VByteBe, &[u64::MAX])?;
@@ -80,10 +80,10 @@ where
     // u64::MAX - 1
     let mut sparse_codes = vec![Codes::Unary];
     for i in 0..10 {
-        sparse_codes.push(Codes::Rice { log2_b: i });
+        sparse_codes.push(Codes::Rice(i));
     }
     for i in 1..10 {
-        sparse_codes.push(Codes::Golomb { b: i });
+        sparse_codes.push(Codes::Golomb(i));
     }
     let vals = (0..1024).collect::<Vec<_>>();
     for code in sparse_codes {
@@ -92,12 +92,12 @@ where
 
     test_vals_codes(
         [
-            (0, Codes::Golomb { b: u64::MAX }),
-            (u64::MAX / 2, Codes::Golomb { b: u64::MAX }),
-            (u64::MAX, Codes::Golomb { b: u64::MAX }),
-            (0, Codes::Rice { log2_b: 63 }),
-            (u64::MAX / 2, Codes::Rice { log2_b: 63 }),
-            (u64::MAX, Codes::Rice { log2_b: 63 }),
+            (0, Codes::Golomb(u64::MAX)),
+            (u64::MAX / 2, Codes::Golomb(u64::MAX)),
+            (u64::MAX, Codes::Golomb(u64::MAX)),
+            (0, Codes::Rice(63)),
+            (u64::MAX / 2, Codes::Rice(63)),
+            (u64::MAX, Codes::Rice(63)),
         ]
         .as_mut_slice(),
     )?;

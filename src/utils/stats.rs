@@ -195,32 +195,27 @@ impl<
         }
         for (k, val) in self.zeta.iter().enumerate() {
             if *val < best.1 {
-                best = (Codes::Zeta { k: (k + 1) as _ }, *val);
+                best = (Codes::Zeta((k + 1) as _), *val);
             }
         }
         for (b, val) in self.golomb.iter().enumerate() {
             if *val < best.1 {
-                best = (Codes::Golomb { b: (b + 1) as _ }, *val);
+                best = (Codes::Golomb((b + 1) as _), *val);
             }
         }
         for (k, val) in self.exp_golomb.iter().enumerate() {
             if *val < best.1 {
-                best = (Codes::ExpGolomb { k: k as _ }, *val);
+                best = (Codes::ExpGolomb(k as _), *val);
             }
         }
         for (log2_b, val) in self.rice.iter().enumerate() {
             if *val < best.1 {
-                best = (
-                    Codes::Rice {
-                        log2_b: log2_b as _,
-                    },
-                    *val,
-                );
+                best = (Codes::Rice(log2_b as _), *val);
             }
         }
         for (k, val) in self.pi.iter().enumerate() {
             if *val < best.1 {
-                best = (Codes::Pi { k: (k + 2) as _ }, *val);
+                best = (Codes::Pi((k + 2) as _), *val);
             }
         }
         best
@@ -237,24 +232,19 @@ impl<
             (Codes::VByteBe, self.vbyte),
         ];
         for (k, val) in self.zeta.iter().enumerate() {
-            codes.push((Codes::Zeta { k: (k + 1) as _ }, *val));
+            codes.push((Codes::Zeta((k + 1) as _), *val));
         }
         for (b, val) in self.golomb.iter().enumerate() {
-            codes.push((Codes::Golomb { b: (b + 1) as _ }, *val));
+            codes.push((Codes::Golomb((b + 1) as _), *val));
         }
         for (k, val) in self.exp_golomb.iter().enumerate() {
-            codes.push((Codes::ExpGolomb { k: k as _ }, *val));
+            codes.push((Codes::ExpGolomb(k as _), *val));
         }
         for (log2_b, val) in self.rice.iter().enumerate() {
-            codes.push((
-                Codes::Rice {
-                    log2_b: log2_b as _,
-                },
-                *val,
-            ));
+            codes.push((Codes::Rice(log2_b as _), *val));
         }
         for (k, val) in self.pi.iter().enumerate() {
-            codes.push((Codes::Pi { k: (k + 2) as _ }, *val));
+            codes.push((Codes::Pi((k + 2) as _), *val));
         }
         // sort them by length
         codes.sort_by_key(|&(_, len)| len);
