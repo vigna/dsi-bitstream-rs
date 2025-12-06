@@ -1,6 +1,13 @@
 # Change Log
 
-## [0.5.3]
+## [0.6.0]
+
+### Changed
+
+- Enum variants defining codes are now all tuple types, making
+  it possible to write more readable expressions such as `Zeta(2)`.
+
+## [0.5.3] - 2025-12-6
 
 ### New
 
