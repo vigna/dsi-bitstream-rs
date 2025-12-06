@@ -22,7 +22,7 @@ pub fn calibrate_overhead() -> u128 {
     measures.avg as u128
 }
 
-/// Pin the process to one core to avoid context switching and caches flushes
+/// Pins the process to one core to avoid context switching and caches flushes
 /// which would result in noise in the measurement.
 #[cfg(target_os = "linux")]
 pub fn pin_to_core(core_id: usize) {

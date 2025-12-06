@@ -8,8 +8,11 @@
 
 use core::any::TypeId;
 use core::{mem, ptr};
+use std::io::BufWriter;
+use std::path::Path;
 
 use crate::codes::params::{DefaultWriteParams, WriteParams};
+use crate::impls::WordAdapter;
 use crate::traits::*;
 use common_traits::{AsBytes, CastableInto, FiniteRangeNumber, Integer, Number};
 #[cfg(feature = "mem_dbg")]
@@ -24,6 +27,9 @@ use mem_dbg::{MemDbg, MemSize};
 /// The additional type parameter `WP` is used to select the parameters for the
 /// instantaneous codes, but the casual user should be happy with the default
 /// value. See [`WriteParams`] for more details.
+///
+/// The convenience methods [`from_path`] and [`from_file`] create a
+/// [`BufBitWriter`] around a buffered file writer.
 ///
 /// For additional flexibility, this structures implements [`std::io::Write`].
 /// Note that because of coherence rules it is not possible to implement
@@ -44,11 +50,36 @@ pub struct BufBitWriter<E: Endianness, WW: WordWrite, WP: WriteParams = DefaultW
     _marker_endianness: core::marker::PhantomData<(E, WP)>,
 }
 
-impl<E: Endianness, WW: WordWrite, WP: WriteParams> BufBitWriter<E, WW, WP>
-where
-    BufBitWriter<E, WW, WP>: BitWrite<E>,
-{
-    /// Create a new [`BufBitWriter`] around a [`WordWrite`].
+/// Creates a new [`BufBitWriter`] with [default read parameters](`DefaultWriteParams`)
+/// from a file path using provided endianness and read word,
+///
+/// # Examples
+///
+/// ```no_run
+/// use dsi_bitstream::prelude::*;
+/// let mut writer = buf_bit_writer::from_path::<LE, u32>("data.bin")?;
+/// # Ok::<(), Box<dyn std::error::Error>>(())
+/// ```
+pub fn from_path<E: Endianness, W: Word>(
+    path: impl AsRef<Path>,
+) -> anyhow::Result<BufBitWriter<E, WordAdapter<W, BufWriter<std::fs::File>>, DefaultWriteParams>> {
+    Ok(from_file::<E, W>(std::fs::File::create(path)?))
+}
+
+/// Creates a new [`BufBitWriter`] with [default read parameters](`DefaultWriteParams`)
+/// from a file path using provided endianness and read word,
+///
+/// See also [`from_path`] for a version that takes a path.
+pub fn from_file<E: Endianness, W: Word>(
+    file: std::fs::File,
+) -> BufBitWriter<E, WordAdapter<W, BufWriter<std::fs::File>>, DefaultWriteParams> {
+    BufBitWriter::<E, WordAdapter<W, BufWriter<std::fs::File>>>::new(WordAdapter::new(
+        BufWriter::new(file),
+    ))
+}
+
+impl<E: Endianness, WW: WordWrite, WP: WriteParams> BufBitWriter<E, WW, WP> {
+    /// Creates a new [`BufBitWriter`] around a [`WordWrite`].
     ///
     /// ### Example
     /// ```
@@ -70,7 +101,12 @@ where
             _marker_endianness: core::marker::PhantomData,
         }
     }
+}
 
+impl<E: Endianness, WW: WordWrite, WP: WriteParams> BufBitWriter<E, WW, WP>
+where
+    BufBitWriter<E, WW, WP>: BitWrite<E>,
+{
     ///  Return the backend, consuming this writer after
     /// [flushing it](BufBitWriter::flush).
     pub fn into_inner(mut self) -> Result<WW, <Self as BitWrite<E>>::Error> {

@@ -38,7 +38,7 @@ use crate::traits::*;
 
 use super::{RiceRead, RiceWrite, len_rice};
 
-/// Return the length of the π code for `n` with parameter `k`.
+/// Returns the length of the π code for `n` with parameter `k`.
 ///
 /// ```rust
 /// use dsi_bitstream::codes::len_pi;

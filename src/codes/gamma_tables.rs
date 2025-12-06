@@ -26,7 +26,7 @@ pub fn read_table_le<B: BitRead<LE>>(backend: &mut B) -> Option<(u64, usize)> {
     None
 }
 
-/// Write a value using an encoding table.
+/// Writes a value using an encoding table.
 ///
 /// If the result is `Some` the encoding was successful, and
 /// length of the code is returned.
@@ -61,7 +61,7 @@ pub fn read_table_be<B: BitRead<BE>>(backend: &mut B) -> Option<(u64, usize)> {
     None
 }
 
-/// Write a value using an encoding table.
+/// Writes a value using an encoding table.
 ///
 /// If the result is `Some` the encoding was successful, and
 /// length of the code is returned.

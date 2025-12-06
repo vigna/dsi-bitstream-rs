@@ -83,7 +83,7 @@ pub trait BitRead<E: Endianness> {
     /// The type we can read from the stream without advancing.
     type PeekWord: CastableInto<u64>;
 
-    /// Read `n` bits and return them in the lowest bits.
+    /// Reads `n` bits and return them in the lowest bits.
     ///
     /// Implementors should check the value of `n` when in test mode
     /// and panic if it is greater than 64.
@@ -107,7 +107,7 @@ pub trait BitRead<E: Endianness> {
     /// at them. Please don't use.
     fn skip_bits_after_peek(&mut self, n: usize);
 
-    /// Read a unary code.
+    /// Reads a unary code.
     ///
     /// Implementations are required to support the range [0 . . 2⁶⁴ – 1).
     fn read_unary(&mut self) -> Result<u64, Self::Error>;
@@ -136,7 +136,7 @@ pub trait BitRead<E: Endianness> {
 pub trait BitWrite<E: Endianness> {
     type Error: Error + Send + Sync + 'static;
 
-    /// Write the lowest `n` bits of `value` to the stream and return the number
+    /// Writes the lowest `n` bits of `value` to the stream and return the number
     /// of bits written, that is, `n`.
     ///
     ///
@@ -145,7 +145,7 @@ pub trait BitWrite<E: Endianness> {
     /// should check that the remaining bits of `value` are zero.
     fn write_bits(&mut self, value: u64, n: usize) -> Result<usize, Self::Error>;
 
-    /// Write `value` as a unary code to the stream and return the number of
+    /// Writes `value` as a unary code to the stream and return the number of
     /// bits written, that is, `value` plus one.
     ///
     /// Implementations are required to support the range [0 . . 2⁶⁴ – 1).
@@ -175,10 +175,10 @@ pub trait BitWrite<E: Endianness> {
 /// Seekability for [`BitRead`] and [`BitWrite`] streams.
 pub trait BitSeek {
     type Error: Error + Send + Sync + 'static;
-    /// Get the current position in bits from the start of the stream.
+    /// Gets the current position in bits from the start of the stream.
     fn bit_pos(&mut self) -> Result<u64, Self::Error>;
 
-    /// Set the current position in bits from the start of the stream to `bit_pos`.
+    /// Sets the current position in bits from the start of the stream to `bit_pos`.
     ///
     /// Note that moving forward by a small amount of bits may be accomplished
     /// more efficiently by calling [`BitRead::skip_bits`].

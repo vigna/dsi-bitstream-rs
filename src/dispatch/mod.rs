@@ -383,6 +383,6 @@ pub trait StaticCodeWrite<E: Endianness, CW: CodesWrite<E> + ?Sized> {
 
 /// A trait providing a generic method to compute the length of a codeword.
 pub trait CodeLen {
-    /// Return the length of the codeword for `value`.
+    /// Returns the length of the codeword for `value`.
     fn len(&self, value: u64) -> usize;
 }

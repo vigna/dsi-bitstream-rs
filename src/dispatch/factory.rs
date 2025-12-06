@@ -84,7 +84,7 @@ pub trait CodesReaderFactory<E: Endianness> {
     where
         Self: 'a;
 
-    /// Create a new code reader that can reference data owned by the factory.
+    /// Creates a new code reader that can reference data owned by the factory.
     fn new_reader(&self) -> Self::CodesReader<'_>;
 }
 
@@ -191,7 +191,7 @@ impl<E: Endianness, CRF: CodesReaderFactoryHelper<E> + ?Sized> FactoryFuncCodeRe
     const EXP_GOLOMB9: FactoryReadFn<E, CRF> = |reader| reader.read_exp_golomb(9);
     const EXP_GOLOMB10: FactoryReadFn<E, CRF> = |reader| reader.read_exp_golomb(10);
 
-    /// Return a new [`FactoryFuncCodeReader`] for the given code.
+    /// Returns a new [`FactoryFuncCodeReader`] for the given code.
     ///
     /// # Errors
     ///

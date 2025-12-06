@@ -9,12 +9,15 @@
 use common_traits::*;
 
 use crate::codes::params::{DefaultReadParams, ReadParams};
+use crate::impls::WordAdapter;
 use crate::traits::*;
 use core::convert::Infallible;
 use core::error::Error;
 use core::{mem, ptr};
 #[cfg(feature = "mem_dbg")]
 use mem_dbg::{MemDbg, MemSize};
+use std::io::BufReader;
+use std::path::Path;
 
 /// An internal shortcut to the double type of the word of a
 /// [`WordRead`].
@@ -34,6 +37,9 @@ type BB<WR> = <<WR as WordRead>::Word as DoubleType>::DoubleType;
 /// by [`peek_bits`](crate::traits::BitRead::peek_bits) contains at least as
 /// many bits as the word size plus one (extended with zeros beyond end of
 /// stream).
+///
+/// The convenience methods [`from_path`] and [`from_file`] create a
+/// [`BufBitReader`] around a buffered file reader.
 ///
 /// This implementation is usually faster than
 /// [`BitReader`](crate::impls::BitReader).
@@ -64,6 +70,32 @@ where
     _marker: core::marker::PhantomData<(E, RP)>,
 }
 
+/// Creates a new [`BufBitReader`] with [default read parameters](`DefaultReadParams`)
+/// from a file path using provided endianness and read word,
+///
+/// # Examples
+///
+/// ```no_run
+/// use dsi_bitstream::prelude::*;
+/// let mut reader = buf_bit_reader::from_path::<LE, u32>("data.bin")?;
+/// # Ok::<(), Box<dyn std::error::Error>>(())
+/// ```
+pub fn from_path<E: Endianness, W: Word + DoubleType>(
+    path: impl AsRef<Path>,
+) -> anyhow::Result<BufBitReader<E, WordAdapter<W, BufReader<std::fs::File>>, DefaultReadParams>> {
+    Ok(from_file::<E, W>(std::fs::File::open(path)?))
+}
+
+/// Creates a new [`BufBitReader`] with [default read parameters](`DefaultReadParams`)
+/// from a file path using provided endianness and read word,
+///
+/// See also [`from_path`] for a version that takes a path.
+pub fn from_file<E: Endianness, W: Word + DoubleType>(
+    file: std::fs::File,
+) -> BufBitReader<E, WordAdapter<W, BufReader<std::fs::File>>, DefaultReadParams> {
+    BufBitReader::new(WordAdapter::new(BufReader::new(file)))
+}
+
 impl<E: Endianness, WR: WordRead + Clone, RP: ReadParams> core::clone::Clone
     for BufBitReader<E, WR, RP>
 where
@@ -83,7 +115,7 @@ impl<E: Endianness, WR: WordRead, RP: ReadParams> BufBitReader<E, WR, RP>
 where
     WR::Word: DoubleType,
 {
-    /// Create a new [`BufBitReader`] around a [`WordRead`].
+    /// Creates a new [`BufBitReader`] around a [`WordRead`].
     ///
     /// # Example
     /// ```

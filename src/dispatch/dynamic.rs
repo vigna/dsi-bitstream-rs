@@ -98,7 +98,7 @@ impl<E: Endianness, CR: CodesRead<E> + ?Sized> FuncCodeReader<E, CR> {
     const EXP_GOLOMB8: ReadFn<E, CR> = |reader: &mut CR| reader.read_exp_golomb(8);
     const EXP_GOLOMB9: ReadFn<E, CR> = |reader: &mut CR| reader.read_exp_golomb(9);
     const EXP_GOLOMB10: ReadFn<E, CR> = |reader: &mut CR| reader.read_exp_golomb(10);
-    /// Return a new [`FuncCodeReader`] for the given code.
+    /// Returns a new [`FuncCodeReader`] for the given code.
     ///
     /// # Errors
     ///
@@ -170,13 +170,13 @@ impl<E: Endianness, CR: CodesRead<E> + ?Sized> FuncCodeReader<E, CR> {
         Ok(Self(read_func))
     }
 
-    /// Return a new [`FuncCodeReader`] for the given function.
+    /// Returns a new [`FuncCodeReader`] for the given function.
     #[inline(always)]
     pub fn new_with_func(read_func: ReadFn<E, CR>) -> Self {
         Self(read_func)
     }
 
-    /// Get the function pointer for the code.
+    /// Gets the function pointer for the code.
     #[inline(always)]
     pub fn get_func(&self) -> ReadFn<E, CR> {
         self.0
@@ -282,7 +282,7 @@ impl<E: Endianness, CW: CodesWrite<E> + ?Sized> FuncCodeWriter<E, CW> {
     const EXP_GOLOMB10: WriteFn<E, CW> =
         |writer: &mut CW, value: u64| writer.write_exp_golomb(value, 10);
 
-    /// Return a new [`FuncCodeWriter`] for the given code.
+    /// Returns a new [`FuncCodeWriter`] for the given code.
     ///
     /// # Errors
     ///
@@ -354,13 +354,13 @@ impl<E: Endianness, CW: CodesWrite<E> + ?Sized> FuncCodeWriter<E, CW> {
         Ok(Self(write_func))
     }
 
-    /// Return a new [`FuncCodeWriter`] for the given function.
+    /// Returns a new [`FuncCodeWriter`] for the given function.
     #[inline(always)]
     pub fn new_with_func(write_func: WriteFn<E, CW>) -> Self {
         Self(write_func)
     }
 
-    /// Get the function pointer for the code.
+    /// Gets the function pointer for the code.
     #[inline(always)]
     pub fn get_func(&self) -> WriteFn<E, CW> {
         self.0
@@ -445,7 +445,7 @@ impl FuncCodeLen {
     const EXP_GOLOMB8: LenFn = |value| len_exp_golomb(value, 8);
     const EXP_GOLOMB9: LenFn = |value| len_exp_golomb(value, 9);
     const EXP_GOLOMB10: LenFn = |value| len_exp_golomb(value, 10);
-    /// Return a new [`FuncCodeLen`] for the given code.
+    /// Returns a new [`FuncCodeLen`] for the given code.
     ///
     /// # Errors
     ///
@@ -517,12 +517,12 @@ impl FuncCodeLen {
         Ok(Self(len_func))
     }
 
-    /// Return a new [`FuncCodeReader`] for the given function.
+    /// Returns a new [`FuncCodeReader`] for the given function.
     #[inline(always)]
     pub fn new_with_func(len_func: LenFn) -> Self {
         Self(len_func)
     }
-    /// Get the function pointer for the code.
+    /// Gets the function pointer for the code.
     #[inline(always)]
     pub fn get_func(&self) -> LenFn {
         self.0

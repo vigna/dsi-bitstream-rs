@@ -10,8 +10,9 @@ use core::error::Error;
 
 use common_traits::*;
 
-/// This is a trait alias for all the properties that we need words of memory
-/// read and wrote by either a [`WordRead`] or [`WordWrite`], respectively.
+/// This is a trait alias for all the properties that we need for words of
+/// memory read and wrote by either a [`WordRead`] or [`WordWrite`],
+/// respectively.
 pub trait Word: UnsignedInt + ToBytes + FromBytes + FiniteRangeNumber {}
 impl<W: UnsignedInt + ToBytes + FromBytes + FiniteRangeNumber> Word for W {}
 
@@ -22,7 +23,7 @@ pub trait WordRead {
     /// The word type (the type of the result of [`WordRead::read_word`]).
     type Word: Word;
 
-    /// Read a word and advance the current position.
+    /// Reads a word and advance the current position.
     fn read_word(&mut self) -> Result<Self::Word, Self::Error>;
 }
 
@@ -33,7 +34,7 @@ pub trait WordWrite {
     /// The word type (the type of the argument of [`WordWrite::write_word`]).
     type Word: Word;
 
-    /// Write a word and advance the current position.
+    /// Writes a word and advance the current position.
     fn write_word(&mut self, word: Self::Word) -> Result<(), Self::Error>;
 
     /// Flush the stream.
@@ -43,10 +44,10 @@ pub trait WordWrite {
 /// Seekability for [`WordRead`] and [`WordWrite`] streams.
 pub trait WordSeek {
     type Error: Error + Send + Sync + 'static;
-    /// Get the current position in words from the start of the file.
+    /// Gets the current position in words from the start of the file.
     fn word_pos(&mut self) -> Result<u64, Self::Error>;
 
-    /// Set the current position in words from the start of the file to `word_pos`.
+    /// Sets the current position in words from the start of the file to `word_pos`.
     fn set_word_pos(&mut self, word_pos: u64) -> Result<(), Self::Error>;
 }
 

@@ -99,8 +99,8 @@ pub use word_adapter::*;
 mod bit_reader;
 pub use bit_reader::BitReader;
 
-mod buf_bit_reader;
+pub mod buf_bit_reader;
 pub use buf_bit_reader::BufBitReader;
 
-mod buf_bit_writer;
+pub mod buf_bit_writer;
 pub use buf_bit_writer::BufBitWriter;

@@ -15,7 +15,7 @@
 //! exponent one). Moreover, the functions return the hit ratio, that is, the
 //! ratio of values that is decodable using tables.
 use super::*;
-use rand::{rngs::SmallRng, SeedableRng};
+use rand::{SeedableRng, rngs::SmallRng};
 
 // Given data to benchmark a code, tables for that code, and a length
 // function for the code, this macro computes the hit ratio, that is,
@@ -56,21 +56,21 @@ pub fn gen_data(_len: fn(u64) -> usize) -> Vec<u64> {
     return samples.take(N).collect();
 }
 
-/// Generate data to benchmark γ code.
+/// Generates data to benchmark γ code.
 pub fn gen_gamma_data() -> (f64, Vec<u64>) {
     let gamma_data = gen_data(len_gamma);
     let ratio = compute_hit_ratio!(gamma_data, gamma_tables, len_gamma);
     (ratio, gamma_data)
 }
 
-/// Generate data to benchmark δ code.
+/// Generates data to benchmark δ code.
 pub fn gen_delta_data() -> (f64, Vec<u64>) {
     let delta_data = gen_data(len_delta);
     let ratio = compute_hit_ratio!(delta_data, delta_tables, len_delta);
     (ratio, delta_data)
 }
 
-/// Generate data to benchmark ζ₃ code.
+/// Generates data to benchmark ζ₃ code.
 pub fn gen_zeta3_data() -> (f64, Vec<u64>) {
     let zeta3_data = gen_data(|x| len_zeta(x, 3));
 
@@ -96,7 +96,7 @@ pub fn gen_zeta3_data() -> (f64, Vec<u64>) {
     (ratio, zeta3_data)
 }
 
-/// Generate data to benchmark ω code.
+/// Generates data to benchmark ω code.
 pub fn gen_omega_data() -> (f64, Vec<u64>) {
     let omega_data = gen_data(len_omega);
     let ratio = compute_hit_ratio!(omega_data, omega_tables, len_omega);

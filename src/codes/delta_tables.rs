@@ -55,7 +55,7 @@ pub fn read_table_be<B: BitRead<BE>>(backend: &mut B) -> (i8, u64) {
     }
 }
 
-/// Write a value using an encoding table.
+/// Writes a value using an encoding table.
 ///
 /// If the result is `Some` the encoding was successful, and
 /// length of the code is returned.
@@ -73,7 +73,7 @@ pub fn write_table_le<B: BitWrite<LE>>(
     })
 }
 
-/// Write a value using an encoding table.
+/// Writes a value using an encoding table.
 ///
 /// If the result is `Some` the encoding was successful, and
 /// length of the code is returned.

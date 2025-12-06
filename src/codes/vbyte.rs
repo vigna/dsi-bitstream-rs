@@ -116,7 +116,7 @@
 
 use crate::traits::*;
 
-/// Return the length of the variable-length byte code for `value` in bytes.
+/// Returns the length of the variable-length byte code for `value` in bytes.
 #[must_use]
 #[inline(always)]
 pub fn byte_len_vbyte(mut value: u64) -> usize {
@@ -131,7 +131,7 @@ pub fn byte_len_vbyte(mut value: u64) -> usize {
     }
 }
 
-/// Return the length of the variable-length byte code for `value` in bits.
+/// Returns the length of the variable-length byte code for `value` in bits.
 #[must_use]
 #[inline(always)]
 pub fn bit_len_vbyte(value: u64) -> usize {
@@ -242,8 +242,8 @@ impl<E: Endianness, B: BitWrite<E>> VByteLeWrite<E> for B {
     }
 }
 
-/// Write a natural number to a byte stream using variable-length byte codes and
-/// return the number of bytes written.
+/// Writes a natural number to a byte stream using variable-length byte codes and
+/// returns the number of bytes written.
 ///
 /// This method just delegates to the correct endianness-specific method.
 #[inline(always)]

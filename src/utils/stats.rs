@@ -178,7 +178,7 @@ impl<
         }
     }
 
-    /// Return the best code for the stream and its space usage.
+    /// Returns the best code for the stream and its space usage.
     pub fn best_code(&self) -> (Codes, u64) {
         let mut best = (Codes::Unary, self.unary);
         if self.gamma < best.1 {
@@ -342,7 +342,7 @@ impl<
     const PI: usize,
 > CodesStatsWrapper<W, ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
 {
-    /// Create a new `CodesStatsWrapper` with the given wrapped value.
+    /// Creates a new `CodesStatsWrapper` with the given wrapped value.
     pub fn new(wrapped: W) -> Self {
         Self {
             stats: Mutex::new(CodesStats::default()),

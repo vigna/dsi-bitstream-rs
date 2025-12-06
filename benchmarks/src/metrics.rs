@@ -38,7 +38,7 @@ impl MetricsStream {
         }
     }
 
-    /// Ingest a value from the stream
+    /// Ingests a value from the stream
     pub fn update(&mut self, value: f64) {
         assert!(value.is_finite());
         self.values.push(value);
@@ -51,7 +51,7 @@ impl MetricsStream {
         self.m2 += delta * delta2;
     }
 
-    /// Consume this builder to get the statistics
+    /// Consumes this builder to get the statistics
     pub fn finalize(mut self) -> Metrics {
         let avg = if self.values.is_empty() {
             f64::NAN

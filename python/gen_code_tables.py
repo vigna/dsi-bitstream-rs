@@ -20,7 +20,7 @@ build folder, pass it as the first positional argument.
 
 import os
 import subprocess
-from math import log2, ceil, floor
+from math import ceil, floor, log2
 
 ROOT = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "src", "codes"
@@ -112,7 +112,7 @@ pub fn write_table_%(bo)s<B: BitWrite<%(BO)s>>(backend: &mut B, value: u64) -> R
 """
 
 write_func_two_table = """
-/// Write a value using an encoding table.
+/// Writes a value using an encoding table.
 ///
 /// If the result is `Some` the encoding was successful, and
 /// length of the code is returned.
@@ -481,23 +481,23 @@ def read_delta(bitstream, be):
 
 def read_delta_partial(bitstream, be):
     """Read a delta code with partial decoding support.
-    
+
     Returns (value_or_len, len_with_flag) where:
     - If complete: (decoded_value, bits_consumed)
     - If incomplete but gamma decoded: (gamma_value, bits_consumed | 0x80)
     - If gamma not decoded: raises ValueError
-    
+
     The highest bit (0x80) is set for partial codes instead of using negative values.
     This allows using a bitwise AND to extract the length instead of abs().
     """
     try:
         gamma_len, bitstream_after_gamma = read_gamma(bitstream, be)
         bits_consumed = len(bitstream) - len(bitstream_after_gamma)
-        
+
         if gamma_len == 0:
             # Complete code for value 0
             return 0, bits_consumed
-        
+
         # Try to read the fixed part
         if len(bitstream_after_gamma) >= gamma_len:
             f, bitstream_after_fixed = read_fixed(gamma_len, bitstream_after_gamma, be)
@@ -617,7 +617,7 @@ pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> (i8, u64) {
 
         f.write(
             """
-/// Write a value using an encoding table.
+/// Writes a value using an encoding table.
 ///
 /// If the result is `Some` the encoding was successful, and
 /// length of the code is returned.
@@ -632,7 +632,7 @@ pub fn write_table_le<B: BitWrite<LE>>(backend: &mut B, value: u64) -> Result<Op
     })
 }
 
-/// Write a value using an encoding table.
+/// Writes a value using an encoding table.
 ///
 /// If the result is `Some` the encoding was successful, and
 /// length of the code is returned.
@@ -659,14 +659,16 @@ pub fn write_table_be<B: BitWrite<BE>>(backend: &mut B, value: u64) -> Result<Op
                     codes.append((value_or_gamma, len_with_flag))
                 except ValueError:
                     codes.append((0, 0))
-            
+
             read_max_val = max(x[0] for x in codes)
             read_max_len = max(x[1] & 0x7F for x in codes)
 
             # Value table (stores decoded value OR gamma_len)
             f.write("/// Precomputed table for reading {} codes\n".format(code_name))
             f.write("/// For complete codes: stores the decoded value\n")
-            f.write("/// For partial codes: stores the gamma_len (length of the following fixed part)\n")
+            f.write(
+                "/// For partial codes: stores the gamma_len (length of the following fixed part)\n"
+            )
             f.write(
                 "pub const READ_%s: &[%s] = &["
                 % (BO, get_best_fitting_type(log2(read_max_val + 1)))
@@ -694,7 +696,11 @@ pub fn write_table_be<B: BitWrite<BE>>(backend: &mut B, value: u64) -> Result<Op
             for _, len_with_flag in codes:
                 # Keep the bit pattern as is: len or (0x80 | len)
                 # When interpreted as i8, 0x80+ becomes negative
-                f.write("{}, ".format(len_with_flag if len_with_flag < 128 else len_with_flag - 256))
+                f.write(
+                    "{}, ".format(
+                        len_with_flag if len_with_flag < 128 else len_with_flag - 256
+                    )
+                )
             f.write("];\n")
 
         # Write tables
@@ -1146,7 +1152,7 @@ pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> (i8, u64) {
 
         f.write(
             """
-/// Write a value using an encoding table.
+/// Writes a value using an encoding table.
 ///
 /// If the result is `Some` the encoding was successful, and
 /// length of the code is returned.
@@ -1176,7 +1182,7 @@ pub fn write_table_le<B: BitWrite<LE>>(backend: &mut B, mut value: u64) -> Resul
     })
 }
 
-/// Write a value using an encoding table.
+/// Writes a value using an encoding table.
 ///
 /// If the result is `Some` the encoding was successful, and
 /// length of the code is returned.
@@ -1245,7 +1251,11 @@ pub fn write_table_be<B: BitWrite<BE>>(backend: &mut B, mut value: u64) -> Resul
             for _, len_with_flag in codes:
                 # Keep the bit pattern as is: len or (0x80 | len)
                 # When interpreted as i8, 0x80+ becomes negative
-                f.write("{}, ".format(len_with_flag if len_with_flag < 128 else len_with_flag - 256))
+                f.write(
+                    "{}, ".format(
+                        len_with_flag if len_with_flag < 128 else len_with_flag - 256
+                    )
+                )
             f.write("];\n")
 
         # Write tables

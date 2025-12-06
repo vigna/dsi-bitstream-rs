@@ -38,7 +38,7 @@ pub struct WordAdapter<W: UnsignedInt + FromBytes + ToBytes, B> {
 }
 
 impl<W: UnsignedInt + FromBytes + ToBytes, B> WordAdapter<W, B> {
-    /// Create a new WordAdapter
+    /// Creates a new WordAdapter
     pub fn new(backend: B) -> Self {
         Self {
             backend,
