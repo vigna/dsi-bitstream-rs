@@ -1,17 +1,13 @@
 # Change Log
 
-## [0.5.4]
-
-### New
-
-- Convenience functions `from_file` and `from_path` in `buf_bit_reader` and
-  `buf_bit_writer` modules.
-
 ## [0.5.3]
 
 ### New
 
 - Partials read (gamma prefix) for delta codes.
+
+- Convenience functions `from_file` and `from_path` in `buf_bit_reader` and
+  `buf_bit_writer` modules.
 
 ## [0.5.2] - 2025-10-10
 

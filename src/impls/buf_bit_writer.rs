@@ -50,8 +50,9 @@ pub struct BufBitWriter<E: Endianness, WW: WordWrite, WP: WriteParams = DefaultW
     _marker_endianness: core::marker::PhantomData<(E, WP)>,
 }
 
-/// Creates a new [`BufBitWriter`] with [default read parameters](`DefaultWriteParams`)
-/// from a file path using provided endianness and read word,
+/// Creates a new [`BufBitWriter`] with [default read
+/// parameters](`DefaultWriteParams`) from a file path using the provided
+/// endianness and read word.
 ///
 /// # Examples
 ///
@@ -66,8 +67,9 @@ pub fn from_path<E: Endianness, W: Word>(
     Ok(from_file::<E, W>(std::fs::File::create(path)?))
 }
 
-/// Creates a new [`BufBitWriter`] with [default read parameters](`DefaultWriteParams`)
-/// from a file path using provided endianness and read word,
+/// Creates a new [`BufBitWriter`] with [default read
+/// parameters](`DefaultWriteParams`) from a file path using the provided
+/// endianness and read word.
 ///
 /// See also [`from_path`] for a version that takes a path.
 pub fn from_file<E: Endianness, W: Word>(

@@ -70,8 +70,9 @@ where
     _marker: core::marker::PhantomData<(E, RP)>,
 }
 
-/// Creates a new [`BufBitReader`] with [default read parameters](`DefaultReadParams`)
-/// from a file path using provided endianness and read word,
+/// Creates a new [`BufBitReader`] with [default read
+/// parameters](`DefaultReadParams`) from a file path using the provided
+/// endianness and read word.
 ///
 /// # Examples
 ///
@@ -86,8 +87,9 @@ pub fn from_path<E: Endianness, W: Word + DoubleType>(
     Ok(from_file::<E, W>(std::fs::File::open(path)?))
 }
 
-/// Creates a new [`BufBitReader`] with [default read parameters](`DefaultReadParams`)
-/// from a file path using provided endianness and read word,
+/// Creates a new [`BufBitReader`] with [default read
+/// parameters](`DefaultReadParams`) from a file path using the provided
+/// endianness and read word.
 ///
 /// See also [`from_path`] for a version that takes a path.
 pub fn from_file<E: Endianness, W: Word + DoubleType>(
