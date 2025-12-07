@@ -1,11 +1,15 @@
 # Change Log
 
-## [0.6.0]
+## [0.6.0] - 2025-12-7
 
 ### Changed
 
 - Enum variants defining codes are now all tuple types, making
   it possible to write more readable expressions such as `Zeta(2)`.
+
+### Fixed
+
+- Now we compile again correctly without std.
 
 ## [0.5.3] - 2025-12-6
 
