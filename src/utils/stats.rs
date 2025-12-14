@@ -627,7 +627,7 @@ mod serde_tests {
             stats.update(i);
         }
         let json = serde_json::to_string_pretty(&stats).unwrap();
-        let deserialized: CodesStats<10, 21, 5, 8, 6> = serde_json::from_str(&json).unwrap();
-        assert_eq!(stats, deserialized);
+        // This should panic because the JSON has 20 golomb values but we expect 21
+        let _deserialized: CodesStats<10, 21, 5, 8, 6> = serde_json::from_str(&json).unwrap();
     }
 }

@@ -314,10 +314,12 @@ impl CodeLen for Codes {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 /// Error type for parsing a code from a string.
 pub enum CodeError {
+    /// Error parsing an integer parameter.
     ParseError(core::num::ParseIntError),
+    /// Unknown code name. Uses a fixed-size array instead of `String` for `no_std` compatibility.
     UnknownCode([u8; 32]),
 }
 #[cfg(feature = "std")]
@@ -383,6 +385,7 @@ impl core::str::FromStr for Codes {
             "Delta" => Ok(Codes::Delta),
             "Omega" => Ok(Codes::Omega),
             "VByteBe" => Ok(Codes::VByteBe),
+            "VByteLe" => Ok(Codes::VByteLe),
 
             _ => {
                 let mut parts = s.split('(');
