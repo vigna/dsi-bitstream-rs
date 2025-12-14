@@ -76,7 +76,7 @@ impl PartialEq for Codes {
 }
 
 impl Codes {
-    /// Delegate to the [`DynamicCodeRead`] implementation.
+    /// Delegates to the [`DynamicCodeRead`] implementation.
     ///
     /// This inherent method is provided to reduce ambiguity in method
     /// resolution.
@@ -88,7 +88,7 @@ impl Codes {
         DynamicCodeRead::read(self, reader)
     }
 
-    /// Delegate to the [`DynamicCodeWrite`] implementation.
+    /// Delegates to the [`DynamicCodeWrite`] implementation.
     ///
     /// This inherent method is provided to reduce ambiguity in method
     /// resolution.
@@ -101,7 +101,7 @@ impl Codes {
         DynamicCodeWrite::write(self, writer, value)
     }
 
-    /// Convert a code to the constant enum [`code_consts`] used for [`ConstCode`].
+    /// Converts a code to the constant enum [`code_consts`] used for [`ConstCode`].
     /// This is mostly used to verify that the code is supported by
     /// [`ConstCode`].
     pub fn to_code_const(&self) -> Result<usize> {
@@ -174,7 +174,7 @@ impl Codes {
         })
     }
 
-    /// Convert a value from [`code_consts`] to a code.
+    /// Converts a value from [`code_consts`] to a code.
     pub fn from_code_const(const_code: usize) -> Result<Self> {
         Ok(match const_code {
             code_consts::UNARY => Self::Unary,
@@ -405,6 +405,27 @@ impl core::str::FromStr for Codes {
                 }
             }
         }
+    }
+}
+
+#[cfg(feature = "serde")]
+impl serde::Serialize for Codes {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&self.to_string())
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> serde::Deserialize<'de> for Codes {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        s.parse().map_err(serde::de::Error::custom)
     }
 }
 

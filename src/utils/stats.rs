@@ -38,7 +38,7 @@ use alloc::vec::Vec;
 /// structure](Self::update) with the integers in the stream; at any time, you
 /// can examine the statistics or call [`best_code`](Self::best_code) to get the
 /// best code.
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
 pub struct CodesStats<
     // How many ζ codes to consider.
@@ -250,6 +250,22 @@ impl<
         codes.sort_by_key(|&(_, len)| len);
         codes
     }
+
+    /// Returns the number of bits used by the given code.
+    pub fn bits_for(&self, code: Codes) -> Option<u64> {
+        match code {
+            Codes::Unary => Some(self.unary),
+            Codes::Gamma => Some(self.gamma),
+            Codes::Delta => Some(self.delta),
+            Codes::Omega => Some(self.omega),
+            Codes::VByteBe | Codes::VByteLe => Some(self.vbyte),
+            Codes::Zeta(k) => self.zeta.get(k.checked_sub(1)?).copied(),
+            Codes::Golomb(b) => self.golomb.get(b.checked_sub(1)? as usize).copied(),
+            Codes::ExpGolomb(k) => self.exp_golomb.get(k).copied(),
+            Codes::Rice(log2_b) => self.rice.get(log2_b).copied(),
+            Codes::Pi(k) => self.pi.get(k.checked_sub(2)?).copied(),
+        }
+    }
 }
 
 /// Combines additively this stats with another one.
@@ -295,6 +311,148 @@ impl<
 {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
         iter.fold(Self::default(), |a, b| a + b)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<
+    const ZETA: usize,
+    const GOLOMB: usize,
+    const EXP_GOLOMB: usize,
+    const RICE: usize,
+    const PI: usize,
+> serde::Serialize for CodesStats<ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
+{
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        use serde::ser::SerializeStruct;
+
+        let mut state = serializer.serialize_struct("CodesStats", 11)?;
+        state.serialize_field("total", &self.total)?;
+        state.serialize_field("unary", &self.unary)?;
+        state.serialize_field("gamma", &self.gamma)?;
+        state.serialize_field("delta", &self.delta)?;
+        state.serialize_field("omega", &self.omega)?;
+        state.serialize_field("vbyte", &self.vbyte)?;
+        // these are array which don't play well with serde, so we convert them to slices
+        state.serialize_field("zeta", &self.zeta.as_slice())?;
+        state.serialize_field("golomb", &self.golomb.as_slice())?;
+        state.serialize_field("exp_golomb", &self.exp_golomb.as_slice())?;
+        state.serialize_field("rice", &self.rice.as_slice())?;
+        state.serialize_field("pi", &self.pi.as_slice())?;
+        state.end()
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<
+    'de,
+    const ZETA: usize,
+    const GOLOMB: usize,
+    const EXP_GOLOMB: usize,
+    const RICE: usize,
+    const PI: usize,
+> serde::Deserialize<'de> for CodesStats<ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
+{
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        use serde::de::{MapAccess, Visitor};
+
+        struct CodesStatsVisitor<
+            const ZETA: usize,
+            const GOLOMB: usize,
+            const EXP_GOLOMB: usize,
+            const RICE: usize,
+            const PI: usize,
+        >;
+
+        impl<
+            'de,
+            const ZETA: usize,
+            const GOLOMB: usize,
+            const EXP_GOLOMB: usize,
+            const RICE: usize,
+            const PI: usize,
+        > Visitor<'de> for CodesStatsVisitor<ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
+        {
+            type Value = CodesStats<ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>;
+
+            fn expecting(&self, formatter: &mut core::fmt::Formatter) -> core::fmt::Result {
+                formatter.write_str("struct CodesStats")
+            }
+
+            fn visit_map<V: MapAccess<'de>>(self, mut map: V) -> Result<Self::Value, V::Error> {
+                let mut total = None;
+                let mut unary = None;
+                let mut gamma = None;
+                let mut delta = None;
+                let mut omega = None;
+                let mut vbyte = None;
+                let mut zeta: Option<[u64; ZETA]> = None;
+                let mut golomb: Option<[u64; GOLOMB]> = None;
+                let mut exp_golomb: Option<[u64; EXP_GOLOMB]> = None;
+                let mut rice: Option<[u64; RICE]> = None;
+                let mut pi: Option<[u64; PI]> = None;
+
+                // Helper to deserialize a Vec<u64> into a fixed-size array
+                fn vec_to_array<E: serde::de::Error, const N: usize>(
+                    v: Vec<u64>,
+                ) -> Result<[u64; N], E> {
+                    v.try_into().map_err(|v: Vec<u64>| {
+                        serde::de::Error::invalid_length(v.len(), &N.to_string().as_str())
+                    })
+                }
+
+                while let Some(key) = map.next_key::<&str>()? {
+                    match key {
+                        "total" => total = Some(map.next_value()?),
+                        "unary" => unary = Some(map.next_value()?),
+                        "gamma" => gamma = Some(map.next_value()?),
+                        "delta" => delta = Some(map.next_value()?),
+                        "omega" => omega = Some(map.next_value()?),
+                        "vbyte" => vbyte = Some(map.next_value()?),
+                        "zeta" => zeta = Some(vec_to_array(map.next_value()?)?),
+                        "golomb" => golomb = Some(vec_to_array(map.next_value()?)?),
+                        "exp_golomb" => exp_golomb = Some(vec_to_array(map.next_value()?)?),
+                        "rice" => rice = Some(vec_to_array(map.next_value()?)?),
+                        "pi" => pi = Some(vec_to_array(map.next_value()?)?),
+                        _ => {
+                            let _ = map.next_value::<serde::de::IgnoredAny>()?;
+                        }
+                    }
+                }
+
+                Ok(CodesStats {
+                    total: total.unwrap_or_default(),
+                    unary: unary.unwrap_or_default(),
+                    gamma: gamma.unwrap_or_default(),
+                    delta: delta.unwrap_or_default(),
+                    omega: omega.unwrap_or_default(),
+                    vbyte: vbyte.unwrap_or_default(),
+                    zeta: zeta.unwrap_or([0; ZETA]),
+                    golomb: golomb.unwrap_or([0; GOLOMB]),
+                    exp_golomb: exp_golomb.unwrap_or([0; EXP_GOLOMB]),
+                    rice: rice.unwrap_or([0; RICE]),
+                    pi: pi.unwrap_or([0; PI]),
+                })
+            }
+        }
+
+        deserializer.deserialize_struct(
+            "CodesStats",
+            &[
+                "total",
+                "unary",
+                "gamma",
+                "delta",
+                "omega",
+                "vbyte",
+                "zeta",
+                "golomb",
+                "exp_golomb",
+                "rice",
+                "pi",
+            ],
+            CodesStatsVisitor::<ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>,
+        )
     }
 }
 
@@ -431,5 +589,45 @@ impl<
         let res = self.wrapped.write(writer, value)?;
         self.stats.lock().unwrap().update(value);
         Ok(res)
+    }
+}
+
+#[cfg(test)]
+#[cfg(feature = "serde")]
+mod serde_tests {
+    use super::*;
+
+    #[test]
+    fn test_serde_code_stats() {
+        let mut stats: CodesStats = CodesStats::default();
+        for i in 0..100 {
+            stats.update(i);
+        }
+        let json = serde_json::to_string(&stats).unwrap();
+        let deserialized: CodesStats = serde_json::from_str(&json).unwrap();
+        assert_eq!(stats, deserialized);
+    }
+
+    #[test]
+    fn test_roundtrip_different_sizes() {
+        let mut stats: CodesStats<10, 20, 5, 8, 6> = CodesStats::default();
+        for i in 0..1000 {
+            stats.update(i);
+        }
+        let json = serde_json::to_string_pretty(&stats).unwrap();
+        let deserialized: CodesStats<10, 20, 5, 8, 6> = serde_json::from_str(&json).unwrap();
+        assert_eq!(stats, deserialized);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_mismatched_sizes() {
+        let mut stats: CodesStats<10, 20, 5, 8, 6> = CodesStats::default();
+        for i in 0..1000 {
+            stats.update(i);
+        }
+        let json = serde_json::to_string_pretty(&stats).unwrap();
+        let deserialized: CodesStats<10, 21, 5, 8, 6> = serde_json::from_str(&json).unwrap();
+        assert_eq!(stats, deserialized);
     }
 }
