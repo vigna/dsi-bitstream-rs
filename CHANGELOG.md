@@ -1,5 +1,11 @@
 # Change Log
 
+## [0.6.1]
+
+### New
+
+- `CodesStats` now support serde via a default feature.
+
 ## [0.6.0] - 2025-12-7
 
 ### Changed

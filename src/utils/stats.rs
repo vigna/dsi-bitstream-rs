@@ -38,13 +38,16 @@ use alloc::vec::Vec;
 /// structure](Self::update) with the integers in the stream; at any time, you
 /// can examine the statistics or call [`best_code`](Self::best_code) to get the
 /// best code.
+///
+/// The structure keeps tracks of the codes for which the module
+/// [`code_consts`](crate::dispatch::code_consts) provide constants.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
 pub struct CodesStats<
     // How many ζ codes to consider.
     const ZETA: usize = 10,
     // How many Golomb codes to consider.
-    const GOLOMB: usize = 20,
+    const GOLOMB: usize = 10,
     // How many Exponential Golomb codes to consider.
     const EXP_GOLOMB: usize = 10,
     // How many Rice codes to consider.
