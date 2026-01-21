@@ -8,7 +8,7 @@
 //! Streamlined Apostolico−Drovandi π codes
 //!
 //! The streamlined π code with parameter *k* ≥ 0 of a natural number *n* is the
-//! concatenation of the [Rice code](super::rice) with parameter *k* of
+//! concatenation of the [Rice code](super::rice) with parameter 2*ᵏ* of
 //! ⌊log₂(*n* + 1)⌋ and of the binary representation of *n* + 1 with the most
 //! significant bit removed.
 //!
