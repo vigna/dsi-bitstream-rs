@@ -67,7 +67,7 @@ pub struct MemWordWriterSlice<W: Word, B: AsMut<[W]>> {
 }
 
 impl<W: Word, B: AsMut<[W]> + AsRef<[W]>> MemWordWriterSlice<W, B> {
-    /// Creates a new [`MemWordWriterSlice`] from a slice of **ZERO INITIALIZED** data
+    /// Creates a new [`MemWordWriterSlice`] from a slice.
     #[must_use]
     pub fn new(data: B) -> Self {
         Self {
@@ -126,7 +126,7 @@ pub struct MemWordWriterVec<W: Word, B: AsMut<alloc::vec::Vec<W>>> {
 
 #[cfg(feature = "alloc")]
 impl<W: Word, B: AsMut<alloc::vec::Vec<W>> + AsRef<alloc::vec::Vec<W>>> MemWordWriterVec<W, B> {
-    /// Creates a new [`MemWordWriterSlice`] from a slice of **ZERO INITIALIZED** data
+    /// Creates a new [`MemWordWriterVec`] from a slice.
     #[must_use]
     pub fn new(data: B) -> Self {
         Self {
