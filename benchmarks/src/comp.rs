@@ -200,6 +200,13 @@ pub fn main() {
         |x| len_zeta(x, 3),
         true
     );
+    bench!(
+        "pi_2_table",
+        |w, x| w.write_pi2(x).unwrap(),
+        |r| r.read_pi2().unwrap(),
+        |x| len_pi(x, 2),
+        true
+    );
     for k in 2..4 {
         bench!(
             format!("zeta_{}", k),

@@ -62,6 +62,12 @@ for bits in range(1, 17):
             k=3,
             merged_table=merged_table,
         )
+        gen_pi(
+            read_bits=12,  # unused
+            write_max_val=value_max,
+            k=2,
+            merged_table=merged_table,
+        )
         # Kludge: this will leave the original tables intact,
         # but avoids failing the static assert for
         if value_max >= 62:

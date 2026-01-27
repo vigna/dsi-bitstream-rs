@@ -36,6 +36,7 @@ nice = {
     "delta": "δ (no γ tables)",
     "delta_gamma": "δ (γ tables)",
     "zeta3": "ζ₃",
+    "pi2": "π₂",
     "omega": "ω",
 }
 
@@ -43,7 +44,7 @@ df = pd.read_csv(sys.stdin, index_col=None, header=0)
 
 plots = []
 
-for code in ["gamma", "delta", "delta_gamma", "zeta3", "omega"]:
+for code in ["gamma", "delta", "delta_gamma", "zeta3", "pi2", "omega"]:
     fig, ax = plt.subplots(1, 1, figsize=(10, 8), dpi=200, facecolor="white")
     for ty in ["read_buff", "read_unbuff"]:
         color = 0
