@@ -404,18 +404,38 @@ impl<B: IsComplete + 'static, C: ContinuationBit> ByteCode
 }
 
 #[derive(Debug, Default, Clone, Copy)]
-pub struct BitStreamVByte<F: Format, B: IsComplete, C: ContinuationBit>(PhantomData<(F, B, C)>);
+pub struct BitStreamVByteBE<F: Format, B: IsComplete, C: ContinuationBit>(PhantomData<(F, B, C)>);
 
-impl<F: Format, B: IsComplete, C: ContinuationBit> WithName for BitStreamVByte<F, B, C> {
+impl<F: Format, B: IsComplete, C: ContinuationBit> WithName for BitStreamVByteBE<F, B, C> {
     fn name() -> String {
-        format!("{},{},{}", F::NAME, B::NAME, C::NAME)
+        format!("{},{},{},vbyte_be", F::NAME, B::NAME, C::NAME)
     }
 }
 
-impl BitCode for BitStreamVByte<GroupedIfs, Complete, OneCont> {
+impl BitCode for BitStreamVByteBE<GroupedIfs, Complete, OneCont> {
     #[inline(always)]
     fn read<E: Endianness>(r: &mut impl BitRead<E>) -> Result<u64> {
         Ok(r.read_vbyte_be()?)
+    }
+    #[inline(always)]
+    fn write<E: Endianness>(value: u64, w: &mut impl BitWrite<E>) -> Result<usize> {
+        Ok(w.write_vbyte_be(value)?)
+    }
+}
+
+#[derive(Debug, Default, Clone, Copy)]
+pub struct BitStreamVByteLE<F: Format, B: IsComplete, C: ContinuationBit>(PhantomData<(F, B, C)>);
+
+impl<F: Format, B: IsComplete, C: ContinuationBit> WithName for BitStreamVByteLE<F, B, C> {
+    fn name() -> String {
+        format!("{},{},{},vbyte_le", F::NAME, B::NAME, C::NAME)
+    }
+}
+
+impl BitCode for BitStreamVByteLE<GroupedIfs, Complete, OneCont> {
+    #[inline(always)]
+    fn read<E: Endianness>(r: &mut impl BitRead<E>) -> Result<u64> {
+        Ok(r.read_vbyte_le()?)
     }
     #[inline(always)]
     fn write<E: Endianness>(value: u64, w: &mut impl BitWrite<E>) -> Result<usize> {
@@ -437,7 +457,8 @@ pub fn benchmark(c: &mut Criterion) {
     bench_bytestream::<ByteStreamVByte<LE, GroupedIfs, Complete, OneCont>>(c);
     bench_bytestream::<ByteStreamVByte<BE, GroupedIfs, Complete, OneCont>>(c);
 
-    bench_bitstream::<BitStreamVByte<GroupedIfs, Complete, OneCont>>(c);
+    bench_bitstream::<BitStreamVByteBE<GroupedIfs, Complete, OneCont>>(c);
+    bench_bitstream::<BitStreamVByteLE<GroupedIfs, Complete, OneCont>>(c);
 
     //bench_bytestream::<ByteStreamVByte<BE, GroupedIfs, Complete, Zero>>(c);
     //bench_bytestream::<ByteStreamVByte<BE, GroupedIfs, NonComplete, One>>(c);
