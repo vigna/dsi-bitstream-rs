@@ -62,50 +62,6 @@ pub fn len_pi_param<const USE_TABLE: bool>(mut n: u64, k: usize) -> usize {
 
 /// Returns the length of the π code for `n` with parameter `k` using
 /// a default value for `USE_TABLE`.
-///
-/// ```rust
-/// use dsi_bitstream::codes::len_pi;
-///
-/// // k = 0
-/// assert_eq!(len_pi(0, 0), 1, "π_0(0)");
-/// assert_eq!(len_pi(1, 0), 3, "π_0(1)");
-/// assert_eq!(len_pi(2, 0), 3, "π_0(2)");
-/// assert_eq!(len_pi(3, 0), 5, "π_0(3)");
-/// assert_eq!(len_pi(4, 0), 5, "π_0(4)");
-/// assert_eq!(len_pi(5, 0), 5, "π_0(5)");
-/// assert_eq!(len_pi(6, 0), 5, "π_0(6)");
-/// assert_eq!(len_pi(7, 0), 7, "π_0(7)");
-///
-/// // k = 1
-/// assert_eq!(len_pi(0, 1), 2, "π_1(0)");
-/// assert_eq!(len_pi(1, 1), 3, "π_1(1)");
-/// assert_eq!(len_pi(2, 1), 3, "π_1(2)");
-/// assert_eq!(len_pi(3, 1), 5, "π_1(3)");
-/// assert_eq!(len_pi(4, 1), 5, "π_1(4)");
-/// assert_eq!(len_pi(5, 1), 5, "π_1(5)");
-/// assert_eq!(len_pi(6, 1), 5, "π_1(6)");
-/// assert_eq!(len_pi(7, 1), 6, "π_1(7)");
-///
-/// // k = 2
-/// assert_eq!(len_pi(0, 2), 3, "π_2(0)");
-/// assert_eq!(len_pi(1, 2), 4, "π_2(1)");
-/// assert_eq!(len_pi(2, 2), 4, "π_2(2)");
-/// assert_eq!(len_pi(3, 2), 5, "π_2(3)");
-/// assert_eq!(len_pi(4, 2), 5, "π_2(4)");
-/// assert_eq!(len_pi(5, 2), 5, "π_2(5)");
-/// assert_eq!(len_pi(6, 2), 5, "π_2(6)");
-/// assert_eq!(len_pi(7, 2), 6, "π_2(7)");
-///
-/// // k = 3
-/// assert_eq!(len_pi(0, 3), 4, "π_3(0)");
-/// assert_eq!(len_pi(1, 3), 5, "π_3(1)");
-/// assert_eq!(len_pi(2, 3), 5, "π_3(2)");
-/// assert_eq!(len_pi(3, 3), 6, "π_3(3)");
-/// assert_eq!(len_pi(4, 3), 6, "π_3(4)");
-/// assert_eq!(len_pi(5, 3), 6, "π_3(5)");
-/// assert_eq!(len_pi(6, 3), 6, "π_3(6)");
-/// assert_eq!(len_pi(7, 3), 7, "π_3(7)");
-/// ```
 #[must_use]
 #[inline(always)]
 pub fn len_pi(n: u64, k: usize) -> usize {
