@@ -103,7 +103,7 @@ pub fn bench_bytestream<C: ByteCode + WithName>(c: &mut Criterion) {
     }
 
     let s = gen_gamma_data(GAMMA_DATA);
-    c.bench_function(&format!("vbyte,bytes,{},write", C::name()), |b| {
+    c.bench_function(&format!("bytes,{},write", C::name()), |b| {
         b.iter(|| {
             let mut w = std::io::Cursor::new(&mut v);
             for &v in &s {
@@ -112,7 +112,7 @@ pub fn bench_bytestream<C: ByteCode + WithName>(c: &mut Criterion) {
         })
     });
 
-    c.bench_function(&format!("vbyte,bytes,{},read", C::name()), |b| {
+    c.bench_function(&format!("bytes,{},read", C::name()), |b| {
         b.iter(|| {
             let mut r = std::io::Cursor::new(v.as_slice());
             for _ in &s {
@@ -159,8 +159,9 @@ where
 
     let s = gen_gamma_data(GAMMA_DATA);
 
+    let endian_short = if E::NAME == "big" { "be" } else { "le" };
     c.bench_function(
-        &format!("vbyte,bits,{},{}_endian,write", C::name(), E::NAME),
+        &format!("bits_{},{},write", endian_short, C::name()),
         |b| {
             b.iter(|| {
                 let mut w = <BufBitWriter<E, _>>::new(MemWordWriterVec::new(&mut v));
@@ -174,7 +175,7 @@ where
     let v = unsafe { v.align_to::<u32>().1 };
 
     c.bench_function(
-        &format!("vbyte,bits,{},{}_endian,read", C::name(), E::NAME),
+        &format!("bits_{},{},read", endian_short, C::name()),
         |b| {
             b.iter(|| {
                 let mut r = BufBitReader::<E, _>::new(MemWordReader::new(v));
@@ -408,7 +409,7 @@ pub struct BitStreamVByteBE<F: Format, B: IsComplete, C: ContinuationBit>(Phanto
 
 impl<F: Format, B: IsComplete, C: ContinuationBit> WithName for BitStreamVByteBE<F, B, C> {
     fn name() -> String {
-        format!("{},{},{},vbyte_be", F::NAME, B::NAME, C::NAME)
+        format!("vbyte_be,{},{},{}", F::NAME, B::NAME, C::NAME)
     }
 }
 
@@ -428,7 +429,7 @@ pub struct BitStreamVByteLE<F: Format, B: IsComplete, C: ContinuationBit>(Phanto
 
 impl<F: Format, B: IsComplete, C: ContinuationBit> WithName for BitStreamVByteLE<F, B, C> {
     fn name() -> String {
-        format!("{},{},{},vbyte_le", F::NAME, B::NAME, C::NAME)
+        format!("vbyte_le,{},{},{}", F::NAME, B::NAME, C::NAME)
     }
 }
 
