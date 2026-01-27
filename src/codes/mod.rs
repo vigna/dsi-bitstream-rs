@@ -116,7 +116,7 @@ pub mod zeta;
 pub use zeta::{ZetaRead, ZetaReadParam, ZetaWrite, ZetaWriteParam, len_zeta, len_zeta_param};
 
 pub mod pi;
-pub use pi::{PiRead, PiWrite, len_pi};
+pub use pi::{PiRead, PiReadParam, PiWrite, PiWriteParam, len_pi, len_pi_param};
 
 pub mod golomb;
 pub use golomb::{GolombRead, GolombWrite, len_golomb};
@@ -132,9 +132,9 @@ pub use vbyte::*;
 
 pub mod delta_tables;
 pub mod gamma_tables;
-pub mod zeta_tables;
-
 pub mod omega_tables;
+pub mod pi_tables;
+pub mod zeta_tables;
 
 /// Extension trait mapping natural numbers bijectively to integers.
 ///

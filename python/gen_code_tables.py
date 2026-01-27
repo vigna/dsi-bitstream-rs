@@ -1301,6 +1301,140 @@ pub fn write_table_be<B: BitWrite<BE>>(backend: &mut B, mut value: u64) -> Resul
 ################################################################################
 
 
+def read_rice(bitstream, k, be):
+    """Read a Rice code with parameter 2^k"""
+    q, bitstream = read_unary(bitstream, be)
+    if k == 0:
+        return q, bitstream
+    r, bitstream = read_fixed(k, bitstream, be)
+    return (q << k) | r, bitstream
+
+
+def write_rice(value, k, bitstream, be):
+    """Write a Rice code with parameter 2^k"""
+    q = value >> k
+    r = value & ((1 << k) - 1)
+    bitstream = write_unary(q, bitstream, be)
+    if k != 0:
+        bitstream = write_fixed(r, k, bitstream, be)
+    return bitstream
+
+
+def len_rice(value, k):
+    """Length of the Rice code with parameter 2^k for value"""
+    return (value >> k) + 1 + k
+
+
+# Test that the Rice impl is reasonable
+assert write_rice(0, 2, "", True) == "100"
+assert write_rice(0, 2, "", False) == "001"
+assert write_rice(1, 2, "", True) == "101"
+assert write_rice(1, 2, "", False) == "011"
+assert write_rice(2, 2, "", True) == "110"
+assert write_rice(2, 2, "", False) == "101"
+assert write_rice(3, 2, "", True) == "111"
+assert write_rice(3, 2, "", False) == "111"
+assert write_rice(4, 2, "", True) == "0100"
+assert write_rice(4, 2, "", False) == "0010"
+
+# Little consistency check for Rice
+for k in range(4):
+    for i in range(256):
+        wbe = write_rice(i, k, "", True)
+        rbe = read_rice(wbe, k, True)[0]
+        wle = write_rice(i, k, "", False)
+        rle = read_rice(wle, k, False)[0]
+        l = len_rice(i, k)  # NoQA: E741
+        assert i == rbe
+        assert i == rle
+        assert len(wbe) == l
+        assert len(wle) == l
+
+
+################################################################################
+
+
+def read_pi(bitstream, k, be):
+    """Read a pi code with parameter k"""
+    lam, bitstream = read_rice(bitstream, k, be)
+    if lam == 0:
+        return 0, bitstream
+    f, bitstream = read_fixed(lam, bitstream, be)
+    return (1 << lam) + f - 1, bitstream
+
+
+def write_pi(value, k, bitstream, be):
+    """Write a pi code with parameter k"""
+    value += 1
+    lam = floor(log2(value))
+    s = value - (1 << lam)
+    bitstream = write_rice(lam, k, bitstream, be)
+    if lam != 0:
+        bitstream = write_fixed(s, lam, bitstream, be)
+    return bitstream
+
+
+def len_pi(value, k):
+    """Length of the pi code with parameter k for value"""
+    value += 1
+    lam = floor(log2(value))
+    return len_rice(lam, k) + lam
+
+
+# Test that the pi impl is reasonable
+assert write_pi(0, 2, "", True) == "100"
+assert write_pi(0, 2, "", False) == "001"
+assert write_pi(1, 2, "", True) == "1010"
+assert write_pi(1, 2, "", False) == "0011"
+assert write_pi(2, 2, "", True) == "1011"
+assert write_pi(2, 2, "", False) == "1011"
+assert write_pi(3, 2, "", True) == "11000"
+assert write_pi(3, 2, "", False) == "00101"
+assert write_pi(4, 2, "", True) == "11001"
+assert write_pi(4, 2, "", False) == "01101"
+assert write_pi(5, 2, "", True) == "11010"
+assert write_pi(5, 2, "", False) == "10101"
+assert write_pi(6, 2, "", True) == "11011"
+assert write_pi(6, 2, "", False) == "11101"
+assert write_pi(7, 2, "", True) == "111000"
+assert write_pi(7, 2, "", False) == "000111"
+
+# Little consistency check for pi
+for k in range(4):
+    for i in range(256):
+        wbe = write_pi(i, k, "", True)
+        rbe = read_pi(wbe, k, True)[0]
+        wle = write_pi(i, k, "", False)
+        rle = read_pi(wle, k, False)[0]
+        l = len_pi(i, k)  # NoQA: E741
+        assert i == rbe, "%s %s %s" % (i, rbe, wbe)
+        assert i == rle, "%s %s %s" % (i, rle, wle)
+        assert len(wbe) == l
+        assert len(wle) == l
+
+
+def gen_pi(read_bits, write_max_val, len_max_val=None, k=2, merged_table=False):
+    """Configuration of `gen_table` for pi"""
+    assert read_bits > 0
+    len_max_val = len_max_val or write_max_val
+    gen_table(
+        read_bits,
+        write_max_val,
+        len_max_val,
+        "pi",
+        lambda value: len_pi(value, k),
+        lambda bitstream, be: read_pi(bitstream, k, be),
+        lambda value, bitstream, be: write_pi(value, k, bitstream, be),
+        merged_table,
+    )
+    with open(os.path.join(ROOT, "pi_tables.rs"), "a") as f:
+        f.write("/// The K of the pi codes for these tables\n")
+        f.write("pub const K: usize = {};".format(k))
+
+
+################################################################################
+
+
 def generate_default_tables():
     # Generate the default tables
     gen_gamma(
@@ -1322,6 +1456,12 @@ def generate_default_tables():
     gen_omega(
         read_bits=10,  # Very useful on all architectures; 7 is a valid alternative value to save cache lines (and is sufficient on the implied distribution)
         write_max_val=63,  # Very useful
+        merged_table=False,
+    )
+    gen_pi(
+        read_bits=12,  # Starting value, to be tuned based on benchmarks
+        write_max_val=1023,  # Similar to zeta3
+        k=2,
         merged_table=False,
     )
     subprocess.check_call(

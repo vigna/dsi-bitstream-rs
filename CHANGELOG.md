@@ -6,6 +6,8 @@
 
 - `CodesStats` now support serde via a default feature.
 
+- Tables for pi codes (k=2).
+
 ## [0.6.0] - 2025-12-7
 
 ### Changed

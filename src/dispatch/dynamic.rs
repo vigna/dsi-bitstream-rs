@@ -73,7 +73,7 @@ impl<E: Endianness, CR: CodesRead<E> + ?Sized> FuncCodeReader<E, CR> {
     const RICE9: ReadFn<E, CR> = |reader: &mut CR| reader.read_rice(9);
     const RICE10: ReadFn<E, CR> = |reader: &mut CR| reader.read_rice(10);
     const PI1: ReadFn<E, CR> = |reader: &mut CR| reader.read_pi(1);
-    const PI2: ReadFn<E, CR> = |reader: &mut CR| reader.read_pi(2);
+    const PI2: ReadFn<E, CR> = |reader: &mut CR| reader.read_pi2();
     const PI3: ReadFn<E, CR> = |reader: &mut CR| reader.read_pi(3);
     const PI4: ReadFn<E, CR> = |reader: &mut CR| reader.read_pi(4);
     const PI5: ReadFn<E, CR> = |reader: &mut CR| reader.read_pi(5);
@@ -246,7 +246,7 @@ impl<E: Endianness, CW: CodesWrite<E> + ?Sized> FuncCodeWriter<E, CW> {
     const RICE9: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_rice(value, 9);
     const RICE10: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_rice(value, 10);
     const PI1: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_pi(value, 1);
-    const PI2: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_pi(value, 2);
+    const PI2: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_pi2(value);
     const PI3: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_pi(value, 3);
     const PI4: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_pi(value, 4);
     const PI5: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_pi(value, 5);

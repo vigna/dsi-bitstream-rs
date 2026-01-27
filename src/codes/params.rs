@@ -125,6 +125,23 @@ macro_rules! impl_default_read_codes {
             }
         }
 
+        impl<WR: WordRead> PiRead<$endianess>
+            for BufBitReader<$endianess, WR, DefaultReadParams>
+        where
+            WR:: Word: DoubleType + UpcastableInto<u64>,
+            <WR::Word as DoubleType>::DoubleType: CastableInto<u64>,
+        {
+            #[inline(always)]
+            fn read_pi(&mut self, k: usize) -> Result<u64, Self::Error> {
+                self.read_pi_param(k)
+            }
+
+            #[inline(always)]
+            fn read_pi2(&mut self) -> Result<u64, Self::Error> {
+                self.read_pi2_param::<true>()
+            }
+        }
+
         impl<E: Error + Send + Sync + 'static, WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>> GammaRead<$endianess>
             for BitReader<$endianess, WR, DefaultReadParams>
         where
@@ -177,6 +194,23 @@ macro_rules! impl_default_read_codes {
             #[inline(always)]
             fn read_zeta3(&mut self) -> Result<u64, Self::Error> {
                 self.read_zeta3_param::<true>()
+            }
+        }
+
+        impl<E: Error + Send + Sync + 'static, WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>> PiRead<$endianess>
+            for BitReader<$endianess, WR, DefaultReadParams>
+        where
+            WR:: Word: DoubleType + UpcastableInto<u64>,
+            <WR::Word as DoubleType>::DoubleType: CastableInto<u64>,
+        {
+            #[inline(always)]
+            fn read_pi(&mut self, k: usize) -> Result<u64, Self::Error> {
+                self.read_pi_param(k)
+            }
+
+            #[inline(always)]
+            fn read_pi2(&mut self) -> Result<u64, Self::Error> {
+                self.read_pi2_param::<true>()
             }
         }
     )*};
@@ -245,6 +279,21 @@ macro_rules! impl_default_write_codes {
             #[inline(always)]
             fn write_zeta3(&mut self, value: u64) -> Result<usize, Self::Error> {
                 self.write_zeta3_param::<true>(value)
+            }
+        }
+
+        impl<WR: WordWrite, DC: WriteParams> PiWrite<$endianess>
+            for BufBitWriter<$endianess, WR, DC>
+            where u64: CastableInto<WR::Word>,
+        {
+            #[inline(always)]
+            fn write_pi(&mut self, value: u64, k: usize) -> Result<usize, Self::Error> {
+                self.write_pi_param::<true>(value, k)
+            }
+
+            #[inline(always)]
+            fn write_pi2(&mut self, value: u64) -> Result<usize, Self::Error> {
+                self.write_pi2_param::<true>(value)
             }
         }
 

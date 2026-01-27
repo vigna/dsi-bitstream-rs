@@ -20,25 +20,48 @@
 //! endianness](crate::codes), in the little-endian case π₁ and ζ₂ have the same
 //! codeword lengths but slightly permuted bits.
 //!
-//! The supported range is [0 . . 2⁶⁴ – 1) for *k* in [0 . . 64).
+//! This module provides a generic implementation of π codes, and a specialized
+//! implementation for π₂ that may use tables.
+//!
+//! The supported range is [0 . . 2⁶⁴ – 1) for *k* in [0 . . 64).
 //!
 //! In the original paper the definition of the code is very convoluted, as the
 //! authors appear to have missed the connection with [Rice codes](super::rice).
 //! The codewords implemented by this module are equivalent to the ones in the
 //! paper, in the sense that corresponding codewords have the same length, but
 //! the codewords for *k* ≥ 2 are different, and encoding/decoding is
-//! faster—hence the name “streamlined π codes”.
+//! faster—hence the name "streamlined π codes".
 //!
 //! # References
 //!
-//! Alberto Apostolico and Guido Drovandi. “[Graph Compression by
-//! BFS](https://doi.org/10.3390/a2031031)”, Algorithms, 2:1031-1044, 2009.
+//! Alberto Apostolico and Guido Drovandi. "[Graph Compression by
+//! BFS](https://doi.org/10.3390/a2031031)", Algorithms, 2:1031-1044, 2009.
 
 use crate::traits::*;
 
-use super::{RiceRead, RiceWrite, len_rice};
+use super::{RiceRead, RiceWrite, len_rice, pi_tables};
 
-/// Returns the length of the π code for `n` with parameter `k`.
+/// Returns the length of the π code with parameter `k` for `n`.
+#[must_use]
+#[inline(always)]
+#[allow(clippy::collapsible_if)]
+pub fn len_pi_param<const USE_TABLE: bool>(mut n: u64, k: usize) -> usize {
+    debug_assert!(k < 64);
+    if USE_TABLE {
+        if k == pi_tables::K {
+            if let Some(idx) = pi_tables::LEN.get(n as usize) {
+                return *idx as usize;
+            }
+        }
+    }
+    debug_assert!(n < u64::MAX);
+    n += 1;
+    let λ = n.ilog2() as usize;
+    len_rice(λ as u64, k) + λ
+}
+
+/// Returns the length of the π code for `n` with parameter `k` using
+/// a default value for `USE_TABLE`.
 ///
 /// ```rust
 /// use dsi_bitstream::codes::len_pi;
@@ -85,51 +108,169 @@ use super::{RiceRead, RiceWrite, len_rice};
 /// ```
 #[must_use]
 #[inline(always)]
-pub fn len_pi(mut n: u64, k: usize) -> usize {
-    debug_assert!(k < 64);
-    debug_assert!(n < u64::MAX);
-    n += 1;
-    let λ = n.ilog2() as usize;
-    len_rice(λ as u64, k) + λ
+pub fn len_pi(n: u64, k: usize) -> usize {
+    len_pi_param::<true>(n, k)
 }
 
 /// Trait for reading π codes.
 ///
-/// This is the trait you should pull in scope to read π codes.
-pub trait PiRead<E: Endianness>: BitRead<E> + RiceRead<E> {
+/// This is the trait you should usually pull in scope to read π codes.
+pub trait PiRead<E: Endianness>: BitRead<E> {
+    fn read_pi(&mut self, k: usize) -> Result<u64, Self::Error>;
+    fn read_pi2(&mut self) -> Result<u64, Self::Error>;
+}
+
+/// Parametric trait for reading π codes.
+///
+/// This trait is more general than [`PiRead`], as it makes it possible
+/// to specify how to use tables using const parameters.
+///
+/// We provide an implementation of this trait for [`BitRead`]. An implementation
+/// of [`PiRead`] using default values is usually provided exploiting the
+/// [`crate::codes::params::ReadParams`] mechanism.
+pub trait PiReadParam<E: Endianness>: BitRead<E> + RiceRead<E> {
+    fn read_pi_param(&mut self, k: usize) -> Result<u64, Self::Error>;
+    fn read_pi2_param<const USE_TABLE: bool>(&mut self) -> Result<u64, Self::Error>;
+}
+
+impl<B: BitRead<BE> + RiceRead<BE>> PiReadParam<BE> for B {
     #[inline(always)]
-    fn read_pi(&mut self, k: usize) -> Result<u64, Self::Error> {
-        debug_assert!(k < 64);
-        let λ = self.read_rice(k)?;
-        debug_assert!(λ < 64);
-        Ok((1 << λ) + self.read_bits(λ as usize)? - 1)
+    fn read_pi_param(&mut self, k: usize) -> Result<u64, B::Error> {
+        default_read_pi(self, k)
     }
+
+    #[inline(always)]
+    fn read_pi2_param<const USE_TABLE: bool>(&mut self) -> Result<u64, B::Error> {
+        if USE_TABLE {
+            if let Some((res, _)) = pi_tables::read_table_be(self) {
+                return Ok(res);
+            }
+        }
+        default_read_pi(self, 2)
+    }
+}
+
+impl<B: BitRead<LE> + RiceRead<LE>> PiReadParam<LE> for B {
+    #[inline(always)]
+    fn read_pi_param(&mut self, k: usize) -> Result<u64, B::Error> {
+        default_read_pi(self, k)
+    }
+
+    #[inline(always)]
+    fn read_pi2_param<const USE_TABLE: bool>(&mut self) -> Result<u64, B::Error> {
+        if USE_TABLE {
+            if let Some((res, _)) = pi_tables::read_table_le(self) {
+                return Ok(res);
+            }
+        }
+        default_read_pi(self, 2)
+    }
+}
+
+/// Default, internal non-table based implementation that works
+/// for any endianness.
+#[inline(always)]
+fn default_read_pi<E: Endianness, B: BitRead<E> + RiceRead<E>>(
+    backend: &mut B,
+    k: usize,
+) -> Result<u64, B::Error> {
+    debug_assert!(k < 64);
+    let λ = backend.read_rice(k)?;
+    debug_assert!(λ < 64);
+    Ok((1 << λ) + backend.read_bits(λ as usize)? - 1)
 }
 
 /// Trait for writing π codes.
 ///
-/// This is the trait you should pull in scope to write π codes.
-pub trait PiWrite<E: Endianness>: BitWrite<E> + RiceWrite<E> {
+/// This is the trait you should usually pull in scope to write π codes.
+pub trait PiWrite<E: Endianness>: BitWrite<E> {
+    fn write_pi(&mut self, n: u64, k: usize) -> Result<usize, Self::Error>;
+    fn write_pi2(&mut self, n: u64) -> Result<usize, Self::Error>;
+}
+
+/// Parametric trait for writing π codes.
+///
+/// This trait is more general than [`PiWrite`], as it makes it possible
+/// to specify how to use tables using const parameters.
+///
+/// We provide an implementation of this trait for [`BitWrite`]. An implementation
+/// of [`PiWrite`] using default values is usually provided exploiting the
+/// [`crate::codes::params::WriteParams`] mechanism.
+pub trait PiWriteParam<E: Endianness>: BitWrite<E> + RiceWrite<E> {
+    fn write_pi_param<const USE_TABLE: bool>(
+        &mut self,
+        n: u64,
+        k: usize,
+    ) -> Result<usize, Self::Error>;
+    fn write_pi2_param<const USE_TABLE: bool>(&mut self, n: u64) -> Result<usize, Self::Error>;
+}
+
+impl<B: BitWrite<BE> + RiceWrite<BE>> PiWriteParam<BE> for B {
     #[inline(always)]
-    fn write_pi(&mut self, mut n: u64, k: usize) -> Result<usize, Self::Error> {
-        debug_assert!(k < 64);
-        debug_assert!(n < u64::MAX);
+    fn write_pi_param<const USE_TABLE: bool>(
+        &mut self,
+        n: u64,
+        k: usize,
+    ) -> Result<usize, Self::Error> {
+        default_write_pi(self, n, k)
+    }
 
-        n += 1;
-        let λ = n.ilog2() as usize;
-
-        #[cfg(feature = "checks")]
-        {
-            // Clean up n in case checks are enabled
-            n ^= 1 << λ;
+    #[inline(always)]
+    #[allow(clippy::collapsible_if)]
+    fn write_pi2_param<const USE_TABLE: bool>(&mut self, n: u64) -> Result<usize, Self::Error> {
+        if USE_TABLE {
+            if let Some(len) = pi_tables::write_table_be(self, n)? {
+                return Ok(len);
+            }
         }
-
-        Ok(self.write_rice(λ as u64, k)? + self.write_bits(n, λ)?)
+        default_write_pi(self, n, 2)
     }
 }
 
-impl<E: Endianness, B: BitRead<E> + RiceRead<E> + ?Sized> PiRead<E> for B {}
-impl<E: Endianness, B: BitWrite<E> + RiceWrite<E> + ?Sized> PiWrite<E> for B {}
+impl<B: BitWrite<LE> + RiceWrite<LE>> PiWriteParam<LE> for B {
+    #[inline(always)]
+    fn write_pi_param<const USE_TABLE: bool>(
+        &mut self,
+        n: u64,
+        k: usize,
+    ) -> Result<usize, Self::Error> {
+        default_write_pi(self, n, k)
+    }
+
+    #[inline(always)]
+    #[allow(clippy::collapsible_if)]
+    fn write_pi2_param<const USE_TABLE: bool>(&mut self, n: u64) -> Result<usize, Self::Error> {
+        if USE_TABLE {
+            if let Some(len) = pi_tables::write_table_le(self, n)? {
+                return Ok(len);
+            }
+        }
+        default_write_pi(self, n, 2)
+    }
+}
+
+/// Default, internal non-table based implementation that works
+/// for any endianness.
+#[inline(always)]
+fn default_write_pi<E: Endianness, B: BitWrite<E> + RiceWrite<E>>(
+    backend: &mut B,
+    mut n: u64,
+    k: usize,
+) -> Result<usize, B::Error> {
+    debug_assert!(k < 64);
+    debug_assert!(n < u64::MAX);
+
+    n += 1;
+    let λ = n.ilog2() as usize;
+
+    #[cfg(feature = "checks")]
+    {
+        // Clean up n in case checks are enabled
+        n ^= 1 << λ;
+    }
+
+    Ok(backend.write_rice(λ as u64, k)? + backend.write_bits(n, λ)?)
+}
 
 #[cfg(test)]
 mod test {
@@ -151,6 +292,92 @@ mod test {
                 "for value: {} with k {}",
                 value,
                 k
+            );
+        }
+    }
+
+    #[test]
+    fn test_roundtrip_pi2() {
+        // Test the specialized pi2 methods
+        for value in (0..64).map(|i| 1 << i).chain(0..1024).chain([u64::MAX - 1]) {
+            // Test BE
+            let mut data = [0_u64; 10];
+            let mut writer = <BufBitWriter<BE, _>>::new(MemWordWriterSlice::new(&mut data));
+            let code_len = writer.write_pi2(value).unwrap();
+            assert_eq!(code_len, len_pi(value, 2));
+            drop(writer);
+            let mut reader = <BufBitReader<BE, _>>::new(MemWordReader::new(&data));
+            assert_eq!(reader.read_pi2().unwrap(), value, "BE for value: {}", value,);
+
+            // Test LE
+            let mut data = [0_u64; 10];
+            let mut writer = <BufBitWriter<LE, _>>::new(MemWordWriterSlice::new(&mut data));
+            let code_len = writer.write_pi2(value).unwrap();
+            assert_eq!(code_len, len_pi(value, 2));
+            drop(writer);
+            let mut reader = <BufBitReader<LE, _>>::new(MemWordReader::new(&data));
+            assert_eq!(reader.read_pi2().unwrap(), value, "LE for value: {}", value,);
+        }
+    }
+
+    #[test]
+    fn test_roundtrip_pi2_param() {
+        // Test the parametric pi2 methods with tables
+        for value in (0..64).map(|i| 1 << i).chain(0..1024).chain([u64::MAX - 1]) {
+            // Test BE with tables
+            let mut data = [0_u64; 10];
+            let mut writer = <BufBitWriter<BE, _>>::new(MemWordWriterSlice::new(&mut data));
+            let code_len = writer.write_pi2_param::<true>(value).unwrap();
+            assert_eq!(code_len, len_pi(value, 2));
+            drop(writer);
+            let mut reader = <BufBitReader<BE, _>>::new(MemWordReader::new(&data));
+            assert_eq!(
+                reader.read_pi2_param::<true>().unwrap(),
+                value,
+                "BE table for value: {}",
+                value,
+            );
+
+            // Test BE without tables
+            let mut data = [0_u64; 10];
+            let mut writer = <BufBitWriter<BE, _>>::new(MemWordWriterSlice::new(&mut data));
+            let code_len = writer.write_pi2_param::<false>(value).unwrap();
+            assert_eq!(code_len, len_pi(value, 2));
+            drop(writer);
+            let mut reader = <BufBitReader<BE, _>>::new(MemWordReader::new(&data));
+            assert_eq!(
+                reader.read_pi2_param::<false>().unwrap(),
+                value,
+                "BE no table for value: {}",
+                value,
+            );
+
+            // Test LE with tables
+            let mut data = [0_u64; 10];
+            let mut writer = <BufBitWriter<LE, _>>::new(MemWordWriterSlice::new(&mut data));
+            let code_len = writer.write_pi2_param::<true>(value).unwrap();
+            assert_eq!(code_len, len_pi(value, 2));
+            drop(writer);
+            let mut reader = <BufBitReader<LE, _>>::new(MemWordReader::new(&data));
+            assert_eq!(
+                reader.read_pi2_param::<true>().unwrap(),
+                value,
+                "LE table for value: {}",
+                value,
+            );
+
+            // Test LE without tables
+            let mut data = [0_u64; 10];
+            let mut writer = <BufBitWriter<LE, _>>::new(MemWordWriterSlice::new(&mut data));
+            let code_len = writer.write_pi2_param::<false>(value).unwrap();
+            assert_eq!(code_len, len_pi(value, 2));
+            drop(writer);
+            let mut reader = <BufBitReader<LE, _>>::new(MemWordReader::new(&data));
+            assert_eq!(
+                reader.read_pi2_param::<false>().unwrap(),
+                value,
+                "LE no table for value: {}",
+                value,
             );
         }
     }

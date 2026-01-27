@@ -227,6 +227,13 @@ pub fn main() {
         );
         impl_code!(
             calibration,
+            "pi2",
+            read_pi2_param,
+            write_pi2_param,
+            gen_pi2_data
+        );
+        impl_code!(
+            calibration,
             "omega",
             read_omega_param,
             write_omega_param,

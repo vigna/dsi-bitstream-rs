@@ -96,6 +96,32 @@ pub fn gen_zeta3_data() -> (f64, Vec<u64>) {
     (ratio, zeta3_data)
 }
 
+/// Generates data to benchmark π₂ code.
+pub fn gen_pi2_data() -> (f64, Vec<u64>) {
+    let pi2_data = gen_data(|x| len_pi(x, 2));
+
+    let ratio = pi2_data
+        .iter()
+        .map(|value| {
+            #[cfg(feature = "reads")]
+            if len_pi(*value, 2) <= pi_tables::READ_BITS {
+                1
+            } else {
+                0
+            }
+            #[cfg(not(feature = "reads"))]
+            if *value <= pi_tables::WRITE_MAX {
+                1
+            } else {
+                0
+            }
+        })
+        .sum::<usize>() as f64
+        / N as f64;
+
+    (ratio, pi2_data)
+}
+
 /// Generates data to benchmark ω code.
 pub fn gen_omega_data() -> (f64, Vec<u64>) {
     let omega_data = gen_data(len_omega);
