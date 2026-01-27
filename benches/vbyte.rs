@@ -160,31 +160,25 @@ where
     let s = gen_gamma_data(GAMMA_DATA);
 
     let endian_short = if E::NAME == "big" { "be" } else { "le" };
-    c.bench_function(
-        &format!("bits_{},{},write", endian_short, C::name()),
-        |b| {
-            b.iter(|| {
-                let mut w = <BufBitWriter<E, _>>::new(MemWordWriterVec::new(&mut v));
-                for &v in &s {
-                    black_box(C::write(v, &mut w).unwrap());
-                }
-            })
-        },
-    );
+    c.bench_function(&format!("bits_{},{},write", endian_short, C::name()), |b| {
+        b.iter(|| {
+            let mut w = <BufBitWriter<E, _>>::new(MemWordWriterVec::new(&mut v));
+            for &v in &s {
+                black_box(C::write(v, &mut w).unwrap());
+            }
+        })
+    });
 
     let v = unsafe { v.align_to::<u32>().1 };
 
-    c.bench_function(
-        &format!("bits_{},{},read", endian_short, C::name()),
-        |b| {
-            b.iter(|| {
-                let mut r = BufBitReader::<E, _>::new(MemWordReader::new(v));
-                for _ in &s {
-                    black_box(C::read(&mut r).unwrap());
-                }
-            })
-        },
-    );
+    c.bench_function(&format!("bits_{},{},read", endian_short, C::name()), |b| {
+        b.iter(|| {
+            let mut r = BufBitReader::<E, _>::new(MemWordReader::new(v));
+            for _ in &s {
+                black_box(C::read(&mut r).unwrap());
+            }
+        })
+    });
 }
 
 #[derive(Debug, Default, Clone, Copy)]
