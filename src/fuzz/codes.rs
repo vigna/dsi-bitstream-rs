@@ -48,7 +48,7 @@ enum RandomCommand {
     VByteBe(u64),
     VByteLe(u64),
     Omega(u64),
-    Pi(u64, usize),
+    Pi(u64, usize, bool, bool),
 }
 
 pub fn harness(data: FuzzCase) {
@@ -94,9 +94,9 @@ pub fn harness(data: FuzzCase) {
             RandomCommand::Omega(value) => {
                 *value = (*value).min(u64::MAX - 1);
             }
-            RandomCommand::Pi(value, k) => {
+            RandomCommand::Pi(value, k, _, _) => {
                 *value = (*value).min(u32::MAX as u64 - 1);
-                *k = (*k).max(1).min(7);
+                *k = (*k).max(0).min(7);
             }
         };
     }
@@ -232,11 +232,18 @@ pub fn harness(data: FuzzCase) {
                     assert_eq!(big_success, little_success);
                     writes.push(big_success);
                 }
-                RandomCommand::Pi(value, k) => {
-                    let (big_success, little_success) = (
-                        big.write_pi(*value, *k).is_ok(),
-                        little.write_pi(*value, *k).is_ok(),
-                    );
+                RandomCommand::Pi(value, k, _, write_tab) => {
+                    let (big_success, little_success) = if *write_tab {
+                        (
+                            big.write_pi_param::<true>(*value, *k).is_ok(),
+                            little.write_pi_param::<true>(*value, *k).is_ok(),
+                        )
+                    } else {
+                        (
+                            big.write_pi_param::<false>(*value, *k).is_ok(),
+                            little.write_pi_param::<false>(*value, *k).is_ok(),
+                        )
+                    };
                     assert_eq!(big_success, little_success);
                     writes.push(big_success);
                 }
@@ -976,31 +983,66 @@ pub fn harness(data: FuzzCase) {
                         assert_eq!(pos, little_buff.bit_pos().unwrap());
                     }
                 }
-                RandomCommand::Pi(value, k) => {
-                    let (b, l, bb, lb) = (
-                        big.read_pi(k),
-                        little.read_pi(k),
-                        big_buff.read_pi(k),
-                        little_buff.read_pi(k),
-                    );
+                RandomCommand::Pi(value, k, read_tab, _) => {
+                    let (b, l, bb, lb) = if k == 2 {
+                        if read_tab {
+                            (
+                                big.read_pi2_param::<true>(),
+                                little.read_pi2_param::<true>(),
+                                big_buff.read_pi2_param::<true>(),
+                                little_buff.read_pi2_param::<true>(),
+                            )
+                        } else {
+                            (
+                                big.read_pi2_param::<false>(),
+                                little.read_pi2_param::<false>(),
+                                big_buff.read_pi2_param::<false>(),
+                                little_buff.read_pi2_param::<false>(),
+                            )
+                        }
+                    } else {
+                        (
+                            big.read_pi_param(k),
+                            little.read_pi_param(k),
+                            big_buff.read_pi_param(k),
+                            little_buff.read_pi_param(k),
+                        )
+                    };
                     if succ {
-                        assert_eq!(b.unwrap(), value as u64);
-                        assert_eq!(l.unwrap(), value as u64);
                         assert_eq!(bb.unwrap(), value as u64);
                         assert_eq!(lb.unwrap(), value as u64);
-                        assert_eq!(pos + len_pi(value, k) as u64, big.bit_pos().unwrap());
-                        assert_eq!(pos + len_pi(value, k) as u64, little.bit_pos().unwrap());
-                        assert_eq!(pos + len_pi(value, k) as u64, big_buff.bit_pos().unwrap());
+                        assert_eq!(b.unwrap(), value as u64);
+                        assert_eq!(l.unwrap(), value as u64);
                         assert_eq!(
-                            pos + len_pi(value, k) as u64,
+                            pos + len_pi_param::<false>(value, k) as u64,
+                            big.bit_pos().unwrap()
+                        );
+                        assert_eq!(
+                            pos + len_pi_param::<false>(value, k) as u64,
+                            little.bit_pos().unwrap()
+                        );
+                        assert_eq!(
+                            pos + len_pi_param::<false>(value, k) as u64,
+                            big_buff.bit_pos().unwrap()
+                        );
+                        assert_eq!(
+                            pos + len_pi_param::<false>(value, k) as u64,
                             little_buff.bit_pos().unwrap()
                         );
-
-                        assert_eq!(pos + len_pi(value, k) as u64, big.bit_pos().unwrap());
-                        assert_eq!(pos + len_pi(value, k) as u64, little.bit_pos().unwrap());
-                        assert_eq!(pos + len_pi(value, k) as u64, big_buff.bit_pos().unwrap());
                         assert_eq!(
-                            pos + len_pi(value, k) as u64,
+                            pos + len_pi_param::<true>(value, k) as u64,
+                            big.bit_pos().unwrap()
+                        );
+                        assert_eq!(
+                            pos + len_pi_param::<true>(value, k) as u64,
+                            little.bit_pos().unwrap()
+                        );
+                        assert_eq!(
+                            pos + len_pi_param::<true>(value, k) as u64,
+                            big_buff.bit_pos().unwrap()
+                        );
+                        assert_eq!(
+                            pos + len_pi_param::<true>(value, k) as u64,
                             little_buff.bit_pos().unwrap()
                         );
                     } else {

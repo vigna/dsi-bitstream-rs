@@ -30,12 +30,12 @@
 //! The codewords implemented by this module are equivalent to the ones in the
 //! paper, in the sense that corresponding codewords have the same length, but
 //! the codewords for *k* ≥ 2 are different, and encoding/decoding is
-//! faster—hence the name "streamlined π codes".
+//! faster—hence the name “streamlined π codes”.
 //!
 //! # References
 //!
-//! Alberto Apostolico and Guido Drovandi. "[Graph Compression by
-//! BFS](https://doi.org/10.3390/a2031031)", Algorithms, 2:1031-1044, 2009.
+//! Alberto Apostolico and Guido Drovandi. “[Graph Compression by
+//! BFS](https://doi.org/10.3390/a2031031)”, Algorithms, 2:1031-1044, 2009.
 
 use crate::traits::*;
 
