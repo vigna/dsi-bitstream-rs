@@ -30,12 +30,21 @@
 //! The codewords implemented by this module are equivalent to the ones in the
 //! paper, in the sense that corresponding codewords have the same length, but
 //! the codewords for *k* ≥ 2 are different, and encoding/decoding is
-//! faster—hence the name “streamlined π codes”.
+//! faster—hence the name "streamlined π codes".
+//!
+//! # Table-Based Optimization
+//!
+//! Like [δ](super::delta) codes, π codes use a special optimization for partial
+//! decoding. Due to the structure of π codes (a Rice code followed by fixed bits),
+//! when a complete codeword cannot be read from the table, the table may still
+//! provide partial information about the Rice prefix (λ) that was successfully decoded.
+//! This partial state is used to directly read the remaining λ fixed bits,
+//! avoiding re-reading the Rice prefix.
 //!
 //! # References
 //!
-//! Alberto Apostolico and Guido Drovandi. “[Graph Compression by
-//! BFS](https://doi.org/10.3390/a2031031)”, Algorithms, 2:1031-1044, 2009.
+//! Alberto Apostolico and Guido Drovandi. "[Graph Compression by
+//! BFS](https://doi.org/10.3390/a2031031)", Algorithms, 2:1031-1044, 2009.
 
 use crate::traits::*;
 
@@ -98,9 +107,18 @@ impl<B: BitRead<BE> + RiceRead<BE>> PiReadParam<BE> for B {
     #[inline(always)]
     fn read_pi2_param<const USE_TABLE: bool>(&mut self) -> Result<u64, B::Error> {
         if USE_TABLE {
-            if let Some((res, _)) = pi_tables::read_table_be(self) {
-                return Ok(res);
+            let (len_with_flag, value_or_lambda) = pi_tables::read_table_be(self);
+            if len_with_flag > 0 {
+                // Complete code - bits already skipped in read_table
+                return Ok(value_or_lambda);
+            } else if len_with_flag < 0 {
+                // Partial code: rice decoded, need to read fixed part
+                // Bits already skipped in read_table
+                let λ = value_or_lambda;
+                debug_assert!(λ < 64);
+                return Ok((1 << λ) + self.read_bits(λ as usize)? - 1);
             }
+            // len_with_flag == 0: no valid decoding, fall through
         }
         default_read_pi(self, 2)
     }
@@ -115,9 +133,18 @@ impl<B: BitRead<LE> + RiceRead<LE>> PiReadParam<LE> for B {
     #[inline(always)]
     fn read_pi2_param<const USE_TABLE: bool>(&mut self) -> Result<u64, B::Error> {
         if USE_TABLE {
-            if let Some((res, _)) = pi_tables::read_table_le(self) {
-                return Ok(res);
+            let (len_with_flag, value_or_lambda) = pi_tables::read_table_le(self);
+            if len_with_flag > 0 {
+                // Complete code - bits already skipped in read_table
+                return Ok(value_or_lambda);
+            } else if len_with_flag < 0 {
+                // Partial code: rice decoded, need to read fixed part
+                // Bits already skipped in read_table
+                let λ = value_or_lambda;
+                debug_assert!(λ < 64);
+                return Ok((1 << λ) + self.read_bits(λ as usize)? - 1);
             }
+            // len_with_flag == 0: no valid decoding, fall through
         }
         default_read_pi(self, 2)
     }
