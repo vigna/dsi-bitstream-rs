@@ -376,21 +376,22 @@ impl<E: Endianness, CW: CodesWrite<E> + ?Sized> StaticCodeWrite<E, CW> for FuncC
 
 type LenFn = fn(u64) -> usize;
 
-/// A newtype containing a function pointer dispatching the read method for a
+/// A newtype containing a function pointer dispatching the length method for a
 /// code.
 ///
 /// This is a more efficient way to pass a [`StaticCodeRead`] to a method, as
 /// a [`FuncCodeReader`] does not need to do a runtime test to dispatch the correct
-/// code.
+/// method.
 ///
-/// Instances can be obtained by calling the [`new`](FuncCodeReader::new) method with
+/// Instances can be obtained by calling the [`new`](FuncCodeLen::new) method with
 ///  method with a variant of the [`Codes`] enum, or by calling the
-/// [`new_with_func`](FuncCodeReader::new_with_func) method with a function pointer.
+/// [`new_with_func`](FuncCodeLen::new_with_func) method with a function pointer.
 ///
-/// Note that since selection of the code happens in the [`new`](FuncCodeReader::new)
-/// method, it is more efficient to clone a [`FuncCodeReader`] than to create a new one.
+/// Note that since selection of the code happens in the [`new`](FuncCodeLen::new)
+/// method, it is more efficient to clone a [`FuncCodeLen`] than to create a new one.
 #[derive(Debug, Clone, Copy)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
+#[mem_size_flat]
 pub struct FuncCodeLen(LenFn);
 
 impl FuncCodeLen {

@@ -159,21 +159,13 @@ pub trait ZetaWrite<E: Endianness>: BitWrite<E> {
 /// of [`ZetaWrite`] using default values is usually provided exploiting the
 /// [`crate::codes::params::WriteParams`] mechanism.
 pub trait ZetaWriteParam<E: Endianness>: MinimalBinaryWrite<E> {
-    fn write_zeta_param<const USE_TABLE: bool>(
-        &mut self,
-        n: u64,
-        k: usize,
-    ) -> Result<usize, Self::Error>;
+    fn write_zeta_param(&mut self, n: u64, k: usize) -> Result<usize, Self::Error>;
     fn write_zeta3_param<const USE_TABLE: bool>(&mut self, n: u64) -> Result<usize, Self::Error>;
 }
 
 impl<B: BitWrite<BE>> ZetaWriteParam<BE> for B {
     #[inline(always)]
-    fn write_zeta_param<const USE_TABLE: bool>(
-        &mut self,
-        n: u64,
-        k: usize,
-    ) -> Result<usize, Self::Error> {
+    fn write_zeta_param(&mut self, n: u64, k: usize) -> Result<usize, Self::Error> {
         default_write_zeta(self, n, k)
     }
 
@@ -191,11 +183,7 @@ impl<B: BitWrite<BE>> ZetaWriteParam<BE> for B {
 
 impl<B: BitWrite<LE>> ZetaWriteParam<LE> for B {
     #[inline(always)]
-    fn write_zeta_param<const USE_TABLE: bool>(
-        &mut self,
-        n: u64,
-        k: usize,
-    ) -> Result<usize, Self::Error> {
+    fn write_zeta_param(&mut self, n: u64, k: usize) -> Result<usize, Self::Error> {
         default_write_zeta(self, n, k)
     }
 

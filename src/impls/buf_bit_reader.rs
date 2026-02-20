@@ -129,7 +129,6 @@ where
     /// ```
     #[must_use]
     pub fn new(backend: WR) -> Self {
-        #[cfg(feature = "std")]
         Self {
             backend,
             buffer: BB::<WR>::ZERO,

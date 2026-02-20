@@ -190,21 +190,13 @@ pub trait PiWrite<E: Endianness>: BitWrite<E> {
 /// of [`PiWrite`] using default values is usually provided exploiting the
 /// [`crate::codes::params::WriteParams`] mechanism.
 pub trait PiWriteParam<E: Endianness>: BitWrite<E> + RiceWrite<E> {
-    fn write_pi_param<const USE_TABLE: bool>(
-        &mut self,
-        n: u64,
-        k: usize,
-    ) -> Result<usize, Self::Error>;
+    fn write_pi_param(&mut self, n: u64, k: usize) -> Result<usize, Self::Error>;
     fn write_pi2_param<const USE_TABLE: bool>(&mut self, n: u64) -> Result<usize, Self::Error>;
 }
 
 impl<B: BitWrite<BE> + RiceWrite<BE>> PiWriteParam<BE> for B {
     #[inline(always)]
-    fn write_pi_param<const USE_TABLE: bool>(
-        &mut self,
-        n: u64,
-        k: usize,
-    ) -> Result<usize, Self::Error> {
+    fn write_pi_param(&mut self, n: u64, k: usize) -> Result<usize, Self::Error> {
         default_write_pi(self, n, k)
     }
 
@@ -222,11 +214,7 @@ impl<B: BitWrite<BE> + RiceWrite<BE>> PiWriteParam<BE> for B {
 
 impl<B: BitWrite<LE> + RiceWrite<LE>> PiWriteParam<LE> for B {
     #[inline(always)]
-    fn write_pi_param<const USE_TABLE: bool>(
-        &mut self,
-        n: u64,
-        k: usize,
-    ) -> Result<usize, Self::Error> {
+    fn write_pi_param(&mut self, n: u64, k: usize) -> Result<usize, Self::Error> {
         default_write_pi(self, n, k)
     }
 

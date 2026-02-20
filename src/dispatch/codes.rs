@@ -18,6 +18,7 @@ use mem_dbg::{MemDbg, MemSize};
 
 #[derive(Debug, Clone, Copy, Eq)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
+#[mem_size_flat]
 #[cfg_attr(feature = "fuzz", derive(arbitrary::Arbitrary))]
 #[non_exhaustive]
 /// An enum whose variants represent all the available codes.

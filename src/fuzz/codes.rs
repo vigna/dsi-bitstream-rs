@@ -60,8 +60,8 @@ pub fn harness(data: FuzzCase) {
                 *value &= (1 << *n_bits) - 1;
             }
             RandomCommand::MinimalBinary(value, max) => {
-                *max = (*max).max(1).min(u32::MAX as _);
-                *value = (*value) % *max;
+                *max = (*max).clamp(1, u32::MAX as _);
+                *value %= *max;
             }
             RandomCommand::Unary(value) => {
                 *value = (*value).min(300);
@@ -74,19 +74,19 @@ pub fn harness(data: FuzzCase) {
             }
             RandomCommand::Zeta(value, k, _, _) => {
                 *value = (*value).min(u32::MAX as u64 - 1);
-                *k = (*k).max(1).min(7);
+                *k = (*k).clamp(1, 7);
             }
             RandomCommand::Golomb(value, b) => {
                 *value = (*value).min(u16::MAX as u64 - 1);
-                *b = (*b).max(1).min(20);
+                *b = (*b).clamp(1, 20);
             }
             RandomCommand::Rice(value, k) => {
                 *value = (*value).min(u16::MAX as u64 - 1);
-                *k = (*k).max(0).min(8);
+                *k = (*k).clamp(0, 8);
             }
             RandomCommand::ExpGolomb(value, k) => {
                 *value = (*value).min(u16::MAX as u64 - 1);
-                *k = (*k).max(0).min(8);
+                *k = (*k).clamp(0, 8);
             }
             RandomCommand::Bytes(_) => {}
             RandomCommand::VByteLe(_) => {}
@@ -96,7 +96,7 @@ pub fn harness(data: FuzzCase) {
             }
             RandomCommand::Pi(value, k, _, _) => {
                 *value = (*value).min(u32::MAX as u64 - 1);
-                *k = (*k).max(0).min(7);
+                *k = (*k).clamp(0, 7);
             }
         };
     }
@@ -127,8 +127,8 @@ pub fn harness(data: FuzzCase) {
                 }
                 RandomCommand::Unary(value) => {
                     let (big_success, little_success) = (
-                        big.write_unary(*value as u64).is_ok(),
-                        little.write_unary(*value as u64).is_ok(),
+                        big.write_unary(*value).is_ok(),
+                        little.write_unary(*value).is_ok(),
                     );
                     assert_eq!(big_success, little_success);
                     writes.push(big_success);
@@ -163,18 +163,12 @@ pub fn harness(data: FuzzCase) {
                     assert_eq!(big_success, little_success);
                     writes.push(big_success);
                 }
-                RandomCommand::Zeta(value, k, _, write_tab) => {
-                    let (big_success, little_success) = if *write_tab {
-                        (
-                            big.write_zeta_param::<true>(*value, *k).is_ok(),
-                            little.write_zeta_param::<true>(*value, *k).is_ok(),
-                        )
-                    } else {
-                        (
-                            big.write_zeta_param::<false>(*value, *k).is_ok(),
-                            little.write_zeta_param::<false>(*value, *k).is_ok(),
-                        )
-                    };
+                RandomCommand::Zeta(value, k, _, _write_tab) => {
+                    let (big_success, little_success) = (
+                        big.write_zeta_param(*value, *k).is_ok(),
+                        little.write_zeta_param(*value, *k).is_ok(),
+                    );
+
                     assert_eq!(big_success, little_success);
                     writes.push(big_success);
                 }
@@ -232,18 +226,12 @@ pub fn harness(data: FuzzCase) {
                     assert_eq!(big_success, little_success);
                     writes.push(big_success);
                 }
-                RandomCommand::Pi(value, k, _, write_tab) => {
-                    let (big_success, little_success) = if *write_tab {
-                        (
-                            big.write_pi_param::<true>(*value, *k).is_ok(),
-                            little.write_pi_param::<true>(*value, *k).is_ok(),
-                        )
-                    } else {
-                        (
-                            big.write_pi_param::<false>(*value, *k).is_ok(),
-                            little.write_pi_param::<false>(*value, *k).is_ok(),
-                        )
-                    };
+                RandomCommand::Pi(value, k, _, _write_tab) => {
+                    let (big_success, little_success) = (
+                        big.write_pi_param(*value, *k).is_ok(),
+                        little.write_pi_param(*value, *k).is_ok(),
+                    );
+
                     assert_eq!(big_success, little_success);
                     writes.push(big_success);
                 }
@@ -412,19 +400,19 @@ pub fn harness(data: FuzzCase) {
                         little_buff.read_unary(),
                     );
                     if succ {
-                        assert_eq!(b.unwrap(), value as u64);
-                        assert_eq!(l.unwrap(), value as u64);
-                        assert_eq!(bb.unwrap(), value as u64);
-                        assert_eq!(lb.unwrap(), value as u64);
-                        assert_eq!(pos + value as u64 + 1, big.bit_pos().unwrap());
-                        assert_eq!(pos + value as u64 + 1, little.bit_pos().unwrap());
-                        assert_eq!(pos + value as u64 + 1, big_buff.bit_pos().unwrap());
-                        assert_eq!(pos + value as u64 + 1, little_buff.bit_pos().unwrap());
+                        assert_eq!(b.unwrap(), value);
+                        assert_eq!(l.unwrap(), value);
+                        assert_eq!(bb.unwrap(), value);
+                        assert_eq!(lb.unwrap(), value);
+                        assert_eq!(pos + value + 1, big.bit_pos().unwrap());
+                        assert_eq!(pos + value + 1, little.bit_pos().unwrap());
+                        assert_eq!(pos + value + 1, big_buff.bit_pos().unwrap());
+                        assert_eq!(pos + value + 1, little_buff.bit_pos().unwrap());
 
-                        assert_eq!(pos + value as u64 + 1, big.bit_pos().unwrap());
-                        assert_eq!(pos + value as u64 + 1, little.bit_pos().unwrap());
-                        assert_eq!(pos + value as u64 + 1, big_buff.bit_pos().unwrap());
-                        assert_eq!(pos + value as u64 + 1, little_buff.bit_pos().unwrap());
+                        assert_eq!(pos + value + 1, big.bit_pos().unwrap());
+                        assert_eq!(pos + value + 1, little.bit_pos().unwrap());
+                        assert_eq!(pos + value + 1, big_buff.bit_pos().unwrap());
+                        assert_eq!(pos + value + 1, little_buff.bit_pos().unwrap());
                     } else {
                         assert!(b.is_err());
                         assert!(l.is_err());
@@ -680,10 +668,10 @@ pub fn harness(data: FuzzCase) {
                         little_buff.read_golomb(b_par),
                     );
                     if succ {
-                        assert_eq!(b.unwrap(), value as u64);
-                        assert_eq!(l.unwrap(), value as u64);
-                        assert_eq!(bb.unwrap(), value as u64);
-                        assert_eq!(lb.unwrap(), value as u64);
+                        assert_eq!(b.unwrap(), value);
+                        assert_eq!(l.unwrap(), value);
+                        assert_eq!(bb.unwrap(), value);
+                        assert_eq!(lb.unwrap(), value);
                         assert_eq!(
                             pos + len_golomb(value, b_par) as u64,
                             big.bit_pos().unwrap()
@@ -736,10 +724,10 @@ pub fn harness(data: FuzzCase) {
                         little_buff.read_rice(k),
                     );
                     if succ {
-                        assert_eq!(b.unwrap(), value as u64);
-                        assert_eq!(l.unwrap(), value as u64);
-                        assert_eq!(bb.unwrap(), value as u64);
-                        assert_eq!(lb.unwrap(), value as u64);
+                        assert_eq!(b.unwrap(), value);
+                        assert_eq!(l.unwrap(), value);
+                        assert_eq!(bb.unwrap(), value);
+                        assert_eq!(lb.unwrap(), value);
                         assert_eq!(pos + len_rice(value, k) as u64, big.bit_pos().unwrap());
                         assert_eq!(pos + len_rice(value, k) as u64, little.bit_pos().unwrap());
                         assert_eq!(pos + len_rice(value, k) as u64, big_buff.bit_pos().unwrap());
@@ -774,10 +762,10 @@ pub fn harness(data: FuzzCase) {
                         little_buff.read_exp_golomb(k),
                     );
                     if succ {
-                        assert_eq!(b.unwrap(), value as u64);
-                        assert_eq!(l.unwrap(), value as u64);
-                        assert_eq!(bb.unwrap(), value as u64);
-                        assert_eq!(lb.unwrap(), value as u64);
+                        assert_eq!(b.unwrap(), value);
+                        assert_eq!(l.unwrap(), value);
+                        assert_eq!(bb.unwrap(), value);
+                        assert_eq!(lb.unwrap(), value);
                         assert_eq!(
                             pos + len_exp_golomb(value, k) as u64,
                             big.bit_pos().unwrap()
@@ -830,10 +818,10 @@ pub fn harness(data: FuzzCase) {
                         little_buff.read_vbyte_le(),
                     );
                     if succ {
-                        assert_eq!(b.unwrap(), value as u64, "b");
-                        assert_eq!(l.unwrap(), value as u64, "l");
-                        assert_eq!(bb.unwrap(), value as u64, "bb");
-                        assert_eq!(lb.unwrap(), value as u64, "lb");
+                        assert_eq!(b.unwrap(), value, "b");
+                        assert_eq!(l.unwrap(), value, "l");
+                        assert_eq!(bb.unwrap(), value, "bb");
+                        assert_eq!(lb.unwrap(), value, "lb");
                         assert_eq!(pos + bit_len_vbyte(value) as u64, big.bit_pos().unwrap());
                         assert_eq!(pos + bit_len_vbyte(value) as u64, little.bit_pos().unwrap());
                         assert_eq!(
@@ -874,10 +862,10 @@ pub fn harness(data: FuzzCase) {
                         little_buff.read_vbyte_be(),
                     );
                     if succ {
-                        assert_eq!(b.unwrap(), value as u64, "b");
-                        assert_eq!(l.unwrap(), value as u64, "l");
-                        assert_eq!(bb.unwrap(), value as u64, "bb");
-                        assert_eq!(lb.unwrap(), value as u64, "lb");
+                        assert_eq!(b.unwrap(), value, "b");
+                        assert_eq!(l.unwrap(), value, "l");
+                        assert_eq!(bb.unwrap(), value, "bb");
+                        assert_eq!(lb.unwrap(), value, "lb");
                         assert_eq!(pos + bit_len_vbyte(value) as u64, big.bit_pos().unwrap());
                         assert_eq!(pos + bit_len_vbyte(value) as u64, little.bit_pos().unwrap());
                         assert_eq!(
@@ -953,10 +941,10 @@ pub fn harness(data: FuzzCase) {
                         little_buff.read_omega(),
                     );
                     if succ {
-                        assert_eq!(b.unwrap(), value as u64, "b");
-                        assert_eq!(l.unwrap(), value as u64, "l");
-                        assert_eq!(bb.unwrap(), value as u64, "bb");
-                        assert_eq!(lb.unwrap(), value as u64, "lb");
+                        assert_eq!(b.unwrap(), value, "b");
+                        assert_eq!(l.unwrap(), value, "l");
+                        assert_eq!(bb.unwrap(), value, "bb");
+                        assert_eq!(lb.unwrap(), value, "lb");
                         assert_eq!(pos + len_omega(value) as u64, big.bit_pos().unwrap());
                         assert_eq!(pos + len_omega(value) as u64, little.bit_pos().unwrap());
                         assert_eq!(pos + len_omega(value) as u64, big_buff.bit_pos().unwrap());
@@ -1009,10 +997,10 @@ pub fn harness(data: FuzzCase) {
                         )
                     };
                     if succ {
-                        assert_eq!(bb.unwrap(), value as u64);
-                        assert_eq!(lb.unwrap(), value as u64);
-                        assert_eq!(b.unwrap(), value as u64);
-                        assert_eq!(l.unwrap(), value as u64);
+                        assert_eq!(bb.unwrap(), value);
+                        assert_eq!(lb.unwrap(), value);
+                        assert_eq!(b.unwrap(), value);
+                        assert_eq!(l.unwrap(), value);
                         assert_eq!(
                             pos + len_pi_param::<false>(value, k) as u64,
                             big.bit_pos().unwrap()

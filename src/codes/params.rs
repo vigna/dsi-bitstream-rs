@@ -70,6 +70,7 @@ pub trait ReadParams {}
 /// own implementation.
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
+#[mem_size_flat]
 pub struct DefaultReadParams;
 impl ReadParams for DefaultReadParams {}
 
@@ -143,7 +144,7 @@ macro_rules! impl_default_read_codes {
 
             #[inline(always)]
             fn read_pi2(&mut self) -> Result<u64, Self::Error> {
-                self.read_pi2_param::<true>()
+                self.read_pi2_param::<false>()
             }
         }
 
@@ -215,7 +216,7 @@ macro_rules! impl_default_read_codes {
 
             #[inline(always)]
             fn read_pi2(&mut self) -> Result<u64, Self::Error> {
-                self.read_pi2_param::<true>()
+                self.read_pi2_param::<false>()
             }
         }
     )*};
@@ -237,6 +238,7 @@ pub trait WriteParams {}
 /// own implementation.
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
+#[mem_size_flat]
 pub struct DefaultWriteParams;
 impl WriteParams for DefaultWriteParams {}
 
@@ -278,7 +280,7 @@ macro_rules! impl_default_write_codes {
         {
             #[inline(always)]
             fn write_zeta(&mut self, value: u64, k: usize) -> Result<usize, Self::Error> {
-                self.write_zeta_param::<true>(value, k)
+                self.write_zeta_param(value, k)
             }
 
             #[inline(always)]
@@ -293,7 +295,7 @@ macro_rules! impl_default_write_codes {
         {
             #[inline(always)]
             fn write_pi(&mut self, value: u64, k: usize) -> Result<usize, Self::Error> {
-                self.write_pi_param::<true>(value, k)
+                self.write_pi_param(value, k)
             }
 
             #[inline(always)]

@@ -6,6 +6,7 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
+#![allow(clippy::unused_io_amount)]
 #[cfg(feature = "fuzz")]
 use std::error::Error;
 

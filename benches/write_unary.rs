@@ -1,8 +1,6 @@
 use criterion::{Criterion, criterion_group, criterion_main};
 use dsi_bitstream::prelude::*;
-use rand::RngCore;
-use rand::SeedableRng;
-use rand::rngs::SmallRng;
+use rand::{RngExt, SeedableRng, rngs::SmallRng};
 use std::hint::black_box;
 use std::time::Duration;
 
@@ -14,15 +12,15 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     let mut r = SmallRng::seed_from_u64(0);
 
     c.bench_function("rng + trailing_zeros", |b| {
-        b.iter(|| black_box(r.next_u64().trailing_zeros() as u64))
+        b.iter(|| black_box(r.random::<u64>().trailing_zeros() as u64))
     });
 
     c.bench_function("write_unary<BE>", |b| {
-        b.iter(|| w_be.write_unary(black_box(r.next_u64().trailing_zeros() as u64)))
+        b.iter(|| w_be.write_unary(black_box(r.random::<u64>().trailing_zeros() as u64)))
     });
 
     c.bench_function("write_unary<LE>", |b| {
-        b.iter(|| w_le.write_unary(black_box(r.next_u64().trailing_zeros() as u64)))
+        b.iter(|| w_le.write_unary(black_box(r.random::<u64>().trailing_zeros() as u64)))
     });
 }
 

@@ -1,8 +1,6 @@
 use criterion::{Criterion, criterion_group, criterion_main};
 use dsi_bitstream::prelude::*;
-use rand::Rng;
-use rand::SeedableRng;
-use rand::rngs::SmallRng;
+use rand::{RngExt, SeedableRng, rngs::SmallRng};
 use std::hint::black_box;
 use std::time::Duration;
 

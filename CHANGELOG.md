@@ -5,10 +5,19 @@
 ### Improved
 
 - Replaced `check_tables` with per-code `check_read_table` const functions
-  added to each parametric method. Checks are now performed at compile
-  time via `const { }` blocks only for the tables actually used using
-  a new constant `BitRead::PEEK_BITS`. Unless you exposed bit readers
-  in your APIs, you can upgrade to this version as if it was a minor release.
+  added to each parametric method. Checks are now performed at compile time via
+  `const { }` blocks, only for the tables actually used, using a new constant
+  `BitRead::PEEK_BITS`. Unless you exposed bit readers in your APIs, you can
+  upgrade to this version as if it was a minor release.
+
+### Changed
+
+- Upgraded to `rand` 0.10.0, `rand_distr` 0.6.0 and `mem_dbg` 0.4.0.
+
+- Removed spurious const parameter from `write_pi_param` and
+  `write_zeta_param`.
+
+- Read tables for pi codes are not set up by default.
 
 ## [0.7.0] - 2026-10-27
 

@@ -11,9 +11,7 @@ use anyhow::Result;
 use criterion::{Criterion, criterion_group, criterion_main};
 use dsi_bitstream::prelude::*;
 use dsi_bitstream::traits::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
-use rand::Rng;
-use rand::SeedableRng;
-use rand::rngs::SmallRng;
+use rand::{RngExt, SeedableRng, rngs::SmallRng};
 use std::hint::black_box;
 use std::io::{Read, Write};
 use std::marker::PhantomData;
@@ -83,7 +81,7 @@ pub trait ByteCode {
     fn write(value: u64, w: &mut impl Write) -> Result<usize>;
 }
 
-pub fn bench_bytestream<C: ByteCode + WithName>(c: &mut Criterion) {
+pub fn bench_byte_stream<C: ByteCode + WithName>(c: &mut Criterion) {
     let mut v = <Vec<u8>>::with_capacity(CAPACITY);
     // test that the impl works
     {
@@ -128,11 +126,11 @@ pub trait BitCode {
 }
 
 pub fn bench_bitstream<C: BitCode + WithName>(c: &mut Criterion) {
-    bench_bitstream_with_endiannes::<C, BigEndian>(c);
-    bench_bitstream_with_endiannes::<C, LittleEndian>(c);
+    bench_bitstream_with_endianness::<C, BigEndian>(c);
+    bench_bitstream_with_endianness::<C, LittleEndian>(c);
 }
 
-fn bench_bitstream_with_endiannes<C: BitCode + WithName, E: Endianness>(c: &mut Criterion)
+fn bench_bitstream_with_endianness<C: BitCode + WithName, E: Endianness>(c: &mut Criterion)
 where
     for<'a> BufBitReader<E, MemWordReader<u32, &'a [u32]>>: BitRead<E>,
     for<'a> BufBitWriter<E, MemWordWriterVec<u64, &'a mut Vec<u64>>>: BitWrite<E>,
@@ -439,18 +437,18 @@ impl BitCode for BitStreamVByteLE<GroupedIfs, Complete, OneCont> {
 }
 
 pub fn benchmark(c: &mut Criterion) {
-    bench_bytestream::<ByteStreamVByte<LE, NonGrouped, Complete, OneCont>>(c);
-    bench_bytestream::<ByteStreamVByte<LE, NonGrouped, Complete, ZeroCont>>(c);
-    bench_bytestream::<ByteStreamVByte<LE, NonGrouped, NonComplete, OneCont>>(c);
-    bench_bytestream::<ByteStreamVByte<LE, NonGrouped, NonComplete, ZeroCont>>(c);
+    bench_byte_stream::<ByteStreamVByte<LE, NonGrouped, Complete, OneCont>>(c);
+    bench_byte_stream::<ByteStreamVByte<LE, NonGrouped, Complete, ZeroCont>>(c);
+    bench_byte_stream::<ByteStreamVByte<LE, NonGrouped, NonComplete, OneCont>>(c);
+    bench_byte_stream::<ByteStreamVByte<LE, NonGrouped, NonComplete, ZeroCont>>(c);
 
-    bench_bytestream::<ByteStreamVByte<BE, NonGrouped, Complete, OneCont>>(c);
-    bench_bytestream::<ByteStreamVByte<BE, NonGrouped, Complete, ZeroCont>>(c);
-    bench_bytestream::<ByteStreamVByte<BE, NonGrouped, NonComplete, OneCont>>(c);
-    bench_bytestream::<ByteStreamVByte<BE, NonGrouped, NonComplete, ZeroCont>>(c);
+    bench_byte_stream::<ByteStreamVByte<BE, NonGrouped, Complete, OneCont>>(c);
+    bench_byte_stream::<ByteStreamVByte<BE, NonGrouped, Complete, ZeroCont>>(c);
+    bench_byte_stream::<ByteStreamVByte<BE, NonGrouped, NonComplete, OneCont>>(c);
+    bench_byte_stream::<ByteStreamVByte<BE, NonGrouped, NonComplete, ZeroCont>>(c);
 
-    bench_bytestream::<ByteStreamVByte<LE, GroupedIfs, Complete, OneCont>>(c);
-    bench_bytestream::<ByteStreamVByte<BE, GroupedIfs, Complete, OneCont>>(c);
+    bench_byte_stream::<ByteStreamVByte<LE, GroupedIfs, Complete, OneCont>>(c);
+    bench_byte_stream::<ByteStreamVByte<BE, GroupedIfs, Complete, OneCont>>(c);
 
     bench_bitstream::<BitStreamVByteBE<GroupedIfs, Complete, OneCont>>(c);
     bench_bitstream::<BitStreamVByteLE<GroupedIfs, Complete, OneCont>>(c);
@@ -458,7 +456,7 @@ pub fn benchmark(c: &mut Criterion) {
     //bench_bytestream::<ByteStreamVByte<BE, GroupedIfs, Complete, Zero>>(c);
     //bench_bytestream::<ByteStreamVByte<BE, GroupedIfs, NonComplete, One>>(c);
     //bench_bytestream::<ByteStreamVByte<BE, GroupedIfs, NonComplete, Zero>>(c);
-    bench_bytestream::<ByteStreamVByte<BE, GroupedCLZ, NonComplete, OneCont>>(c);
+    bench_byte_stream::<ByteStreamVByte<BE, GroupedCLZ, NonComplete, OneCont>>(c);
     //bench_bytestream::<ByteStreamVByte<BE, GroupedCLZ, Complete, Zero>>(c);
     //bench_bytestream::<ByteStreamVByte<BE, GroupedCLZ, NonComplete, One>>(c);
     //bench_bytestream::<ByteStreamVByte<BE, GroupedCLZ, NonComplete, Zero>>(c);
