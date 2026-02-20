@@ -600,8 +600,8 @@ mod test {
                         BufBitReader, DeltaRead, DeltaWrite, MemWordReader, len_delta, len_gamma,
                     },
                 };
-                use rand::Rng;
-                use rand::{SeedableRng, rngs::SmallRng};
+
+                use rand::{RngExt, SeedableRng, rngs::SmallRng};
 
                 let mut buffer_be: Vec<$word> = vec![];
                 let mut buffer_le: Vec<$word> = vec![];

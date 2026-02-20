@@ -101,6 +101,11 @@ impl<B: GammaReadParam<BE>> DeltaReadParam<BE> for B {
     fn read_delta_param<const USE_DELTA_TABLE: bool, const USE_GAMMA_TABLE: bool>(
         &mut self,
     ) -> Result<u64, B::Error> {
+        const {
+            if USE_DELTA_TABLE {
+                delta_tables::check_read_table(B::PEEK_BITS)
+            }
+        }
         if USE_DELTA_TABLE {
             let (len_with_flag, value_or_gamma) = delta_tables::read_table_be(self);
             if len_with_flag > 0 {
@@ -124,6 +129,11 @@ impl<B: GammaReadParam<LE>> DeltaReadParam<LE> for B {
     fn read_delta_param<const USE_DELTA_TABLE: bool, const USE_GAMMA_TABLE: bool>(
         &mut self,
     ) -> Result<u64, B::Error> {
+        const {
+            if USE_DELTA_TABLE {
+                delta_tables::check_read_table(B::PEEK_BITS)
+            }
+        }
         if USE_DELTA_TABLE {
             let (len_with_flag, value_or_gamma) = delta_tables::read_table_le(self);
             if len_with_flag > 0 {

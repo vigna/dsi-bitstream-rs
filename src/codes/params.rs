@@ -6,71 +6,47 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
-/*!
-
-Mechanisms for selecting parameters.
-
-Traits and structures in this file are of no interest for the standard
-user. Their purpose is to provide a systematic way, and in particular
-a default way, to select parameters for parameterized traits
-such as [`GammaReadParam`] and [`GammaWriteParam`].
-
-The traits and structure in this module work closely with the
-bitstream readers and writers in [`impls`](crate::impls), which have an
-additional type parameter `RP`/`WP` that must
-implement marker traits [`ReadParams`] or [`WriteParams`], respectively.
-The type is then used as a selector type to provide blanket implementations
-of parameterless traits in [`codes`](crate::codes) such as [`GammaRead`],
-[`GammaWrite`], [`DeltaRead`], [`DeltaWrite`], and so on.
-
-This module provides default selector types [`DefaultReadParams`] and [`DefaultWriteParams`]
-which are also the default value for the parameter `RP`/`WP` in the bitstream
-readers and writers in [`crate::impls`]. Type-selected blanket implementations
-of all parameterless traits in [`crate::codes`] are provided for the bitstream
-readers and writers in [`impls`](crate::impls). Thus, if you not specify a value for the
-parameter `RP`/`WP`, you will obtain automatically
-the blanket implementations for parameterless traits contained in this module.
-
-However, you can also create new selector types implementing [`ReadParams`]/[`WriteParams`] and
-write blanket implementations for the bitstream readers and writers in [`crate::impls`]
-where `RP`/`WP` is set to your selector types. Then, by specifying your type as value of the
-parameter `RP`/`WP` when creating such readers and writers you will use
-automatically your blanket implementations instead of the ones provided by this module.
-
-Note that the default implementations provided by this module are targeted at
-`u32` read words and `u64` write words. If you use different word sizes,
-you may want to write your own selector types.
-
-# Table peek-word checks
-
-When a default read implementation enables table-based decoding (i.e., it calls
-a `read_*_param` method with a `USE_TABLE` or `USE_*_TABLE` const parameter set
-to `true`), it must verify at compile time that the reader's peek word is large
-enough for the table. Each table module (e.g.,
-[`gamma_tables`](super::gamma_tables),
-[`delta_tables`](super::delta_tables), etc.) provides a
-`check_read_table` const fn for this purpose.
-
-The [`DefaultReadParams`] implementations in this module already include such
-checks via `const { }` blocks. If you create your own selector type and write
-custom blanket implementations that enable tables, you should add analogous
-checks. For example:
-
-```ignore
-const { gamma_tables::check_read_table(WR::Word::BITS + 1) }
-```
-
-for a [`BufBitReader`](crate::impls::BufBitReader) (whose peek word
-provides `WR::Word::BITS + 1` bits), or:
-
-```ignore
-const { gamma_tables::check_read_table(32) }
-```
-
-for a [`BitReader`](crate::impls::BitReader) (whose peek word is always 32
-bits).
-
-*/
+//! Mechanisms for selecting parameters.
+//!
+//! Traits and structures in this file are of no interest for the standard
+//! user. Their purpose is to provide a systematic way, and in particular
+//! a default way, to select parameters for parameterized traits
+//! such as [`GammaReadParam`] and [`GammaWriteParam`].
+//!
+//! The traits and structure in this module work closely with the
+//! bitstream readers and writers in [`impls`](crate::impls), which have an
+//! additional type parameter `RP`/`WP` that must
+//! implement marker traits [`ReadParams`] or [`WriteParams`], respectively.
+//! The type is then used as a selector type to provide blanket implementations
+//! of parameterless traits in [`codes`](crate::codes) such as [`GammaRead`],
+//! [`GammaWrite`], [`DeltaRead`], [`DeltaWrite`], and so on.
+//!
+//! This module provides default selector types [`DefaultReadParams`] and [`DefaultWriteParams`]
+//! which are also the default value for the parameter `RP`/`WP` in the bitstream
+//! readers and writers in [`crate::impls`]. Type-selected blanket implementations
+//! of all parameterless traits in [`crate::codes`] are provided for the bitstream
+//! readers and writers in [`impls`](crate::impls). Thus, if you not specify a value for the
+//! parameter `RP`/`WP`, you will obtain automatically
+//! the blanket implementations for parameterless traits contained in this module.
+//!
+//! However, you can also create new selector types implementing [`ReadParams`]/[`WriteParams`] and
+//! write blanket implementations for the bitstream readers and writers in [`crate::impls`]
+//! where `RP`/`WP` is set to your selector types. Then, by specifying your type as value of the
+//! parameter `RP`/`WP` when creating such readers and writers you will use
+//! automatically your blanket implementations instead of the ones provided by this module.
+//!
+//! Note that the default implementations provided by this module are targeted at
+//! `u32` read words and `u64` write words. If you use different word sizes,
+//! you may want to write your own selector types.
+//!
+//! # Table peek-bits checks
+//!
+//! The `read_*_param` methods in each code module (e.g.,
+//! [`GammaReadParam::read_gamma_param`]) verify at compile time, via `const {
+//! }` blocks using [`BitRead::PEEK_BITS`], that the reader's peek word is large
+//! enough for the table when the corresponding `USE_TABLE` const parameter is
+//! `true`. These checks are short-circuited when the table is not used, so they
+//! are only triggered for the tables actually selected.
 
 use crate::codes::*;
 use crate::impls::*;
@@ -121,8 +97,6 @@ macro_rules! impl_default_read_codes {
         {
             #[inline(always)]
             fn read_delta(&mut self) -> Result<u64, Self::Error> {
-                // USE_GAMMA_TABLE is true, so check gamma tables
-                const { gamma_tables::check_read_table(WR::Word::BITS + 1) }
                 self.read_delta_param::<false, true>()
             }
         }
@@ -135,7 +109,6 @@ macro_rules! impl_default_read_codes {
         {
             #[inline(always)]
             fn read_omega(&mut self) -> Result<u64, Self::Error> {
-                const { omega_tables::check_read_table(WR::Word::BITS + 1) }
                 self.read_omega_param::<true>()
             }
         }
@@ -153,7 +126,6 @@ macro_rules! impl_default_read_codes {
 
             #[inline(always)]
             fn read_zeta3(&mut self) -> Result<u64, Self::Error> {
-                const { zeta_tables::check_read_table(WR::Word::BITS + 1) }
                 self.read_zeta3_param::<true>()
             }
         }
@@ -171,7 +143,6 @@ macro_rules! impl_default_read_codes {
 
             #[inline(always)]
             fn read_pi2(&mut self) -> Result<u64, Self::Error> {
-                const { pi_tables::check_read_table(WR::Word::BITS + 1) }
                 self.read_pi2_param::<true>()
             }
         }
@@ -198,8 +169,6 @@ macro_rules! impl_default_read_codes {
         {
             #[inline(always)]
             fn read_delta(&mut self) -> Result<u64, Self::Error> {
-                // USE_GAMMA_TABLE is true, so check gamma tables
-                const { gamma_tables::check_read_table(32) }
                 self.read_delta_param::<false, true>()
             }
         }
@@ -212,7 +181,6 @@ macro_rules! impl_default_read_codes {
         {
             #[inline(always)]
             fn read_omega(&mut self) -> Result<u64, Self::Error> {
-                const { omega_tables::check_read_table(32) }
                 self.read_omega_param::<true>()
             }
         }
@@ -230,7 +198,6 @@ macro_rules! impl_default_read_codes {
 
             #[inline(always)]
             fn read_zeta3(&mut self) -> Result<u64, Self::Error> {
-                const { zeta_tables::check_read_table(32) }
                 self.read_zeta3_param::<true>()
             }
         }
@@ -248,7 +215,6 @@ macro_rules! impl_default_read_codes {
 
             #[inline(always)]
             fn read_pi2(&mut self) -> Result<u64, Self::Error> {
-                const { pi_tables::check_read_table(32) }
                 self.read_pi2_param::<true>()
             }
         }

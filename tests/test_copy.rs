@@ -11,7 +11,7 @@ use dsi_bitstream::prelude::{
 };
 use dsi_bitstream::traits::{BE, Endianness, LE};
 use rand::rngs::SmallRng;
-use rand::{Rng, SeedableRng};
+use rand::{RngExt, SeedableRng};
 use std::error::Error;
 
 #[test]

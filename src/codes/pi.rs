@@ -106,6 +106,11 @@ impl<B: BitRead<BE> + RiceRead<BE>> PiReadParam<BE> for B {
 
     #[inline(always)]
     fn read_pi2_param<const USE_TABLE: bool>(&mut self) -> Result<u64, B::Error> {
+        const {
+            if USE_TABLE {
+                pi_tables::check_read_table(B::PEEK_BITS)
+            }
+        }
         if USE_TABLE {
             let (len_with_flag, value_or_lambda) = pi_tables::read_table_be(self);
             if len_with_flag > 0 {
@@ -132,6 +137,11 @@ impl<B: BitRead<LE> + RiceRead<LE>> PiReadParam<LE> for B {
 
     #[inline(always)]
     fn read_pi2_param<const USE_TABLE: bool>(&mut self) -> Result<u64, B::Error> {
+        const {
+            if USE_TABLE {
+                pi_tables::check_read_table(B::PEEK_BITS)
+            }
+        }
         if USE_TABLE {
             let (len_with_flag, value_or_lambda) = pi_tables::read_table_le(self);
             if len_with_flag > 0 {

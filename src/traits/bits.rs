@@ -76,6 +76,10 @@ pub trait BitRead<E: Endianness> {
     /// The type we can read from the stream without advancing.
     type PeekWord: CastableInto<u64>;
 
+    /// The number of bits that [`peek_bits`](BitRead::peek_bits) is guaranteed
+    /// to return successfully (with zero-extended EOF).
+    const PEEK_BITS: usize;
+
     /// Reads `n` bits and return them in the lowest bits.
     ///
     /// Implementors should check the value of `n` when in test mode

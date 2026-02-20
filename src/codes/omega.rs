@@ -150,6 +150,11 @@ fn read_omega_from_state<E: Endianness, B: BitRead<E>>(
 impl<B: BitRead<BE>> OmegaReadParam<BE> for B {
     #[inline(always)]
     fn read_omega_param<const USE_TABLES: bool>(&mut self) -> Result<u64, Self::Error> {
+        const {
+            if USE_TABLES {
+                omega_tables::check_read_table(B::PEEK_BITS)
+            }
+        }
         if USE_TABLES {
             let (len_with_flag, value) = omega_tables::read_table_be(self);
             if len_with_flag > 0 {
@@ -168,6 +173,11 @@ impl<B: BitRead<BE>> OmegaReadParam<BE> for B {
 impl<B: BitRead<LE>> OmegaReadParam<LE> for B {
     #[inline(always)]
     fn read_omega_param<const USE_TABLES: bool>(&mut self) -> Result<u64, Self::Error> {
+        const {
+            if USE_TABLES {
+                omega_tables::check_read_table(B::PEEK_BITS)
+            }
+        }
         if USE_TABLES {
             let (len_with_flag, value) = omega_tables::read_table_le(self);
             if len_with_flag > 0 {

@@ -84,6 +84,11 @@ fn default_read_gamma<E: Endianness, B: BitRead<E>>(backend: &mut B) -> Result<u
 impl<B: BitRead<BE>> GammaReadParam<BE> for B {
     #[inline(always)]
     fn read_gamma_param<const USE_TABLE: bool>(&mut self) -> Result<u64, Self::Error> {
+        const {
+            if USE_TABLE {
+                gamma_tables::check_read_table(B::PEEK_BITS)
+            }
+        }
         if USE_TABLE {
             if let Some((res, _)) = gamma_tables::read_table_be(self) {
                 return Ok(res);
@@ -96,6 +101,11 @@ impl<B: BitRead<BE>> GammaReadParam<BE> for B {
 impl<B: BitRead<LE>> GammaReadParam<LE> for B {
     #[inline(always)]
     fn read_gamma_param<const USE_TABLE: bool>(&mut self) -> Result<u64, Self::Error> {
+        const {
+            if USE_TABLE {
+                gamma_tables::check_read_table(B::PEEK_BITS)
+            }
+        }
         if USE_TABLE {
             if let Some((res, _)) = gamma_tables::read_table_le(self) {
                 return Ok(res);

@@ -11,42 +11,39 @@ use core::convert::Infallible;
 #[cfg(feature = "mem_dbg")]
 use mem_dbg::{MemDbg, MemSize};
 
-/**
-
-An implementation of [`WordRead`] and [`WordSeek`] for a slice.
-
-The implementation depends on the `INF` parameter: if true, the reader will
-behave as if the slice is infinitely extended with zeros.
-If false, the reader will return an error when reading
-beyond the end of the slice. You can create a zero-extended
-reader with [`MemWordReader::new`] and a strict reader with
-[`MemWordReader::new_strict`].
-
-The zero-extended reader is usually much faster than the strict reader, but
-it might loop infinitely when reading beyond the end of the slice.
-
-# Examples
-
-```rust
-# fn main() -> Result<(), Box<dyn std::error::Error>> {
-use dsi_bitstream::prelude::*;
-
-let words: [u32; 2] = [1, 2];
-
-let mut word_reader = MemWordReader::new(&words);
-assert_eq!(1, word_reader.read_word()?);
-assert_eq!(2, word_reader.read_word()?);
-assert_eq!(0, word_reader.read_word()?);
-assert_eq!(0, word_reader.read_word()?);
-
-let mut word_reader = MemWordReader::new_strict(&words);
-assert_eq!(1, word_reader.read_word()?);
-assert_eq!(2, word_reader.read_word()?);
-assert!(word_reader.read_word().is_err());
-# Ok(())
-# }
-```
-*/
+/// An implementation of [`WordRead`] and [`WordSeek`] for a slice.
+///
+/// The implementation depends on the `INF` parameter: if true, the reader will
+/// behave as if the slice is infinitely extended with zeros.
+/// If false, the reader will return an error when reading
+/// beyond the end of the slice. You can create a zero-extended
+/// reader with [`MemWordReader::new`] and a strict reader with
+/// [`MemWordReader::new_strict`].
+///
+/// The zero-extended reader is usually much faster than the strict reader, but
+/// it might loop infinitely when reading beyond the end of the slice.
+///
+/// # Examples
+///
+/// ```rust
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// use dsi_bitstream::prelude::*;
+///
+/// let words: [u32; 2] = [1, 2];
+///
+/// let mut word_reader = MemWordReader::new(&words);
+/// assert_eq!(1, word_reader.read_word()?);
+/// assert_eq!(2, word_reader.read_word()?);
+/// assert_eq!(0, word_reader.read_word()?);
+/// assert_eq!(0, word_reader.read_word()?);
+///
+/// let mut word_reader = MemWordReader::new_strict(&words);
+/// assert_eq!(1, word_reader.read_word()?);
+/// assert_eq!(2, word_reader.read_word()?);
+/// assert!(word_reader.read_word().is_err());
+/// # Ok(())
+/// # }
+/// ```
 #[derive(Debug, Clone, PartialEq)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
 pub struct MemWordReader<W: Word, B: AsRef<[W]>, const INF: bool = true> {

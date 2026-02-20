@@ -129,6 +129,7 @@ where
     /// ```
     #[must_use]
     pub fn new(backend: WR) -> Self {
+        #[cfg(feature = "std")]
         Self {
             backend,
             buffer: BB::<WR>::ZERO,
@@ -175,6 +176,7 @@ where
 {
     type Error = <WR as WordRead>::Error;
     type PeekWord = BB<WR>;
+    const PEEK_BITS: usize = <WR as WordRead>::Word::BITS + 1;
 
     #[inline(always)]
     fn peek_bits(&mut self, n_bits: usize) -> Result<Self::PeekWord, Self::Error> {
@@ -230,8 +232,8 @@ where
         let new_word = self.backend.read_word()?.to_be();
         self.bits_in_buffer = WR::Word::BITS - n_bits;
         // compose the remaining bits
-        let upcasted: u64 = new_word.upcast();
-        let final_bits: u64 = (upcasted >> self.bits_in_buffer).downcast();
+        let upcast: u64 = new_word.upcast();
+        let final_bits: u64 = (upcast >> self.bits_in_buffer).downcast();
         result = (result << (n_bits - 1) << 1) | final_bits;
         // and put the rest in the buffer
         self.buffer = (UpcastableInto::<BB<WR>>::upcast(new_word)
@@ -421,6 +423,7 @@ where
 {
     type Error = <WR as WordRead>::Error;
     type PeekWord = BB<WR>;
+    const PEEK_BITS: usize = <WR as WordRead>::Word::BITS + 1;
 
     #[inline(always)]
     fn peek_bits(&mut self, n_bits: usize) -> Result<Self::PeekWord, Self::Error> {
@@ -435,8 +438,8 @@ where
         debug_assert!(n_bits <= self.bits_in_buffer);
 
         // Keep the n_bits lowest bits of the buffer
-        let shamt = BB::<WR>::BITS - n_bits;
-        Ok((self.buffer << shamt) >> shamt)
+        let sham = BB::<WR>::BITS - n_bits;
+        Ok((self.buffer << sham) >> sham)
     }
 
     #[inline(always)]
@@ -477,9 +480,9 @@ where
         let new_word = self.backend.read_word()?.to_le();
         self.bits_in_buffer = WR::Word::BITS - n_bits;
         // compose the remaining bits
-        let shamt = 64 - n_bits;
-        let upcasted: u64 = new_word.upcast();
-        let final_bits: u64 = ((upcasted << shamt) >> shamt).downcast();
+        let sham = 64 - n_bits;
+        let upcast: u64 = new_word.upcast();
+        let final_bits: u64 = ((upcast << sham) >> sham).downcast();
         result |= final_bits << bits_in_res;
         // and put the rest in the buffer
         self.buffer = UpcastableInto::<BB<WR>>::upcast(new_word) >> n_bits;
@@ -751,8 +754,7 @@ mod test {
                         BufBitWriter, DeltaRead, DeltaWrite, MemWordReader, len_delta, len_gamma,
                     },
                 };
-                use rand::Rng;
-                use rand::{SeedableRng, rngs::SmallRng};
+                use rand::{RngExt, SeedableRng, rngs::SmallRng};
 
                 let mut buffer_be: Vec<$word> = vec![];
                 let mut buffer_le: Vec<$word> = vec![];

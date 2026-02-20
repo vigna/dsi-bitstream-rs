@@ -1,14 +1,14 @@
 # Change Log
 
-## [0.7.1]
+## [0.8.0]
 
 ### Improved
 
-- Replaced `check_tables` with per-table `check_read_table` const functions
-  generated in each `*_tables.rs` file. Checks are now performed at compile
-  time via `const { }` blocks only for the tables actually used, so a
-  `BufBitReader` with a small peek word no longer panics if it never uses the
-  codes that require a larger peek word.
+- Replaced `check_tables` with per-code `check_read_table` const functions
+  added to each parametric method. Checks are now performed at compile
+  time via `const { }` blocks only for the tables actually used using
+  a new constant `BitRead::PEEK_BITS`. Unless you exposed bit readers
+  in your APIs, you can upgrade to this version as if it was a minor release.
 
 ## [0.7.0] - 2026-10-27
 

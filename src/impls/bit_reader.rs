@@ -61,6 +61,7 @@ impl<
 {
     type Error = <WR as WordRead>::Error;
     type PeekWord = u32;
+    const PEEK_BITS: usize = 32;
 
     #[inline]
     fn skip_bits(&mut self, n_bits: usize) -> Result<(), Self::Error> {
@@ -183,6 +184,7 @@ impl<
 {
     type Error = <WR as WordRead>::Error;
     type PeekWord = u32;
+    const PEEK_BITS: usize = 32;
 
     #[inline]
     fn skip_bits(&mut self, n_bits: usize) -> Result<(), Self::Error> {

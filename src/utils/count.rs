@@ -187,6 +187,7 @@ impl<E: Endianness, BR: BitRead<E>, const PRINT: bool> CountBitReader<E, BR, PRI
 impl<E: Endianness, BR: BitRead<E>, const PRINT: bool> BitRead<E> for CountBitReader<E, BR, PRINT> {
     type Error = <BR as BitRead<E>>::Error;
     type PeekWord = BR::PeekWord;
+    const PEEK_BITS: usize = BR::PEEK_BITS;
 
     fn read_bits(&mut self, n_bits: usize) -> Result<u64, Self::Error> {
         self.bit_read.read_bits(n_bits).inspect(|x| {

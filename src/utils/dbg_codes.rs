@@ -34,6 +34,7 @@ where
 {
     type Error = R::Error;
     type PeekWord = R::PeekWord;
+    const PEEK_BITS: usize = R::PEEK_BITS;
 
     fn peek_bits(&mut self, n_bits: usize) -> Result<Self::PeekWord, Self::Error> {
         let value = self.reader.peek_bits(n_bits)?;
