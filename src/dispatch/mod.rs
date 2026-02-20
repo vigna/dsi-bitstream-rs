@@ -256,8 +256,7 @@ impl core::fmt::Display for DispatchError {
     }
 }
 
-#[cfg(feature = "std")]
-impl std::error::Error for DispatchError {}
+impl core::error::Error for DispatchError {}
 
 pub mod r#static;
 pub use r#static::{ConstCode, code_consts};

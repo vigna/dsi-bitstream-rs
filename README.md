@@ -136,10 +136,15 @@ We provide several options to [dispatch] codes dynamically.
 ## Benchmarks
 
 To evaluate the performance on your hardware you can run the
-benchmarks in the `benchmarks` directory, which test the speed of read/write
-operations under several combinations of parameters. Please refer to the crate
-documentation therein. The `svg` directory contains reference results of these
-benchmarks of a few architectures.
+benchmarks in the `benches` directory, which test the speed of read/write
+operations under several combinations of parameters. The `svg` directory
+contains reference results of these benchmarks on a few architectures.
+
+## Features
+
+- `implied`: enables the `implied` module in `utils`, which provides
+  `sample_implied_distribution` and `get_implied_distribution`. This
+  feature pulls in the `rand` dependency.
 
 ## Testing
 

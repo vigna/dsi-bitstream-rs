@@ -20,9 +20,9 @@
 //! integers using different codes.
 //!
 //! With the `implied` feature, it also provides
-//! [`sample_implied_distribution`], an infinite iterator that returns samples
+//! `sample_implied_distribution`, an infinite iterator that returns samples
 //! from the implied distribution of a code, and the helper function
-//! [`get_implied_distribution`].
+//! `get_implied_distribution`.
 //!
 //! [`FindChangePoints`] finds, using exponential search, the points where a
 //! non-decreasing monotonic function changes value.

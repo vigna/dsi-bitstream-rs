@@ -24,6 +24,14 @@
 
 - Read tables for pi codes are not set up by default.
 
+- `from_path` functions in `buf_bit_reader` and `buf_bit_writer` now
+  return `std::io::Result` instead of `anyhow::Result`.
+
+- Dispatch `new()` methods (`FuncCodeReader`, `FuncCodeWriter`,
+  `FuncCodeLen`, `FactoryFuncCodeReader`) and `Codes::to_code_const`
+  / `Codes::from_code_const` now return `Result<_, DispatchError>`
+  instead of `anyhow::Result`.
+
 ### Fixed
 
 - `[Count|Dbg]Bit[Reader|Writer]` were missing recent code implementations.
