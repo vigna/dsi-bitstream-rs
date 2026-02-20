@@ -1,5 +1,15 @@
 # Change Log
 
+## [0.7.1]
+
+### Improved
+
+- Replaced `check_tables` with per-table `check_read_table` const functions
+  generated in each `*_tables.rs` file. Checks are now performed at compile
+  time via `const { }` blocks only for the tables actually used, so a
+  `BufBitReader` with a small peek word no longer panics if it never uses the
+  codes that require a larger peek word.
+
 ## [0.7.0] - 2026-10-27
 
 ### New

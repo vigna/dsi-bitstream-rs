@@ -45,8 +45,6 @@ pub struct BitReader<E: Endianness, WR, RP: ReadParams = DefaultReadParams> {
 
 impl<E: Endianness, WR, RP: ReadParams> BitReader<E, WR, RP> {
     pub fn new(data: WR) -> Self {
-        #[cfg(feature = "std")]
-        check_tables(32);
         Self {
             data,
             bit_index: 0,

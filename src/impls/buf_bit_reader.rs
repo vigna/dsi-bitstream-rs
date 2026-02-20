@@ -129,8 +129,6 @@ where
     /// ```
     #[must_use]
     pub fn new(backend: WR) -> Self {
-        #[cfg(feature = "std")]
-        check_tables(WR::Word::BITS + 1);
         Self {
             backend,
             buffer: BB::<WR>::ZERO,

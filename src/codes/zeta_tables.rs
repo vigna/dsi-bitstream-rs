@@ -938,5 +938,12 @@ pub const LEN: &[u8] = &[
     15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
     16,
 ];
+/// Asserts at compile time that `peek_bits` is large enough for these tables.
+pub const fn check_read_table(peek_bits: usize) {
+    assert!(
+        peek_bits >= READ_BITS,
+        "BitRead peek word too small for zeta code read tables (12 bits required)"
+    );
+}
 /// The K of the zeta codes for these tables
 pub const K: usize = 3;

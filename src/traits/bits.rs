@@ -9,11 +9,8 @@
 use core::error::Error;
 use core::fmt::{Display, Formatter};
 
-#[cfg(feature = "std")]
-use crate::prelude::{delta_tables, gamma_tables, zeta_tables};
 use crate::traits::*;
 use common_traits::CastableInto;
-
 pub trait Peek<const N: usize> {}
 macro_rules! impl_peekable {
     ($($n:literal),*) => {$(
@@ -67,13 +64,9 @@ impl<RE: Error + Send + Sync + 'static, WE: Error + Send + Sync + 'static> Error
 /// [`peek_bits`](BitRead::peek_bits) method to read a few bits in advance and
 /// then use a table to decode them. For this to happen correctly,
 /// [`peek_bits`](BitRead::peek_bits) must return a sufficient number of bits.
-/// It is unfortunately difficult at the time being to check statically that
-/// this is the case, but in test mode an assertion will be triggered if the
-/// number of bits returned by [`peek_bits`](BitRead::peek_bits) is not
-/// sufficient.
-///
-/// Implementors are invited to call [`check_tables`] at construction time to
-/// provide a warning to the user if the peek word is not large enough.
+/// Each table module provides a `check_read_table` const fn that can be used
+/// in a `const { }` block to verify at compile time that the peek word is
+/// large enough.
 ///
 /// Please see the documentation of the [`impls`](crate::impls) module for more
 /// details.
@@ -183,33 +176,4 @@ pub trait BitSeek {
     /// Note that moving forward by a small amount of bits may be accomplished
     /// more efficiently by calling [`BitRead::skip_bits`].
     fn set_bit_pos(&mut self, bit_pos: u64) -> Result<(), Self::Error>;
-}
-
-/// Utility function to check that the peek word is large enough.
-///
-/// It **strongly suggested** that this function is called by the
-/// creation methods of types implementing [`BitRead`].
-#[cfg(feature = "std")]
-pub fn check_tables(peek_bits: usize) {
-    if peek_bits < gamma_tables::READ_BITS {
-        eprintln!(
-            "DANGER: your BitRead can peek at {} bits, but the tables for γ codes use {} bits",
-            peek_bits,
-            gamma_tables::READ_BITS
-        );
-    }
-    if peek_bits < delta_tables::READ_BITS {
-        eprintln!(
-            "DANGER: your BitRead can peek at {} bits, but the tables for δ codes use {} bits",
-            peek_bits,
-            delta_tables::READ_BITS
-        );
-    }
-    if peek_bits < zeta_tables::READ_BITS {
-        eprintln!(
-            "DANGER: your BitRead can peek at {} bits, but the tables for ζ₃ codes use {} bits",
-            peek_bits,
-            zeta_tables::READ_BITS
-        );
-    }
 }

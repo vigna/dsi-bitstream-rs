@@ -41,6 +41,35 @@ Note that the default implementations provided by this module are targeted at
 `u32` read words and `u64` write words. If you use different word sizes,
 you may want to write your own selector types.
 
+# Table peek-word checks
+
+When a default read implementation enables table-based decoding (i.e., it calls
+a `read_*_param` method with a `USE_TABLE` or `USE_*_TABLE` const parameter set
+to `true`), it must verify at compile time that the reader's peek word is large
+enough for the table. Each table module (e.g.,
+[`gamma_tables`](super::gamma_tables),
+[`delta_tables`](super::delta_tables), etc.) provides a
+`check_read_table` const fn for this purpose.
+
+The [`DefaultReadParams`] implementations in this module already include such
+checks via `const { }` blocks. If you create your own selector type and write
+custom blanket implementations that enable tables, you should add analogous
+checks. For example:
+
+```ignore
+const { gamma_tables::check_read_table(WR::Word::BITS + 1) }
+```
+
+for a [`BufBitReader`](crate::impls::BufBitReader) (whose peek word
+provides `WR::Word::BITS + 1` bits), or:
+
+```ignore
+const { gamma_tables::check_read_table(32) }
+```
+
+for a [`BitReader`](crate::impls::BitReader) (whose peek word is always 32
+bits).
+
 */
 
 use crate::codes::*;
@@ -92,6 +121,8 @@ macro_rules! impl_default_read_codes {
         {
             #[inline(always)]
             fn read_delta(&mut self) -> Result<u64, Self::Error> {
+                // USE_GAMMA_TABLE is true, so check gamma tables
+                const { gamma_tables::check_read_table(WR::Word::BITS + 1) }
                 self.read_delta_param::<false, true>()
             }
         }
@@ -104,6 +135,7 @@ macro_rules! impl_default_read_codes {
         {
             #[inline(always)]
             fn read_omega(&mut self) -> Result<u64, Self::Error> {
+                const { omega_tables::check_read_table(WR::Word::BITS + 1) }
                 self.read_omega_param::<true>()
             }
         }
@@ -121,6 +153,7 @@ macro_rules! impl_default_read_codes {
 
             #[inline(always)]
             fn read_zeta3(&mut self) -> Result<u64, Self::Error> {
+                const { zeta_tables::check_read_table(WR::Word::BITS + 1) }
                 self.read_zeta3_param::<true>()
             }
         }
@@ -138,6 +171,7 @@ macro_rules! impl_default_read_codes {
 
             #[inline(always)]
             fn read_pi2(&mut self) -> Result<u64, Self::Error> {
+                const { pi_tables::check_read_table(WR::Word::BITS + 1) }
                 self.read_pi2_param::<true>()
             }
         }
@@ -164,6 +198,8 @@ macro_rules! impl_default_read_codes {
         {
             #[inline(always)]
             fn read_delta(&mut self) -> Result<u64, Self::Error> {
+                // USE_GAMMA_TABLE is true, so check gamma tables
+                const { gamma_tables::check_read_table(32) }
                 self.read_delta_param::<false, true>()
             }
         }
@@ -176,6 +212,7 @@ macro_rules! impl_default_read_codes {
         {
             #[inline(always)]
             fn read_omega(&mut self) -> Result<u64, Self::Error> {
+                const { omega_tables::check_read_table(32) }
                 self.read_omega_param::<true>()
             }
         }
@@ -193,6 +230,7 @@ macro_rules! impl_default_read_codes {
 
             #[inline(always)]
             fn read_zeta3(&mut self) -> Result<u64, Self::Error> {
+                const { zeta_tables::check_read_table(32) }
                 self.read_zeta3_param::<true>()
             }
         }
@@ -210,6 +248,7 @@ macro_rules! impl_default_read_codes {
 
             #[inline(always)]
             fn read_pi2(&mut self) -> Result<u64, Self::Error> {
+                const { pi_tables::check_read_table(32) }
                 self.read_pi2_param::<true>()
             }
         }

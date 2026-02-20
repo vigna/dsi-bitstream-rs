@@ -23,7 +23,7 @@
 //! This module provides a generic implementation of π codes, and a specialized
 //! implementation for π₂ that may use tables.
 //!
-//! The supported range is [0 . . 2⁶⁴ – 1) for *k* in [0 . . 64).
+//! The supported range is [0 . . 2⁶⁴ – 1) for *k* in [0 . . 64).
 //!
 //! In the original paper the definition of the code is very convoluted, as the
 //! authors appear to have missed the connection with [Rice codes](super::rice).

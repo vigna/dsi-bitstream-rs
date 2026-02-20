@@ -1683,3 +1683,10 @@ pub const LEN: &[u8] = &[
     14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14,
     15,
 ];
+/// Asserts at compile time that `peek_bits` is large enough for these tables.
+pub const fn check_read_table(peek_bits: usize) {
+    assert!(
+        peek_bits >= READ_BITS,
+        "BitRead peek word too small for pi code read tables (13 bits required)"
+    );
+}

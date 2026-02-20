@@ -193,3 +193,10 @@ pub const LEN: &[u8] = &[
     11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11,
     11, 11, 11, 11, 11, 11, 11, 11, 13,
 ];
+/// Asserts at compile time that `peek_bits` is large enough for these tables.
+pub const fn check_read_table(peek_bits: usize) {
+    assert!(
+        peek_bits >= READ_BITS,
+        "BitRead peek word too small for gamma code read tables (9 bits required)"
+    );
+}

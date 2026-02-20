@@ -301,6 +301,17 @@ def gen_table(
             f.write("{}, ".format(len_func(value)))
         f.write("];\n")
 
+        # Write check_read_table function
+        f.write(
+            '/// Asserts at compile time that `peek_bits` is large enough for these tables.\n'
+        )
+        f.write("pub const fn check_read_table(peek_bits: usize) {\n")
+        f.write(
+            '    assert!(peek_bits >= READ_BITS, "BitRead peek word too small for %s code read tables (%d bits required)");\n'
+            % (code_name, read_bits)
+        )
+        f.write("}\n")
+
 
 ################################################################################
 
@@ -741,6 +752,17 @@ pub fn write_table_be<B: BitWrite<BE>>(backend: &mut B, value: u64) -> Result<Op
         for value in range(write_max_val + 1):
             f.write("{}, ".format(len_delta(value)))
         f.write("];\n")
+
+        # Write check_read_table function
+        f.write(
+            '/// Asserts at compile time that `peek_bits` is large enough for these tables.\n'
+        )
+        f.write("pub const fn check_read_table(peek_bits: usize) {\n")
+        f.write(
+            '    assert!(peek_bits >= READ_BITS, "BitRead peek word too small for %s code read tables (%d bits required)");\n'
+            % (code_name, read_bits)
+        )
+        f.write("}\n")
 
 
 ################################################################################
@@ -1297,6 +1319,17 @@ pub fn write_table_be<B: BitWrite<BE>>(backend: &mut B, mut value: u64) -> Resul
             f.write("{}, ".format(len_omega(value)))
         f.write("];\n")
 
+        # Write check_read_table function
+        f.write(
+            '/// Asserts at compile time that `peek_bits` is large enough for these tables.\n'
+        )
+        f.write("pub const fn check_read_table(peek_bits: usize) {\n")
+        f.write(
+            '    assert!(peek_bits >= READ_BITS, "BitRead peek word too small for %s code read tables (%d bits required)");\n'
+            % (code_name, read_bits)
+        )
+        f.write("}\n")
+
 
 ################################################################################
 
@@ -1633,6 +1666,17 @@ pub fn write_table_be<B: BitWrite<BE>>(backend: &mut B, value: u64) -> Result<Op
         for value in range(write_max_val + 1):
             f.write("{}, ".format(len_pi(value, k)))
         f.write("];\n")
+
+        # Write check_read_table function
+        f.write(
+            '/// Asserts at compile time that `peek_bits` is large enough for these tables.\n'
+        )
+        f.write("pub const fn check_read_table(peek_bits: usize) {\n")
+        f.write(
+            '    assert!(peek_bits >= READ_BITS, "BitRead peek word too small for %s code read tables (%d bits required)");\n'
+            % (code_name, read_bits)
+        )
+        f.write("}\n")
 
 
 ################################################################################
