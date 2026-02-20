@@ -96,6 +96,7 @@ impl<E: Endianness, WW: WordWrite, WP: WriteParams> BufBitWriter<E, WW, WP> {
     /// let mut buf_bit_writer = <BufBitWriter<BE, _>>::new(word_writer);
     /// # }
     /// ```
+    #[must_use]
     pub fn new(backend: WW) -> Self {
         Self {
             backend,
@@ -110,7 +111,7 @@ impl<E: Endianness, WW: WordWrite, WP: WriteParams> BufBitWriter<E, WW, WP>
 where
     BufBitWriter<E, WW, WP>: BitWrite<E>,
 {
-    ///  Return the backend, consuming this writer after
+    /// Returns the backend, consuming this writer after
     /// [flushing it](BufBitWriter::flush).
     pub fn into_inner(mut self) -> Result<WW, <Self as BitWrite<E>>::Error> {
         self.flush()?;

@@ -137,7 +137,7 @@ where
         }
     }
 
-    ///  Return the backend, consuming this reader.
+    /// Returns the backend, consuming this reader.
     pub fn into_inner(self) -> Result<WR, Infallible> {
         // SAFETY: forget(self) prevents double dropping backend
         let backend = unsafe { ptr::read(&self.backend) };

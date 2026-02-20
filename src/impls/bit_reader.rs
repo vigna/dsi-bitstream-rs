@@ -44,6 +44,7 @@ pub struct BitReader<E: Endianness, WR, RP: ReadParams = DefaultReadParams> {
 }
 
 impl<E: Endianness, WR, RP: ReadParams> BitReader<E, WR, RP> {
+    #[must_use]
     pub fn new(data: WR) -> Self {
         Self {
             data,

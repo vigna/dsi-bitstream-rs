@@ -164,7 +164,7 @@ impl<E: Endianness, CRF: CodesReaderFactoryHelper<E> + ?Sized> FactoryFuncCodeRe
     const RICE9: FactoryReadFn<E, CRF> = |reader| reader.read_rice(9);
     const RICE10: FactoryReadFn<E, CRF> = |reader| reader.read_rice(10);
     const PI1: FactoryReadFn<E, CRF> = |reader| reader.read_pi(1);
-    const PI2: FactoryReadFn<E, CRF> = |reader| reader.read_pi(2);
+    const PI2: FactoryReadFn<E, CRF> = |reader| reader.read_pi2();
     const PI3: FactoryReadFn<E, CRF> = |reader| reader.read_pi(3);
     const PI4: FactoryReadFn<E, CRF> = |reader| reader.read_pi(4);
     const PI5: FactoryReadFn<E, CRF> = |reader| reader.read_pi(5);

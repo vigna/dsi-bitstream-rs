@@ -475,7 +475,7 @@ pub struct CodesStatsWrapper<
     // How many Pi and Pi web codes to consider.
     const PI: usize = 10,
 > {
-    // TODO!: figure out how we can do this without a lock.
+    // TODO: figure out how we can do this without a lock.
     // This is needed because the [`DynamicCodeRead`] and [`DynamicCodeWrite`] traits must have
     // &self and not &mut self.
     stats: Mutex<CodesStats<ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>>,
