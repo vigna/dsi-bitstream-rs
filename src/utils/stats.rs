@@ -506,8 +506,12 @@ impl<
     }
 
     /// Consumes the wrapper and returns the inner wrapped value and the stats.
+    #[must_use]
     pub fn into_inner(self) -> (W, CodesStats<ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>) {
-        (self.wrapped, self.stats.into_inner().unwrap())
+        (
+            self.wrapped,
+            self.stats.into_inner().expect("mutex is not poisoned"),
+        )
     }
 }
 

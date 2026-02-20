@@ -326,9 +326,9 @@ impl core::error::Error for CodeError {}
 impl core::fmt::Display for CodeError {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         match self {
-            CodeError::ParseError(e) => write!(f, "Parse error: {}", e),
+            CodeError::ParseError(e) => write!(f, "parse error: {}", e),
             CodeError::UnknownCode(s) => {
-                write!(f, "Unknown code: ")?;
+                write!(f, "unknown code: ")?;
                 for c in s {
                     if *c == 0 {
                         break;
@@ -367,7 +367,7 @@ impl core::fmt::Display for Codes {
 
 fn array_format_error(s: &str) -> [u8; 32] {
     let mut error_buffer = [0u8; 32];
-    const ERROR_PREFIX: &[u8] = b"Could not parse ";
+    const ERROR_PREFIX: &[u8] = b"could not parse ";
     error_buffer[..ERROR_PREFIX.len()].copy_from_slice(ERROR_PREFIX);
     error_buffer[ERROR_PREFIX.len()..ERROR_PREFIX.len() + s.len().min(32 - ERROR_PREFIX.len())]
         .copy_from_slice(&s.as_bytes()[..s.len().min(32 - ERROR_PREFIX.len())]);

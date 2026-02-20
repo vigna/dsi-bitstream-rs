@@ -30,7 +30,6 @@
 //! This partial state is used to directly read the remaining fixed bits,
 //! avoiding re-reading the γ prefix.
 //!
-//!
 //! # References
 //!
 //! Peter Elias, “[Universal codeword sets and representations of the

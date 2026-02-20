@@ -22,7 +22,6 @@
 //! The supported range is [0 . . 2⁶⁴ – 1) for *k* = 0 and [0 . . 2⁶⁴) for *k*
 //! in [1 . . 64).
 //!
-//!
 //! Exponential Golomb codes are used in the [H.264
 //! (MPEG-4)](https://en.wikipedia.org/wiki/Advanced_Video_Coding) and
 //! [H.265](https://en.wikipedia.org/wiki/High_Efficiency_Video_Coding)

@@ -80,7 +80,8 @@ pub fn sample_implied_distribution(
     rng: &mut impl Rng,
 ) -> impl Iterator<Item = u64> + '_ {
     let (change_points, probabilities) = get_implied_distribution(f);
-    let dist = WeightedIndex::new(probabilities).unwrap();
+    let dist = WeightedIndex::new(probabilities)
+        .expect("get_implied_distribution returns non-empty, positive weights");
 
     InfiniteIterator.map(move |_| {
         // sample a len with the correct probability

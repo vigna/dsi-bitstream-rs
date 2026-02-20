@@ -87,6 +87,7 @@ impl<W: Word, B: AsMut<[W]> + AsRef<[W]>> MemWordWriterSlice<W, B> {
         self.len() == 0
     }
 
+    #[must_use]
     pub fn into_inner(self) -> B {
         self.data
     }
@@ -148,6 +149,7 @@ impl<W: Word, B: AsMut<alloc::vec::Vec<W>> + AsRef<alloc::vec::Vec<W>>> MemWordW
         self.len() == 0
     }
 
+    #[must_use]
     pub fn into_inner(self) -> B {
         self.data
     }

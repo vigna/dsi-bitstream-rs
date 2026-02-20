@@ -47,6 +47,7 @@ impl<W: UnsignedInt + FromBytes + ToBytes, B> WordAdapter<W, B> {
         }
     }
 
+    #[must_use]
     pub fn into_inner(self) -> B {
         self.backend
     }
