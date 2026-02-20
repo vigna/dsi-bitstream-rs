@@ -254,7 +254,7 @@ fn default_write_pi<E: Endianness, B: BitWrite<E> + RiceWrite<E>>(
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use crate::prelude::*;
 
     #[test]

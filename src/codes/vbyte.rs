@@ -23,7 +23,7 @@
 //!
 //! Since there are a few slightly different variants used in production code
 //! and in the literature, before going into the details of this implementation
-//! we will try to define a clear taxonomy by explaining in detail the four
+//! we will try to define a clear taxonomy by explaining in detail the
 //! three properties that define such variants.
 //!
 //! The simplest variable-length byte code encodes a number with a binary
@@ -87,7 +87,7 @@
 //! the little-endian version might be faster.
 //!
 //! Note that the endianness of the code is independent from the endianness of
-//! the underlying bit stream, as it just depend on the order in which bytes are
+//! the underlying bit stream, as it just depends on the order in which bytes are
 //! written.
 //!
 //! Since this code is byte-aligned, we provide also convenient, fast methods
@@ -186,14 +186,14 @@ impl<E: Endianness, B: BitRead<E>> VByteLeRead<E> for B {
     }
 }
 
-/// Trait for write big-endian variable-length byte codes.
+/// Trait for writing big-endian variable-length byte codes.
 ///
 /// Note that the endianness of the code is independent
 /// from the endianness of the underlying bit stream.
 pub trait VByteBeWrite<E: Endianness>: BitWrite<E> {
     fn write_vbyte_be(&mut self, value: u64) -> Result<usize, Self::Error>;
 }
-/// Trait for write little-endian variable-length byte codes.
+/// Trait for writing little-endian variable-length byte codes.
 ///
 /// Note that the endianness of the code is independent
 /// from the endianness of the underlying bit stream.
@@ -353,7 +353,7 @@ pub fn vbyte_read_le<R: std::io::Read>(reader: &mut R) -> std::io::Result<u64> {
 
 #[cfg(test)]
 #[cfg(feature = "std")]
-mod test {
+mod tests {
     #[allow(unused_imports)]
     use super::*;
 

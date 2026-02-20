@@ -264,7 +264,7 @@ fn recursive_omega_write<E: Endianness, B: BitWrite<E>>(
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use crate::prelude::*;
 
     #[test]

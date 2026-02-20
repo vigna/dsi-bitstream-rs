@@ -39,7 +39,7 @@ writer.write_unary(0)?;
 writer.write_gamma(1)?;
 // Write 3 in δ code
 writer.write_delta(2)?;
-writer.flush();
+writer.flush()?;
 
 // Let's recover the data
 let data = writer.into_inner()?.into_inner();
@@ -74,12 +74,12 @@ writer.write_bits(0, 10)?;
 writer.write_unary(0)?;
 writer.write_gamma(1)?;
 writer.write_delta(2)?;
-writer.flush();
+writer.flush()?;
 
 // Let's recover the data
 let data = writer.into_inner()?.into_inner();
 
-// as in the example above, convert to u32 for better read performance 
+// as in the example above, convert to u32 for better read performance
 let data = unsafe{data.align_to::<u32>().1};
 let mut reader = BufBitReader::<LE, _>::new(MemWordReader::new(&data));
 assert_eq!(reader.read_bits(10)?, 0);
@@ -98,7 +98,7 @@ There are a few options to modify the behavior of the bit read/write traits:
 
 - Endianness can be selected using the [`BE`] or [`LE`] types as the first
   parameter. The native endianness is usually the best choice, albeit sometimes
-  the lack of some low-level instructions (first bit set, last bit etc, etc.)
+  the lack of some low-level instructions (first bit set, last bit, etc.)
   may make the non-native endianness more efficient.
 - Data is read from or written to the backend one word at a time, and the size
   of the word can be selected using the second parameter, but it must match the
@@ -163,26 +163,26 @@ opinions expressed are however those of the authors only and do not necessarily
 reflect those of the European Union or the Italian MUR. Neither the European
 Union nor the Italian MUR can be held responsible for them.
 
-[`BitRead`]: <https://docs.rs/dsi-bitstream/latest/dsi_bitstream/traits/trait.BitRead.html>
-[`BitWrite`]: <https://docs.rs/dsi-bitstream/latest/dsi_bitstream/traits/trait.BitWrite.html>
-[`BufBitReader`]: <https://docs.rs/dsi-bitstream/latest/dsi_bitstream/impls/struct.BufBitReader.html>
-[`BufBitWriter`]: <https://docs.rs/dsi-bitstream/latest/dsi_bitstream/impls/struct.BufBitWriter.html>
-[`ReadParams`]: <https://docs.rs/dsi-bitstream/latest/dsi_bitstream/codes/params/trait.ReadParams.html>
-[`WriteParams`]: <https://docs.rs/dsi-bitstream/latest/dsi_bitstream/codes/params/trait.WriteParams.html>
-[`GammaReadParam::read_gamma_param`]: <https://docs.rs/dsi-bitstream/latest/dsi_bitstream/codes/gamma/trait.GammaReadParam.html#tymethod.read_gamma_param>
-[`WordAdapter`]: <https://docs.rs/dsi-bitstream/latest/dsi_bitstream/impls/struct.WordAdapter.html>
-[`traits`]: <https://docs.rs/dsi-bitstream/latest/dsi_bitstream/traits/index.html>
-[`impls`]: <https://docs.rs/dsi-bitstream/latest/dsi_bitstream/impls/index.html>
-[`params`]: <https://docs.rs/dsi-bitstream/latest/dsi_bitstream/codes/params/index.html>
-[`GammaRead::read_gamma`]: <https://docs.rs/dsi-bitstream/latest/dsi_bitstream/codes/gamma/trait.GammaRead.html#tymethod.read_gamma>
-[`BE`]: <https://docs.rs/dsi-bitstream/latest/dsi_bitstream/traits/type.BE.html>
-[`LE`]: <https://docs.rs/dsi-bitstream/latest/dsi_bitstream/traits/type.LE.html>
-[`DefaultReadParams`]: <https://docs.rs/dsi-bitstream/latest/dsi_bitstream/codes/params/struct.DefaultReadParams.html>
-[`DefaultWriteParams`]: <https://docs.rs/dsi-bitstream/latest/dsi_bitstream/codes/params/struct.DefaultWriteParams.html>
-[`BitRead::read_unary`]: <https://docs.rs/dsi-bitstream/latest/dsi_bitstream/traits/trait.BitRead.html#method.read_unary>
-[`BitWrite::write_unary`]: <https://docs.rs/dsi-bitstream/latest/dsi_bitstream/traits/trait.BitWrite.html#method.write_unary>
-[DSI Utilities]: <https://dsiutils.di.unimi.it/>
-[exponential Golomb codes]: <https://docs.rs/dsi-bitstream/latest/dsi_bitstream/codes/exp_golomb/index.html>
-[H.264 (MPEG-4)]: <https://en.wikipedia.org/wiki/Advanced_Video_Coding>
-[H.265]: <https://en.wikipedia.org/wiki/High_Efficiency_Video_Coding>
-[dispatch]: <https://docs.rs/dsi-bitstream/latest/dsi_bitstream/dispatch/index.html>
+[`BitRead`]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/traits/trait.BitRead.html
+[`BitWrite`]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/traits/trait.BitWrite.html
+[`BufBitReader`]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/impls/struct.BufBitReader.html
+[`BufBitWriter`]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/impls/struct.BufBitWriter.html
+[`ReadParams`]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/codes/params/trait.ReadParams.html
+[`WriteParams`]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/codes/params/trait.WriteParams.html
+[`GammaReadParam::read_gamma_param`]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/codes/gamma/trait.GammaReadParam.html#tymethod.read_gamma_param
+[`WordAdapter`]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/impls/struct.WordAdapter.html
+[`traits`]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/traits/index.html
+[`impls`]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/impls/index.html
+[`params`]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/codes/params/index.html
+[`GammaRead::read_gamma`]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/codes/gamma/trait.GammaRead.html#tymethod.read_gamma
+[`BE`]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/traits/type.BE.html
+[`LE`]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/traits/type.LE.html
+[`DefaultReadParams`]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/codes/params/struct.DefaultReadParams.html
+[`DefaultWriteParams`]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/codes/params/struct.DefaultWriteParams.html
+[`BitRead::read_unary`]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/traits/trait.BitRead.html#method.read_unary
+[`BitWrite::write_unary`]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/traits/trait.BitWrite.html#method.write_unary
+[DSI Utilities]: https://dsiutils.di.unimi.it/
+[exponential Golomb codes]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/codes/exp_golomb/index.html
+[H.264 (MPEG-4)]: https://en.wikipedia.org/wiki/Advanced_Video_Coding
+[H.265]: https://en.wikipedia.org/wiki/High_Efficiency_Video_Coding
+[dispatch]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/dispatch/index.html

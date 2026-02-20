@@ -88,7 +88,7 @@ impl<W: UnsignedInt + ToBytes + FromBytes + FiniteRangeNumber, B: Write> WordWri
 
     #[inline(always)]
     fn write_word(&mut self, word: W) -> Result<(), std::io::Error> {
-        let _ = self.backend.write(word.to_ne_bytes().as_ref())?;
+        self.backend.write_all(word.to_ne_bytes().as_ref())?;
         Ok(())
     }
 
@@ -116,7 +116,7 @@ impl<W: UnsignedInt + ToBytes + FromBytes + FiniteRangeNumber, B: Seek> WordSeek
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use crate::prelude::*;
     #[test]
     fn test_word_adapter() {

@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
-/// Iters the points where the given function change value.
-/// This only works for monotonic non decreasing functions.
+/// Iterates over the points where the given function changes value.
+/// This only works for monotonic non-decreasing functions.
 ///
 /// Each call to next returns a tuple with the first input where the function
 /// changes value and the new value.
@@ -103,7 +103,7 @@ impl<F: Fn(u64) -> usize> Iterator for FindChangePoints<F> {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::FindChangePoints;
 
     #[test]

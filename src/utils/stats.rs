@@ -463,7 +463,7 @@ impl<
 #[derive(Debug)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
 #[cfg(feature = "std")]
-/// A struct that can wrap `Code` and compute `CodesStats` for a given stream.
+/// A struct that can wrap `Codes` and compute `CodesStats` for a given stream.
 pub struct CodesStatsWrapper<
     W,
     // How many ζ codes to consider.

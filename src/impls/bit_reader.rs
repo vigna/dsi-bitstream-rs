@@ -26,7 +26,7 @@ use crate::traits::*;
 /// (extended with zeros beyond end of stream), that is, a full peek word.
 ///
 /// The additional type parameter `RP` is used to select the parameters for the
-/// instantanous codes, but the casual user should be happy with the default
+/// instantaneous codes, but the casual user should be happy with the default
 /// value. See [`ReadParams`] for more details.
 ///
 /// For additional flexibility, this structures implements [`std::io::Read`].

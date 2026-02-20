@@ -77,10 +77,12 @@ impl<W: Word, B: AsMut<[W]> + AsRef<[W]>> MemWordWriterSlice<W, B> {
         }
     }
 
+    #[must_use]
     pub fn len(&self) -> usize {
         self.data.as_ref().len()
     }
 
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }
@@ -126,7 +128,7 @@ pub struct MemWordWriterVec<W: Word, B: AsMut<alloc::vec::Vec<W>>> {
 
 #[cfg(feature = "alloc")]
 impl<W: Word, B: AsMut<alloc::vec::Vec<W>> + AsRef<alloc::vec::Vec<W>>> MemWordWriterVec<W, B> {
-    /// Creates a new [`MemWordWriterVec`] from a slice.
+    /// Creates a new [`MemWordWriterVec`] from a vector.
     #[must_use]
     pub fn new(data: B) -> Self {
         Self {
@@ -136,10 +138,12 @@ impl<W: Word, B: AsMut<alloc::vec::Vec<W>> + AsRef<alloc::vec::Vec<W>>> MemWordW
         }
     }
 
+    #[must_use]
     pub fn len(&self) -> usize {
         self.data.as_ref().len()
     }
 
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }

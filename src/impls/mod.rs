@@ -14,7 +14,7 @@
 //! [`Read`](std::io::Read) or [`Write`](std::io::Write) byte stream
 //! you can wrap it into a [`WordAdapter`] to turn it into a word stream.
 //!
-//! In instead you want to read or write words directly from memory, you can use
+//! If instead you want to read or write words directly from memory, you can use
 //! [`MemWordReader`] and [`MemWordWriterVec`]/[`MemWordWriterSlice`],
 //! which read from a slice and write to a vector/slice.
 //!

@@ -27,7 +27,7 @@ type ReadFn<E, CR> = fn(&mut CR) -> Result<u64, <CR as BitRead<E>>::Error>;
 /// correct code.
 ///
 /// Instances can be obtained by calling the [`new`](FuncCodeReader::new) method
-///  with method with a variant of the [`Codes`] enum, or by calling the
+/// with a variant of the [`Codes`] enum, or by calling the
 /// [`new_with_func`](FuncCodeReader::new_with_func) method with a function
 /// pointer.
 ///
@@ -200,7 +200,7 @@ type WriteFn<E, CW> = fn(&mut CW, u64) -> Result<usize, <CW as BitWrite<E>>::Err
 /// correct code.
 ///
 /// Instances can be obtained by calling the [`new`](FuncCodeWriter::new) method
-///  with method with a variant of the [`Codes`] enum, or by calling the
+/// with a variant of the [`Codes`] enum, or by calling the
 /// [`new_with_func`](FuncCodeWriter::new_with_func) method with a function
 /// pointer.
 ///
@@ -383,8 +383,8 @@ type LenFn = fn(u64) -> usize;
 /// a [`FuncCodeReader`] does not need to do a runtime test to dispatch the correct
 /// method.
 ///
-/// Instances can be obtained by calling the [`new`](FuncCodeLen::new) method with
-///  method with a variant of the [`Codes`] enum, or by calling the
+/// Instances can be obtained by calling the [`new`](FuncCodeLen::new) method
+/// with a variant of the [`Codes`] enum, or by calling the
 /// [`new_with_func`](FuncCodeLen::new_with_func) method with a function pointer.
 ///
 /// Note that since selection of the code happens in the [`new`](FuncCodeLen::new)
@@ -518,7 +518,7 @@ impl FuncCodeLen {
         Ok(Self(len_func))
     }
 
-    /// Returns a new [`FuncCodeReader`] for the given function.
+    /// Returns a new [`FuncCodeLen`] for the given function.
     #[inline(always)]
     pub fn new_with_func(len_func: LenFn) -> Self {
         Self(len_func)

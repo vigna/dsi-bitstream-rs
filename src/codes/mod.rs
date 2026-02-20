@@ -8,7 +8,7 @@
 
 //! Traits for reading and writing instantaneous codes.
 //!
-//! This modules contains code for reading and writing instantaneous codes.
+//! This module contains code for reading and writing instantaneous codes.
 //! Codewords are uniformly indexed from 0 for all codes. For example, the first
 //! few words of [unary](crate::traits::BitRead::read_unary), [γ](gamma), and
 //! [δ](delta) codes are:
@@ -80,7 +80,7 @@
 //!
 //! # Dispatch
 //!
-//! The basic method for accessing code is through traits like [`GammaRead`] and
+//! The basic method for accessing codes is through traits like [`GammaRead`] and
 //! [`GammaWrite`]. This approach, however, forces a choice of code in the
 //! source. To pass a choice of code dynamically, please have a look at the
 //! [`dispatch`](crate::dispatch) module.
@@ -142,7 +142,7 @@ pub mod zeta_tables;
 /// [Protocol Buffers](https://protobuf.dev/), albeit it has been used by
 /// [WebGraph](http://webgraph.di.unimi.it/) since 2003, and much likely in
 /// other software, for the same purpose. Note that the compression standards
-/// H.264/H.265 uses a different transformation for exponential Golomb codes,
+/// H.264/H.265 use a different transformation for exponential Golomb codes,
 /// mapping a positive integer `x` to `2x − 1` and a zero or negative integer
 /// `x` to `−2x`.
 ///
@@ -176,7 +176,7 @@ impl ToInt for usize {}
 /// [Protocol Buffers](https://protobuf.dev/), albeit it has been used by
 /// [WebGraph](http://webgraph.di.unimi.it/) since 2003, and much likely in
 /// other software, for the same purpose. Note that the compression standards
-/// H.264/H.265 uses a different transformation for exponential Golomb codes,
+/// H.264/H.265 use a different transformation for exponential Golomb codes,
 /// mapping a positive integer `x` to `2x − 1` and a zero or negative integer
 /// `x` to `−2x`.
 ///

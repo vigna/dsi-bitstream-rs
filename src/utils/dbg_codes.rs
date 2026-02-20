@@ -111,7 +111,38 @@ where
     }
 }
 
-/// A wrapper over a [`BitWrite`] that report on standard error all operations performed,
+impl<E: Endianness, R: OmegaRead<E>> OmegaRead<E> for DbgBitReader<E, R>
+where
+    R::PeekWord: core::fmt::Display,
+{
+    fn read_omega(&mut self) -> Result<u64, R::Error> {
+        let value = self.reader.read_omega()?;
+        #[cfg(feature = "std")]
+        eprintln!("{{o:{}}}", value);
+        Ok(value)
+    }
+}
+
+impl<E: Endianness, R: PiRead<E>> PiRead<E> for DbgBitReader<E, R>
+where
+    R::PeekWord: core::fmt::Display,
+{
+    fn read_pi(&mut self, k: usize) -> Result<u64, R::Error> {
+        let value = self.reader.read_pi(k)?;
+        #[cfg(feature = "std")]
+        eprintln!("{{p{}:{}}}", k, value);
+        Ok(value)
+    }
+
+    fn read_pi2(&mut self) -> Result<u64, R::Error> {
+        let value = self.reader.read_pi2()?;
+        #[cfg(feature = "std")]
+        eprintln!("{{p2:{}}}", value);
+        Ok(value)
+    }
+}
+
+/// A wrapper over a [`BitWrite`] that reports on standard error all operations performed,
 /// including all code writes.
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
@@ -168,12 +199,34 @@ impl<E: Endianness, W: DeltaWrite<E>> DeltaWrite<E> for DbgBitWriter<E, W> {
 impl<E: Endianness, W: ZetaWrite<E>> ZetaWrite<E> for DbgBitWriter<E, W> {
     fn write_zeta(&mut self, value: u64, k: usize) -> Result<usize, W::Error> {
         #[cfg(feature = "std")]
-        eprintln!("{{z{}:{}}}", value, k);
+        eprintln!("{{z{}:{}}}", k, value);
         self.writer.write_zeta(value, k)
     }
     fn write_zeta3(&mut self, value: u64) -> Result<usize, W::Error> {
         #[cfg(feature = "std")]
         eprintln!("{{z3:{}}}", value);
         self.writer.write_zeta3(value)
+    }
+}
+
+impl<E: Endianness, W: OmegaWrite<E>> OmegaWrite<E> for DbgBitWriter<E, W> {
+    fn write_omega(&mut self, value: u64) -> Result<usize, W::Error> {
+        #[cfg(feature = "std")]
+        eprintln!("{{o:{}}}", value);
+        self.writer.write_omega(value)
+    }
+}
+
+impl<E: Endianness, W: PiWrite<E>> PiWrite<E> for DbgBitWriter<E, W> {
+    fn write_pi(&mut self, n: u64, k: usize) -> Result<usize, W::Error> {
+        #[cfg(feature = "std")]
+        eprintln!("{{p{}:{}}}", k, n);
+        self.writer.write_pi(n, k)
+    }
+
+    fn write_pi2(&mut self, n: u64) -> Result<usize, W::Error> {
+        #[cfg(feature = "std")]
+        eprintln!("{{p2:{}}}", n);
+        self.writer.write_pi2(n)
     }
 }

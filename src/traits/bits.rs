@@ -11,17 +11,6 @@ use core::fmt::{Display, Formatter};
 
 use crate::traits::*;
 use common_traits::CastableInto;
-pub trait Peek<const N: usize> {}
-macro_rules! impl_peekable {
-    ($($n:literal),*) => {$(
-        impl<T: Peek<{$n + 1}>> Peek<$n> for T {}
-    )*};
-}
-
-impl_peekable!(
-    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
-    26, 27, 28, 29, 30, 31, 32
-);
 
 /// The error returned by the bit copy methods [`BitRead::copy_to`] and [`BitWrite::copy_from`].
 ///
@@ -57,7 +46,7 @@ impl<RE: Error + Send + Sync + 'static, WE: Error + Send + Sync + 'static> Error
 
 /// Sequential, streaming bit-by-bit reads.
 ///
-/// This trait specify basic operation over which codes can be implemented by
+/// This trait specifies basic operations over which codes can be implemented by
 /// traits such as [`GammaReadParam`](crate::codes::GammaReadParam).
 ///
 /// To read quickly complex codes, such traits may use the
@@ -80,7 +69,7 @@ pub trait BitRead<E: Endianness> {
     /// to return successfully (with zero-extended EOF).
     const PEEK_BITS: usize;
 
-    /// Reads `n` bits and return them in the lowest bits.
+    /// Reads `n` bits and returns them in the lowest bits.
     ///
     /// Implementors should check the value of `n` when in test mode
     /// and panic if it is greater than 64.
@@ -97,7 +86,7 @@ pub trait BitRead<E: Endianness> {
     fn skip_bits(&mut self, n: usize) -> Result<(), Self::Error>;
 
     #[doc(hidden)]
-    /// Skip bits form the stream after a call to [`BitRead::peek_bits`].
+    /// Skip bits from the stream after a call to [`BitRead::peek_bits`].
     ///
     /// This is an internal optimization used to skip bits we know
     /// are already in some internal buffer as we [peeked](BitRead::peek_bits)
@@ -128,12 +117,12 @@ pub trait BitRead<E: Endianness> {
 
 /// Sequential, streaming bit-by-bit writes.
 ///
-/// This trait specify basic operation over which codes can be implemented
+/// This trait specifies basic operations over which codes can be implemented
 /// by traits such as [`crate::codes::GammaWriteParam`].
 pub trait BitWrite<E: Endianness> {
     type Error: Error + Send + Sync + 'static;
 
-    /// Writes the lowest `n` bits of `value` to the stream and return the number
+    /// Writes the lowest `n` bits of `value` to the stream and returns the number
     /// of bits written, that is, `n`.
     ///
     ///
@@ -142,7 +131,7 @@ pub trait BitWrite<E: Endianness> {
     /// should check that the remaining bits of `value` are zero.
     fn write_bits(&mut self, value: u64, n: usize) -> Result<usize, Self::Error>;
 
-    /// Writes `value` as a unary code to the stream and return the number of
+    /// Writes `value` as a unary code to the stream and returns the number of
     /// bits written, that is, `value` plus one.
     ///
     /// Implementations are required to support the range [0 . . 2⁶⁴ – 1).

@@ -88,7 +88,7 @@ pub fn from_path<E: Endianness, W: Word + DoubleType>(
 }
 
 /// Creates a new [`BufBitReader`] with [default read
-/// parameters](`DefaultReadParams`) from a file path using the provided
+/// parameters](`DefaultReadParams`) from a file using the provided
 /// endianness and read word.
 ///
 /// See also [`from_path`] for a version that takes a path.
@@ -706,7 +706,7 @@ where
 
 #[cfg(test)]
 #[cfg(feature = "std")]
-mod test {
+mod tests {
     use super::*;
     use crate::prelude::{MemWordReader, MemWordWriterVec};
     use std::io::Read;

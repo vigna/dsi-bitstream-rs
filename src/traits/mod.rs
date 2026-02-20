@@ -39,7 +39,7 @@ methods will generally result in panics.
 
 ## Bit and byte order
 
-The endianness parameter specifies at the same byte the endianness of the byte
+The endianness parameter specifies at the same time the endianness of the byte
 stream and of the bits in each byte: in the little-endian case, the first bit
 of the stream is the least significant bit of the first byte, while in the
 big-endian case it is the most significant bit of the first byte. Albeit in principle

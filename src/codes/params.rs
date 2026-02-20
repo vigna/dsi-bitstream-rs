@@ -25,7 +25,7 @@
 //! which are also the default value for the parameter `RP`/`WP` in the bitstream
 //! readers and writers in [`crate::impls`]. Type-selected blanket implementations
 //! of all parameterless traits in [`crate::codes`] are provided for the bitstream
-//! readers and writers in [`impls`](crate::impls). Thus, if you not specify a value for the
+//! readers and writers in [`impls`](crate::impls). Thus, if you do not specify a value for the
 //! parameter `RP`/`WP`, you will obtain automatically
 //! the blanket implementations for parameterless traits contained in this module.
 //!

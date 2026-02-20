@@ -34,7 +34,7 @@ use mem_dbg::{MemDbg, MemSize};
 pub struct ConstCode<const CODE: usize>;
 
 impl<const CODE: usize> ConstCode<CODE> {
-    /// Delegate the read method to the [`DynamicCodeRead`] implementation.
+    /// Delegates the read method to the [`DynamicCodeRead`] implementation.
     ///
     /// This inherent method is provided to reduce ambiguity in method
     /// resolution.
@@ -46,7 +46,7 @@ impl<const CODE: usize> ConstCode<CODE> {
         DynamicCodeRead::read(self, reader)
     }
 
-    /// Delegate to the [`DynamicCodeWrite`] implementation.
+    /// Delegates to the [`DynamicCodeWrite`] implementation.
     ///
     /// This inherent method is provided to reduce ambiguity in method
     /// resolution.

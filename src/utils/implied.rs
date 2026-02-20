@@ -18,7 +18,7 @@ use alloc::vec::Vec;
 /// its implied distribution, i.e. a code-word with length l has
 /// probability 2^(-l).
 ///
-/// This code works only with monotonic non decreasing len functions.
+/// This code works only with monotonic non-decreasing len functions.
 ///
 /// Returns two vectors, the first one contains the input values where the
 /// function changes value and the code length at that point. The second
@@ -42,7 +42,7 @@ pub fn get_implied_distribution(f: impl Fn(u64) -> usize) -> (Vec<(u64, usize)>,
             prob * (next_input - input) as f64
         })
         .collect::<Vec<_>>();
-    // TODO!: this ignores the last change point
+    // TODO: this ignores the last change point
 
     (change_points, probabilities)
 }
@@ -64,7 +64,7 @@ impl Iterator for InfiniteIterator {
 /// the given code length function.
 /// The function f should be the len function of the code.
 ///
-/// This code works only with monotonic non decreasing len functions and
+/// This code works only with monotonic non-decreasing len functions and
 /// the codes are limited to 128 bits as we cannot write more than 64 bits at once.
 ///
 /// # Example

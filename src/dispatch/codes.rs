@@ -440,7 +440,7 @@ impl<'de> serde::Deserialize<'de> for Codes {
 /// [Minimal binary coding](crate::codes::minimal_binary) does not
 /// fit the [`Codes`] enum because it is not defined for all integers.
 ///
-/// Instances of this structure can be used in context in which a
+/// Instances of this structure can be used in contexts in which a
 /// [`DynamicCodeRead`], [`DynamicCodeWrite`], [`StaticCodeRead`],
 /// [`StaticCodeWrite`] or [`CodeLen`] implementing minimal binary coding
 /// is necessary.

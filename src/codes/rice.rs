@@ -86,16 +86,20 @@ impl<E: Endianness, B: BitRead<E>> RiceRead<E> for B {}
 impl<E: Endianness, B: BitWrite<E>> RiceWrite<E> for B {}
 
 #[cfg(test)]
-#[test]
-fn test_log2_b() {
-    use crate::prelude::golomb::b;
+mod tests {
+    use super::*;
 
-    let mut p = 1.0;
-    for _ in 0..100 {
-        p *= 0.9;
-        let golomb = b(p);
-        if golomb & -(golomb as i64) as u64 == golomb {
-            assert_eq!(golomb, 1 << log2_b(p));
+    #[test]
+    fn test_log2_b() {
+        use crate::prelude::golomb::b;
+
+        let mut p = 1.0;
+        for _ in 0..100 {
+            p *= 0.9;
+            let golomb = b(p);
+            if golomb & -(golomb as i64) as u64 == golomb {
+                assert_eq!(golomb, 1 << log2_b(p));
+            }
         }
     }
 }

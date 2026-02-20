@@ -47,9 +47,9 @@ pub struct BufBitWriter<E: Endianness, WW: WordWrite, WP: WriteParams = DefaultW
     _marker_endianness: core::marker::PhantomData<(E, WP)>,
 }
 
-/// Creates a new [`BufBitWriter`] with [default read
+/// Creates a new [`BufBitWriter`] with [default write
 /// parameters](`DefaultWriteParams`) from a file path using the provided
-/// endianness and read word.
+/// endianness and write word.
 ///
 /// # Examples
 ///
@@ -67,9 +67,9 @@ pub fn from_path<E: Endianness, W: Word>(
     Ok(from_file::<E, W>(std::fs::File::create(path)?))
 }
 
-/// Creates a new [`BufBitWriter`] with [default read
-/// parameters](`DefaultWriteParams`) from a file path using the provided
-/// endianness and read word.
+/// Creates a new [`BufBitWriter`] with [default write
+/// parameters](`DefaultWriteParams`) from a file using the provided
+/// endianness and write word.
 ///
 /// See also [`from_path`] for a version that takes a path.
 #[cfg(feature = "std")]
@@ -301,7 +301,7 @@ where
     }
 }
 
-/// Helper function flushing a [`BufBitWriter`] in big-endian fashion.
+/// Helper function flushing a [`BufBitWriter`] in little-endian fashion.
 ///
 /// The endianness is hardwired because the function is called
 /// from [`BufBitWriter::drop`] using a check on the
@@ -546,7 +546,7 @@ where
 
 #[cfg(test)]
 #[cfg(feature = "std")]
-mod test {
+mod tests {
     use super::*;
     use crate::prelude::MemWordWriterVec;
     use std::io::Write;

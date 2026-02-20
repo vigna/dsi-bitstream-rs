@@ -6,8 +6,8 @@
 
 use crate::{
     prelude::{
-        DeltaRead, DeltaWrite, GammaRead, GammaWrite, ZetaRead, ZetaWrite, len_delta, len_gamma,
-        len_zeta,
+        DeltaRead, DeltaWrite, GammaRead, GammaWrite, OmegaRead, OmegaWrite, PiRead, PiWrite,
+        ZetaRead, ZetaWrite, len_delta, len_gamma, len_omega, len_pi, len_zeta,
     },
     traits::*,
 };
@@ -125,7 +125,7 @@ impl<E: Endianness, BW: BitWrite<E> + ZetaWrite<E>, const PRINT: bool> ZetaWrite
                 #[cfg(feature = "std")]
                 eprintln!(
                     "write_zeta({}, {}) = {} (total = {})",
-                    value, x, k, self.bits_written
+                    value, k, x, self.bits_written
                 );
             }
         })
@@ -137,9 +137,53 @@ impl<E: Endianness, BW: BitWrite<E> + ZetaWrite<E>, const PRINT: bool> ZetaWrite
             if PRINT {
                 #[cfg(feature = "std")]
                 eprintln!(
-                    "write_zeta({}) = {} (total = {})",
+                    "write_zeta3({}) = {} (total = {})",
                     value, x, self.bits_written
                 );
+            }
+        })
+    }
+}
+
+impl<E: Endianness, BW: BitWrite<E> + OmegaWrite<E>, const PRINT: bool> OmegaWrite<E>
+    for CountBitWriter<E, BW, PRINT>
+{
+    fn write_omega(&mut self, value: u64) -> Result<usize, BW::Error> {
+        self.bit_write.write_omega(value).inspect(|x| {
+            self.bits_written += *x;
+            if PRINT {
+                #[cfg(feature = "std")]
+                eprintln!(
+                    "write_omega({}) = {} (total = {})",
+                    value, x, self.bits_written
+                );
+            }
+        })
+    }
+}
+
+impl<E: Endianness, BW: BitWrite<E> + PiWrite<E>, const PRINT: bool> PiWrite<E>
+    for CountBitWriter<E, BW, PRINT>
+{
+    fn write_pi(&mut self, n: u64, k: usize) -> Result<usize, BW::Error> {
+        self.bit_write.write_pi(n, k).inspect(|x| {
+            self.bits_written += *x;
+            if PRINT {
+                #[cfg(feature = "std")]
+                eprintln!(
+                    "write_pi({}, {}) = {} (total = {})",
+                    n, k, x, self.bits_written
+                );
+            }
+        })
+    }
+
+    fn write_pi2(&mut self, n: u64) -> Result<usize, BW::Error> {
+        self.bit_write.write_pi2(n).inspect(|x| {
+            self.bits_written += *x;
+            if PRINT {
+                #[cfg(feature = "std")]
+                eprintln!("write_pi2({}) = {} (total = {})", n, x, self.bits_written);
             }
         })
     }
@@ -283,6 +327,44 @@ impl<E: Endianness, BR: BitRead<E> + ZetaRead<E>, const PRINT: bool> ZetaRead<E>
     }
 }
 
+impl<E: Endianness, BR: BitRead<E> + OmegaRead<E>, const PRINT: bool> OmegaRead<E>
+    for CountBitReader<E, BR, PRINT>
+{
+    fn read_omega(&mut self) -> Result<u64, BR::Error> {
+        self.bit_read.read_omega().inspect(|x| {
+            self.bits_read += len_omega(*x);
+            if PRINT {
+                #[cfg(feature = "std")]
+                eprintln!("read_omega() = {} (total = {})", x, self.bits_read);
+            }
+        })
+    }
+}
+
+impl<E: Endianness, BR: BitRead<E> + PiRead<E>, const PRINT: bool> PiRead<E>
+    for CountBitReader<E, BR, PRINT>
+{
+    fn read_pi(&mut self, k: usize) -> Result<u64, BR::Error> {
+        self.bit_read.read_pi(k).inspect(|x| {
+            self.bits_read += len_pi(*x, k);
+            if PRINT {
+                #[cfg(feature = "std")]
+                eprintln!("read_pi({}) = {} (total = {})", k, x, self.bits_read);
+            }
+        })
+    }
+
+    fn read_pi2(&mut self) -> Result<u64, BR::Error> {
+        self.bit_read.read_pi2().inspect(|x| {
+            self.bits_read += len_pi(*x, 2);
+            if PRINT {
+                #[cfg(feature = "std")]
+                eprintln!("read_pi2() = {} (total = {})", x, self.bits_read);
+            }
+        })
+    }
+}
+
 impl<E: Endianness, BR: BitRead<E> + BitSeek, const PRINT: bool> BitSeek
     for CountBitReader<E, BR, PRINT>
 {
@@ -299,52 +381,56 @@ impl<E: Endianness, BR: BitRead<E> + BitSeek, const PRINT: bool> BitSeek
 
 #[cfg(test)]
 #[cfg(feature = "std")]
-#[test]
-fn test_count() -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
+mod tests {
+    use super::*;
     use crate::prelude::*;
-    let mut buffer = <Vec<u64>>::new();
-    let bit_write = <BufBitWriter<LE, _>>::new(MemWordWriterVec::new(&mut buffer));
-    let mut count_bit_write = CountBitWriter::<_, _, true>::new(bit_write);
 
-    count_bit_write.write_unary(5)?;
-    assert_eq!(count_bit_write.bits_written, 6);
-    count_bit_write.write_unary(100)?;
-    assert_eq!(count_bit_write.bits_written, 107);
-    count_bit_write.write_bits(1, 20)?;
-    assert_eq!(count_bit_write.bits_written, 127);
-    count_bit_write.write_bits(1, 33)?;
-    assert_eq!(count_bit_write.bits_written, 160);
-    count_bit_write.write_gamma(2)?;
-    assert_eq!(count_bit_write.bits_written, 163);
-    count_bit_write.write_delta(1)?;
-    assert_eq!(count_bit_write.bits_written, 167);
-    count_bit_write.write_zeta(0, 4)?;
-    assert_eq!(count_bit_write.bits_written, 171);
-    count_bit_write.write_zeta3(0)?;
-    assert_eq!(count_bit_write.bits_written, 174);
-    count_bit_write.flush()?;
-    drop(count_bit_write);
+    #[test]
+    fn test_count() -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
+        let mut buffer = <Vec<u64>>::new();
+        let bit_write = <BufBitWriter<LE, _>>::new(MemWordWriterVec::new(&mut buffer));
+        let mut count_bit_write = CountBitWriter::<_, _, true>::new(bit_write);
 
-    let bit_read = <BufBitReader<LE, _>>::new(MemWordReader::<u64, _>::new(&buffer));
-    let mut count_bit_read = CountBitReader::<_, _, true>::new(bit_read);
+        count_bit_write.write_unary(5)?;
+        assert_eq!(count_bit_write.bits_written, 6);
+        count_bit_write.write_unary(100)?;
+        assert_eq!(count_bit_write.bits_written, 107);
+        count_bit_write.write_bits(1, 20)?;
+        assert_eq!(count_bit_write.bits_written, 127);
+        count_bit_write.write_bits(1, 33)?;
+        assert_eq!(count_bit_write.bits_written, 160);
+        count_bit_write.write_gamma(2)?;
+        assert_eq!(count_bit_write.bits_written, 163);
+        count_bit_write.write_delta(1)?;
+        assert_eq!(count_bit_write.bits_written, 167);
+        count_bit_write.write_zeta(0, 4)?;
+        assert_eq!(count_bit_write.bits_written, 171);
+        count_bit_write.write_zeta3(0)?;
+        assert_eq!(count_bit_write.bits_written, 174);
+        count_bit_write.flush()?;
+        drop(count_bit_write);
 
-    assert_eq!(count_bit_read.peek_bits(5)?, 0);
-    assert_eq!(count_bit_read.read_unary()?, 5);
-    assert_eq!(count_bit_read.bits_read, 6);
-    assert_eq!(count_bit_read.read_unary()?, 100);
-    assert_eq!(count_bit_read.bits_read, 107);
-    assert_eq!(count_bit_read.read_bits(20)?, 1);
-    assert_eq!(count_bit_read.bits_read, 127);
-    count_bit_read.skip_bits(33)?;
-    assert_eq!(count_bit_read.bits_read, 160);
-    assert_eq!(count_bit_read.read_gamma()?, 2);
-    assert_eq!(count_bit_read.bits_read, 163);
-    assert_eq!(count_bit_read.read_delta()?, 1);
-    assert_eq!(count_bit_read.bits_read, 167);
-    assert_eq!(count_bit_read.read_zeta(4)?, 0);
-    assert_eq!(count_bit_read.bits_read, 171);
-    assert_eq!(count_bit_read.read_zeta3()?, 0);
-    assert_eq!(count_bit_read.bits_read, 174);
+        let bit_read = <BufBitReader<LE, _>>::new(MemWordReader::<u64, _>::new(&buffer));
+        let mut count_bit_read = CountBitReader::<_, _, true>::new(bit_read);
 
-    Ok(())
+        assert_eq!(count_bit_read.peek_bits(5)?, 0);
+        assert_eq!(count_bit_read.read_unary()?, 5);
+        assert_eq!(count_bit_read.bits_read, 6);
+        assert_eq!(count_bit_read.read_unary()?, 100);
+        assert_eq!(count_bit_read.bits_read, 107);
+        assert_eq!(count_bit_read.read_bits(20)?, 1);
+        assert_eq!(count_bit_read.bits_read, 127);
+        count_bit_read.skip_bits(33)?;
+        assert_eq!(count_bit_read.bits_read, 160);
+        assert_eq!(count_bit_read.read_gamma()?, 2);
+        assert_eq!(count_bit_read.bits_read, 163);
+        assert_eq!(count_bit_read.read_delta()?, 1);
+        assert_eq!(count_bit_read.bits_read, 167);
+        assert_eq!(count_bit_read.read_zeta(4)?, 0);
+        assert_eq!(count_bit_read.bits_read, 171);
+        assert_eq!(count_bit_read.read_zeta3()?, 0);
+        assert_eq!(count_bit_read.bits_read, 174);
+
+        Ok(())
+    }
 }

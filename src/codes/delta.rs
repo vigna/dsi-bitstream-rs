@@ -16,7 +16,7 @@
 //!
 //! The `USE_DELTA_TABLE` parameter enables or disables the use of pre-computed
 //! tables for decoding δ codes, and the `USE_GAMMA_TABLE` parameter enables or
-//! disables the use of pre-computed tables for decoding the the initial γ code
+//! disables the use of pre-computed tables for decoding the initial γ code
 //! in case the whole δ code could not be decoded by tables.
 //!
 //! The supported range is [0 . . 2⁶⁴ – 1).

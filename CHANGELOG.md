@@ -1,6 +1,6 @@
 # Change Log
 
-## [0.8.0]
+## [0.8.0] - 2026-02-20
 
 ### Improved
 
@@ -19,11 +19,15 @@
 
 - Read tables for pi codes are not set up by default.
 
+### Fixed
+
+- `[Count|Dbg]Bit[Reader|Writer]` were missing recent code implementations.
+
 ## [0.7.0] - 2026-01-27
 
 ### New
 
-- `CodesStats` now support serde via a default feature.
+- `CodesStats` now supports serde via a default feature.
 
 - Tables for pi codes (k=2).
 
@@ -89,10 +93,10 @@
 
 - Implemented `std::io::Write` for `BufBitWriter`.
 
-- Added `update_many` to `CodeStats` and added more codes.
+- Added `update_many` to `CodesStats` and added more codes.
 
 - Added `core::ops::Add`, `core::ops::AddAssign`, and `core::iter::Sum` to
-  CodeStats so they can be merged using iter's `.sum()`.
+  CodesStats so they can be merged using iter's `.sum()`.
 
 - New benchmarks on implied distributions.
 
