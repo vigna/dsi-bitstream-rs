@@ -77,7 +77,10 @@ pub trait BitRead<E: Endianness> {
 
     /// Peeks at `n` bits without advancing the stream position.
     /// `n` must be nonzero, and at most `PeekWord::BITS`.
-    fn peek_bits(&mut self, n: usize) -> Result<Self::PeekWord, Self::Error>;
+    ///
+    /// If there are not enough bits in the stream, the result is
+    /// zero-extended.
+    fn peek_bits(&mut self, n: usize) -> Self::PeekWord;
 
     /// Skip `n` bits from the stream.
     ///

@@ -257,7 +257,7 @@ impl<E: Endianness, BR: BitRead<E>, const PRINT: bool> BitRead<E> for CountBitRe
         })
     }
 
-    fn peek_bits(&mut self, n_bits: usize) -> Result<Self::PeekWord, Self::Error> {
+    fn peek_bits(&mut self, n_bits: usize) -> Self::PeekWord {
         self.bit_read.peek_bits(n_bits)
     }
 
@@ -413,7 +413,7 @@ mod tests {
         let bit_read = <BufBitReader<LE, _>>::new(MemWordReader::<u64, _>::new(&buffer));
         let mut count_bit_read = CountBitReader::<_, _, true>::new(bit_read);
 
-        assert_eq!(count_bit_read.peek_bits(5)?, 0);
+        assert_eq!(count_bit_read.peek_bits(5), 0);
         assert_eq!(count_bit_read.read_unary()?, 5);
         assert_eq!(count_bit_read.bits_read, 6);
         assert_eq!(count_bit_read.read_unary()?, 100);

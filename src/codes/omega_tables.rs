@@ -28,17 +28,11 @@ pub const WRITE_MAX: u64 = 63;
 /// Using signed i8 allows testing with `< 0` instead of masking, which is more efficient.
 #[inline(always)]
 pub fn read_table_le<B: BitRead<LE>>(backend: &mut B) -> (i8, u64) {
-    if let Ok(idx) = backend.peek_bits(READ_BITS) {
-        let idx = idx.cast() as usize;
-        let len_with_flag = READ_LEN_LE[idx];
-        let value = READ_LE[idx] as u64;
-        backend.skip_bits_after_peek((len_with_flag & 0x7F) as usize);
-
-        (len_with_flag, value)
-    } else {
-        // Not enough bits available - return initial state
-        (0, 1)
-    }
+    let idx = backend.peek_bits(READ_BITS).cast() as usize;
+    let len_with_flag = READ_LEN_LE[idx];
+    let value = READ_LE[idx] as u64;
+    backend.skip_bits_after_peek((len_with_flag & 0x7F) as usize);
+    (len_with_flag, value)
 }
 
 /// Reads from the decoding table.
@@ -52,17 +46,11 @@ pub fn read_table_le<B: BitRead<LE>>(backend: &mut B) -> (i8, u64) {
 /// Using signed i8 allows testing with `< 0` instead of masking, which is more efficient.
 #[inline(always)]
 pub fn read_table_be<B: BitRead<BE>>(backend: &mut B) -> (i8, u64) {
-    if let Ok(idx) = backend.peek_bits(READ_BITS) {
-        let idx = idx.cast() as usize;
-        let len_with_flag = READ_LEN_BE[idx];
-        let value = READ_BE[idx] as u64;
-        backend.skip_bits_after_peek((len_with_flag & 0x7F) as usize);
-
-        (len_with_flag, value)
-    } else {
-        // Not enough bits available - return initial state
-        (0, 1)
-    }
+    let idx = backend.peek_bits(READ_BITS).cast() as usize;
+    let len_with_flag = READ_LEN_BE[idx];
+    let value = READ_BE[idx] as u64;
+    backend.skip_bits_after_peek((len_with_flag & 0x7F) as usize);
+    (len_with_flag, value)
 }
 
 /// Writes a value using an encoding table.

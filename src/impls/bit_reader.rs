@@ -98,29 +98,32 @@ impl<
     }
 
     #[inline]
-    fn peek_bits(&mut self, n_bits: usize) -> Result<u32, Self::Error> {
+    fn peek_bits(&mut self, n_bits: usize) -> u32 {
         if n_bits == 0 {
-            return Ok(0);
+            return 0;
         }
 
         assert!(n_bits <= 32);
 
-        self.data.set_word_pos(self.bit_index / 64)?;
-        let in_word_offset = (self.bit_index % 64) as usize;
+        (|| -> Result<u32, Self::Error> {
+            self.data.set_word_pos(self.bit_index / 64)?;
+            let in_word_offset = (self.bit_index % 64) as usize;
 
-        let res = if (in_word_offset + n_bits) <= 64 {
-            // single word access
-            let word = self.data.read_word()?.to_be();
-            (word << in_word_offset) >> (64 - n_bits)
-        } else {
-            // double word access
-            let high_word = self.data.read_word()?.to_be();
-            let low_word = self.data.read_word()?.to_be();
-            let shamt1 = 64 - n_bits;
-            let shamt2 = 128 - in_word_offset - n_bits;
-            ((high_word << in_word_offset) >> shamt1) | (low_word >> shamt2)
-        };
-        Ok(res as u32)
+            let res = if (in_word_offset + n_bits) <= 64 {
+                // single word access
+                let word = self.data.read_word()?.to_be();
+                (word << in_word_offset) >> (64 - n_bits)
+            } else {
+                // double word access
+                let high_word = self.data.read_word()?.to_be();
+                let low_word = self.data.read_word()?.to_be();
+                let shamt1 = 64 - n_bits;
+                let shamt2 = 128 - in_word_offset - n_bits;
+                ((high_word << in_word_offset) >> shamt1) | (low_word >> shamt2)
+            };
+            Ok(res as u32)
+        })()
+        .unwrap_or(0)
     }
 
     #[inline]
@@ -223,30 +226,33 @@ impl<
     }
 
     #[inline]
-    fn peek_bits(&mut self, n_bits: usize) -> Result<u32, Self::Error> {
+    fn peek_bits(&mut self, n_bits: usize) -> u32 {
         if n_bits == 0 {
-            return Ok(0);
+            return 0;
         }
 
         assert!(n_bits <= 32);
 
-        self.data.set_word_pos(self.bit_index / 64)?;
-        let in_word_offset = (self.bit_index % 64) as usize;
+        (|| -> Result<u32, Self::Error> {
+            self.data.set_word_pos(self.bit_index / 64)?;
+            let in_word_offset = (self.bit_index % 64) as usize;
 
-        let res = if (in_word_offset + n_bits) <= 64 {
-            // single word access
-            let word = self.data.read_word()?.to_le();
-            let shamt = 64 - n_bits;
-            (word << (shamt - in_word_offset)) >> shamt
-        } else {
-            // double word access
-            let low_word = self.data.read_word()?.to_le();
-            let high_word = self.data.read_word()?.to_le();
-            let shamt1 = 128 - in_word_offset - n_bits;
-            let shamt2 = 64 - n_bits;
-            ((high_word << shamt1) >> shamt2) | (low_word >> in_word_offset)
-        };
-        Ok(res as u32)
+            let res = if (in_word_offset + n_bits) <= 64 {
+                // single word access
+                let word = self.data.read_word()?.to_le();
+                let shamt = 64 - n_bits;
+                (word << (shamt - in_word_offset)) >> shamt
+            } else {
+                // double word access
+                let low_word = self.data.read_word()?.to_le();
+                let high_word = self.data.read_word()?.to_le();
+                let shamt1 = 128 - in_word_offset - n_bits;
+                let shamt2 = 64 - n_bits;
+                ((high_word << shamt1) >> shamt2) | (low_word >> in_word_offset)
+            };
+            Ok(res as u32)
+        })()
+        .unwrap_or(0)
     }
 
     #[inline]

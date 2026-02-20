@@ -63,13 +63,11 @@ read_func_merged_table = """
 /// the decoded value and the length of the code are returned.
 #[inline(always)]
 pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> Option<(u64, usize)> {
-    if let Ok(idx) = backend.peek_bits(READ_BITS) {
-        let idx = idx.cast() as usize;
-        let (value, len) = READ_%(BO)s[idx];
-        if len != MISSING_VALUE_LEN_%(BO)s {
-            backend.skip_bits_after_peek(len as usize);
-            return Some((value as u64, len as usize));
-        }
+    let idx = backend.peek_bits(READ_BITS).cast() as usize;
+    let (value, len) = READ_%(BO)s[idx];
+    if len != MISSING_VALUE_LEN_%(BO)s {
+        backend.skip_bits_after_peek(len as usize);
+        return Some((value as u64, len as usize));
     }
     None
 }
@@ -82,13 +80,11 @@ read_func_two_table = """
 /// the decoded value and the length of the code are returned.
 #[inline(always)]
 pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> Option<(u64, usize)> {
-    if let Ok(idx) = backend.peek_bits(READ_BITS) {
-        let idx = idx.cast() as usize;
-        let len = READ_LEN_%(BO)s[idx];
-        if len != MISSING_VALUE_LEN_%(BO)s {
-            backend.skip_bits_after_peek(len as usize);
-            return Some((READ_%(BO)s[idx] as u64, len as usize));
-        }
+    let idx = backend.peek_bits(READ_BITS).cast() as usize;
+    let len = READ_LEN_%(BO)s[idx];
+    if len != MISSING_VALUE_LEN_%(BO)s {
+        backend.skip_bits_after_peek(len as usize);
+        return Some((READ_%(BO)s[idx] as u64, len as usize));
     }
     None
 }
@@ -611,16 +607,11 @@ def gen_delta(read_bits, write_max_val, len_max_val=None, merged_table=False):
 /// Using signed i8 allows testing with `< 0` instead of masking, which is more efficient.
 #[inline(always)]
 pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> (i8, u64) {
-    if let Ok(idx) = backend.peek_bits(READ_BITS) {
-        let idx = idx.cast() as usize;
-        let len_with_flag = READ_LEN_%(BO)s[idx];
-        let value_or_gamma = READ_%(BO)s[idx] as u64;
-        backend.skip_bits_after_peek((len_with_flag & 0x7F) as usize);
-        (len_with_flag, value_or_gamma)
-    } else {
-        // Not enough bits available
-        (0, 0)
-    }
+    let idx = backend.peek_bits(READ_BITS).cast() as usize;
+    let len_with_flag = READ_LEN_%(BO)s[idx];
+    let value_or_gamma = READ_%(BO)s[idx] as u64;
+    backend.skip_bits_after_peek((len_with_flag & 0x7F) as usize);
+    (len_with_flag, value_or_gamma)
 }
 """
                 % {"bo": bo, "BO": BO}
@@ -1156,17 +1147,11 @@ def gen_omega(read_bits, write_max_val, len_max_val=None, merged_table=False):
 /// Using signed i8 allows testing with `< 0` instead of masking, which is more efficient.
 #[inline(always)]
 pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> (i8, u64) {
-    if let Ok(idx) = backend.peek_bits(READ_BITS) {
-        let idx = idx.cast() as usize;
-        let len_with_flag = READ_LEN_%(BO)s[idx];
-        let value = READ_%(BO)s[idx] as u64;
-        backend.skip_bits_after_peek((len_with_flag & 0x7F) as usize);
-
-        (len_with_flag, value)
-    } else {
-        // Not enough bits available - return initial state
-        (0, 1)
-    }
+    let idx = backend.peek_bits(READ_BITS).cast() as usize;
+    let len_with_flag = READ_LEN_%(BO)s[idx];
+    let value = READ_%(BO)s[idx] as u64;
+    backend.skip_bits_after_peek((len_with_flag & 0x7F) as usize);
+    (len_with_flag, value)
 }
 """
                 % {"bo": bo, "BO": BO}
@@ -1525,16 +1510,11 @@ def gen_pi(read_bits, write_max_val, len_max_val=None, k=2, merged_table=False):
 /// Using signed i8 allows testing with `< 0` instead of masking, which is more efficient.
 #[inline(always)]
 pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> (i8, u64) {
-    if let Ok(idx) = backend.peek_bits(READ_BITS) {
-        let idx = idx.cast() as usize;
-        let len_with_flag = READ_LEN_%(BO)s[idx];
-        let value_or_lambda = READ_%(BO)s[idx] as u64;
-        backend.skip_bits_after_peek((len_with_flag & 0x7F) as usize);
-        (len_with_flag, value_or_lambda)
-    } else {
-        // Not enough bits available
-        (0, 0)
-    }
+    let idx = backend.peek_bits(READ_BITS).cast() as usize;
+    let len_with_flag = READ_LEN_%(BO)s[idx];
+    let value_or_lambda = READ_%(BO)s[idx] as u64;
+    backend.skip_bits_after_peek((len_with_flag & 0x7F) as usize);
+    (len_with_flag, value_or_lambda)
 }
 """
                 % {"bo": bo, "BO": BO}

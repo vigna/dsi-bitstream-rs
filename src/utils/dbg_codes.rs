@@ -36,11 +36,11 @@ where
     type PeekWord = R::PeekWord;
     const PEEK_BITS: usize = R::PEEK_BITS;
 
-    fn peek_bits(&mut self, n_bits: usize) -> Result<Self::PeekWord, Self::Error> {
-        let value = self.reader.peek_bits(n_bits)?;
+    fn peek_bits(&mut self, n_bits: usize) -> Self::PeekWord {
+        let value = self.reader.peek_bits(n_bits);
         #[cfg(feature = "std")]
         eprintln!("peek_bits({}): {}", n_bits, value);
-        Ok(value)
+        value
     }
 
     fn skip_bits(&mut self, n_bits: usize) -> Result<(), Self::Error> {

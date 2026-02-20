@@ -178,19 +178,15 @@ where
     const PEEK_BITS: usize = <WR as WordRead>::Word::BITS + 1;
 
     #[inline(always)]
-    fn peek_bits(&mut self, n_bits: usize) -> Result<Self::PeekWord, Self::Error> {
+    fn peek_bits(&mut self, n_bits: usize) -> Self::PeekWord {
         debug_assert!(n_bits > 0);
         debug_assert!(n_bits <= Self::PeekWord::BITS);
 
-        // A peek can do at most one refill, otherwise we might lose data
         if n_bits > self.bits_in_buffer {
-            self.refill()?;
+            let _ = self.refill();
         }
 
-        debug_assert!(n_bits <= self.bits_in_buffer);
-
-        // Move the n_bits highest bits of the buffer to the lowest
-        Ok(self.buffer >> (BB::<WR>::BITS - n_bits))
+        self.buffer >> (BB::<WR>::BITS - n_bits)
     }
 
     #[inline(always)]
@@ -425,20 +421,16 @@ where
     const PEEK_BITS: usize = <WR as WordRead>::Word::BITS + 1;
 
     #[inline(always)]
-    fn peek_bits(&mut self, n_bits: usize) -> Result<Self::PeekWord, Self::Error> {
+    fn peek_bits(&mut self, n_bits: usize) -> Self::PeekWord {
         debug_assert!(n_bits > 0);
         debug_assert!(n_bits <= Self::PeekWord::BITS);
 
-        // A peek can do at most one refill, otherwise we might lose data
         if n_bits > self.bits_in_buffer {
-            self.refill()?;
+            let _ = self.refill();
         }
 
-        debug_assert!(n_bits <= self.bits_in_buffer);
-
-        // Keep the n_bits lowest bits of the buffer
         let sham = BB::<WR>::BITS - n_bits;
-        Ok((self.buffer << sham) >> sham)
+        (self.buffer << sham) >> sham
     }
 
     #[inline(always)]

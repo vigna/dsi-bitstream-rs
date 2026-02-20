@@ -132,7 +132,7 @@ fn read_omega_from_state<E: Endianness, B: BitRead<E>>(
     mut n: u64,
 ) -> Result<u64, B::Error> {
     loop {
-        let bit = backend.peek_bits(1)?.cast();
+        let bit = backend.peek_bits(1).cast();
         if bit == 0 {
             backend.skip_bits_after_peek(1);
             return Ok(n - 1);
