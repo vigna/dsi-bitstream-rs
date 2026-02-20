@@ -369,18 +369,18 @@ mod tests {
     macro_rules! impl_tests {
         ($test_name:ident, $E:ty) => {
             #[test]
-            fn $test_name() {
+            fn $test_name() -> std::io::Result<()> {
                 const MAX: usize = 1 << 20;
                 const MIN: usize = 0;
                 let mut buffer = std::io::Cursor::new(Vec::with_capacity(128));
                 let mut lens = Vec::new();
 
                 for i in MIN..MAX {
-                    lens.push(vbyte_write::<$E, _>(i as _, &mut buffer).unwrap());
+                    lens.push(vbyte_write::<$E, _>(i as _, &mut buffer)?);
                 }
                 buffer.set_position(0);
                 for (i, l) in (MIN..MAX).zip(lens.iter()) {
-                    let j = vbyte_read::<$E, _>(&mut buffer).unwrap();
+                    let j = vbyte_read::<$E, _>(&mut buffer)?;
                     assert_eq!(byte_len_vbyte(i as _), *l);
                     assert_eq!(j, i as u64);
                 }
@@ -408,12 +408,13 @@ mod tests {
 
                 let tell: u64 = buffer.position();
                 for &i in values.iter() {
-                    vbyte_write::<$E, _>(i, &mut buffer).unwrap();
+                    vbyte_write::<$E, _>(i, &mut buffer)?;
                 }
                 buffer.set_position(tell);
                 for &i in values.iter() {
-                    assert_eq!(i, vbyte_read::<$E, _>(&mut buffer).unwrap());
+                    assert_eq!(i, vbyte_read::<$E, _>(&mut buffer)?);
                 }
+                Ok(())
             }
         };
     }

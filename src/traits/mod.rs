@@ -26,12 +26,12 @@ The implementations we provide for these traits (e.g.,
 operations, as reading or writing multiple bytes at a time is usually
 much faster than reading or writing single bytes, in particular when
 interacting with memory. For example,
-[`MemWordRead`](crate::impls::MemWordReader) is a [`WordRead`] that
+[`MemWordReader`](crate::impls::MemWordReader) is a [`WordRead`] that
 reads word-by-word from a slice.
 
 All traits have an internal error type `Error`, which usually propagates
 the error of the underlying backend. However, in some cases (e.g.,
-[`MemWordRead`](crate::impls::MemWordReader) with infinite zero
+[`MemWordReader`](crate::impls::MemWordReader) with infinite zero
 extension) the error type is
 [`Infallible`](core::convert::Infallible), in which case the compiler
 is able to perform several further optimizations.

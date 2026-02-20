@@ -383,8 +383,9 @@ pub trait DynamicCodeWrite {
 /// A trait providing a method to read a code from a [`CodesRead`] specified as
 /// trait type parameter.
 ///
-/// The difference with [`DynamicCodeRead`] is that this trait is more specialized,
-/// as the [`CodesRead`] is a parameter of the trait.
+/// The difference with [`DynamicCodeRead`] is that this trait is
+/// more specialized, as the [`CodesRead`] is a parameter of the
+/// trait.
 ///
 /// For a fixed code this trait may be implemented by storing
 /// a function pointer.
@@ -392,11 +393,12 @@ pub trait StaticCodeRead<E: Endianness, CR: CodesRead<E> + ?Sized> {
     fn read(&self, reader: &mut CR) -> Result<u64, CR::Error>;
 }
 
-/// A trait providing a method to write a code to a [`CodesWrite`] specified as
-/// a trait type parameter.
+/// A trait providing a method to write a code to a [`CodesWrite`]
+/// specified as a trait type parameter.
 ///
-/// The difference with [`DynamicCodeWrite`] is that this trait is more specialized,
-/// as the [`CodesWrite`] is a parameter of the trait.
+/// The difference with [`DynamicCodeWrite`] is that this trait is
+/// more specialized, as the [`CodesWrite`] is a parameter of the
+/// trait.
 ///
 /// For a fixed code this trait may be implemented by storing a function
 /// pointer.

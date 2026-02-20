@@ -258,62 +258,64 @@ mod tests {
     use crate::prelude::*;
 
     #[test]
-    fn test_roundtrip() {
+    fn test_roundtrip() -> Result<(), Box<dyn core::error::Error>> {
         let k = 3;
         for value in (0..64).map(|i| 1 << i).chain(0..1024).chain([u64::MAX - 1]) {
             let mut data = [0_u64; 10];
             let mut writer = <BufBitWriter<BE, _>>::new(MemWordWriterSlice::new(&mut data));
-            let code_len = writer.write_pi(value, k).unwrap();
+            let code_len = writer.write_pi(value, k)?;
             assert_eq!(code_len, len_pi(value, k));
             drop(writer);
             let mut reader = <BufBitReader<BE, _>>::new(MemWordReader::new(&data));
             assert_eq!(
-                reader.read_pi(k).unwrap(),
+                reader.read_pi(k)?,
                 value,
                 "for value: {} with k {}",
                 value,
                 k
             );
         }
+        Ok(())
     }
 
     #[test]
-    fn test_roundtrip_pi2() {
+    fn test_roundtrip_pi2() -> Result<(), Box<dyn core::error::Error>> {
         // Test the specialized pi2 methods
         for value in (0..64).map(|i| 1 << i).chain(0..1024).chain([u64::MAX - 1]) {
             // Test BE
             let mut data = [0_u64; 10];
             let mut writer = <BufBitWriter<BE, _>>::new(MemWordWriterSlice::new(&mut data));
-            let code_len = writer.write_pi2(value).unwrap();
+            let code_len = writer.write_pi2(value)?;
             assert_eq!(code_len, len_pi(value, 2));
             drop(writer);
             let mut reader = <BufBitReader<BE, _>>::new(MemWordReader::new(&data));
-            assert_eq!(reader.read_pi2().unwrap(), value, "BE for value: {}", value,);
+            assert_eq!(reader.read_pi2()?, value, "BE for value: {}", value,);
 
             // Test LE
             let mut data = [0_u64; 10];
             let mut writer = <BufBitWriter<LE, _>>::new(MemWordWriterSlice::new(&mut data));
-            let code_len = writer.write_pi2(value).unwrap();
+            let code_len = writer.write_pi2(value)?;
             assert_eq!(code_len, len_pi(value, 2));
             drop(writer);
             let mut reader = <BufBitReader<LE, _>>::new(MemWordReader::new(&data));
-            assert_eq!(reader.read_pi2().unwrap(), value, "LE for value: {}", value,);
+            assert_eq!(reader.read_pi2()?, value, "LE for value: {}", value,);
         }
+        Ok(())
     }
 
     #[test]
-    fn test_roundtrip_pi2_param() {
+    fn test_roundtrip_pi2_param() -> Result<(), Box<dyn core::error::Error>> {
         // Test the parametric pi2 methods with tables
         for value in (0..64).map(|i| 1 << i).chain(0..1024).chain([u64::MAX - 1]) {
             // Test BE with tables
             let mut data = [0_u64; 10];
             let mut writer = <BufBitWriter<BE, _>>::new(MemWordWriterSlice::new(&mut data));
-            let code_len = writer.write_pi2_param::<true>(value).unwrap();
+            let code_len = writer.write_pi2_param::<true>(value)?;
             assert_eq!(code_len, len_pi(value, 2));
             drop(writer);
             let mut reader = <BufBitReader<BE, _>>::new(MemWordReader::new(&data));
             assert_eq!(
-                reader.read_pi2_param::<true>().unwrap(),
+                reader.read_pi2_param::<true>()?,
                 value,
                 "BE table for value: {}",
                 value,
@@ -322,12 +324,12 @@ mod tests {
             // Test BE without tables
             let mut data = [0_u64; 10];
             let mut writer = <BufBitWriter<BE, _>>::new(MemWordWriterSlice::new(&mut data));
-            let code_len = writer.write_pi2_param::<false>(value).unwrap();
+            let code_len = writer.write_pi2_param::<false>(value)?;
             assert_eq!(code_len, len_pi(value, 2));
             drop(writer);
             let mut reader = <BufBitReader<BE, _>>::new(MemWordReader::new(&data));
             assert_eq!(
-                reader.read_pi2_param::<false>().unwrap(),
+                reader.read_pi2_param::<false>()?,
                 value,
                 "BE no table for value: {}",
                 value,
@@ -336,12 +338,12 @@ mod tests {
             // Test LE with tables
             let mut data = [0_u64; 10];
             let mut writer = <BufBitWriter<LE, _>>::new(MemWordWriterSlice::new(&mut data));
-            let code_len = writer.write_pi2_param::<true>(value).unwrap();
+            let code_len = writer.write_pi2_param::<true>(value)?;
             assert_eq!(code_len, len_pi(value, 2));
             drop(writer);
             let mut reader = <BufBitReader<LE, _>>::new(MemWordReader::new(&data));
             assert_eq!(
-                reader.read_pi2_param::<true>().unwrap(),
+                reader.read_pi2_param::<true>()?,
                 value,
                 "LE table for value: {}",
                 value,
@@ -350,22 +352,23 @@ mod tests {
             // Test LE without tables
             let mut data = [0_u64; 10];
             let mut writer = <BufBitWriter<LE, _>>::new(MemWordWriterSlice::new(&mut data));
-            let code_len = writer.write_pi2_param::<false>(value).unwrap();
+            let code_len = writer.write_pi2_param::<false>(value)?;
             assert_eq!(code_len, len_pi(value, 2));
             drop(writer);
             let mut reader = <BufBitReader<LE, _>>::new(MemWordReader::new(&data));
             assert_eq!(
-                reader.read_pi2_param::<false>().unwrap(),
+                reader.read_pi2_param::<false>()?,
                 value,
                 "LE no table for value: {}",
                 value,
             );
         }
+        Ok(())
     }
 
     #[test]
     #[allow(clippy::unusual_byte_groupings)]
-    fn test_bits() {
+    fn test_bits() -> Result<(), Box<dyn core::error::Error>> {
         for (k, value, expected) in [
             (2, 20, 0b01_00_0101 << (64 - 8)),
             (2, 0, 0b100 << (64 - 3)),
@@ -387,7 +390,7 @@ mod tests {
         ] {
             let mut data = [0_u64; 10];
             let mut writer = <BufBitWriter<BE, _>>::new(MemWordWriterSlice::new(&mut data));
-            let code_len = writer.write_pi(value, k).unwrap();
+            let code_len = writer.write_pi(value, k)?;
             assert_eq!(code_len, len_pi(value, k));
             drop(writer);
             assert_eq!(
@@ -402,10 +405,11 @@ mod tests {
                 len_pi(value, k),
             );
         }
+        Ok(())
     }
 
     #[test]
-    fn test_against_zeta() {
+    fn test_against_zeta() -> Result<(), Box<dyn core::error::Error>> {
         // BE: π₀ = ζ₁ and π₁ = ζ₂
         for k in 0..2 {
             for value in 0..100 {
@@ -413,13 +417,13 @@ mod tests {
                 let mut data_zeta = [0_u64; 10];
 
                 let mut writer = <BufBitWriter<BE, _>>::new(MemWordWriterSlice::new(&mut data_pi));
-                let code_len = writer.write_pi(value, k).unwrap();
+                let code_len = writer.write_pi(value, k)?;
                 assert_eq!(code_len, len_pi(value, k));
                 drop(writer);
 
                 let mut writer =
                     <BufBitWriter<BE, _>>::new(MemWordWriterSlice::new(&mut data_zeta));
-                let code_len = writer.write_zeta(value, 1 << k).unwrap();
+                let code_len = writer.write_zeta(value, 1 << k)?;
                 assert_eq!(code_len, len_zeta(value, 1 << k));
                 drop(writer);
 
@@ -433,12 +437,12 @@ mod tests {
             let mut data_zeta = [0_u64; 10];
 
             let mut writer = <BufBitWriter<LE, _>>::new(MemWordWriterSlice::new(&mut data_pi));
-            let code_len = writer.write_pi(value, 0).unwrap();
+            let code_len = writer.write_pi(value, 0)?;
             assert_eq!(code_len, len_pi(value, 0));
             drop(writer);
 
             let mut writer = <BufBitWriter<LE, _>>::new(MemWordWriterSlice::new(&mut data_zeta));
-            let code_len = writer.write_zeta(value, 1).unwrap();
+            let code_len = writer.write_zeta(value, 1)?;
             assert_eq!(code_len, len_zeta(value, 1));
             drop(writer);
 
@@ -448,5 +452,6 @@ mod tests {
         for value in 0..100 {
             assert_eq!(len_pi(value, 1), len_zeta(value, 2));
         }
+        Ok(())
     }
 }

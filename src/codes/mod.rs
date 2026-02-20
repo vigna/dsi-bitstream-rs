@@ -80,8 +80,8 @@
 //!
 //! # Dispatch
 //!
-//! The basic method for accessing codes is through traits like [`GammaRead`] and
-//! [`GammaWrite`]. This approach, however, forces a choice of code in the
+//! The basic method for accessing codes is through traits like
+//! [`GammaRead`] and [`GammaWrite`]. This approach, however, forces a choice of code in the
 //! source. To pass a choice of code dynamically, please have a look at the
 //! [`dispatch`](crate::dispatch) module.
 

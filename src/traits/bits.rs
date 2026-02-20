@@ -12,7 +12,8 @@ use core::fmt::{Display, Formatter};
 use crate::traits::*;
 use common_traits::CastableInto;
 
-/// The error returned by the bit copy methods [`BitRead::copy_to`] and [`BitWrite::copy_from`].
+/// The error returned by the bit copy methods [`BitRead::copy_to`]
+/// and [`BitWrite::copy_from`].
 ///
 /// It can be a read or a write error, depending on which stream (source or
 /// destination) generated the error.
@@ -27,8 +28,8 @@ impl<RE: Error + Send + Sync + 'static, WE: Error + Send + Sync + 'static> Displ
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         match self {
-            CopyError::ReadError(e) => write!(f, "Read error while copying: {}", e),
-            CopyError::WriteError(e) => write!(f, "Write error while copying: {}", e),
+            CopyError::ReadError(e) => write!(f, "read error while copying: {}", e),
+            CopyError::WriteError(e) => write!(f, "write error while copying: {}", e),
         }
     }
 }
@@ -122,9 +123,8 @@ pub trait BitRead<E: Endianness> {
 pub trait BitWrite<E: Endianness> {
     type Error: Error + Send + Sync + 'static;
 
-    /// Writes the lowest `n` bits of `value` to the stream and returns the number
-    /// of bits written, that is, `n`.
-    ///
+    /// Writes the lowest `n` bits of `value` to the stream and
+    /// returns the number of bits written, that is, `n`.
     ///
     /// Implementors should check the value of `n` in test mode and panic if it
     /// is greater than 64. Moreover, if the feature `checks` is enabled they
@@ -139,7 +139,8 @@ pub trait BitWrite<E: Endianness> {
 
     /// Flush the buffer, consuming the bit stream.
     ///
-    /// Returns the number of bits written from the bit buffer (not including padding).
+    /// Returns the number of bits written from the bit buffer (not
+    /// including padding).
     fn flush(&mut self) -> Result<usize, Self::Error>;
 
     fn copy_from<F: Endianness, R: BitRead<F>>(
@@ -164,7 +165,8 @@ pub trait BitSeek {
     /// Gets the current position in bits from the start of the stream.
     fn bit_pos(&mut self) -> Result<u64, Self::Error>;
 
-    /// Sets the current position in bits from the start of the stream to `bit_pos`.
+    /// Sets the current position in bits from the start of the
+    /// stream to `bit_pos`.
     ///
     /// Note that moving forward by a small amount of bits may be accomplished
     /// more efficiently by calling [`BitRead::skip_bits`].

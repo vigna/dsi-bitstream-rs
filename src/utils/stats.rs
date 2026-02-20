@@ -155,7 +155,7 @@ impl<
         n
     }
 
-    // Combines additively this stats with another one.
+    /// Combines additively this stats with another one.
     pub fn add(&mut self, rhs: &Self) {
         self.total += rhs.total;
         self.unary += rhs.unary;
@@ -600,25 +600,27 @@ mod serde_tests {
     use super::*;
 
     #[test]
-    fn test_serde_code_stats() {
+    fn test_serde_code_stats() -> serde_json::Result<()> {
         let mut stats: CodesStats = CodesStats::default();
         for i in 0..100 {
             stats.update(i);
         }
-        let json = serde_json::to_string(&stats).unwrap();
-        let deserialized: CodesStats = serde_json::from_str(&json).unwrap();
+        let json = serde_json::to_string(&stats)?;
+        let deserialized: CodesStats = serde_json::from_str(&json)?;
         assert_eq!(stats, deserialized);
+        Ok(())
     }
 
     #[test]
-    fn test_roundtrip_different_sizes() {
+    fn test_roundtrip_different_sizes() -> serde_json::Result<()> {
         let mut stats: CodesStats<10, 20, 5, 8, 6> = CodesStats::default();
         for i in 0..1000 {
             stats.update(i);
         }
-        let json = serde_json::to_string_pretty(&stats).unwrap();
-        let deserialized: CodesStats<10, 20, 5, 8, 6> = serde_json::from_str(&json).unwrap();
+        let json = serde_json::to_string_pretty(&stats)?;
+        let deserialized: CodesStats<10, 20, 5, 8, 6> = serde_json::from_str(&json)?;
         assert_eq!(stats, deserialized);
+        Ok(())
     }
 
     #[test]

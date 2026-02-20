@@ -486,7 +486,7 @@ where
 
         for word in &mut iter {
             self.write_bits(u64::from_be_bytes(word.try_into().unwrap()), 64)
-                .map_err(|_| std::io::Error::other("Could not write bits to stream"))?;
+                .map_err(|_| std::io::Error::other("could not write bits to stream"))?;
         }
 
         let rem = iter.remainder();
@@ -498,14 +498,14 @@ where
                 word |= *byte as u64;
             }
             self.write_bits(word, bits)
-                .map_err(|_| std::io::Error::other("Could not write bits to stream"))?;
+                .map_err(|_| std::io::Error::other("could not write bits to stream"))?;
         }
 
         Ok(buf.len())
     }
 
     fn flush(&mut self) -> std::io::Result<()> {
-        flush_be(self).map_err(|_| std::io::Error::other("Could not flush bits to stream"))?;
+        flush_be(self).map_err(|_| std::io::Error::other("could not flush bits to stream"))?;
         Ok(())
     }
 }
@@ -521,7 +521,7 @@ where
 
         for word in &mut iter {
             self.write_bits(u64::from_le_bytes(word.try_into().unwrap()), 64)
-                .map_err(|_| std::io::Error::other("Could not write bits to stream"))?;
+                .map_err(|_| std::io::Error::other("could not write bits to stream"))?;
         }
 
         let rem = iter.remainder();
@@ -533,14 +533,14 @@ where
                 word |= *byte as u64;
             }
             self.write_bits(word, bits)
-                .map_err(|_| std::io::Error::other("Could not write bits to stream"))?;
+                .map_err(|_| std::io::Error::other("could not write bits to stream"))?;
         }
 
         Ok(buf.len())
     }
 
     fn flush(&mut self) -> std::io::Result<()> {
-        flush_le(self).map_err(|_| std::io::Error::other("Could not flush bits to stream"))?;
+        flush_le(self).map_err(|_| std::io::Error::other("could not flush bits to stream"))?;
         Ok(())
     }
 }
@@ -553,7 +553,7 @@ mod tests {
     use std::io::Write;
 
     #[test]
-    fn test_write() {
+    fn test_write() -> Result<(), Box<dyn std::error::Error>> {
         let data = [
             0x90, 0x2d, 0xd0, 0x26, 0xdf, 0x89, 0xbb, 0x7e, 0x3a, 0xd6, 0xc6, 0x96, 0x73, 0xe9,
             0x9d, 0xc9, 0x2a, 0x77, 0x82, 0xa9, 0xe6, 0x4b, 0x53, 0xcc, 0x83, 0x80, 0x4a, 0xf3,
@@ -573,21 +573,22 @@ mod tests {
             let mut buffer = Vec::<u64>::new();
             let mut writer = BufBitWriter::<BE, _>::new(MemWordWriterVec::new(&mut buffer));
 
-            writer.write_all(&data[..i]).unwrap();
-            std::io::Write::flush(&mut writer).unwrap();
+            writer.write_all(&data[..i])?;
+            std::io::Write::flush(&mut writer)?;
 
-            let buffer = writer.into_inner().unwrap().into_inner();
+            let buffer = writer.into_inner()?.into_inner();
             assert_eq!(unsafe { &buffer.align_to::<u8>().1[..i] }, &data[..i]);
 
             let mut buffer = Vec::<u64>::new();
             let mut writer = BufBitWriter::<LE, _>::new(MemWordWriterVec::new(&mut buffer));
 
-            writer.write_all(&data[..i]).unwrap();
-            std::io::Write::flush(&mut writer).unwrap();
+            writer.write_all(&data[..i])?;
+            std::io::Write::flush(&mut writer)?;
 
-            let buffer = writer.into_inner().unwrap().into_inner();
+            let buffer = writer.into_inner()?.into_inner();
             assert_eq!(unsafe { &buffer.align_to::<u8>().1[..i] }, &data[..i]);
         }
+        Ok(())
     }
 
     macro_rules! test_buf_bit_writer {

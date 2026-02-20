@@ -120,7 +120,7 @@ impl<W: UnsignedInt + ToBytes + FromBytes + FiniteRangeNumber, B: Seek> WordSeek
 mod tests {
     use crate::prelude::*;
     #[test]
-    fn test_word_adapter() {
+    fn test_word_adapter() -> std::io::Result<()> {
         let data: Vec<u32> = vec![
             0xa6032421, 0xc9d01b28, 0x168b4ecd, 0xc5ccbed9, 0xfd007100, 0x08469d41, 0x989fd8c2,
             0x954d351a, 0x3225ec9f, 0xbca253f9, 0x915aad84, 0x274c0de1, 0x4bfc6982, 0x59a47341,
@@ -128,21 +128,22 @@ mod tests {
         ];
         let path = std::env::temp_dir().join("test_file_adapter");
         {
-            let mut writer = <WordAdapter<u32, _>>::new(std::fs::File::create(&path).unwrap());
+            let mut writer = <WordAdapter<u32, _>>::new(std::fs::File::create(&path)?);
             for value in &data {
-                writer.write_word(*value).unwrap();
+                writer.write_word(*value)?;
             }
         }
         {
-            let mut reader = <WordAdapter<u32, _>>::new(std::fs::File::open(&path).unwrap());
+            let mut reader = <WordAdapter<u32, _>>::new(std::fs::File::open(&path)?);
             for value in &data {
-                assert_eq!(*value, reader.read_word().unwrap());
+                assert_eq!(*value, reader.read_word()?);
             }
         }
+        Ok(())
     }
 
     #[test]
-    fn test_word_adapter_codes() {
+    fn test_word_adapter_codes() -> std::io::Result<()> {
         let data: Vec<u8> = vec![
             0x5f, 0x68, 0xdb, 0xca, 0x79, 0x17, 0xf3, 0x37, 0x2c, 0x46, 0x63, 0xf7, 0xf3, 0x28,
             0xa4, 0x8d, 0x29, 0x3b, 0xb6, 0xd5, 0xc7, 0xe2, 0x22, 0x3f, 0x6e, 0xb5, 0xf2, 0xda,
@@ -153,35 +154,34 @@ mod tests {
         let path = std::env::temp_dir().join("test_file_adapter_codes");
         {
             let mut writer = <BufBitWriter<BE, _>>::new(<WordAdapter<u64, _>>::new(
-                std::fs::File::create(&path).unwrap(),
+                std::fs::File::create(&path)?,
             ));
             for value in &data {
-                writer.write_gamma(*value as _).unwrap();
+                writer.write_gamma(*value as _)?;
             }
         }
         {
-            let mut reader = <BufBitReader<BE, _>>::new(<WordAdapter<u32, _>>::new(
-                std::fs::File::open(&path).unwrap(),
-            ));
+            let mut reader =
+                <BufBitReader<BE, _>>::new(<WordAdapter<u32, _>>::new(std::fs::File::open(&path)?));
             for value in &data {
-                assert_eq!(*value as u64, reader.read_gamma().unwrap());
+                assert_eq!(*value as u64, reader.read_gamma()?);
             }
         }
         {
             let mut writer = <BufBitWriter<LE, _>>::new(<WordAdapter<u64, _>>::new(
-                std::fs::File::create(&path).unwrap(),
+                std::fs::File::create(&path)?,
             ));
             for value in &data {
-                writer.write_gamma(*value as _).unwrap();
+                writer.write_gamma(*value as _)?;
             }
         }
         {
-            let mut reader = <BufBitReader<LE, _>>::new(<WordAdapter<u32, _>>::new(
-                std::fs::File::open(&path).unwrap(),
-            ));
+            let mut reader =
+                <BufBitReader<LE, _>>::new(<WordAdapter<u32, _>>::new(std::fs::File::open(&path)?));
             for value in &data {
-                assert_eq!(*value as u64, reader.read_gamma().unwrap());
+                assert_eq!(*value as u64, reader.read_gamma()?);
             }
         }
+        Ok(())
     }
 }

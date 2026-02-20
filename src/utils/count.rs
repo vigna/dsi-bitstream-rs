@@ -34,6 +34,7 @@ impl<E: Endianness, BW: BitWrite<E>, const PRINT: bool> CountBitWriter<E, BW, PR
         }
     }
 
+    #[must_use]
     pub fn into_inner(self) -> BW {
         self.bit_write
     }
@@ -223,6 +224,7 @@ impl<E: Endianness, BR: BitRead<E>, const PRINT: bool> CountBitReader<E, BR, PRI
         }
     }
 
+    #[must_use]
     pub fn into_inner(self) -> BR {
         self.bit_read
     }

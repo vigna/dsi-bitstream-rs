@@ -54,8 +54,8 @@ impl PartialEq for Codes {
                 Self::Unary | Self::Rice(0) | Self::Golomb(1),
             ) => true,
             (
-                Self::Gamma | Self::Zeta(1) | Self::ExpGolomb(0),
-                Self::Gamma | Self::Zeta(1) | Self::ExpGolomb(0),
+                Self::Gamma | Self::Zeta(1) | Self::ExpGolomb(0) | Self::Pi(0),
+                Self::Gamma | Self::Zeta(1) | Self::ExpGolomb(0) | Self::Pi(0),
             ) => true,
             (Self::Golomb(2) | Self::Rice(1), Self::Golomb(2) | Self::Rice(1)) => true,
             (Self::Golomb(4) | Self::Rice(2), Self::Golomb(4) | Self::Rice(2)) => true,
