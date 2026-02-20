@@ -57,6 +57,7 @@ pub fn len_zeta_param<const USE_TABLE: bool>(mut n: u64, k: usize) -> usize {
 
 /// Returns the length of the ζ code with parameter `k` for `n` using
 /// a default value for `USE_TABLE`.
+#[must_use]
 #[inline(always)]
 pub fn len_zeta(n: u64, k: usize) -> usize {
     len_zeta_param::<true>(n, k)
@@ -72,7 +73,7 @@ pub trait ZetaRead<E: Endianness>: BitRead<E> {
 
 /// Parametric trait for reading ζ codes.
 ///
-/// This trait is is more general than [`ZetaRead`], as it makes it possible
+/// This trait is more general than [`ZetaRead`], as it makes it possible
 /// to specify how to use tables using const parameters.
 ///
 /// We provide an implementation of this trait for [`BitRead`]. An implementation
@@ -152,7 +153,7 @@ pub trait ZetaWrite<E: Endianness>: BitWrite<E> {
 
 /// Parametric trait for writing ζ codes.
 ///
-/// This trait is is more general than [`ZetaWrite`], as it makes it possible
+/// This trait is more general than [`ZetaWrite`], as it makes it possible
 /// to specify how to use tables using const parameters.
 ///
 /// We provide an implementation of this trait for [`BitWrite`]. An implementation

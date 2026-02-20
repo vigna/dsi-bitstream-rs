@@ -67,6 +67,7 @@ use crate::{codes::omega_tables, prelude::*};
 use common_traits::CastableInto;
 
 /// Returns the length of the ω code for `n`.
+#[must_use]
 #[inline(always)]
 pub fn len_omega_param<const USE_TABLE: bool>(n: u64) -> usize {
     debug_assert!(n < u64::MAX);
@@ -79,6 +80,7 @@ pub fn len_omega_param<const USE_TABLE: bool>(n: u64) -> usize {
 }
 
 /// Returns the length of the ω code for `n`.
+#[must_use]
 #[inline(always)]
 pub fn len_omega(n: u64) -> usize {
     debug_assert!(n < u64::MAX);
@@ -102,7 +104,7 @@ pub trait OmegaRead<E: Endianness>: BitRead<E> {
 
 /// Parametric trait for reading ω codes.
 ///
-/// This trait is is more general than [`OmegaRead`], as it makes it possible
+/// This trait is more general than [`OmegaRead`], as it makes it possible
 /// to specify how to use tables using const parameters.
 ///
 /// We provide an implementation of this trait for [`BitRead`]. An implementation
@@ -202,7 +204,7 @@ pub trait OmegaWrite<E: Endianness>: BitWrite<E> {
 
 /// Parametric trait for writing ω codes.
 ///
-/// This trait is is more general than [`OmegaWrite`], as it makes it possible
+/// This trait is more general than [`OmegaWrite`], as it makes it possible
 /// to specify how to use tables using const parameters.
 ///
 /// We provide an implementation of this trait for [`BitWrite`]. An implementation

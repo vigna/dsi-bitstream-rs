@@ -19,7 +19,7 @@
 
 - Read tables for pi codes are not set up by default.
 
-## [0.7.0] - 2026-10-27
+## [0.7.0] - 2026-01-27
 
 ### New
 

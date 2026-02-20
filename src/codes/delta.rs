@@ -56,6 +56,7 @@ pub fn len_delta_param<const USE_DELTA_TABLE: bool, const USE_GAMMA_TABLE: bool>
 
 /// Returns the length of the δ code for `n` using
 /// a default value for `USE_DELTA_TABLE` and `USE_GAMMA_TABLE`.
+#[must_use]
 #[inline(always)]
 pub fn len_delta(n: u64) -> usize {
     #[cfg(target_arch = "arm")]
@@ -73,7 +74,7 @@ pub trait DeltaRead<E: Endianness>: BitRead<E> {
 
 /// Parametric trait for reading δ codes.
 ///
-/// This trait is is more general than [`DeltaRead`], as it makes it possible
+/// This trait is more general than [`DeltaRead`], as it makes it possible
 /// to specify how to use tables using const parameters.
 ///
 /// We provide an implementation of this trait for [`BitRead`]. An implementation
@@ -161,7 +162,7 @@ pub trait DeltaWrite<E: Endianness>: BitWrite<E> {
 
 /// Parametric trait for writing δ codes.
 ///
-/// This trait is is more general than [`DeltaWrite`], as it makes it possible
+/// This trait is more general than [`DeltaWrite`], as it makes it possible
 /// to specify how to use tables using const parameters.
 ///
 /// We provide an implementation of this trait for [`BitWrite`]. An implementation

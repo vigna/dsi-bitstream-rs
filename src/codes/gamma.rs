@@ -45,6 +45,7 @@ pub fn len_gamma_param<const USE_TABLE: bool>(mut n: u64) -> usize {
 
 /// Returns the length of the γ code for `n` using
 /// a default value for `USE_TABLE`.
+#[must_use]
 #[inline(always)]
 pub fn len_gamma(n: u64) -> usize {
     #[cfg(target_arch = "arm")]
@@ -62,7 +63,7 @@ pub trait GammaRead<E: Endianness>: BitRead<E> {
 
 /// Parametric trait for reading γ codes.
 ///
-/// This trait is is more general than [`GammaRead`], as it makes it possible
+/// This trait is more general than [`GammaRead`], as it makes it possible
 /// to specify how to use tables using const parameters.
 ///
 /// We provide an implementation of this trait for [`BitRead`]. An implementation
@@ -124,7 +125,7 @@ pub trait GammaWrite<E: Endianness>: BitWrite<E> {
 
 /// Parametric trait for writing γ codes.
 ///
-/// This trait is is more general than [`GammaWrite`], as it makes it possible
+/// This trait is more general than [`GammaWrite`], as it makes it possible
 /// to specify how to use tables using const parameters.
 ///
 /// We provide an implementation of this trait for [`BitWrite`]. An implementation

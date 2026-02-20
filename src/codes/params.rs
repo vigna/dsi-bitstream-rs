@@ -70,7 +70,7 @@ pub trait ReadParams {}
 /// own implementation.
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
-#[mem_size_flat]
+#[cfg_attr(feature = "mem_dbg", mem_size_flat)]
 pub struct DefaultReadParams;
 impl ReadParams for DefaultReadParams {}
 
@@ -238,7 +238,7 @@ pub trait WriteParams {}
 /// own implementation.
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
-#[mem_size_flat]
+#[cfg_attr(feature = "mem_dbg", mem_size_flat)]
 pub struct DefaultWriteParams;
 impl WriteParams for DefaultWriteParams {}
 

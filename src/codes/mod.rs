@@ -41,13 +41,6 @@
 //! which defaults are provided using the mechanism described in the [`params`]
 //! module.
 //!
-//! Note that if you are using decoding tables, you must ensure that the
-//! [`peek_bits`](crate::traits::BitRead::peek_bits) method of your
-//! [`BitRead`](crate::traits::BitRead) implementation returns a sufficient
-//! number of bits: if it does not, an assertion will be triggered in test mode,
-//! but behavior will be unpredictable otherwise. This is unfortunately
-//! difficult to check statically. To stay on the safe side, we recommend to use
-//! a an implementation that is able to peek at least at 16 bits.
 //!
 //! # Big-endian vs. little-endian
 //!

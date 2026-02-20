@@ -13,7 +13,7 @@
 //! optionally printing on standard error the operations performed on the stream.
 //!
 //! [`DbgBitReader`] and [`DbgBitWriter`] print on standard error all
-//! operation beformed by a [`BitRead`](crate::traits::BitRead) or
+//! operations performed by a [`BitRead`](crate::traits::BitRead) or
 //! [`BitWrite`](crate::traits::BitWrite).
 //!
 //! [`CodesStats`] keeps track of the space needed to store a stream of

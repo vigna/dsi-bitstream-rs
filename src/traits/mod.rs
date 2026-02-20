@@ -17,7 +17,7 @@ such as [reading instantaneous codes](crate::codes::GammaReadParam),
 are built on these basic traits.
 
 The endianness of a bit stream specified by using the selector types
-[`BigEndian`] (AKA [`LE`]) and [`LittleEndian`] (AKA [`BE`]), which
+[`BigEndian`] (AKA [`BE`]) and [`LittleEndian`] (AKA [`LE`]), which
 are the only implementations of the sealed marker trait [`Endianness`].
 
 The implementations we provide for these traits (e.g.,
@@ -48,7 +48,7 @@ and bits is usually more convenient and makes for more efficient implementations
 
 Byte-level endianness is used to read memory word-by-word, greatly reducing the number
 of memory accesses when reading from slices. However, it is important to note that
-fixed-width values have thair least significant bit always stored at the lowest bit position,
+fixed-width values have their least significant bit always stored at the lowest bit position,
 independently of endianness, as current CPUs always use big-endian bit order.
 In particular, reversing the order of the bits of each byte of a file containing
 a sequence of fixed-width integers or instantaneous codes
