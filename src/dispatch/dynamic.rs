@@ -104,7 +104,7 @@ impl<E: Endianness, CR: CodesRead<E> + ?Sized> FuncCodeReader<E, CR> {
     ///
     /// The method will return an error if there is no constant
     /// for the given code in [`FuncCodeReader`].
-    pub fn new(code: Codes) -> anyhow::Result<Self> {
+    pub fn new(code: Codes) -> Result<Self, DispatchError> {
         let read_func = match code {
             Codes::Unary => Self::UNARY,
             Codes::Gamma => Self::GAMMA,
@@ -165,7 +165,7 @@ impl<E: Endianness, CR: CodesRead<E> + ?Sized> FuncCodeReader<E, CR> {
             Codes::ExpGolomb(8) => Self::EXP_GOLOMB8,
             Codes::ExpGolomb(9) => Self::EXP_GOLOMB9,
             Codes::ExpGolomb(10) => Self::EXP_GOLOMB10,
-            _ => anyhow::bail!("Unsupported read dispatch for code {:?}", code),
+            _ => return Err(DispatchError::UnsupportedCode(code)),
         };
         Ok(Self(read_func))
     }
@@ -288,7 +288,7 @@ impl<E: Endianness, CW: CodesWrite<E> + ?Sized> FuncCodeWriter<E, CW> {
     ///
     /// The method will return an error if there is no constant
     /// for the given code in [`FuncCodeWriter`].
-    pub fn new(code: Codes) -> anyhow::Result<Self> {
+    pub fn new(code: Codes) -> Result<Self, DispatchError> {
         let write_func = match code {
             Codes::Unary => Self::UNARY,
             Codes::Gamma => Self::GAMMA,
@@ -349,7 +349,7 @@ impl<E: Endianness, CW: CodesWrite<E> + ?Sized> FuncCodeWriter<E, CW> {
             Codes::ExpGolomb(8) => Self::EXP_GOLOMB8,
             Codes::ExpGolomb(9) => Self::EXP_GOLOMB9,
             Codes::ExpGolomb(10) => Self::EXP_GOLOMB10,
-            _ => anyhow::bail!("Unsupported write dispatch for code {:?}", code),
+            _ => return Err(DispatchError::UnsupportedCode(code)),
         };
         Ok(Self(write_func))
     }
@@ -452,7 +452,7 @@ impl FuncCodeLen {
     ///
     /// The method will return an error if there is no constant
     /// for the given code in [`FuncCodeLen`].
-    pub fn new(code: Codes) -> anyhow::Result<Self> {
+    pub fn new(code: Codes) -> Result<Self, DispatchError> {
         let len_func = match code {
             Codes::Unary => Self::UNARY,
             Codes::Gamma => Self::GAMMA,
@@ -513,7 +513,7 @@ impl FuncCodeLen {
             Codes::ExpGolomb(8) => Self::EXP_GOLOMB8,
             Codes::ExpGolomb(9) => Self::EXP_GOLOMB9,
             Codes::ExpGolomb(10) => Self::EXP_GOLOMB10,
-            _ => anyhow::bail!("Unsupported read dispatch for code {:?}", code),
+            _ => return Err(DispatchError::UnsupportedCode(code)),
         };
         Ok(Self(len_func))
     }

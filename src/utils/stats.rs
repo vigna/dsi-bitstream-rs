@@ -22,8 +22,6 @@ use crate::prelude::Endianness;
 #[cfg(feature = "std")]
 use crate::prelude::{DynamicCodeRead, DynamicCodeWrite, StaticCodeRead, StaticCodeWrite};
 #[cfg(feature = "std")]
-use anyhow::Result;
-#[cfg(feature = "std")]
 use std::sync::Mutex;
 
 #[cfg(feature = "alloc")]

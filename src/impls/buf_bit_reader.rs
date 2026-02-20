@@ -81,7 +81,7 @@ where
 #[cfg(feature = "std")]
 pub fn from_path<E: Endianness, W: Word + DoubleType>(
     path: impl AsRef<std::path::Path>,
-) -> anyhow::Result<
+) -> std::io::Result<
     BufBitReader<E, super::WordAdapter<W, std::io::BufReader<std::fs::File>>, DefaultReadParams>,
 > {
     Ok(from_file::<E, W>(std::fs::File::open(path)?))

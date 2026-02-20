@@ -74,7 +74,6 @@
 //! ```
 
 use super::*;
-use anyhow::Result;
 use core::fmt::Debug;
 /// A trait that models a type that can return a [`CodesRead`] that can reference
 /// data owned by the factory. The typical case is a factory that owns the
@@ -197,7 +196,7 @@ impl<E: Endianness, CRF: CodesReaderFactoryHelper<E> + ?Sized> FactoryFuncCodeRe
     ///
     /// The method will return an error if there is no constant
     /// for the given code in [`FactoryFuncCodeReader`].
-    pub fn new(code: Codes) -> anyhow::Result<Self> {
+    pub fn new(code: Codes) -> Result<Self, DispatchError> {
         let read_func = match code {
             Codes::Unary => Self::UNARY,
             Codes::Gamma => Self::GAMMA,
@@ -258,7 +257,7 @@ impl<E: Endianness, CRF: CodesReaderFactoryHelper<E> + ?Sized> FactoryFuncCodeRe
             Codes::ExpGolomb(8) => Self::EXP_GOLOMB8,
             Codes::ExpGolomb(9) => Self::EXP_GOLOMB9,
             Codes::ExpGolomb(10) => Self::EXP_GOLOMB10,
-            _ => anyhow::bail!("Unsupported read dispatch for code {:?}", code),
+            _ => return Err(DispatchError::UnsupportedCode(code)),
         };
         Ok(Self(read_func))
     }

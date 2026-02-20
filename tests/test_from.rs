@@ -14,7 +14,7 @@ use dsi_bitstream::{
 };
 
 #[test]
-fn test_from() -> anyhow::Result<()> {
+fn test_from() -> Result<(), Box<dyn std::error::Error>> {
     let temp_dir: PathBuf = env::temp_dir();
     let mut writer = buf_bit_writer::from_path::<LE, u64>(&temp_dir.join("test.bin"))?;
     for i in 0..100 {

@@ -230,10 +230,34 @@ use crate::prelude::Endianness;
 use crate::prelude::{BitRead, BitWrite};
 
 use crate::codes::*;
-use anyhow::Result;
 
 pub mod codes;
 pub use codes::*;
+
+/// Error returned when a code is not supported for dispatch.
+#[derive(Debug, Clone, Copy)]
+pub enum DispatchError {
+    /// The code is not supported for dynamic dispatch.
+    UnsupportedCode(Codes),
+    /// The code constant is not supported.
+    UnsupportedCodeConst(usize),
+}
+
+impl core::fmt::Display for DispatchError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            Self::UnsupportedCode(code) => {
+                write!(f, "unsupported dispatch for code {:?}", code)
+            }
+            Self::UnsupportedCodeConst(c) => {
+                write!(f, "unsupported code constant {}", c)
+            }
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for DispatchError {}
 
 pub mod r#static;
 pub use r#static::{ConstCode, code_consts};

@@ -10,6 +10,11 @@
   `BitRead::PEEK_BITS`. Unless you exposed bit readers in your APIs, you can
   upgrade to this version as if it was a minor release.
 
+- We are not anymore dependent on `anyhow`.
+
+- `rand` is optional and only necessary for the `implied` module, which
+  is now gated by the `implied` feature.
+
 ### Changed
 
 - Upgraded to `rand` 0.10.0, `rand_distr` 0.6.0 and `mem_dbg` 0.4.0.

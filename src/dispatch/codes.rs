@@ -105,7 +105,7 @@ impl Codes {
     /// Converts a code to the constant enum [`code_consts`] used for [`ConstCode`].
     /// This is mostly used to verify that the code is supported by
     /// [`ConstCode`].
-    pub fn to_code_const(&self) -> Result<usize> {
+    pub fn to_code_const(&self) -> Result<usize, DispatchError> {
         Ok(match self {
             Self::Unary => code_consts::UNARY,
             Self::Gamma => code_consts::GAMMA,
@@ -167,16 +167,13 @@ impl Codes {
             Self::ExpGolomb(9) => code_consts::EXP_GOLOMB9,
             Self::ExpGolomb(10) => code_consts::EXP_GOLOMB10,
             _ => {
-                return Err(anyhow::anyhow!(
-                    "Code {:?} not supported as const code",
-                    self
-                ));
+                return Err(DispatchError::UnsupportedCode(*self));
             }
         })
     }
 
     /// Converts a value from [`code_consts`] to a code.
-    pub fn from_code_const(const_code: usize) -> Result<Self> {
+    pub fn from_code_const(const_code: usize) -> Result<Self, DispatchError> {
         Ok(match const_code {
             code_consts::UNARY => Self::Unary,
             code_consts::GAMMA => Self::Gamma,
@@ -229,7 +226,7 @@ impl Codes {
             code_consts::EXP_GOLOMB8 => Self::ExpGolomb(8),
             code_consts::EXP_GOLOMB9 => Self::ExpGolomb(9),
             code_consts::EXP_GOLOMB10 => Self::ExpGolomb(10),
-            _ => return Err(anyhow::anyhow!("Code {} not supported", const_code)),
+            _ => return Err(DispatchError::UnsupportedCodeConst(const_code)),
         })
     }
 }

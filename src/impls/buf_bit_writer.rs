@@ -61,7 +61,7 @@ pub struct BufBitWriter<E: Endianness, WW: WordWrite, WP: WriteParams = DefaultW
 #[cfg(feature = "std")]
 pub fn from_path<E: Endianness, W: Word>(
     path: impl AsRef<std::path::Path>,
-) -> anyhow::Result<
+) -> std::io::Result<
     BufBitWriter<E, super::WordAdapter<W, std::io::BufWriter<std::fs::File>>, DefaultWriteParams>,
 > {
     Ok(from_file::<E, W>(std::fs::File::create(path)?))

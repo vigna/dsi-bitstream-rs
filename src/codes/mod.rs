@@ -85,7 +85,6 @@
 //! source. To pass a choice of code dynamically, please have a look at the
 //! [`dispatch`](crate::dispatch) module.
 
-use anyhow::Result;
 use common_traits::{AsBytes, SignedInt, UnsignedInt};
 pub mod params;
 

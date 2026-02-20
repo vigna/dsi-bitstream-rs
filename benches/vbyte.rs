@@ -7,7 +7,6 @@
 //!
 //! - if continuation bits at start, test if chains vs leading_ones and jump table
 //!
-use anyhow::Result;
 use criterion::{Criterion, criterion_group, criterion_main};
 use dsi_bitstream::prelude::*;
 use dsi_bitstream::traits::{BigEndian, BitRead, BitWrite, Endianness, LittleEndian};
@@ -16,6 +15,8 @@ use std::hint::black_box;
 use std::io::{Read, Write};
 use std::marker::PhantomData;
 use std::time::Duration;
+
+type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 pub const GAMMA_DATA: usize = 1_000_000;
 pub const CAPACITY: usize = 4 * GAMMA_DATA;

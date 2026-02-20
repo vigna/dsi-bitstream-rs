@@ -19,12 +19,13 @@
 //! [`CodesStats`] keeps track of the space needed to store a stream of
 //! integers using different codes.
 //!
-//! It also provides [`sample_implied_distribution`], an infinite iterator that
-//! returns samples from the implied distribution of a code, and the helper
-//! functions and structs we use to implement it:
-//! - [`FindChangePoints`] to find, using exponential search, the points where a
-//!   non decreasing monotonic function changes value.
-//! - [`get_implied_distribution`] to calculate the implied distribution of a code.
+//! With the `implied` feature, it also provides
+//! [`sample_implied_distribution`], an infinite iterator that returns samples
+//! from the implied distribution of a code, and the helper function
+//! [`get_implied_distribution`].
+//!
+//! [`FindChangePoints`] finds, using exponential search, the points where a
+//! non-decreasing monotonic function changes value.
 
 mod count;
 pub use count::*;
@@ -35,7 +36,9 @@ pub use dbg_codes::*;
 mod find_change;
 pub use find_change::*;
 
+#[cfg(feature = "implied")]
 mod implied;
+#[cfg(feature = "implied")]
 pub use implied::*;
 
 pub mod stats;
