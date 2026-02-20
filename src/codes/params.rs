@@ -21,19 +21,24 @@
 //! of parameterless traits in [`codes`](crate::codes) such as [`GammaRead`],
 //! [`GammaWrite`], [`DeltaRead`], [`DeltaWrite`], and so on.
 //!
-//! This module provides default selector types [`DefaultReadParams`] and [`DefaultWriteParams`]
-//! which are also the default value for the parameter `RP`/`WP` in the bitstream
-//! readers and writers in [`crate::impls`]. Type-selected blanket implementations
-//! of all parameterless traits in [`crate::codes`] are provided for the bitstream
-//! readers and writers in [`impls`](crate::impls). Thus, if you do not specify a value for the
-//! parameter `RP`/`WP`, you will obtain automatically
-//! the blanket implementations for parameterless traits contained in this module.
+//! This module provides default selector types
+//! [`DefaultReadParams`] and [`DefaultWriteParams`] which are also
+//! the default value for the parameter `RP`/`WP` in the bitstream
+//! readers and writers in [`crate::impls`]. Type-selected blanket
+//! implementations of all parameterless traits in [`crate::codes`]
+//! are provided for the bitstream readers and writers in
+//! [`impls`](crate::impls). Thus, if you do not specify a value for
+//! the parameter `RP`/`WP`, you will obtain automatically the
+//! blanket implementations for parameterless traits contained in
+//! this module.
 //!
-//! However, you can also create new selector types implementing [`ReadParams`]/[`WriteParams`] and
-//! write blanket implementations for the bitstream readers and writers in [`crate::impls`]
-//! where `RP`/`WP` is set to your selector types. Then, by specifying your type as value of the
-//! parameter `RP`/`WP` when creating such readers and writers you will use
-//! automatically your blanket implementations instead of the ones provided by this module.
+//! However, you can also create new selector types implementing
+//! [`ReadParams`]/[`WriteParams`] and write blanket implementations
+//! for the bitstream readers and writers in [`crate::impls`] where
+//! `RP`/`WP` is set to your selector types. Then, by specifying
+//! your type as value of the parameter `RP`/`WP` when creating such
+//! readers and writers you will use automatically your blanket
+//! implementations instead of the ones provided by this module.
 //!
 //! Note that the default implementations provided by this module are targeted at
 //! `u32` read words and `u64` write words. If you use different word sizes,

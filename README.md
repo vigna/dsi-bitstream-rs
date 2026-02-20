@@ -142,9 +142,20 @@ contains reference results of these benchmarks on a few architectures.
 
 ## Features
 
+- `std` (default): enables standard library support, including
+  [`WordAdapter`] and convenience functions such as [`from_path`].
+  Implies `alloc`.
+- `alloc`: enables heap allocation without full `std` (e.g.,
+  [`MemWordWriterVec`]). This feature is sufficient for `no_std`
+  environments with a global allocator.
+- `mem_dbg` (default): derives `MemDbg` and `MemSize` from the
+  [`mem_dbg`] crate on most structs, making it possible to inspect
+  their heap memory usage.
+- `serde` (default): enables [`serde`] serialization and deserialization
+  support for [`Codes`] and [`CodesStats`].
 - `implied`: enables the `implied` module in `utils`, which provides
   `sample_implied_distribution` and `get_implied_distribution`. This
-  feature pulls in the `rand` dependency.
+  feature pulls in the `rand` dependency and implies `alloc`.
 
 ## Testing
 
@@ -190,4 +201,10 @@ Union nor the Italian MUR can be held responsible for them.
 [exponential Golomb codes]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/codes/exp_golomb/index.html
 [H.264 (MPEG-4)]: https://en.wikipedia.org/wiki/Advanced_Video_Coding
 [H.265]: https://en.wikipedia.org/wiki/High_Efficiency_Video_Coding
+[`Codes`]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/dispatch/enum.Codes.html
+[`CodesStats`]: https://docs.rs/dsi-bitstream/0.7.0/dsi_bitstream/utils/stats/struct.CodesStats.html
+[`mem_dbg`]: https://crates.io/crates/mem_dbg
+[`MemWordWriterVec`]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/impls/struct.MemWordWriterVec.html
 [dispatch]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/dispatch/index.html
+[`from_path`]: https://docs.rs/dsi-bitstream/0.7.0/dsi_bitstream/impls/buf_bit_reader/fn.from_path.html
+[`serde`]: https://crates.io/crates/serde

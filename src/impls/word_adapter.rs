@@ -27,8 +27,9 @@ use std::io::{Read, Seek, SeekFrom, Write};
 /// To provide a sensible value after such a read,
 /// [`word_pos`](WordAdapter::word_pos) will always return the position
 /// of the underlying [`Seek`] rounded up to the next multiple of `W::Bytes`.
-/// This approach, however, requires that if you adapt a [`Seek`], its current position must be
-/// a multiple of `W::Bytes`, or the results of [`word_pos`](WordAdapter::word_pos)
+/// This approach, however, requires that if you adapt a [`Seek`],
+/// its current position must be a multiple of `W::Bytes`, or the
+/// results of [`word_pos`](WordAdapter::word_pos)
 /// will be shifted by the rounding.
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]

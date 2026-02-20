@@ -37,7 +37,8 @@
 //! Like [δ](super::delta) codes, π codes use a special optimization for partial
 //! decoding. Due to the structure of π codes (a Rice code followed by fixed bits),
 //! when a complete codeword cannot be read from the table, the table may still
-//! provide partial information about the Rice prefix (λ) that was successfully decoded.
+//! provide partial information about the Rice prefix (λ) that was
+//! successfully decoded.
 //! This partial state is used to directly read the remaining λ fixed bits,
 //! avoiding re-reading the Rice prefix.
 //!

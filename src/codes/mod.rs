@@ -41,7 +41,6 @@
 //! which defaults are provided using the mechanism described in the [`params`]
 //! module.
 //!
-//!
 //! # Big-endian vs. little-endian
 //!
 //! As discussed in the [traits module](crate::traits), in general reversing the
