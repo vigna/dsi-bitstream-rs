@@ -66,7 +66,7 @@ but this approach is less efficient:
 ```rust
 use dsi_bitstream::prelude::*;
 #[cfg(feature = "alloc")]
-let mut word_write = MemWordWriterVec::new( Vec::<u64>::new());
+let mut word_write = MemWordWriterVec::new(Vec::<u64>::new());
 #[cfg(not(feature = "alloc"))]
 let mut word_write = MemWordWriterSlice::new([0_u64; 10]);
 let mut writer = BufBitWriter::<LE, _>::new(word_write);
@@ -202,9 +202,9 @@ Union nor the Italian MUR can be held responsible for them.
 [H.264 (MPEG-4)]: https://en.wikipedia.org/wiki/Advanced_Video_Coding
 [H.265]: https://en.wikipedia.org/wiki/High_Efficiency_Video_Coding
 [`Codes`]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/dispatch/enum.Codes.html
-[`CodesStats`]: https://docs.rs/dsi-bitstream/0.7.0/dsi_bitstream/utils/stats/struct.CodesStats.html
+[`CodesStats`]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/utils/stats/struct.CodesStats.html
 [`mem_dbg`]: https://crates.io/crates/mem_dbg
 [`MemWordWriterVec`]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/impls/struct.MemWordWriterVec.html
 [dispatch]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/dispatch/index.html
-[`from_path`]: https://docs.rs/dsi-bitstream/0.7.0/dsi_bitstream/impls/buf_bit_reader/fn.from_path.html
+[`from_path`]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/impls/buf_bit_reader/fn.from_path.html
 [`serde`]: https://crates.io/crates/serde

@@ -74,7 +74,7 @@
 //! let mut writer = BufBitWriter::<BE, _>::new(MemWordWriterVec::new(&mut v));
 //! writer.write_gamma(42)?;
 //! writer.flush()?;
-//! drop(writer); // We must drop the writer release the borrow on v
+//! drop(writer); // We must drop the writer to release the borrow on v
 //!
 //! let mut reader = BufBitReader::<BE, _>::new(MemWordReader::new(&v));
 //! assert_eq!(reader.read_gamma()?, 42);
