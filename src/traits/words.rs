@@ -51,8 +51,8 @@ pub trait WordSeek {
     fn set_word_pos(&mut self, word_pos: u64) -> Result<(), Self::Error>;
 }
 
-#[derive(Debug, Clone, PartialEq)]
 /// Replacement of [`std::io::Error`] for `no_std` environments
+#[derive(Debug, Clone, PartialEq)]
 pub enum WordError {
     UnexpectedEof { word_pos: usize },
 }
