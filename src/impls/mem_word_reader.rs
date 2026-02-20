@@ -154,23 +154,23 @@ impl<W: Word, B: AsRef<[W]>> WordSeek for MemWordReader<W, B, false> {
 }
 
 #[test]
-
-fn test_eof_table_read() {
+fn test_eof_table_read() -> Result<(), Box<dyn core::error::Error>> {
     use crate::codes::{DeltaReadParam, DeltaWrite};
     let mut words: [u64; 1] = [0];
     let mut writer = crate::prelude::BufBitWriter::<crate::prelude::LE, _>::new(
         MemWordWriterSlice::new(&mut words),
     );
     for _ in 0..16 {
-        writer.write_delta(1).unwrap();
+        writer.write_delta(1)?;
     }
-    writer.flush().unwrap();
+    writer.flush()?;
     drop(writer);
 
     let mut reader =
         crate::prelude::BufBitReader::<crate::prelude::LE, _>::new(MemWordReader::new(&words));
     for _ in 0..16 {
-        // Here the last table read make peek_bits return Ok(None)
-        assert_eq!(1, reader.read_delta_param::<true, true>().unwrap());
+        // Here the last table read returns zero-extended data
+        assert_eq!(1, reader.read_delta_param::<true, true>()?);
     }
+    Ok(())
 }

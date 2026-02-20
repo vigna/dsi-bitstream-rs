@@ -244,8 +244,8 @@ impl WriteParams for DefaultWriteParams {}
 
 macro_rules! impl_default_write_codes {
     ($($endianess:ident),*) => {$(
-        impl<WR: WordWrite> GammaWrite<$endianess>
-            for BufBitWriter<$endianess, WR, DefaultWriteParams>
+        impl<WR: WordWrite, WP: WriteParams> GammaWrite<$endianess>
+            for BufBitWriter<$endianess, WR, WP>
             where u64: CastableInto<WR::Word>,
         {
             #[inline(always)]
@@ -254,8 +254,8 @@ macro_rules! impl_default_write_codes {
             }
         }
 
-        impl<WR: WordWrite, DC: WriteParams> DeltaWrite<$endianess>
-            for BufBitWriter<$endianess, WR, DC>
+        impl<WR: WordWrite, WP: WriteParams> DeltaWrite<$endianess>
+            for BufBitWriter<$endianess, WR, WP>
             where u64: CastableInto<WR::Word>,
         {
             #[inline(always)]
@@ -274,8 +274,8 @@ macro_rules! impl_default_write_codes {
             }
         }
 
-        impl<WR: WordWrite, DC: WriteParams> ZetaWrite<$endianess>
-            for BufBitWriter<$endianess, WR, DC>
+        impl<WR: WordWrite, WP: WriteParams> ZetaWrite<$endianess>
+            for BufBitWriter<$endianess, WR, WP>
             where u64: CastableInto<WR::Word>,
         {
             #[inline(always)]
@@ -289,8 +289,8 @@ macro_rules! impl_default_write_codes {
             }
         }
 
-        impl<WR: WordWrite, DC: WriteParams> PiWrite<$endianess>
-            for BufBitWriter<$endianess, WR, DC>
+        impl<WR: WordWrite, WP: WriteParams> PiWrite<$endianess>
+            for BufBitWriter<$endianess, WR, WP>
             where u64: CastableInto<WR::Word>,
         {
             #[inline(always)]

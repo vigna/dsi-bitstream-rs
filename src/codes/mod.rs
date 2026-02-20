@@ -120,7 +120,13 @@ pub mod exp_golomb;
 pub use exp_golomb::{ExpGolombRead, ExpGolombWrite, len_exp_golomb};
 
 pub mod vbyte;
-pub use vbyte::*;
+pub use vbyte::{
+    VByteBeRead, VByteBeWrite, VByteLeRead, VByteLeWrite, bit_len_vbyte, byte_len_vbyte,
+};
+#[cfg(feature = "std")]
+pub use vbyte::{
+    vbyte_read, vbyte_read_be, vbyte_read_le, vbyte_write, vbyte_write_be, vbyte_write_le,
+};
 
 pub mod delta_tables;
 pub mod gamma_tables;

@@ -712,7 +712,7 @@ mod tests {
     use std::io::Read;
 
     #[test]
-    fn test_read() {
+    fn test_read() -> std::io::Result<()> {
         let data = [
             0x90, 0x2d, 0xd0, 0x26, 0xdf, 0x89, 0xbb, 0x7e, 0x3a, 0xd6, 0xc6, 0x96, 0x73, 0xe9,
             0x9d, 0xc9, 0x2a, 0x77, 0x82, 0xa9, 0xe6, 0x4b, 0x53, 0xcc, 0x83, 0x80, 0x4a, 0xf3,
@@ -732,14 +732,15 @@ mod tests {
         for i in 0..data.len() {
             let mut reader = BufBitReader::<LE, _>::new(MemWordReader::new(&data_u32));
             let mut buffer = vec![0; i];
-            assert_eq!(reader.read(&mut buffer).unwrap(), i);
+            assert_eq!(reader.read(&mut buffer)?, i);
             assert_eq!(&buffer, &data[..i]);
 
             let mut reader = BufBitReader::<BE, _>::new(MemWordReader::new(&data_u32));
             let mut buffer = vec![0; i];
-            assert_eq!(reader.read(&mut buffer).unwrap(), i);
+            assert_eq!(reader.read(&mut buffer)?, i);
             assert_eq!(&buffer, &data[..i]);
         }
+        Ok(())
     }
 
     macro_rules! test_buf_bit_reader {

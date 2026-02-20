@@ -62,7 +62,7 @@ impl core::fmt::Display for WordError {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             WordError::UnexpectedEof { word_pos } => {
-                write!(f, "Unexpected end of data at word position {}", word_pos)
+                write!(f, "unexpected end of data at word position {}", word_pos)
             }
         }
     }
