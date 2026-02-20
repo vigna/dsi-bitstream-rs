@@ -16,11 +16,6 @@ use super::*;
 #[cfg(feature = "mem_dbg")]
 use mem_dbg::{MemDbg, MemSize};
 
-#[derive(Debug, Clone, Copy, Eq)]
-#[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
-#[cfg_attr(feature = "mem_dbg", mem_size_flat)]
-#[cfg_attr(feature = "fuzz", derive(arbitrary::Arbitrary))]
-#[non_exhaustive]
 /// An enum whose variants represent all the available codes.
 ///
 /// This enum is kept in sync with implementations in the
@@ -29,6 +24,11 @@ use mem_dbg::{MemDbg, MemSize};
 /// Both [`Display`](std::fmt::Display) and [`FromStr`](std::str::FromStr) are
 /// implemented for this enum in a dual way, which makes it possible to store a
 /// code as a string in a configuration file, and then parse it back.
+#[derive(Debug, Clone, Copy, Eq)]
+#[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
+#[cfg_attr(feature = "mem_dbg", mem_size_flat)]
+#[cfg_attr(feature = "fuzz", derive(arbitrary::Arbitrary))]
+#[non_exhaustive]
 pub enum Codes {
     Unary,
     Gamma,
@@ -314,16 +314,15 @@ impl CodeLen for Codes {
     }
 }
 
-#[derive(Debug, Clone)]
 /// Error type for parsing a code from a string.
+#[derive(Debug, Clone)]
 pub enum CodeError {
     /// Error parsing an integer parameter.
     ParseError(core::num::ParseIntError),
     /// Unknown code name. Uses a fixed-size array instead of `String` for `no_std` compatibility.
     UnknownCode([u8; 32]),
 }
-#[cfg(feature = "std")]
-impl std::error::Error for CodeError {}
+impl core::error::Error for CodeError {}
 impl core::fmt::Display for CodeError {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         match self {

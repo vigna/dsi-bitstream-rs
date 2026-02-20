@@ -136,7 +136,7 @@ We provide several options to [dispatch] codes dynamically.
 ## Benchmarks
 
 To evaluate the performance on your hardware you can run the
-benchmarks in the `benches` directory, which test the speed of read/write
+benchmarks in the `benchmarks` directory, which test the speed of read/write
 operations under several combinations of parameters. The `svg` directory
 contains reference results of these benchmarks on a few architectures.
 

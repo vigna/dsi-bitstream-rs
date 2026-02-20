@@ -18,8 +18,6 @@ use super::*;
 #[cfg(feature = "mem_dbg")]
 use mem_dbg::{MemDbg, MemSize};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
 /// A zero-sized struct with a const generic parameter representing a code using
 /// the values exported by the [`code_consts`] module.
 ///
@@ -31,6 +29,8 @@ use mem_dbg::{MemDbg, MemSize};
 /// methods will panic.
 ///
 /// See the [module documentation](crate::dispatch) for more information.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
 pub struct ConstCode<const CODE: usize>;
 
 impl<const CODE: usize> ConstCode<CODE> {
