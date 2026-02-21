@@ -96,9 +96,6 @@
 //! methods [`vbyte_write_be`], [`vbyte_write_le`], [`vbyte_read_be`], and
 //! [`vbyte_read_le`].
 //!
-//! [`LEB128`]: https://en.wikipedia.org/wiki/LEB128
-//! [`VLQ`]: https://en.wikipedia.org/wiki/Variable-length_quantity
-//!
 //! # Examples
 //!
 //! - The [LEB128](https://en.wikipedia.org/wiki/LEB128) code used by LLVM is a

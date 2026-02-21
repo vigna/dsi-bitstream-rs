@@ -83,7 +83,6 @@ pub fn len_omega_param<const USE_TABLE: bool>(n: u64) -> usize {
 #[must_use]
 #[inline(always)]
 pub fn len_omega(n: u64) -> usize {
-    debug_assert!(n < u64::MAX);
     len_omega_param::<true>(n)
 }
 
@@ -111,7 +110,7 @@ pub trait OmegaRead<E: Endianness>: BitRead<E> {
 /// of [`OmegaRead`] using default values is usually provided exploiting the
 /// [`crate::codes::params::ReadParams`] mechanism.
 pub trait OmegaReadParam<E: Endianness>: BitRead<E> {
-    fn read_omega_param<const USE_TABLES: bool>(&mut self) -> Result<u64, Self::Error>;
+    fn read_omega_param<const USE_TABLE: bool>(&mut self) -> Result<u64, Self::Error>;
 }
 
 /// Default, internal non-table based implementation that works
@@ -151,13 +150,13 @@ fn read_omega_from_state<E: Endianness, B: BitRead<E>>(
 
 impl<B: BitRead<BE>> OmegaReadParam<BE> for B {
     #[inline(always)]
-    fn read_omega_param<const USE_TABLES: bool>(&mut self) -> Result<u64, Self::Error> {
+    fn read_omega_param<const USE_TABLE: bool>(&mut self) -> Result<u64, Self::Error> {
         const {
-            if USE_TABLES {
+            if USE_TABLE {
                 omega_tables::check_read_table(B::PEEK_BITS)
             }
         }
-        if USE_TABLES {
+        if USE_TABLE {
             let (len_with_flag, value) = omega_tables::read_table_be(self);
             if len_with_flag > 0 {
                 // Complete code - bits already skipped in read_table
@@ -174,13 +173,13 @@ impl<B: BitRead<BE>> OmegaReadParam<BE> for B {
 
 impl<B: BitRead<LE>> OmegaReadParam<LE> for B {
     #[inline(always)]
-    fn read_omega_param<const USE_TABLES: bool>(&mut self) -> Result<u64, Self::Error> {
+    fn read_omega_param<const USE_TABLE: bool>(&mut self) -> Result<u64, Self::Error> {
         const {
-            if USE_TABLES {
+            if USE_TABLE {
                 omega_tables::check_read_table(B::PEEK_BITS)
             }
         }
-        if USE_TABLES {
+        if USE_TABLE {
             let (len_with_flag, value) = omega_tables::read_table_le(self);
             if len_with_flag > 0 {
                 // Complete code - bits already skipped in read_table
@@ -211,14 +210,14 @@ pub trait OmegaWrite<E: Endianness>: BitWrite<E> {
 /// of [`OmegaWrite`] using default values is usually provided exploiting the
 /// [`crate::codes::params::WriteParams`] mechanism.
 pub trait OmegaWriteParam<E: Endianness>: BitWrite<E> {
-    fn write_omega_param<const USE_TABLES: bool>(&mut self, n: u64) -> Result<usize, Self::Error>;
+    fn write_omega_param<const USE_TABLE: bool>(&mut self, n: u64) -> Result<usize, Self::Error>;
 }
 
 impl<B: BitWrite<BE>> OmegaWriteParam<BE> for B {
     #[inline(always)]
-    fn write_omega_param<const USE_TABLES: bool>(&mut self, n: u64) -> Result<usize, Self::Error> {
+    fn write_omega_param<const USE_TABLE: bool>(&mut self, n: u64) -> Result<usize, Self::Error> {
         debug_assert!(n < u64::MAX);
-        if USE_TABLES {
+        if USE_TABLE {
             if let Ok(Some(len)) = omega_tables::write_table_be(self, n) {
                 return Ok(len);
             }
@@ -229,9 +228,9 @@ impl<B: BitWrite<BE>> OmegaWriteParam<BE> for B {
 
 impl<B: BitWrite<LE>> OmegaWriteParam<LE> for B {
     #[inline(always)]
-    fn write_omega_param<const USE_TABLES: bool>(&mut self, n: u64) -> Result<usize, Self::Error> {
+    fn write_omega_param<const USE_TABLE: bool>(&mut self, n: u64) -> Result<usize, Self::Error> {
         debug_assert!(n < u64::MAX);
-        if USE_TABLES {
+        if USE_TABLE {
             if let Ok(Some(len)) = omega_tables::write_table_le(self, n) {
                 return Ok(len);
             }

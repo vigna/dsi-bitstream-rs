@@ -24,7 +24,7 @@ use mem_dbg::{MemDbg, MemSize};
 /// Both [`Display`](std::fmt::Display) and [`FromStr`](std::str::FromStr) are
 /// implemented for this enum in a dual way, which makes it possible to store a
 /// code as a string in a configuration file, and then parse it back.
-#[derive(Debug, Clone, Copy, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
 #[cfg_attr(feature = "mem_dbg", mem_size_flat)]
 #[cfg_attr(feature = "fuzz", derive(arbitrary::Arbitrary))]
@@ -43,40 +43,35 @@ pub enum Codes {
     Rice(usize),
 }
 
-/// Some codes are equivalent, so we implement [`PartialEq`] to make them
-/// interchangeable so `Codes::Unary == Codes::Rice(0)`.
-impl PartialEq for Codes {
-    fn eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            // First we check the equivalence classes
-            (
-                Self::Unary | Self::Rice(0) | Self::Golomb(1),
-                Self::Unary | Self::Rice(0) | Self::Golomb(1),
-            ) => true,
-            (
-                Self::Gamma | Self::Zeta(1) | Self::ExpGolomb(0) | Self::Pi(0),
-                Self::Gamma | Self::Zeta(1) | Self::ExpGolomb(0) | Self::Pi(0),
-            ) => true,
-            (Self::Golomb(2) | Self::Rice(1), Self::Golomb(2) | Self::Rice(1)) => true,
-            (Self::Golomb(4) | Self::Rice(2), Self::Golomb(4) | Self::Rice(2)) => true,
-            (Self::Golomb(8) | Self::Rice(3), Self::Golomb(8) | Self::Rice(3)) => true,
-            // we know that we are not in a special case, so we can directly
-            // compare them naively
-            (Self::Delta, Self::Delta) => true,
-            (Self::Omega, Self::Omega) => true,
-            (Self::VByteLe, Self::VByteLe) => true,
-            (Self::VByteBe, Self::VByteBe) => true,
-            (Self::Zeta(k), Self::Zeta(k2)) => k == k2,
-            (Self::Pi(k), Self::Pi(k2)) => k == k2,
-            (Self::Golomb(b), Self::Golomb(b2)) => b == b2,
-            (Self::ExpGolomb(k), Self::ExpGolomb(k2)) => k == k2,
-            (Self::Rice(log2_b), Self::Rice(log2_b2)) => log2_b == log2_b2,
-            _ => false,
+impl Codes {
+    /// Returns the canonical form of this code.
+    ///
+    /// Some codes are equivalent, in the sense that they are defined
+    /// differently, but they give rise to the same codewords. Among equivalent
+    /// codes, there is usually one that is faster to encode and decode, which
+    /// we call the _canonical representative_ of the equivalence class.
+    ///
+    /// The mapping is:
+    ///
+    /// - [`Rice(0)`](Codes::Rice),
+    ///   [`Golomb(1)`](Codes::Golomb) →
+    ///   [`Unary`](Codes::Unary)
+    ///
+    /// - [`Zeta(1)`](Codes::Zeta),
+    ///   [`ExpGolomb(0)`](Codes::ExpGolomb),
+    ///   [`Pi(0)`](Codes::Pi) →
+    ///   [`Gamma`](Codes::Gamma)
+    ///
+    /// - [`Golomb(2ⁿ)`](Codes::Golomb) → [`Rice(n)`](Codes::Rice)
+    pub const fn canonicalize(self) -> Self {
+        match self {
+            Self::Zeta(1) | Self::ExpGolomb(0) | Self::Pi(0) => Self::Gamma,
+            Self::Rice(0) | Self::Golomb(1) => Self::Unary,
+            Self::Golomb(b) if b.is_power_of_two() => Self::Rice(b.trailing_zeros() as usize),
+            other => other,
         }
     }
-}
 
-impl Codes {
     /// Delegates to the [`DynamicCodeRead`] implementation.
     ///
     /// This inherent method is provided to reduce ambiguity in method
@@ -102,18 +97,21 @@ impl Codes {
         DynamicCodeWrite::write(self, writer, value)
     }
 
-    /// Converts a code to the constant enum [`code_consts`] used for [`ConstCode`].
-    /// This is mostly used to verify that the code is supported by
-    /// [`ConstCode`].
-    pub fn to_code_const(&self) -> Result<usize, DispatchError> {
-        Ok(match self {
+    /// Converts a code to the constant enum [`code_consts`]
+    /// used for [`ConstCode`]. This is mostly used to verify
+    /// that the code is supported by [`ConstCode`].
+    ///
+    /// The code is [canonicalized](Codes::canonicalize) before
+    /// the conversion, so equivalent codes map to the same
+    /// constant.
+    pub const fn to_code_const(&self) -> Result<usize, DispatchError> {
+        Ok(match self.canonicalize() {
             Self::Unary => code_consts::UNARY,
             Self::Gamma => code_consts::GAMMA,
             Self::Delta => code_consts::DELTA,
             Self::Omega => code_consts::OMEGA,
             Self::VByteLe => code_consts::VBYTE_LE,
             Self::VByteBe => code_consts::VBYTE_BE,
-            Self::Zeta(1) => code_consts::ZETA1,
             Self::Zeta(2) => code_consts::ZETA2,
             Self::Zeta(3) => code_consts::ZETA3,
             Self::Zeta(4) => code_consts::ZETA4,
@@ -123,7 +121,6 @@ impl Codes {
             Self::Zeta(8) => code_consts::ZETA8,
             Self::Zeta(9) => code_consts::ZETA9,
             Self::Zeta(10) => code_consts::ZETA10,
-            Self::Rice(0) => code_consts::RICE0,
             Self::Rice(1) => code_consts::RICE1,
             Self::Rice(2) => code_consts::RICE2,
             Self::Rice(3) => code_consts::RICE3,
@@ -134,7 +131,6 @@ impl Codes {
             Self::Rice(8) => code_consts::RICE8,
             Self::Rice(9) => code_consts::RICE9,
             Self::Rice(10) => code_consts::RICE10,
-            Self::Pi(0) => code_consts::PI0,
             Self::Pi(1) => code_consts::PI1,
             Self::Pi(2) => code_consts::PI2,
             Self::Pi(3) => code_consts::PI3,
@@ -145,17 +141,12 @@ impl Codes {
             Self::Pi(8) => code_consts::PI8,
             Self::Pi(9) => code_consts::PI9,
             Self::Pi(10) => code_consts::PI10,
-            Self::Golomb(1) => code_consts::GOLOMB1,
-            Self::Golomb(2) => code_consts::GOLOMB2,
             Self::Golomb(3) => code_consts::GOLOMB3,
-            Self::Golomb(4) => code_consts::GOLOMB4,
             Self::Golomb(5) => code_consts::GOLOMB5,
             Self::Golomb(6) => code_consts::GOLOMB6,
             Self::Golomb(7) => code_consts::GOLOMB7,
-            Self::Golomb(8) => code_consts::GOLOMB8,
             Self::Golomb(9) => code_consts::GOLOMB9,
             Self::Golomb(10) => code_consts::GOLOMB10,
-            Self::ExpGolomb(0) => code_consts::EXP_GOLOMB0,
             Self::ExpGolomb(1) => code_consts::EXP_GOLOMB1,
             Self::ExpGolomb(2) => code_consts::EXP_GOLOMB2,
             Self::ExpGolomb(3) => code_consts::EXP_GOLOMB3,
@@ -173,7 +164,7 @@ impl Codes {
     }
 
     /// Converts a value from [`code_consts`] to a code.
-    pub fn from_code_const(const_code: usize) -> Result<Self, DispatchError> {
+    pub const fn from_code_const(const_code: usize) -> Result<Self, DispatchError> {
         Ok(match const_code {
             code_consts::UNARY => Self::Unary,
             code_consts::GAMMA => Self::Gamma,
@@ -237,7 +228,7 @@ impl DynamicCodeRead for Codes {
         &self,
         reader: &mut CR,
     ) -> Result<u64, CR::Error> {
-        Ok(match self {
+        Ok(match self.canonicalize() {
             Codes::Unary => reader.read_unary()?,
             Codes::Gamma => reader.read_gamma()?,
             Codes::Delta => reader.read_delta()?,
@@ -245,12 +236,12 @@ impl DynamicCodeRead for Codes {
             Codes::VByteBe => reader.read_vbyte_be()?,
             Codes::VByteLe => reader.read_vbyte_le()?,
             Codes::Zeta(3) => reader.read_zeta3()?,
-            Codes::Zeta(k) => reader.read_zeta(*k)?,
+            Codes::Zeta(k) => reader.read_zeta(k)?,
             Codes::Pi(2) => reader.read_pi2()?,
-            Codes::Pi(k) => reader.read_pi(*k)?,
-            Codes::Golomb(b) => reader.read_golomb(*b)?,
-            Codes::ExpGolomb(k) => reader.read_exp_golomb(*k)?,
-            Codes::Rice(log2_b) => reader.read_rice(*log2_b)?,
+            Codes::Pi(k) => reader.read_pi(k)?,
+            Codes::Golomb(b) => reader.read_golomb(b)?,
+            Codes::ExpGolomb(k) => reader.read_exp_golomb(k)?,
+            Codes::Rice(log2_b) => reader.read_rice(log2_b)?,
         })
     }
 }
@@ -262,21 +253,20 @@ impl DynamicCodeWrite for Codes {
         writer: &mut CW,
         value: u64,
     ) -> Result<usize, CW::Error> {
-        Ok(match self {
+        Ok(match self.canonicalize() {
             Codes::Unary => writer.write_unary(value)?,
             Codes::Gamma => writer.write_gamma(value)?,
             Codes::Delta => writer.write_delta(value)?,
             Codes::Omega => writer.write_omega(value)?,
             Codes::VByteBe => writer.write_vbyte_be(value)?,
             Codes::VByteLe => writer.write_vbyte_le(value)?,
-            Codes::Zeta(1) => writer.write_gamma(value)?,
             Codes::Zeta(3) => writer.write_zeta3(value)?,
-            Codes::Zeta(k) => writer.write_zeta(value, *k)?,
+            Codes::Zeta(k) => writer.write_zeta(value, k)?,
             Codes::Pi(2) => writer.write_pi2(value)?,
-            Codes::Pi(k) => writer.write_pi(value, *k)?,
-            Codes::Golomb(b) => writer.write_golomb(value, *b)?,
-            Codes::ExpGolomb(k) => writer.write_exp_golomb(value, *k)?,
-            Codes::Rice(log2_b) => writer.write_rice(value, *log2_b)?,
+            Codes::Pi(k) => writer.write_pi(value, k)?,
+            Codes::Golomb(b) => writer.write_golomb(value, b)?,
+            Codes::ExpGolomb(k) => writer.write_exp_golomb(value, k)?,
+            Codes::Rice(log2_b) => writer.write_rice(value, log2_b)?,
         })
     }
 }
@@ -298,18 +288,17 @@ impl<E: Endianness, CW: CodesWrite<E> + ?Sized> StaticCodeWrite<E, CW> for Codes
 impl CodeLen for Codes {
     #[inline]
     fn len(&self, value: u64) -> usize {
-        match self {
+        match self.canonicalize() {
             Codes::Unary => value as usize + 1,
             Codes::Gamma => len_gamma(value),
             Codes::Delta => len_delta(value),
             Codes::Omega => len_omega(value),
             Codes::VByteLe | Codes::VByteBe => bit_len_vbyte(value),
-            Codes::Zeta(1) => len_gamma(value),
-            Codes::Zeta(k) => len_zeta(value, *k),
-            Codes::Pi(k) => len_pi(value, *k),
-            Codes::Golomb(b) => len_golomb(value, *b),
-            Codes::ExpGolomb(k) => len_exp_golomb(value, *k),
-            Codes::Rice(log2_b) => len_rice(value, *log2_b),
+            Codes::Zeta(k) => len_zeta(value, k),
+            Codes::Pi(k) => len_pi(value, k),
+            Codes::Golomb(b) => len_golomb(value, b),
+            Codes::ExpGolomb(k) => len_exp_golomb(value, k),
+            Codes::Rice(log2_b) => len_rice(value, log2_b),
         }
     }
 }

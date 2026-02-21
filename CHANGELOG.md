@@ -32,6 +32,13 @@
   / `Codes::from_code_const` now return `Result<_, DispatchError>`
   instead of `anyhow::Result`.
 
+- A new method `Codes::canonicalize`
+  returns equivalent, canonical, more efficient implementations of a code
+  (e.g, π₀ = ɣ).
+
+- Removed `PartialEq` implementation for `Codes`. It was equating codes
+  with the same canonical form, which was confusing.
+
 ### Fixed
 
 - `[Count|Dbg]Bit[Reader|Writer]` were missing recent code implementations.

@@ -61,14 +61,30 @@ impl<const CODE: usize> ConstCode<CODE> {
 }
 
 /// The constants to use as generic parameter for the [`ConstCode`] struct.
+///
+/// Aliases for equivalent codes (e.g., [`ZETA1`](self::code_consts::ZETA1),
+/// [`RICE0`](self::code_consts::RICE0)) are derived from
+/// [`Codes::canonicalize`] via [`Codes::to_code_const`], so they
+/// are guaranteed to be consistent.
 pub mod code_consts {
+    use super::Codes;
+
+    /// Unwraps a [`Codes::to_code_const`] result at compile
+    /// time.
+    const fn canonical(code: Codes) -> usize {
+        match code.to_code_const() {
+            Ok(v) => v,
+            Err(_) => panic!("unsupported canonical code"),
+        }
+    }
+
     pub const UNARY: usize = 0;
     pub const GAMMA: usize = 1;
     pub const DELTA: usize = 2;
     pub const OMEGA: usize = 3;
     pub const VBYTE_BE: usize = 4;
     pub const VBYTE_LE: usize = 5;
-    pub const ZETA1: usize = GAMMA;
+    pub const ZETA1: usize = canonical(Codes::Zeta(1));
     pub const ZETA2: usize = 6;
     pub const ZETA3: usize = 7;
     pub const ZETA4: usize = 8;
@@ -78,7 +94,7 @@ pub mod code_consts {
     pub const ZETA8: usize = 12;
     pub const ZETA9: usize = 13;
     pub const ZETA10: usize = 14;
-    pub const RICE0: usize = UNARY;
+    pub const RICE0: usize = canonical(Codes::Rice(0));
     pub const RICE1: usize = 15;
     pub const RICE2: usize = 16;
     pub const RICE3: usize = 17;
@@ -89,7 +105,7 @@ pub mod code_consts {
     pub const RICE8: usize = 22;
     pub const RICE9: usize = 23;
     pub const RICE10: usize = 24;
-    pub const PI0: usize = GAMMA;
+    pub const PI0: usize = canonical(Codes::Pi(0));
     pub const PI1: usize = 25;
     pub const PI2: usize = 26;
     pub const PI3: usize = 27;
@@ -100,17 +116,17 @@ pub mod code_consts {
     pub const PI8: usize = 32;
     pub const PI9: usize = 33;
     pub const PI10: usize = 34;
-    pub const GOLOMB1: usize = UNARY;
-    pub const GOLOMB2: usize = RICE1;
+    pub const GOLOMB1: usize = canonical(Codes::Golomb(1));
+    pub const GOLOMB2: usize = canonical(Codes::Golomb(2));
     pub const GOLOMB3: usize = 35;
-    pub const GOLOMB4: usize = RICE2;
+    pub const GOLOMB4: usize = canonical(Codes::Golomb(4));
     pub const GOLOMB5: usize = 36;
     pub const GOLOMB6: usize = 37;
     pub const GOLOMB7: usize = 38;
-    pub const GOLOMB8: usize = RICE3;
+    pub const GOLOMB8: usize = canonical(Codes::Golomb(8));
     pub const GOLOMB9: usize = 39;
     pub const GOLOMB10: usize = 40;
-    pub const EXP_GOLOMB0: usize = GAMMA;
+    pub const EXP_GOLOMB0: usize = canonical(Codes::ExpGolomb(0));
     pub const EXP_GOLOMB1: usize = 41;
     pub const EXP_GOLOMB2: usize = 42;
     pub const EXP_GOLOMB3: usize = 43;

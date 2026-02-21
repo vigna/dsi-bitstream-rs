@@ -192,11 +192,15 @@ impl<E: Endianness, CRF: CodesReaderFactoryHelper<E> + ?Sized> FactoryFuncCodeRe
 
     /// Returns a new [`FactoryFuncCodeReader`] for the given code.
     ///
+    /// The code is [canonicalized](Codes::canonicalize) before
+    /// the lookup, so equivalent codes yield the same reader.
+    ///
     /// # Errors
     ///
     /// The method will return an error if there is no constant
     /// for the given code in [`FactoryFuncCodeReader`].
     pub fn new(code: Codes) -> Result<Self, DispatchError> {
+        let code = code.canonicalize();
         let read_func = match code {
             Codes::Unary => Self::UNARY,
             Codes::Gamma => Self::GAMMA,
@@ -204,7 +208,6 @@ impl<E: Endianness, CRF: CodesReaderFactoryHelper<E> + ?Sized> FactoryFuncCodeRe
             Codes::Omega => Self::OMEGA,
             Codes::VByteBe => Self::VBYTE_BE,
             Codes::VByteLe => Self::VBYTE_LE,
-            Codes::Zeta(1) => Self::GAMMA,
             Codes::Zeta(2) => Self::ZETA2,
             Codes::Zeta(3) => Self::ZETA3,
             Codes::Zeta(4) => Self::ZETA4,
@@ -214,7 +217,6 @@ impl<E: Endianness, CRF: CodesReaderFactoryHelper<E> + ?Sized> FactoryFuncCodeRe
             Codes::Zeta(8) => Self::ZETA8,
             Codes::Zeta(9) => Self::ZETA9,
             Codes::Zeta(10) => Self::ZETA10,
-            Codes::Rice(0) => Self::UNARY,
             Codes::Rice(1) => Self::RICE1,
             Codes::Rice(2) => Self::RICE2,
             Codes::Rice(3) => Self::RICE3,
@@ -225,7 +227,6 @@ impl<E: Endianness, CRF: CodesReaderFactoryHelper<E> + ?Sized> FactoryFuncCodeRe
             Codes::Rice(8) => Self::RICE8,
             Codes::Rice(9) => Self::RICE9,
             Codes::Rice(10) => Self::RICE10,
-            Codes::Pi(0) => Self::GAMMA,
             Codes::Pi(1) => Self::PI1,
             Codes::Pi(2) => Self::PI2,
             Codes::Pi(3) => Self::PI3,
@@ -236,17 +237,12 @@ impl<E: Endianness, CRF: CodesReaderFactoryHelper<E> + ?Sized> FactoryFuncCodeRe
             Codes::Pi(8) => Self::PI8,
             Codes::Pi(9) => Self::PI9,
             Codes::Pi(10) => Self::PI10,
-            Codes::Golomb(1) => Self::UNARY,
-            Codes::Golomb(2) => Self::RICE1,
             Codes::Golomb(3) => Self::GOLOMB3,
-            Codes::Golomb(4) => Self::RICE2,
             Codes::Golomb(5) => Self::GOLOMB5,
             Codes::Golomb(6) => Self::GOLOMB6,
             Codes::Golomb(7) => Self::GOLOMB7,
-            Codes::Golomb(8) => Self::RICE3,
             Codes::Golomb(9) => Self::GOLOMB9,
             Codes::Golomb(10) => Self::GOLOMB10,
-            Codes::ExpGolomb(0) => Self::GAMMA,
             Codes::ExpGolomb(1) => Self::EXP_GOLOMB1,
             Codes::ExpGolomb(2) => Self::EXP_GOLOMB2,
             Codes::ExpGolomb(3) => Self::EXP_GOLOMB3,

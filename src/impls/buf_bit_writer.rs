@@ -51,6 +51,9 @@ pub struct BufBitWriter<E: Endianness, WW: WordWrite, WP: WriteParams = DefaultW
 /// parameters](`DefaultWriteParams`) from a file path using the provided
 /// endianness and write word.
 ///
+/// The file will be created if it does not exist, and truncated if it already
+/// exists.
+///
 /// # Examples
 ///
 /// ```no_run
