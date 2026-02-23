@@ -23,14 +23,14 @@ impl<W: PrimitiveUnsigned + ConstZero + ConstOne> Word for W {}
 /// that is twice the width of the word read from the backend.
 ///
 /// The methods
-/// [`as_double_type`](Self::as_double_type)/[`as_u64`](Self::as_u64) can be
-/// used used to convert a word into its double-width type or to a `u64`,
+/// [`as_double`](Self::as_double)/[`as_u64`](Self::as_u64) can be
+/// used to convert a word into its double-width type or to a `u64`,
 /// respectively, without loss of precision.
 pub trait DoubleType {
     type DoubleType: Word + AsPrimitive<u64>;
 
     /// Converts a word into its double-width type without loss of precision.
-    fn as_double_type(&self) -> Self::DoubleType;
+    fn as_double(&self) -> Self::DoubleType;
 
     /// Converts a word into a `u64` without loss of precision.
     fn as_u64(&self) -> u64;
@@ -42,7 +42,7 @@ macro_rules! impl_double_type {
             impl DoubleType for $t {
                 type DoubleType = $d;
 
-                fn as_double_type(&self) -> Self::DoubleType {
+                fn as_double(&self) -> Self::DoubleType {
                     *self as Self::DoubleType
                 }
 
@@ -90,6 +90,10 @@ pub trait WordWrite {
 pub trait WordSeek {
     type Error: Error + Send + Sync + 'static;
     /// Gets the current position in words from the start of the file.
+    ///
+    /// Note that, consistently with
+    /// [`Seek::stream_position`](https://doc.rust-lang.org/beta/std/io/trait.Seek.html#method.stream_position),
+    /// this method takes a mutable reference to `self`.
     fn word_pos(&mut self) -> Result<u64, Self::Error>;
 
     /// Sets the current position in words from the start of the file to `word_pos`.
@@ -97,7 +101,7 @@ pub trait WordSeek {
 }
 
 /// Replacement of [`std::io::Error`] for `no_std` environments
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum WordError {
     UnexpectedEof { word_pos: usize },
 }

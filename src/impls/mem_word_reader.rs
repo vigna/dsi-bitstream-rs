@@ -46,7 +46,7 @@ use mem_dbg::{MemDbg, MemSize};
 /// ```
 #[derive(Debug, Clone, PartialEq)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
-pub struct MemWordReader<W: Word, B: AsRef<[W]>, const INF: bool = true> {
+pub struct MemWordReader<W: Word, B, const INF: bool = true> {
     data: B,
     word_index: usize,
     _marker: core::marker::PhantomData<W>,

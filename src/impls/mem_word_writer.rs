@@ -60,13 +60,13 @@ use crate::traits::*;
 /// ```
 #[derive(Debug, PartialEq)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
-pub struct MemWordWriterSlice<W: Word, B: AsMut<[W]>> {
+pub struct MemWordWriterSlice<W: Word, B> {
     data: B,
     word_index: usize,
     _marker: core::marker::PhantomData<W>,
 }
 
-impl<W: Word, B: AsMut<[W]> + AsRef<[W]>> MemWordWriterSlice<W, B> {
+impl<W: Word, B: AsRef<[W]>> MemWordWriterSlice<W, B> {
     /// Creates a new [`MemWordWriterSlice`] from a slice.
     #[must_use]
     pub fn new(data: B) -> Self {
@@ -121,14 +121,14 @@ impl<W: Word, B: AsMut<[W]> + AsRef<[W]>> MemWordWriterSlice<W, B> {
 #[derive(Debug, PartialEq)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
 #[cfg(feature = "alloc")]
-pub struct MemWordWriterVec<W: Word, B: AsMut<alloc::vec::Vec<W>>> {
+pub struct MemWordWriterVec<W: Word, B> {
     data: B,
     word_index: usize,
     _marker: core::marker::PhantomData<W>,
 }
 
 #[cfg(feature = "alloc")]
-impl<W: Word, B: AsMut<alloc::vec::Vec<W>> + AsRef<alloc::vec::Vec<W>>> MemWordWriterVec<W, B> {
+impl<W: Word, B: AsRef<Vec<W>> + AsRef<Vec<W>>> MemWordWriterVec<W, B> {
     /// Creates a new [`MemWordWriterVec`] from a vector.
     #[must_use]
     pub fn new(data: B) -> Self {
@@ -155,13 +155,13 @@ impl<W: Word, B: AsMut<alloc::vec::Vec<W>> + AsRef<alloc::vec::Vec<W>>> MemWordW
     }
 }
 
-impl<W: Word, B: AsMut<[W]>> WordRead for MemWordWriterSlice<W, B> {
+impl<W: Word, B: AsRef<[W]>> WordRead for MemWordWriterSlice<W, B> {
     type Error = WordError;
     type Word = W;
 
     #[inline]
     fn read_word(&mut self) -> Result<W, WordError> {
-        match self.data.as_mut().get(self.word_index) {
+        match self.data.as_ref().get(self.word_index) {
             Some(word) => {
                 self.word_index += 1;
                 Ok(*word)
@@ -173,7 +173,7 @@ impl<W: Word, B: AsMut<[W]>> WordRead for MemWordWriterSlice<W, B> {
     }
 }
 
-impl<W: Word, B: AsRef<[W]> + AsMut<[W]>> WordSeek for MemWordWriterSlice<W, B> {
+impl<W: Word, B: AsRef<[W]>> WordSeek for MemWordWriterSlice<W, B> {
     type Error = WordError;
 
     #[inline(always)]
@@ -218,16 +218,17 @@ impl<W: Word, B: AsMut<[W]>> WordWrite for MemWordWriterSlice<W, B> {
 }
 
 #[cfg(feature = "alloc")]
-impl<W: Word, B: AsMut<alloc::vec::Vec<W>>> WordWrite for MemWordWriterVec<W, B> {
+impl<W: Word, B: AsMut<Vec<W>>> WordWrite for MemWordWriterVec<W, B> {
     type Error = Infallible;
     type Word = W;
 
     #[inline]
     fn write_word(&mut self, word: W) -> Result<(), Infallible> {
-        if self.word_index >= self.data.as_mut().len() {
-            self.data.as_mut().resize(self.word_index + 1, W::ZERO);
+        let data = self.data.as_mut();
+        if self.word_index >= data.len() {
+            data.resize(self.word_index + 1, W::ZERO);
         }
-        self.data.as_mut()[self.word_index] = word;
+        data[self.word_index] = word;
         self.word_index += 1;
         Ok(())
     }
@@ -238,13 +239,13 @@ impl<W: Word, B: AsMut<alloc::vec::Vec<W>>> WordWrite for MemWordWriterVec<W, B>
 }
 
 #[cfg(feature = "alloc")]
-impl<W: Word, B: AsMut<alloc::vec::Vec<W>>> WordRead for MemWordWriterVec<W, B> {
+impl<W: Word, B: AsRef<Vec<W>>> WordRead for MemWordWriterVec<W, B> {
     type Error = WordError;
     type Word = W;
 
     #[inline]
     fn read_word(&mut self) -> Result<W, WordError> {
-        match self.data.as_mut().get(self.word_index) {
+        match self.data.as_ref().get(self.word_index) {
             Some(word) => {
                 self.word_index += 1;
                 Ok(*word)
@@ -257,9 +258,7 @@ impl<W: Word, B: AsMut<alloc::vec::Vec<W>>> WordRead for MemWordWriterVec<W, B> 
 }
 
 #[cfg(feature = "alloc")]
-impl<W: Word, B: AsMut<alloc::vec::Vec<W>> + AsRef<alloc::vec::Vec<W>>> WordSeek
-    for MemWordWriterVec<W, B>
-{
+impl<W: Word, B: AsRef<Vec<W>>> WordSeek for MemWordWriterVec<W, B> {
     type Error = WordError;
 
     #[inline(always)]

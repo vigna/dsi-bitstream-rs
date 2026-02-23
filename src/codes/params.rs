@@ -80,9 +80,9 @@ pub struct DefaultReadParams;
 impl ReadParams for DefaultReadParams {}
 
 macro_rules! impl_default_read_codes {
-    ($($endianess:ident),*) => {$(
-        impl<WR: WordRead<Word: DoubleType>> GammaRead<$endianess>
-            for BufBitReader<$endianess, WR, DefaultReadParams>
+    ($($endianness:ident),*) => {$(
+        impl<WR: WordRead<Word: DoubleType>> GammaRead<$endianness>
+            for BufBitReader<$endianness, WR, DefaultReadParams>
         {
             #[inline(always)]
             fn read_gamma(&mut self) -> Result<u64, Self::Error> {
@@ -92,8 +92,8 @@ macro_rules! impl_default_read_codes {
             }
         }
 
-        impl<WR: WordRead<Word: DoubleType>> DeltaRead<$endianess>
-            for BufBitReader<$endianess, WR, DefaultReadParams>
+        impl<WR: WordRead<Word: DoubleType>> DeltaRead<$endianness>
+            for BufBitReader<$endianness, WR, DefaultReadParams>
         {
             #[inline(always)]
             fn read_delta(&mut self) -> Result<u64, Self::Error> {
@@ -101,8 +101,8 @@ macro_rules! impl_default_read_codes {
             }
         }
 
-        impl<WR: WordRead<Word: DoubleType>> OmegaRead<$endianess>
-            for BufBitReader<$endianess, WR, DefaultReadParams>
+        impl<WR: WordRead<Word: DoubleType>> OmegaRead<$endianness>
+            for BufBitReader<$endianness, WR, DefaultReadParams>
         {
             #[inline(always)]
             fn read_omega(&mut self) -> Result<u64, Self::Error> {
@@ -110,8 +110,8 @@ macro_rules! impl_default_read_codes {
             }
         }
 
-        impl<WR: WordRead<Word: DoubleType>> ZetaRead<$endianess>
-            for BufBitReader<$endianess, WR, DefaultReadParams>
+        impl<WR: WordRead<Word: DoubleType>> ZetaRead<$endianness>
+            for BufBitReader<$endianness, WR, DefaultReadParams>
         {
             #[inline(always)]
             fn read_zeta(&mut self, k: usize) -> Result<u64, Self::Error> {
@@ -124,8 +124,8 @@ macro_rules! impl_default_read_codes {
             }
         }
 
-        impl<WR: WordRead<Word: DoubleType>> PiRead<$endianess>
-            for BufBitReader<$endianess, WR, DefaultReadParams>
+        impl<WR: WordRead<Word: DoubleType>> PiRead<$endianness>
+            for BufBitReader<$endianness, WR, DefaultReadParams>
         {
             #[inline(always)]
             fn read_pi(&mut self, k: usize) -> Result<u64, Self::Error> {
@@ -138,8 +138,8 @@ macro_rules! impl_default_read_codes {
             }
         }
 
-        impl<E: Error + Send + Sync + 'static, WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>> GammaRead<$endianess>
-            for BitReader<$endianess, WR, DefaultReadParams>
+        impl<E: Error + Send + Sync + 'static, WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>> GammaRead<$endianness>
+            for BitReader<$endianness, WR, DefaultReadParams>
         {
             #[inline(always)]
             fn read_gamma(&mut self) -> Result<u64, Self::Error> {
@@ -149,8 +149,8 @@ macro_rules! impl_default_read_codes {
             }
         }
 
-        impl<E: Error + Send + Sync + 'static, WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>> DeltaRead<$endianess>
-            for BitReader<$endianess, WR, DefaultReadParams>
+        impl<E: Error + Send + Sync + 'static, WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>> DeltaRead<$endianness>
+            for BitReader<$endianness, WR, DefaultReadParams>
         {
             #[inline(always)]
             fn read_delta(&mut self) -> Result<u64, Self::Error> {
@@ -158,8 +158,8 @@ macro_rules! impl_default_read_codes {
             }
         }
 
-        impl<E: Error + Send + Sync + 'static, WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>> OmegaRead<$endianess>
-            for BitReader<$endianess, WR, DefaultReadParams>
+        impl<E: Error + Send + Sync + 'static, WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>> OmegaRead<$endianness>
+            for BitReader<$endianness, WR, DefaultReadParams>
         {
             #[inline(always)]
             fn read_omega(&mut self) -> Result<u64, Self::Error> {
@@ -167,8 +167,8 @@ macro_rules! impl_default_read_codes {
             }
         }
 
-        impl<E: Error + Send + Sync + 'static, WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>> ZetaRead<$endianess>
-            for BitReader<$endianess, WR, DefaultReadParams>
+        impl<E: Error + Send + Sync + 'static, WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>> ZetaRead<$endianness>
+            for BitReader<$endianness, WR, DefaultReadParams>
         {
             #[inline(always)]
             fn read_zeta(&mut self, k: usize) -> Result<u64, Self::Error> {
@@ -181,8 +181,8 @@ macro_rules! impl_default_read_codes {
             }
         }
 
-        impl<E: Error + Send + Sync + 'static, WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>> PiRead<$endianess>
-            for BitReader<$endianess, WR, DefaultReadParams>
+        impl<E: Error + Send + Sync + 'static, WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>> PiRead<$endianness>
+            for BitReader<$endianness, WR, DefaultReadParams>
         {
             #[inline(always)]
             fn read_pi(&mut self, k: usize) -> Result<u64, Self::Error> {
@@ -218,9 +218,9 @@ pub struct DefaultWriteParams;
 impl WriteParams for DefaultWriteParams {}
 
 macro_rules! impl_default_write_codes {
-    ($($endianess:ident),*) => {$(
-        impl<WR: WordWrite, WP: WriteParams> GammaWrite<$endianess>
-            for BufBitWriter<$endianess, WR, WP>
+    ($($endianness:ident),*) => {$(
+        impl<WR: WordWrite, WP: WriteParams> GammaWrite<$endianness>
+            for BufBitWriter<$endianness, WR, WP>
             where u64: AsPrimitive<WR::Word>,
         {
             #[inline(always)]
@@ -229,8 +229,8 @@ macro_rules! impl_default_write_codes {
             }
         }
 
-        impl<WR: WordWrite, WP: WriteParams> DeltaWrite<$endianess>
-            for BufBitWriter<$endianess, WR, WP>
+        impl<WR: WordWrite, WP: WriteParams> DeltaWrite<$endianness>
+            for BufBitWriter<$endianness, WR, WP>
             where u64: AsPrimitive<WR::Word>,
         {
             #[inline(always)]
@@ -239,8 +239,8 @@ macro_rules! impl_default_write_codes {
             }
         }
 
-        impl<WR: WordWrite, WP: WriteParams> OmegaWrite<$endianess>
-            for BufBitWriter<$endianess, WR, WP>
+        impl<WR: WordWrite, WP: WriteParams> OmegaWrite<$endianness>
+            for BufBitWriter<$endianness, WR, WP>
             where u64: AsPrimitive<WR::Word>,
         {
             #[inline(always)]
@@ -249,8 +249,8 @@ macro_rules! impl_default_write_codes {
             }
         }
 
-        impl<WR: WordWrite, WP: WriteParams> ZetaWrite<$endianess>
-            for BufBitWriter<$endianess, WR, WP>
+        impl<WR: WordWrite, WP: WriteParams> ZetaWrite<$endianness>
+            for BufBitWriter<$endianness, WR, WP>
             where u64: AsPrimitive<WR::Word>,
         {
             #[inline(always)]
@@ -264,8 +264,8 @@ macro_rules! impl_default_write_codes {
             }
         }
 
-        impl<WR: WordWrite, WP: WriteParams> PiWrite<$endianess>
-            for BufBitWriter<$endianess, WR, WP>
+        impl<WR: WordWrite, WP: WriteParams> PiWrite<$endianness>
+            for BufBitWriter<$endianness, WR, WP>
             where u64: AsPrimitive<WR::Word>,
         {
             #[inline(always)]

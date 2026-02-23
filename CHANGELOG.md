@@ -13,11 +13,14 @@
 - We are no longer dependent on `anyhow`.
 
 - We are no longer dependent on `common_traits`, which has been replaced by
-  `num-primitives` and `num-traits`. The trait `DoubleType` is now internal
-  and subsumes all relevant bounds.
+  `num-primitive` and `num-traits`. The trait `DoubleType` now replaces
+  `common_traits::DoubleType`.
 
 - `rand` is optional and only necessary for the `implied` module, which
   is now gated by the `implied` feature.
+
+- `BufBitReader::into_inner` does not return a `Result` anymore, as it cannot
+  fail.
 
 ### Changed
 

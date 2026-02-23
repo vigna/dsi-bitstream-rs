@@ -55,7 +55,7 @@ impl core::fmt::Display for BE {
 }
 
 /// Selector type for little-endian streams.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct LittleEndian;
 
 /// Selector type for big-endian streams.

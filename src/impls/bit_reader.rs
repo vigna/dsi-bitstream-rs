@@ -29,7 +29,7 @@ use crate::traits::*;
 /// instantaneous codes, but the casual user should be happy with the default
 /// value. See [`ReadParams`] for more details.
 ///
-/// For additional flexibility, this structures implements [`std::io::Read`].
+/// For additional flexibility, this structure implements [`std::io::Read`].
 /// Note that because of coherence rules it is not possible to implement
 /// [`std::io::Read`] for a generic [`BitRead`].
 

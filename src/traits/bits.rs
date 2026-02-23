@@ -163,6 +163,10 @@ pub trait BitWrite<E: Endianness> {
 pub trait BitSeek {
     type Error: Error + Send + Sync + 'static;
     /// Gets the current position in bits from the start of the stream.
+    ///
+    /// Note that, consistently with
+    /// [`Seek::stream_position`](https://doc.rust-lang.org/beta/std/io/trait.Seek.html#method.stream_position),
+    /// this method takes a mutable reference to `self`.
     fn bit_pos(&mut self) -> Result<u64, Self::Error>;
 
     /// Sets the current position in bits from the start of the

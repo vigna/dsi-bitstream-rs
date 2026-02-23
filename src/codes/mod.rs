@@ -145,7 +145,7 @@ pub mod zeta_tables;
 ///
 /// This bijection is best known as the “ZigZag” transformation in Google's
 /// [Protocol Buffers](https://protobuf.dev/), albeit it has been used by
-/// [WebGraph](http://webgraph.di.unimi.it/) since 2003, and much likely in
+/// [WebGraph](http://webgraph.di.unimi.it/) since 2003, and most likely in
 /// other software, for the same purpose. Note that the compression standards
 /// H.264/H.265 use a different transformation for exponential Golomb codes,
 /// mapping a positive integer `x` to `2x − 1` and a zero or negative integer
@@ -180,7 +180,7 @@ where
 ///
 /// This bijection is best known as the “ZigZag” transformation in Google's
 /// [Protocol Buffers](https://protobuf.dev/), albeit it has been used by
-/// [WebGraph](http://webgraph.di.unimi.it/) since 2003, and much likely in
+/// [WebGraph](http://webgraph.di.unimi.it/) since 2003, and most likely in
 /// other software, for the same purpose. Note that the compression standards
 /// H.264/H.265 use a different transformation for exponential Golomb codes,
 /// mapping a positive integer `x` to `2x − 1` and a zero or negative integer

@@ -20,7 +20,7 @@ use num_traits::{AsPrimitive, ConstOne, ConstZero};
 ///
 /// This implementation uses a bit buffer to store bits that are not yet
 /// written. The size of the bit buffer is the size of the word used by the
-/// [`WordWrite`], which on most platform should be `usize`.
+/// [`WordWrite`], which on most platforms should be `usize`.
 ///
 /// The additional type parameter `WP` is used to select the parameters for the
 /// instantaneous codes, but the casual user should be happy with the default
@@ -29,7 +29,7 @@ use num_traits::{AsPrimitive, ConstOne, ConstZero};
 /// The convenience methods [`from_path`] and [`from_file`] create a
 /// [`BufBitWriter`] around a buffered file writer.
 ///
-/// For additional flexibility, this structures implements [`std::io::Write`].
+/// For additional flexibility, this structure implements [`std::io::Write`].
 /// Note that because of coherence rules it is not possible to implement
 /// [`std::io::Write`] for a generic [`BitWrite`].
 
@@ -45,7 +45,7 @@ pub struct BufBitWriter<E: Endianness, WW: WordWrite, WP: WriteParams = DefaultW
     buffer: WW::Word,
     /// Number of upper (BE) or lower (LE) free bits in the buffer. It is always greater than zero.
     space_left_in_buffer: usize,
-    _marker_endianness: core::marker::PhantomData<(E, WP)>,
+    _marker: core::marker::PhantomData<(E, WP)>,
 }
 
 /// Creates a new [`BufBitWriter`] with [default write
@@ -114,7 +114,7 @@ impl<E: Endianness, WW: WordWrite, WP: WriteParams> BufBitWriter<E, WW, WP> {
             backend,
             buffer: WW::Word::ZERO,
             space_left_in_buffer: Self::WORD_BITS,
-            _marker_endianness: core::marker::PhantomData,
+            _marker: core::marker::PhantomData,
         }
     }
 }

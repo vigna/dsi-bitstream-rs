@@ -33,11 +33,11 @@ let mut word_write = MemWordWriterSlice::new([0_u64; 10]);
 let mut writer = BufBitWriter::<LE, _>::new(word_write);
 // Write 0 using 10 bits
 writer.write_bits(0, 10)?;
-// Write 1 in unary code
+// Write 0 in unary code
 writer.write_unary(0)?;
-// Write 2 in γ code
+// Write 1 in γ code
 writer.write_gamma(1)?;
-// Write 3 in δ code
+// Write 2 in δ code
 writer.write_delta(2)?;
 writer.flush()?;
 
