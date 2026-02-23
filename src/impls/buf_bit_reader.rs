@@ -6,7 +6,8 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
-use num_traits::AsPrimitive;
+use num_primitive::PrimitiveInteger;
+use num_traits::{AsPrimitive, ConstOne, ConstZero};
 
 use crate::codes::params::{DefaultReadParams, ReadParams};
 use crate::traits::*;
@@ -170,7 +171,7 @@ where
     fn refill(&mut self) -> Result<(), <WR as WordRead>::Error> {
         debug_assert!(Self::BUFFER_BITS - self.bits_in_buffer >= Self::WORD_BITS);
 
-        let new_word: BB<WR> = self.backend.read_word()?.to_be().as_double();
+        let new_word: BB<WR> = self.backend.read_word()?.to_be().as_double_type();
         self.bits_in_buffer += Self::WORD_BITS;
         self.buffer |= new_word << (Self::BUFFER_BITS - self.bits_in_buffer);
         Ok(())
@@ -243,7 +244,8 @@ where
         let final_bits: u64 = upcast >> self.bits_in_buffer;
         result = (result << (n_bits - 1) << 1) | final_bits;
         // and put the rest in the buffer
-        self.buffer = (new_word.as_double() << (Self::BUFFER_BITS - self.bits_in_buffer - 1)) << 1;
+        self.buffer =
+            (new_word.as_double_type() << (Self::BUFFER_BITS - self.bits_in_buffer - 1)) << 1;
 
         Ok(result)
     }
@@ -269,7 +271,7 @@ where
 
             if new_word != WR::Word::ZERO {
                 let zeros: usize = new_word.leading_zeros() as _;
-                self.buffer = new_word.as_double() << (Self::WORD_BITS + zeros) << 1;
+                self.buffer = new_word.as_double_type() << (Self::WORD_BITS + zeros) << 1;
                 self.bits_in_buffer = Self::WORD_BITS - zeros - 1;
                 return Ok(result + zeros as u64);
             }
@@ -299,7 +301,8 @@ where
         let new_word = self.backend.read_word()?.to_be();
         self.bits_in_buffer = Self::WORD_BITS - n_bits;
 
-        self.buffer = new_word.as_double() << (Self::BUFFER_BITS - 1 - self.bits_in_buffer) << 1;
+        self.buffer =
+            new_word.as_double_type() << (Self::BUFFER_BITS - 1 - self.bits_in_buffer) << 1;
 
         Ok(())
     }
@@ -359,7 +362,7 @@ where
             .write_bits((new_word >> self.bits_in_buffer).as_u64(), n as usize)
             .map_err(CopyError::WriteError)?;
         self.buffer = new_word
-            .as_double()
+            .as_double_type()
             .rotate_right(Self::WORD_BITS as u32 - n as u32);
 
         Ok(())
@@ -389,7 +392,7 @@ where
         self.buffer = BB::<WR>::ZERO;
         self.bits_in_buffer = 0;
         if bit_offset != 0 {
-            let new_word: BB<WR> = self.backend.read_word()?.to_be().as_double();
+            let new_word: BB<WR> = self.backend.read_word()?.to_be().as_double_type();
             self.bits_in_buffer = Self::WORD_BITS - bit_offset;
             self.buffer = new_word << (Self::BUFFER_BITS - self.bits_in_buffer);
         }
@@ -412,7 +415,7 @@ where
     fn refill(&mut self) -> Result<(), <WR as WordRead>::Error> {
         debug_assert!(Self::BUFFER_BITS - self.bits_in_buffer >= Self::WORD_BITS);
 
-        let new_word: BB<WR> = self.backend.read_word()?.to_le().as_double();
+        let new_word: BB<WR> = self.backend.read_word()?.to_le().as_double_type();
         self.buffer |= new_word << self.bits_in_buffer;
         self.bits_in_buffer += Self::WORD_BITS;
         Ok(())
@@ -487,7 +490,7 @@ where
         let final_bits: u64 = (upcast << sham) >> sham;
         result |= final_bits << bits_in_res;
         // and put the rest in the buffer
-        self.buffer = new_word.as_double() >> n_bits;
+        self.buffer = new_word.as_double_type() >> n_bits;
 
         Ok(result)
     }
@@ -513,7 +516,7 @@ where
 
             if new_word != WR::Word::ZERO {
                 let zeros: usize = new_word.trailing_zeros() as _;
-                self.buffer = new_word.as_double() >> zeros >> 1;
+                self.buffer = new_word.as_double_type() >> zeros >> 1;
                 self.bits_in_buffer = Self::WORD_BITS - zeros - 1;
                 return Ok(result + zeros as u64);
             }
@@ -542,7 +545,7 @@ where
         // get the final word
         let new_word = self.backend.read_word()?.to_le();
         self.bits_in_buffer = Self::WORD_BITS - n_bits;
-        self.buffer = new_word.as_double() >> n_bits;
+        self.buffer = new_word.as_double_type() >> n_bits;
 
         Ok(())
     }
@@ -614,7 +617,7 @@ where
         bit_write
             .write_bits(new_word_u64, n as usize)
             .map_err(CopyError::WriteError)?;
-        self.buffer = new_word.as_double() >> n;
+        self.buffer = new_word.as_double_type() >> n;
         Ok(())
     }
 }
@@ -643,7 +646,7 @@ where
         self.buffer = BB::<WR>::ZERO;
         self.bits_in_buffer = 0;
         if bit_offset != 0 {
-            let new_word: BB<WR> = self.backend.read_word()?.to_le().as_double();
+            let new_word: BB<WR> = self.backend.read_word()?.to_le().as_double_type();
             self.bits_in_buffer = Self::WORD_BITS - bit_offset;
             self.buffer = new_word >> bit_offset;
         }

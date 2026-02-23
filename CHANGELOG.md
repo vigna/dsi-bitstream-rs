@@ -1,6 +1,6 @@
 # Change Log
 
-## [0.8.0] - 2026-02-20
+## [0.8.0] - unreleased
 
 ### Improved
 
@@ -11,6 +11,10 @@
   upgrade to this version as if it was a minor release.
 
 - We are no longer dependent on `anyhow`.
+
+- We are no longer dependent on `common_traits`, which has been replaced by
+  `num-primitives` and `num-traits`. The trait `DoubleType` is now internal
+  and subsumes all relevant bounds.
 
 - `rand` is optional and only necessary for the `implied` module, which
   is now gated by the `implied` feature.

@@ -13,7 +13,8 @@ use crate::codes::params::{DefaultWriteParams, WriteParams};
 use crate::traits::*;
 #[cfg(feature = "mem_dbg")]
 use mem_dbg::{MemDbg, MemSize};
-use num_traits::AsPrimitive;
+use num_primitive::PrimitiveInteger;
+use num_traits::{AsPrimitive, ConstOne, ConstZero};
 
 /// An implementation of [`BitWrite`] for a [`WordWrite`].
 ///

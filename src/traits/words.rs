@@ -8,9 +8,8 @@
 
 use core::error::Error;
 
-pub use num_primitive::{PrimitiveInteger, PrimitiveUnsigned};
-use num_traits::AsPrimitive;
-pub use num_traits::{ConstOne, ConstZero};
+use num_primitive::PrimitiveUnsigned;
+use num_traits::{AsPrimitive, ConstOne, ConstZero};
 
 /// This is a trait alias for all the properties that we need for words of
 /// memory read and written by either a [`WordRead`] or [`WordWrite`],
@@ -23,20 +22,17 @@ impl<W: PrimitiveUnsigned + ConstZero + ConstOne> Word for W {}
 /// This is used by [`crate::impls::BufBitReader`] to provide a bit buffer
 /// that is twice the width of the word read from the backend.
 ///
-/// The methods [`as_double`](Self::as_double)[`as_u64`](Self::as_u64) can be
-/// used used to convert a word into its double-width type or to a `u64`, respectively,
-/// without loss of precision.
+/// The methods
+/// [`as_double_type`](Self::as_double_type)/[`as_u64`](Self::as_u64) can be
+/// used used to convert a word into its double-width type or to a `u64`,
+/// respectively, without loss of precision.
 pub trait DoubleType {
     type DoubleType: Word + AsPrimitive<u64>;
 
-    /// Converts a word into its double-width type.
-    ///
-    /// This method guarantees that the value of `self` is preserved.
-    fn as_double(&self) -> Self::DoubleType;
+    /// Converts a word into its double-width type without loss of precision.
+    fn as_double_type(&self) -> Self::DoubleType;
 
-    /// Converts a word into a `u64`.
-    ///
-    /// This method guarantees that the value of `self` is preserved.
+    /// Converts a word into a `u64` without loss of precision.
     fn as_u64(&self) -> u64;
 }
 
@@ -46,7 +42,7 @@ macro_rules! impl_double_type {
             impl DoubleType for $t {
                 type DoubleType = $d;
 
-                fn as_double(&self) -> Self::DoubleType {
+                fn as_double_type(&self) -> Self::DoubleType {
                     *self as Self::DoubleType
                 }
 

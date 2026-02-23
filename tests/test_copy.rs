@@ -8,7 +8,8 @@
 use dsi_bitstream::prelude::{
     BitRead, BitWrite, BufBitReader, BufBitWriter, MemWordReader, MemWordWriterVec,
 };
-use dsi_bitstream::traits::{BE, DoubleType, Endianness, LE, PrimitiveInteger, Word};
+use dsi_bitstream::traits::{BE, DoubleType, Endianness, LE, Word};
+use num_primitive::PrimitiveInteger;
 use rand::rngs::SmallRng;
 use rand::{RngExt, SeedableRng};
 use std::error::Error;
