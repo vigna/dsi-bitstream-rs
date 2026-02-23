@@ -20,7 +20,7 @@ use crate::traits::*;
 ///
 /// Writing beyond the end of the slice will return an error.
 ///
-/// # Example
+/// # Examples
 /// ```
 /// # fn main() -> Result<(), Box<dyn core::error::Error>> {
 /// use dsi_bitstream::prelude::*;
@@ -100,7 +100,7 @@ impl<W: Word, B: AsRef<[W]>> MemWordWriterSlice<W, B> {
 ///
 /// The vector will be extended as new data is written.
 ///
-/// # Example
+/// # Examples
 /// ```
 /// # fn main() -> Result<(), Box<dyn core::error::Error>> {
 /// use dsi_bitstream::prelude::*;

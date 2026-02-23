@@ -128,7 +128,7 @@ where
 
     /// Creates a new [`BufBitReader`] around a [`WordRead`].
     ///
-    /// # Example
+    /// # Examples
     /// ```
     /// use dsi_bitstream::prelude::*;
     /// let words: [u32; 2] = [0x0043b59f, 0xccf16077];

@@ -24,10 +24,10 @@ use crate::prelude::{DynamicCodeRead, DynamicCodeWrite, StaticCodeRead, StaticCo
 #[cfg(feature = "std")]
 use std::sync::Mutex;
 
+#[cfg(feature = "serde")]
+use alloc::string::ToString;
 #[cfg(feature = "alloc")]
-use alloc::vec;
-#[cfg(feature = "alloc")]
-use alloc::vec::Vec;
+use alloc::{vec, vec::Vec};
 
 /// Keeps track of the space needed to store a stream of integers using
 /// different codes.
@@ -493,6 +493,7 @@ impl<
 > CodesStatsWrapper<W, ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
 {
     /// Creates a new `CodesStatsWrapper` with the given wrapped value.
+    #[must_use]
     pub fn new(wrapped: W) -> Self {
         Self {
             stats: Mutex::new(CodesStats::default()),

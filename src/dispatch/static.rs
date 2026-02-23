@@ -19,7 +19,7 @@ use super::*;
 use mem_dbg::{MemDbg, MemSize};
 
 /// A zero-sized struct with a const generic parameter representing a code using
-/// the ns exported by the [`code_consts`] module.
+/// the constants exported by the [`code_consts`] module.
 ///
 /// Methods for all traits are implemented for this struct using a match on the
 /// value of the const type parameter. Since the parameter is a constant, the

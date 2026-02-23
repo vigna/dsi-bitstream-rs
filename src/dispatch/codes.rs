@@ -13,6 +13,8 @@
 //! [dynamic] or [static] dispatch.
 
 use super::*;
+#[cfg(feature = "serde")]
+use alloc::string::{String, ToString};
 #[cfg(feature = "mem_dbg")]
 use mem_dbg::{MemDbg, MemSize};
 

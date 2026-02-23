@@ -44,7 +44,7 @@ no_copy_impls = []
 # This is necessary to avoid warnings from MemDbg and to use the
 # offset_of_enum MemDbg feature gate if needed
 offset_of_enum = []
-serde = ["dep:serde"]
+serde = ["dep:serde", "alloc"]
 
 [profile.bench]
 opt-level = 3 # like --release

@@ -201,13 +201,13 @@ type WriteFn<E, CW> = fn(&mut CW, u64) -> Result<usize, <CW as BitWrite<E>>::Err
 /// pointer.
 ///
 /// Note that since selection of the code happens in the
-/// [`new`](FuncCodeReader::new) method, it is more efficient to clone a
+/// [`new`](FuncCodeWriter::new) method, it is more efficient to clone a
 /// [`FuncCodeWriter`] than to create a new one.
 #[derive(Debug, Copy)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
 pub struct FuncCodeWriter<E: Endianness, CW: CodesWrite<E> + ?Sized>(WriteFn<E, CW>);
 
-/// manually implement Clone to avoid the Clone bound on CR and E
+/// Manually implement Clone to avoid the Clone bound on CW and E.
 impl<E: Endianness, CR: CodesWrite<E> + ?Sized> Clone for FuncCodeWriter<E, CR> {
     #[inline(always)]
     fn clone(&self) -> Self {
@@ -361,8 +361,8 @@ type LenFn = fn(u64) -> usize;
 /// A newtype containing a function pointer dispatching the length method for a
 /// code.
 ///
-/// This is a more efficient way to pass a [`StaticCodeRead`] to a method, as
-/// a [`FuncCodeReader`] does not need to do a runtime test to dispatch the correct
+/// This is a more efficient way to pass a [`CodeLen`] to a method, as
+/// a [`FuncCodeLen`] does not need to do a runtime test to dispatch the correct
 /// method.
 ///
 /// Instances can be obtained by calling the [`new`](FuncCodeLen::new) method

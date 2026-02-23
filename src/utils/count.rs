@@ -398,6 +398,15 @@ mod tests {
         assert_eq!(count_bit_write.bits_written, 171);
         count_bit_write.write_zeta3(0)?;
         assert_eq!(count_bit_write.bits_written, 174);
+        count_bit_write.write_omega(3)?;
+        assert_eq!(count_bit_write.bits_written, 174 + len_omega(3));
+        let after_omega = count_bit_write.bits_written;
+        count_bit_write.write_pi(5, 3)?;
+        assert_eq!(count_bit_write.bits_written, after_omega + len_pi(5, 3));
+        let after_pi = count_bit_write.bits_written;
+        count_bit_write.write_pi2(7)?;
+        assert_eq!(count_bit_write.bits_written, after_pi + len_pi(7, 2));
+        let after_pi2 = count_bit_write.bits_written;
         count_bit_write.flush()?;
         drop(count_bit_write);
 
@@ -421,6 +430,12 @@ mod tests {
         assert_eq!(count_bit_read.bits_read, 171);
         assert_eq!(count_bit_read.read_zeta3()?, 0);
         assert_eq!(count_bit_read.bits_read, 174);
+        assert_eq!(count_bit_read.read_omega()?, 3);
+        assert_eq!(count_bit_read.bits_read, after_omega);
+        assert_eq!(count_bit_read.read_pi(3)?, 5);
+        assert_eq!(count_bit_read.bits_read, after_pi);
+        assert_eq!(count_bit_read.read_pi2()?, 7);
+        assert_eq!(count_bit_read.bits_read, after_pi2);
 
         Ok(())
     }
