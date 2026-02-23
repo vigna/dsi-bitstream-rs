@@ -20,7 +20,7 @@
 //! create a [`CodesRead`] with a lifetime that can reference data owned by the
 //! factory. This trait must be implemented by client applications.
 //!
-//! At the point, one can create a [`FactoryFuncCodeReader`] depending on a
+//! At that point, one can create a [`FactoryFuncCodeReader`] depending on a
 //! specific [`CodesReaderFactory`]. The [`FactoryFuncCodeReader`] will store a
 //! function pointer with a generic lifetime that can be downcast to a specific
 //! lifetime. Thus, the function pointer is created just once at the creation of
@@ -74,7 +74,6 @@
 //! ```
 
 use super::*;
-use core::fmt::Debug;
 /// A trait that models a type that can return a [`CodesRead`] that can reference
 /// data owned by the factory. The typical case is a factory that owns the
 /// bit stream, and returns a [`CodesRead`] that can read from it.
@@ -126,7 +125,7 @@ pub struct FactoryFuncCodeReader<E: Endianness, CRF: CodesReaderFactoryHelper<E>
     FactoryReadFn<E, CRF>,
 );
 
-/// Manually implement [`Clone`] to avoid the [`Clone`] bound on `CR` and `E`.
+/// Manually implement [`Clone`] to avoid the [`Clone`] bound on `CRF` and `E`.
 impl<E: Endianness, CRF: CodesReaderFactoryHelper<E> + ?Sized> Clone
     for FactoryFuncCodeReader<E, CRF>
 {

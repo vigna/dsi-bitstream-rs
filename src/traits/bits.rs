@@ -99,6 +99,13 @@ pub trait BitRead<E: Endianness> {
     /// Implementations are required to support the range [0 . . 2⁶⁴ – 1).
     fn read_unary(&mut self) -> Result<u64, Self::Error>;
 
+    /// Copy bits from `self` to a [`BitWrite`] stream.
+    ///
+    /// # Errors
+    ///
+    /// This method can return a [`CopyError`] if the source stream returns an
+    /// error while reading, or if the destination stream returns an error while
+    /// writing.
     fn copy_to<F: Endianness, W: BitWrite<F>>(
         &mut self,
         bit_write: &mut W,
@@ -143,6 +150,13 @@ pub trait BitWrite<E: Endianness> {
     /// including padding).
     fn flush(&mut self) -> Result<usize, Self::Error>;
 
+    /// Copy bits from a [`BitRead`] stream to `self`.
+    ///
+    /// # Errors
+    ///
+    /// This method can return a [`CopyError`] if the source stream returns an
+    /// error while reading, or if the destination stream returns an error while
+    /// writing.
     fn copy_from<F: Endianness, R: BitRead<F>>(
         &mut self,
         bit_read: &mut R,

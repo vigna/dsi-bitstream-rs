@@ -38,7 +38,7 @@ type ReadFn<E, CR> = fn(&mut CR) -> Result<u64, <CR as BitRead<E>>::Error>;
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
 pub struct FuncCodeReader<E: Endianness, CR: CodesRead<E> + ?Sized>(ReadFn<E, CR>);
 
-/// manually implement Clone to avoid the Clone bound on CR and E
+/// Manually implement [`Clone`] to avoid the [`Clone`] bound on CR and E
 impl<E: Endianness, CR: CodesRead<E> + ?Sized> Clone for FuncCodeReader<E, CR> {
     #[inline(always)]
     fn clone(&self) -> Self {
@@ -98,6 +98,7 @@ impl<E: Endianness, CR: CodesRead<E> + ?Sized> FuncCodeReader<E, CR> {
     const EXP_GOLOMB8: ReadFn<E, CR> = |reader: &mut CR| reader.read_exp_golomb(8);
     const EXP_GOLOMB9: ReadFn<E, CR> = |reader: &mut CR| reader.read_exp_golomb(9);
     const EXP_GOLOMB10: ReadFn<E, CR> = |reader: &mut CR| reader.read_exp_golomb(10);
+
     /// Returns a new [`FuncCodeReader`] for the given code.
     ///
     /// The code is [canonicalized](Codes::canonicalize) before
@@ -207,8 +208,8 @@ type WriteFn<E, CW> = fn(&mut CW, u64) -> Result<usize, <CW as BitWrite<E>>::Err
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
 pub struct FuncCodeWriter<E: Endianness, CW: CodesWrite<E> + ?Sized>(WriteFn<E, CW>);
 
-/// Manually implement Clone to avoid the Clone bound on CW and E.
-impl<E: Endianness, CR: CodesWrite<E> + ?Sized> Clone for FuncCodeWriter<E, CR> {
+/// Manually implement [`Clone`] to avoid the [`Clone`] bound on CW and E.
+impl<E: Endianness, CW: CodesWrite<E> + ?Sized> Clone for FuncCodeWriter<E, CW> {
     #[inline(always)]
     fn clone(&self) -> Self {
         Self(self.0)
@@ -428,6 +429,7 @@ impl FuncCodeLen {
     const EXP_GOLOMB8: LenFn = |n| len_exp_golomb(n, 8);
     const EXP_GOLOMB9: LenFn = |n| len_exp_golomb(n, 9);
     const EXP_GOLOMB10: LenFn = |n| len_exp_golomb(n, 10);
+
     /// Returns a new [`FuncCodeLen`] for the given code.
     ///
     /// The code is [canonicalized](Codes::canonicalize) before

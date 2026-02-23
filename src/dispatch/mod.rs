@@ -8,8 +8,8 @@
 
 //! Programmable static and dynamic dispatch for codes.
 //!
-//! The code traits in [codes](super::codes), such as
-//! [`Omega`](crate::codes::omega), extend [`BitRead`] and [`BitWrite`] to
+//! The modules in [codes](super::codes), such as
+//! [`omega`](crate::codes::omega), extend [`BitRead`] and [`BitWrite`] to
 //! provide a way to read and write codes from a bitstream. The user can thus
 //! select at compile time the desired trait and use the associated codes.
 //!
@@ -409,5 +409,6 @@ pub trait StaticCodeWrite<E: Endianness, CW: CodesWrite<E> + ?Sized> {
 /// A trait providing a generic method to compute the length of a codeword.
 pub trait CodeLen {
     /// Returns the length of the codeword for `n`.
+    #[must_use]
     fn len(&self, n: u64) -> usize;
 }

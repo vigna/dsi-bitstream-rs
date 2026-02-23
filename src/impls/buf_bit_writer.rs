@@ -46,9 +46,9 @@ use num_traits::{AsPrimitive, ConstOne, ConstZero};
 pub struct BufBitWriter<E: Endianness, WW: WordWrite, WP: WriteParams = DefaultWriteParams> {
     /// The [`WordWrite`] to which we will write words.
     backend: WW,
-    /// The buffer where we store bits until we have a word worth of them.
-    /// It might be empty, but it is never full.
-    /// Only the lower (BE) or upper (LE) `WW::Word::BITS - space_left_in_buffer`
+    /// The buffer where we store bits until we have a word's worth of them. It
+    /// might be empty, but it is never full. Only the lower (BE) or upper (LE)
+    /// `WW::Word::BITS - space_left_in_buffer`
     /// bits are valid: the rest have undefined value.
     buffer: WW::Word,
     /// Number of upper (BE) or lower (LE) free bits in the buffer. It is always greater than zero.

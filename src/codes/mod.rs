@@ -191,6 +191,7 @@ where
 /// signed integer types.
 pub trait ToNat {
     type Unsigned;
+    #[must_use]
     fn to_nat(self) -> Self::Unsigned;
 }
 

@@ -442,7 +442,10 @@ impl<'de> serde::Deserialize<'de> for Codes {
 /// [`StaticCodeWrite`] or [`CodeLen`] implementing minimal binary coding
 /// is necessary.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct MinimalBinary(pub u64);
+pub struct MinimalBinary(
+    /// The upper bound of the minimal binary code.
+    pub u64,
+);
 
 impl DynamicCodeRead for MinimalBinary {
     fn read<E: Endianness, R: CodesRead<E> + ?Sized>(
