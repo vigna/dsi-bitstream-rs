@@ -53,7 +53,7 @@ assert_eq!(reader.read_bits(10)?, 0);
 assert_eq!(reader.read_unary()?, 0);
 assert_eq!(reader.read_gamma()?, 1);
 assert_eq!(reader.read_delta()?, 2);
-# Ok::<(), Box<dyn std::error::Error>>(())
+# Ok::<(), Box<dyn core::error::Error>>(())
 ```
 
 In this case, the backend is already word-based, but if you have a byte-based
@@ -86,7 +86,7 @@ assert_eq!(reader.read_bits(10)?, 0);
 assert_eq!(reader.read_unary()?, 0);
 assert_eq!(reader.read_gamma()?, 1);
 assert_eq!(reader.read_delta()?, 2);
-# Ok::<(), Box<dyn std::error::Error>>(())
+# Ok::<(), Box<dyn core::error::Error>>(())
 ```
 
 Please read the documentation of the [`traits`] module and the [`impls`] module

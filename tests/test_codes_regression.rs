@@ -8,8 +8,8 @@
 
 #![cfg(feature = "alloc")]
 
+use core::error::Error;
 use dsi_bitstream::prelude::*;
-use std::error::Error;
 
 macro_rules! test_code {
     ($call_be:expr, $expected_be:expr, $call_le:expr, $expected_le:expr,) => {

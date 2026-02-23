@@ -235,7 +235,7 @@ pub mod codes;
 pub use codes::*;
 
 /// Error returned when a code is not supported for dispatch.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DispatchError {
     /// The code is not supported for dynamic dispatch.
     UnsupportedCode(Codes),

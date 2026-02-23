@@ -5,6 +5,7 @@
  */
 
 #![cfg(feature = "alloc")]
+use core::error::Error;
 use dsi_bitstream::prelude::{
     BitRead, BitWrite, BufBitReader, BufBitWriter, MemWordReader, MemWordWriterVec,
 };
@@ -12,7 +13,6 @@ use dsi_bitstream::traits::{BE, DoubleType, Endianness, LE, Word};
 use num_primitive::PrimitiveInteger;
 use rand::rngs::SmallRng;
 use rand::{RngExt, SeedableRng};
-use std::error::Error;
 
 #[test]
 fn test() -> Result<(), Box<dyn Error + Send + Sync + 'static>> {

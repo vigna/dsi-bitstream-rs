@@ -8,7 +8,7 @@
 
 #![allow(clippy::unused_io_amount)]
 #[cfg(feature = "fuzz")]
-use std::error::Error;
+use core::error::Error;
 
 macro_rules! impl_fuzz_repr {
     ($func_name:ident, $func_zip_name:ident, $fuzz_name:ident) => {

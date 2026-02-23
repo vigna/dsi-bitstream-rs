@@ -46,9 +46,14 @@
 - Removed `PartialEq` implementation for `Codes`. It was equating codes
   with the same canonical form, which was confusing.
 
+- We use `core::error::Error` everywhere.
+
 ### Fixed
 
 - `[Count|Dbg]Bit[Reader|Writer]` were missing recent code implementations.
+
+- Fixed bug in `Write` implementations for `BufBitWriter`, which would
+  work only with word `u64`.
 
 ## [0.7.0] - 2026-01-27
 

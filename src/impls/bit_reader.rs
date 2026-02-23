@@ -7,7 +7,6 @@
  */
 
 use core::convert::Infallible;
-use core::error::Error;
 #[cfg(feature = "mem_dbg")]
 use mem_dbg::{MemDbg, MemSize};
 
@@ -29,9 +28,10 @@ use crate::traits::*;
 /// instantaneous codes, but the casual user should be happy with the default
 /// value. See [`ReadParams`] for more details.
 ///
-/// For additional flexibility, this structure implements [`std::io::Read`].
-/// Note that because of coherence rules it is not possible to implement
-/// [`std::io::Read`] for a generic [`BitRead`].
+/// For additional flexibility, when the `std` feature is enabled, this
+/// structure implements [`std::io::Read`]. Note that because of coherence
+/// rules it is not possible to implement [`std::io::Read`] for a generic
+/// [`BitRead`].
 
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
@@ -54,11 +54,8 @@ impl<E: Endianness, WR, RP: ReadParams> BitReader<E, WR, RP> {
     }
 }
 
-impl<
-    E: Error + Send + Sync + 'static,
-    WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>,
-    RP: ReadParams,
-> BitRead<BE> for BitReader<BE, WR, RP>
+impl<WR: WordRead<Word = u64> + WordSeek<Error = <WR as WordRead>::Error>, RP: ReadParams>
+    BitRead<BE> for BitReader<BE, WR, RP>
 {
     type Error = <WR as WordRead>::Error;
     type PeekWord = u32;
@@ -177,11 +174,8 @@ impl<WR: WordSeek, RP: ReadParams> BitSeek for BitReader<BE, WR, RP> {
     }
 }
 
-impl<
-    E: Error + Send + Sync + 'static,
-    WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>,
-    RP: ReadParams,
-> BitRead<LE> for BitReader<LE, WR, RP>
+impl<WR: WordRead<Word = u64> + WordSeek<Error = <WR as WordRead>::Error>, RP: ReadParams>
+    BitRead<LE> for BitReader<LE, WR, RP>
 {
     type Error = <WR as WordRead>::Error;
     type PeekWord = u32;
@@ -278,11 +272,8 @@ impl<
 }
 
 #[cfg(feature = "std")]
-impl<
-    E: Error + Send + Sync + 'static,
-    WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>,
-    RP: ReadParams,
-> std::io::Read for BitReader<LE, WR, RP>
+impl<WR: WordRead<Word = u64> + WordSeek<Error = <WR as WordRead>::Error>, RP: ReadParams>
+    std::io::Read for BitReader<LE, WR, RP>
 {
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
         let mut iter = buf.chunks_exact_mut(8);
@@ -307,11 +298,8 @@ impl<
 }
 
 #[cfg(feature = "std")]
-impl<
-    E: Error + Send + Sync + 'static,
-    WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>,
-    RP: ReadParams,
-> std::io::Read for BitReader<BE, WR, RP>
+impl<WR: WordRead<Word = u64> + WordSeek<Error = <WR as WordRead>::Error>, RP: ReadParams>
+    std::io::Read for BitReader<BE, WR, RP>
 {
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
         let mut iter = buf.chunks_exact_mut(8);

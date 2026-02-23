@@ -87,6 +87,7 @@ impl<E: Endianness, B: BitRead<E>> RiceRead<E> for B {}
 impl<E: Endianness, B: BitWrite<E>> RiceWrite<E> for B {}
 
 #[cfg(test)]
+#[cfg(feature = "std")]
 mod tests {
     use super::*;
 

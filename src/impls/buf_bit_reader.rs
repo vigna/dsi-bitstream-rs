@@ -11,8 +11,6 @@ use num_traits::{AsPrimitive, ConstOne, ConstZero};
 
 use crate::codes::params::{DefaultReadParams, ReadParams};
 use crate::traits::*;
-use core::error::Error;
-use core::{mem, ptr};
 #[cfg(feature = "mem_dbg")]
 use mem_dbg::{MemDbg, MemSize};
 
@@ -35,8 +33,8 @@ type BB<WR> = <<WR as WordRead>::Word as DoubleType>::DoubleType;
 /// many bits as the word size plus one (extended with zeros beyond end of
 /// stream).
 ///
-/// The convenience methods [`from_path`] and [`from_file`] create a
-/// [`BufBitReader`] around a buffered file reader.
+/// The convenience functions [`from_path`] and [`from_file`] (requiring the
+/// `std` feature) create a [`BufBitReader`] around a buffered file reader.
 ///
 /// This implementation is usually faster than
 /// [`BitReader`](crate::impls::BitReader).
@@ -45,9 +43,10 @@ type BB<WR> = <<WR as WordRead>::Word as DoubleType>::DoubleType;
 /// instantaneous codes, but the casual user should be happy with the default
 /// value. See [`ReadParams`] for more details.
 ///
-/// For additional flexibility, this structure implements [`std::io::Read`].
-/// Note that because of coherence rules it is not possible to implement
-/// [`std::io::Read`] for a generic [`BitRead`].
+/// For additional flexibility, when the `std` feature is enabled, this
+/// structure implements [`std::io::Read`]. Note that because of coherence
+/// rules it is not possible to implement [`std::io::Read`] for a generic
+/// [`BitRead`].
 
 #[derive(Debug)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
@@ -76,7 +75,7 @@ where
 /// ```no_run
 /// use dsi_bitstream::prelude::*;
 /// let mut reader = buf_bit_reader::from_path::<LE, u32>("data.bin")?;
-/// # Ok::<(), Box<dyn std::error::Error>>(())
+/// # Ok::<(), Box<dyn core::error::Error>>(())
 /// ```
 #[cfg(feature = "std")]
 pub fn from_path<E: Endianness, W: Word + DoubleType>(
@@ -148,10 +147,7 @@ where
 
     /// Returns the backend, consuming this reader.
     pub fn into_inner(self) -> WR {
-        // SAFETY: forget(self) prevents double dropping backend
-        let backend = unsafe { ptr::read(&self.backend) };
-        mem::forget(self);
-        backend
+        self.backend
     }
 }
 
@@ -366,11 +362,8 @@ where
     }
 }
 
-impl<
-    E: Error + Send + Sync + 'static,
-    WR: WordRead<Error = E> + WordSeek<Error = E>,
-    RP: ReadParams,
-> BitSeek for BufBitReader<BE, WR, RP>
+impl<WR: WordRead + WordSeek<Error = <WR as WordRead>::Error>, RP: ReadParams> BitSeek
+    for BufBitReader<BE, WR, RP>
 where
     WR::Word: DoubleType,
 {
@@ -619,11 +612,8 @@ where
     }
 }
 
-impl<
-    E: Error + Send + Sync + 'static,
-    WR: WordRead<Error = E> + WordSeek<Error = E>,
-    RP: ReadParams,
-> BitSeek for BufBitReader<LE, WR, RP>
+impl<WR: WordRead + WordSeek<Error = <WR as WordRead>::Error>, RP: ReadParams> BitSeek
+    for BufBitReader<LE, WR, RP>
 where
     WR::Word: DoubleType,
 {
@@ -710,6 +700,7 @@ where
 mod tests {
     use super::*;
     use crate::prelude::{MemWordReader, MemWordWriterVec};
+    use core::error::Error;
     use std::io::Read;
 
     #[test]

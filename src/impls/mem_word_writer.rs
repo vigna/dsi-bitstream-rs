@@ -7,6 +7,8 @@
  */
 
 #[cfg(feature = "alloc")]
+use alloc::vec::Vec;
+#[cfg(feature = "alloc")]
 use core::convert::Infallible;
 #[cfg(feature = "mem_dbg")]
 use mem_dbg::{MemDbg, MemSize};
@@ -20,7 +22,7 @@ use crate::traits::*;
 ///
 /// # Example
 /// ```
-/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// # fn main() -> Result<(), Box<dyn core::error::Error>> {
 /// use dsi_bitstream::prelude::*;
 ///
 /// let mut words: [u64; 2] = [
@@ -100,7 +102,7 @@ impl<W: Word, B: AsRef<[W]>> MemWordWriterSlice<W, B> {
 ///
 /// # Example
 /// ```
-/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// # fn main() -> Result<(), Box<dyn core::error::Error>> {
 /// use dsi_bitstream::prelude::*;
 ///
 /// let mut words: Vec<u64> = vec![
@@ -128,7 +130,7 @@ pub struct MemWordWriterVec<W: Word, B> {
 }
 
 #[cfg(feature = "alloc")]
-impl<W: Word, B: AsRef<Vec<W>> + AsRef<Vec<W>>> MemWordWriterVec<W, B> {
+impl<W: Word, B: AsRef<Vec<W>>> MemWordWriterVec<W, B> {
     /// Creates a new [`MemWordWriterVec`] from a vector.
     #[must_use]
     pub fn new(data: B) -> Self {

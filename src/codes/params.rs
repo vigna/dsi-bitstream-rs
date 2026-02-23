@@ -56,7 +56,6 @@
 use crate::codes::*;
 use crate::impls::*;
 use crate::traits::*;
-use core::error::Error;
 #[cfg(feature = "mem_dbg")]
 use mem_dbg::{MemDbg, MemSize};
 use num_traits::AsPrimitive;
@@ -138,7 +137,7 @@ macro_rules! impl_default_read_codes {
             }
         }
 
-        impl<E: Error + Send + Sync + 'static, WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>> GammaRead<$endianness>
+        impl<WR: WordRead<Word = u64> + WordSeek<Error = <WR as WordRead>::Error>> GammaRead<$endianness>
             for BitReader<$endianness, WR, DefaultReadParams>
         {
             #[inline(always)]
@@ -149,7 +148,7 @@ macro_rules! impl_default_read_codes {
             }
         }
 
-        impl<E: Error + Send + Sync + 'static, WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>> DeltaRead<$endianness>
+        impl<WR: WordRead<Word = u64> + WordSeek<Error = <WR as WordRead>::Error>> DeltaRead<$endianness>
             for BitReader<$endianness, WR, DefaultReadParams>
         {
             #[inline(always)]
@@ -158,7 +157,7 @@ macro_rules! impl_default_read_codes {
             }
         }
 
-        impl<E: Error + Send + Sync + 'static, WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>> OmegaRead<$endianness>
+        impl<WR: WordRead<Word = u64> + WordSeek<Error = <WR as WordRead>::Error>> OmegaRead<$endianness>
             for BitReader<$endianness, WR, DefaultReadParams>
         {
             #[inline(always)]
@@ -167,7 +166,7 @@ macro_rules! impl_default_read_codes {
             }
         }
 
-        impl<E: Error + Send + Sync + 'static, WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>> ZetaRead<$endianness>
+        impl<WR: WordRead<Word = u64> + WordSeek<Error = <WR as WordRead>::Error>> ZetaRead<$endianness>
             for BitReader<$endianness, WR, DefaultReadParams>
         {
             #[inline(always)]
@@ -181,7 +180,7 @@ macro_rules! impl_default_read_codes {
             }
         }
 
-        impl<E: Error + Send + Sync + 'static, WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>> PiRead<$endianness>
+        impl<WR: WordRead<Word = u64> + WordSeek<Error = <WR as WordRead>::Error>> PiRead<$endianness>
             for BitReader<$endianness, WR, DefaultReadParams>
         {
             #[inline(always)]

@@ -62,7 +62,7 @@
 //! bit of each byte. However, one can gather all continuation bits in the first
 //! byte ([as UTF-8 does](https://en.wikipedia.org/wiki/UTF-8)). This approach
 //! makes it possible to compute the length of the code using a call to
-//! [`usize::leading_ones`] on the first negated byte, which usually maps to a
+//! [`u8::leading_ones`] on the first negated byte, which usually maps to a
 //! negation and a call to a fast instruction for the detection of the most
 //! significant bit, improving branch prediction.
 //!

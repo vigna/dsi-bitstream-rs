@@ -84,6 +84,9 @@
 //! source. To pass a choice of code dynamically, please have a look at the
 //! [`dispatch`](crate::dispatch) module.
 
+use num_primitive::{PrimitiveSigned, PrimitiveUnsigned};
+use num_traits::{AsPrimitive, ConstOne};
+
 pub mod params;
 
 pub mod gamma;
@@ -97,8 +100,6 @@ pub use delta::{
 };
 
 pub mod omega;
-use num_primitive::{PrimitiveSigned, PrimitiveUnsigned};
-use num_traits::{AsPrimitive, ConstOne};
 pub use omega::{OmegaRead, OmegaReadParam, OmegaWrite, OmegaWriteParam, len_omega};
 
 pub mod minimal_binary;
@@ -171,7 +172,7 @@ where
 
 /// Extension trait mapping signed integers bijectively to natural numbers.
 ///
-/// The method [`to_nat`](#method.to_nat) will map an nonnegative integer `x`
+/// The method [`to_nat`](#method.to_nat) will map a nonnegative integer `x`
 /// to `2x` and a negative integer `x` to `−2x − 1`. The inverse transformation
 /// is provided by the [`ToInt`] trait.
 ///

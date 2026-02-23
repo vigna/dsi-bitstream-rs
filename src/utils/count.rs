@@ -390,7 +390,7 @@ mod tests {
     use crate::prelude::*;
 
     #[test]
-    fn test_count() -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
+    fn test_count() -> Result<(), Box<dyn core::error::Error + Send + Sync + 'static>> {
         let mut buffer = <Vec<u64>>::new();
         let bit_write = <BufBitWriter<LE, _>>::new(MemWordWriterVec::new(&mut buffer));
         let mut count_bit_write = CountBitWriter::<_, _, true>::new(bit_write);

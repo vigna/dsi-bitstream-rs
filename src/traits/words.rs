@@ -89,14 +89,14 @@ pub trait WordWrite {
 /// Seekability for [`WordRead`] and [`WordWrite`] streams.
 pub trait WordSeek {
     type Error: Error + Send + Sync + 'static;
-    /// Gets the current position in words from the start of the file.
+    /// Gets the current position in words from the start of the stream.
     ///
     /// Note that, consistently with
     /// [`Seek::stream_position`](https://doc.rust-lang.org/beta/std/io/trait.Seek.html#method.stream_position),
     /// this method takes a mutable reference to `self`.
     fn word_pos(&mut self) -> Result<u64, Self::Error>;
 
-    /// Sets the current position in words from the start of the file to `word_pos`.
+    /// Sets the current position in words from the start of the stream to `word_pos`.
     fn set_word_pos(&mut self, word_pos: u64) -> Result<(), Self::Error>;
 }
 

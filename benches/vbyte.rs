@@ -16,7 +16,7 @@ use std::io::{Read, Write};
 use std::marker::PhantomData;
 use std::time::Duration;
 
-type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+type Result<T> = std::result::Result<T, Box<dyn core::error::Error>>;
 
 pub const GAMMA_DATA: usize = 1_000_000;
 pub const CAPACITY: usize = 4 * GAMMA_DATA;

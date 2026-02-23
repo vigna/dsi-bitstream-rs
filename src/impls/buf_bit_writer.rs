@@ -26,12 +26,13 @@ use num_traits::{AsPrimitive, ConstOne, ConstZero};
 /// instantaneous codes, but the casual user should be happy with the default
 /// value. See [`WriteParams`] for more details.
 ///
-/// The convenience methods [`from_path`] and [`from_file`] create a
-/// [`BufBitWriter`] around a buffered file writer.
+/// The convenience functions [`from_path`] and [`from_file`] (requiring the
+/// `std` feature) create a [`BufBitWriter`] around a buffered file writer.
 ///
-/// For additional flexibility, this structure implements [`std::io::Write`].
-/// Note that because of coherence rules it is not possible to implement
-/// [`std::io::Write`] for a generic [`BitWrite`].
+/// For additional flexibility, when the `std` feature is enabled, this
+/// structure implements [`std::io::Write`]. Note that because of coherence
+/// rules it is not possible to implement [`std::io::Write`] for a generic
+/// [`BitWrite`].
 
 #[derive(Debug)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
@@ -60,7 +61,7 @@ pub struct BufBitWriter<E: Endianness, WW: WordWrite, WP: WriteParams = DefaultW
 /// ```no_run
 /// use dsi_bitstream::prelude::*;
 /// let mut writer = buf_bit_writer::from_path::<LE, u64>("data.bin")?;
-/// # Ok::<(), Box<dyn std::error::Error>>(())
+/// # Ok::<(), Box<dyn core::error::Error>>(())
 /// ```
 #[cfg(feature = "std")]
 pub fn from_path<E: Endianness, W: Word>(
@@ -493,7 +494,7 @@ where
 {
     #[inline(always)]
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-        let mut iter = buf.chunks_exact(Self::WORD_BITS / 8);
+        let mut iter = buf.chunks_exact(8);
 
         for word in &mut iter {
             self.write_bits(u64::from_be_bytes(word.try_into().unwrap()), 64)
@@ -528,7 +529,7 @@ where
 {
     #[inline(always)]
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-        let mut iter = buf.chunks_exact(Self::WORD_BITS / 8);
+        let mut iter = buf.chunks_exact(8);
 
         for word in &mut iter {
             self.write_bits(u64::from_le_bytes(word.try_into().unwrap()), 64)
@@ -564,7 +565,7 @@ mod tests {
     use std::io::Write;
 
     #[test]
-    fn test_write() -> Result<(), Box<dyn std::error::Error>> {
+    fn test_write() -> Result<(), Box<dyn core::error::Error>> {
         let data = [
             0x90, 0x2d, 0xd0, 0x26, 0xdf, 0x89, 0xbb, 0x7e, 0x3a, 0xd6, 0xc6, 0x96, 0x73, 0xe9,
             0x9d, 0xc9, 0x2a, 0x77, 0x82, 0xa9, 0xe6, 0x4b, 0x53, 0xcc, 0x83, 0x80, 0x4a, 0xf3,
@@ -605,7 +606,7 @@ mod tests {
     macro_rules! test_buf_bit_writer {
         ($f: ident, $word:ty) => {
             #[test]
-            fn $f() -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
+            fn $f() -> Result<(), Box<dyn core::error::Error + Send + Sync + 'static>> {
                 #[allow(unused_imports)]
                 use crate::{
                     codes::{GammaRead, GammaWrite},

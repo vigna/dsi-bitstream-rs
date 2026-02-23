@@ -16,13 +16,13 @@ type BW<'a, E> = BufBitWriter<E, MemWordWriterVec<u64, &'a mut Vec<u64>>>;
 type BR<'a, E> = BufBitReader<E, MemWordReader<u32, &'a [u32]>>;
 
 #[test]
-fn test_codes() -> Result<(), Box<dyn std::error::Error>> {
+fn test_codes() -> Result<(), Box<dyn core::error::Error>> {
     test_codes_endianness::<LE>()?;
     test_codes_endianness::<BE>()?;
     Ok(())
 }
 
-fn test_codes_endianness<E: Endianness>() -> Result<(), Box<dyn std::error::Error>>
+fn test_codes_endianness<E: Endianness>() -> Result<(), Box<dyn core::error::Error>>
 where
     for<'a> BW<'a, E>: CodesWrite<E>,
     for<'a> BR<'a, E>: CodesRead<E>,
@@ -108,7 +108,7 @@ where
 fn test_code_with_vals<E: Endianness>(
     code: Codes,
     vals: &[u64],
-) -> Result<(), Box<dyn std::error::Error>>
+) -> Result<(), Box<dyn core::error::Error>>
 where
     for<'a> BW<'a, E>: CodesWrite<E>,
     for<'a> BR<'a, E>: CodesRead<E>,
@@ -129,7 +129,7 @@ fn test_vals_codes<E: Endianness>(
         + CodeLen
         + fmt::Debug,
     )],
-) -> Result<(), Box<dyn std::error::Error>>
+) -> Result<(), Box<dyn core::error::Error>>
 where
     for<'a> BW<'a, E>: CodesWrite<E>,
     for<'a> BR<'a, E>: CodesRead<E>,

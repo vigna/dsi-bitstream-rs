@@ -12,7 +12,7 @@ use std::io::Cursor;
 use std::io::{BufReader, BufWriter};
 
 #[test]
-fn test_word_pos() -> Result<(), Box<dyn std::error::Error>> {
+fn test_word_pos() -> Result<(), Box<dyn core::error::Error>> {
     let mut data: Vec<u8> = vec![];
 
     // create a bit writer on the file

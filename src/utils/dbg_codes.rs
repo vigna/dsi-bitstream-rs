@@ -20,6 +20,7 @@ pub struct DbgBitReader<E: Endianness, R> {
 }
 
 impl<E: Endianness, R> DbgBitReader<E, R> {
+    #[must_use]
     pub fn new(cr: R) -> Self {
         Self {
             reader: cr,
@@ -152,6 +153,7 @@ pub struct DbgBitWriter<E: Endianness, W> {
 }
 
 impl<E: Endianness, W> DbgBitWriter<E, W> {
+    #[must_use]
     pub fn new(cw: W) -> Self {
         Self {
             writer: cw,

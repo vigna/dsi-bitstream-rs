@@ -268,7 +268,7 @@ mod tests {
 
     #[test]
     #[allow(clippy::unusual_byte_groupings)]
-    fn test_omega() -> Result<(), Box<dyn core::error::Error>> {
+    fn test_omega() {
         for (value, expected_be, expected_le) in [
             (0, 0, 0),
             (1, 0b10_0 << (64 - 3), 0b0_01),
@@ -293,7 +293,7 @@ mod tests {
         ] {
             let mut data = [0_u64];
             let mut writer = <BufBitWriter<BE, _>>::new(MemWordWriterSlice::new(&mut data));
-            writer.write_omega(value)?;
+            writer.write_omega(value).unwrap();
             drop(writer);
             assert_eq!(
                 data[0].to_be(),
@@ -306,7 +306,7 @@ mod tests {
 
             let mut data = [0_u64];
             let mut writer = <BufBitWriter<LE, _>>::new(MemWordWriterSlice::new(&mut data));
-            writer.write_omega(value)?;
+            writer.write_omega(value).unwrap();
             drop(writer);
             assert_eq!(
                 data[0].to_le(),
@@ -317,6 +317,5 @@ mod tests {
                 expected_le,
             );
         }
-        Ok(())
     }
 }

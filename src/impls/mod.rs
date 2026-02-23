@@ -48,7 +48,7 @@
 //! # #[cfg(not(feature = "std"))]
 //! # fn main() {}
 //! # #[cfg(feature = "std")]
-//! # fn main() -> Result<(), Box<dyn std::error::Error>> {
+//! # fn main() -> Result<(), Box<dyn core::error::Error>> {
 //! use dsi_bitstream::prelude::*;
 //! use std::io::BufReader;
 //!
@@ -66,7 +66,7 @@
 //! # #[cfg(not(feature = "std"))]
 //! # fn main() {}
 //! # #[cfg(feature = "std")]
-//! # fn main() -> Result<(), Box<dyn std::error::Error>> {
+//! # fn main() -> Result<(), Box<dyn core::error::Error>> {
 //! use dsi_bitstream::prelude::*;
 //!
 //! let mut v: Vec<u64> = vec![];
