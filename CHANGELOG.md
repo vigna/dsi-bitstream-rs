@@ -34,7 +34,7 @@
 
 - A new method `Codes::canonicalize`
   returns equivalent, canonical, more efficient implementations of a code
-  (e.g, π₀ = ɣ).
+  (e.g., π₀ = ɣ).
 
 - Removed `PartialEq` implementation for `Codes`. It was equating codes
   with the same canonical form, which was confusing.

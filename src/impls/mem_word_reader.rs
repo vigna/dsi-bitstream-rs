@@ -46,13 +46,17 @@ use mem_dbg::{MemDbg, MemSize};
 /// ```
 #[derive(Debug, Clone, PartialEq)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
-pub struct MemWordReader<W: Word, B: AsRef<[W]>, const INF: bool = true> {
+pub struct MemWordReader<
+    W: PrimitiveUnsigned + ConstZero + ConstOne,
+    B: AsRef<[W]>,
+    const INF: bool = true,
+> {
     data: B,
     word_index: usize,
     _marker: core::marker::PhantomData<W>,
 }
 
-impl<W: Word, B: AsRef<[W]>> MemWordReader<W, B> {
+impl<W: PrimitiveUnsigned + ConstZero + ConstOne, B: AsRef<[W]>> MemWordReader<W, B> {
     /// Creates a new [`MemWordReader`] from a slice of data
     #[must_use]
     pub fn new(data: B) -> Self {
@@ -69,7 +73,7 @@ impl<W: Word, B: AsRef<[W]>> MemWordReader<W, B> {
     }
 }
 
-impl<W: Word, B: AsRef<[W]>> MemWordReader<W, B, false> {
+impl<W: PrimitiveUnsigned + ConstZero + ConstOne, B: AsRef<[W]>> MemWordReader<W, B, false> {
     /// Creates a new [`MemWordReader`] from a slice of data
     #[must_use]
     pub fn new_strict(data: B) -> Self {
@@ -81,7 +85,9 @@ impl<W: Word, B: AsRef<[W]>> MemWordReader<W, B, false> {
     }
 }
 
-impl<W: Word, B: AsRef<[W]>> WordRead for MemWordReader<W, B, true> {
+impl<W: PrimitiveUnsigned + ConstZero + ConstOne, B: AsRef<[W]>> WordRead
+    for MemWordReader<W, B, true>
+{
     type Error = Infallible;
     type Word = W;
 
@@ -99,7 +105,9 @@ impl<W: Word, B: AsRef<[W]>> WordRead for MemWordReader<W, B, true> {
     }
 }
 
-impl<W: Word, B: AsRef<[W]>> WordRead for MemWordReader<W, B, false> {
+impl<W: PrimitiveUnsigned + ConstZero + ConstOne, B: AsRef<[W]>> WordRead
+    for MemWordReader<W, B, false>
+{
     type Error = WordError;
     type Word = W;
 
@@ -118,7 +126,9 @@ impl<W: Word, B: AsRef<[W]>> WordRead for MemWordReader<W, B, false> {
     }
 }
 
-impl<W: Word, B: AsRef<[W]>> WordSeek for MemWordReader<W, B, true> {
+impl<W: PrimitiveUnsigned + ConstZero + ConstOne, B: AsRef<[W]>> WordSeek
+    for MemWordReader<W, B, true>
+{
     type Error = Infallible;
 
     #[inline(always)]
@@ -134,7 +144,9 @@ impl<W: Word, B: AsRef<[W]>> WordSeek for MemWordReader<W, B, true> {
     }
 }
 
-impl<W: Word, B: AsRef<[W]>> WordSeek for MemWordReader<W, B, false> {
+impl<W: PrimitiveUnsigned + ConstZero + ConstOne, B: AsRef<[W]>> WordSeek
+    for MemWordReader<W, B, false>
+{
     type Error = WordError;
 
     #[inline(always)]

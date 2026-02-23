@@ -6,7 +6,7 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
-use common_traits::*;
+use num_traits::AsPrimitive;
 
 use crate::codes::params::{DefaultReadParams, ReadParams};
 use crate::traits::*;
@@ -79,11 +79,14 @@ where
 /// # Ok::<(), Box<dyn std::error::Error>>(())
 /// ```
 #[cfg(feature = "std")]
-pub fn from_path<E: Endianness, W: Word + DoubleType>(
+pub fn from_path<E: Endianness, W: PrimitiveUnsigned + ConstZero + ConstOne + DoubleType>(
     path: impl AsRef<std::path::Path>,
 ) -> std::io::Result<
     BufBitReader<E, super::WordAdapter<W, std::io::BufReader<std::fs::File>>, DefaultReadParams>,
-> {
+>
+where
+    W::Bytes: Default + AsMut<[u8]>,
+{
     Ok(from_file::<E, W>(std::fs::File::open(path)?))
 }
 
@@ -93,9 +96,12 @@ pub fn from_path<E: Endianness, W: Word + DoubleType>(
 ///
 /// See also [`from_path`] for a version that takes a path.
 #[cfg(feature = "std")]
-pub fn from_file<E: Endianness, W: Word + DoubleType>(
+pub fn from_file<E: Endianness, W: PrimitiveUnsigned + ConstZero + ConstOne + DoubleType>(
     file: std::fs::File,
-) -> BufBitReader<E, super::WordAdapter<W, std::io::BufReader<std::fs::File>>, DefaultReadParams> {
+) -> BufBitReader<E, super::WordAdapter<W, std::io::BufReader<std::fs::File>>, DefaultReadParams>
+where
+    W::Bytes: Default + AsMut<[u8]>,
+{
     BufBitReader::new(super::WordAdapter::new(std::io::BufReader::new(file)))
 }
 
@@ -152,35 +158,35 @@ where
 
 impl<WR: WordRead, RP: ReadParams> BufBitReader<BE, WR, RP>
 where
-    WR::Word: DoubleType,
+    WR::Word: DoubleType + AsPrimitive<BB<WR>>,
 {
     /// Ensure that in the buffer there are at least `WR::Word::BITS` bits to read.
     /// This method can be called only if there are at least
     /// `WR::Word::BITS` free bits in the buffer.
     #[inline(always)]
     fn refill(&mut self) -> Result<(), <WR as WordRead>::Error> {
-        debug_assert!(BB::<WR>::BITS - self.bits_in_buffer >= WR::Word::BITS);
+        debug_assert!(BB::<WR>::BITS as usize - self.bits_in_buffer >= WR::Word::BITS as usize);
 
-        let new_word: BB<WR> = self.backend.read_word()?.to_be().upcast();
-        self.bits_in_buffer += WR::Word::BITS;
-        self.buffer |= new_word << (BB::<WR>::BITS - self.bits_in_buffer);
+        let new_word: BB<WR> = self.backend.read_word()?.to_be().as_();
+        self.bits_in_buffer += WR::Word::BITS as usize;
+        self.buffer |= new_word << (BB::<WR>::BITS as usize - self.bits_in_buffer);
         Ok(())
     }
 }
 
 impl<WR: WordRead, RP: ReadParams> BitRead<BE> for BufBitReader<BE, WR, RP>
 where
-    WR::Word: DoubleType + UpcastableInto<u64>,
-    BB<WR>: CastableInto<u64>,
+    WR::Word: DoubleType + AsPrimitive<u64> + AsPrimitive<BB<WR>>,
+    BB<WR>: AsPrimitive<u64>,
 {
     type Error = <WR as WordRead>::Error;
     type PeekWord = BB<WR>;
-    const PEEK_BITS: usize = <WR as WordRead>::Word::BITS + 1;
+    const PEEK_BITS: usize = <WR as WordRead>::Word::BITS as usize + 1;
 
     #[inline(always)]
     fn peek_bits(&mut self, n_bits: usize) -> Result<Self::PeekWord, Self::Error> {
         debug_assert!(n_bits > 0);
-        debug_assert!(n_bits <= Self::PeekWord::BITS);
+        debug_assert!(n_bits <= Self::PeekWord::BITS as usize);
 
         // A peek can do at most one refill, otherwise we might lose data
         if n_bits > self.bits_in_buffer {
@@ -190,7 +196,7 @@ where
         debug_assert!(n_bits <= self.bits_in_buffer);
 
         // Move the n_bits highest bits of the buffer to the lowest
-        Ok(self.buffer >> (BB::<WR>::BITS - n_bits))
+        Ok(self.buffer >> (BB::<WR>::BITS as usize - n_bits))
     }
 
     #[inline(always)]
@@ -202,41 +208,42 @@ where
     #[inline]
     fn read_bits(&mut self, mut n_bits: usize) -> Result<u64, Self::Error> {
         debug_assert!(n_bits <= 64);
-        debug_assert!(self.bits_in_buffer < BB::<WR>::BITS);
+        debug_assert!(self.bits_in_buffer < BB::<WR>::BITS as usize);
 
         // most common path, we just read the buffer
         if n_bits <= self.bits_in_buffer {
             // Valid right shift of BB::<WR>::BITS - n_bits, even when n_bits is zero
-            let result: u64 = (self.buffer >> (BB::<WR>::BITS - n_bits - 1) >> 1_u32).cast();
+            let result: u64 =
+                (self.buffer >> (BB::<WR>::BITS as usize - n_bits - 1) >> 1_u32).as_();
             self.bits_in_buffer -= n_bits;
             self.buffer <<= n_bits;
             return Ok(result);
         }
 
         let mut result: u64 =
-            (self.buffer >> (BB::<WR>::BITS - 1 - self.bits_in_buffer) >> 1_u8).cast();
+            (self.buffer >> (BB::<WR>::BITS as usize - 1 - self.bits_in_buffer) >> 1_u8).as_();
         n_bits -= self.bits_in_buffer;
 
         // Directly read to the result without updating the buffer
-        while n_bits > WR::Word::BITS {
-            let new_word: u64 = self.backend.read_word()?.to_be().upcast();
+        while n_bits > WR::Word::BITS as usize {
+            let new_word: u64 = self.backend.read_word()?.to_be().as_();
             result = (result << WR::Word::BITS) | new_word;
-            n_bits -= WR::Word::BITS;
+            n_bits -= WR::Word::BITS as usize;
         }
 
         debug_assert!(n_bits > 0);
-        debug_assert!(n_bits <= WR::Word::BITS);
+        debug_assert!(n_bits <= WR::Word::BITS as usize);
 
         // get the final word
         let new_word = self.backend.read_word()?.to_be();
-        self.bits_in_buffer = WR::Word::BITS - n_bits;
+        self.bits_in_buffer = WR::Word::BITS as usize - n_bits;
         // compose the remaining bits
-        let upcast: u64 = new_word.upcast();
-        let final_bits: u64 = (upcast >> self.bits_in_buffer).downcast();
+        let upcast: u64 = new_word.as_();
+        let final_bits: u64 = upcast >> self.bits_in_buffer;
         result = (result << (n_bits - 1) << 1) | final_bits;
         // and put the rest in the buffer
-        self.buffer = (UpcastableInto::<BB<WR>>::upcast(new_word)
-            << (BB::<WR>::BITS - self.bits_in_buffer - 1))
+        self.buffer = (AsPrimitive::<BB<WR>>::as_(new_word)
+            << (BB::<WR>::BITS as usize - self.bits_in_buffer - 1))
             << 1;
 
         Ok(result)
@@ -244,7 +251,7 @@ where
 
     #[inline]
     fn read_unary(&mut self) -> Result<u64, Self::Error> {
-        debug_assert!(self.bits_in_buffer < BB::<WR>::BITS);
+        debug_assert!(self.bits_in_buffer < BB::<WR>::BITS as usize);
 
         // count the zeros from the left
         let zeros: usize = self.buffer.leading_zeros() as _;
@@ -264,8 +271,8 @@ where
             if new_word != WR::Word::ZERO {
                 let zeros: usize = new_word.leading_zeros() as _;
                 self.buffer =
-                    UpcastableInto::<BB<WR>>::upcast(new_word) << (WR::Word::BITS + zeros) << 1;
-                self.bits_in_buffer = WR::Word::BITS - zeros - 1;
+                    AsPrimitive::<BB<WR>>::as_(new_word) << (WR::Word::BITS as usize + zeros) << 1;
+                self.bits_in_buffer = WR::Word::BITS as usize - zeros - 1;
                 return Ok(result + zeros as u64);
             }
             result += WR::Word::BITS as u64;
@@ -274,7 +281,7 @@ where
 
     #[inline]
     fn skip_bits(&mut self, mut n_bits: usize) -> Result<(), Self::Error> {
-        debug_assert!(self.bits_in_buffer < BB::<WR>::BITS);
+        debug_assert!(self.bits_in_buffer < BB::<WR>::BITS as usize);
         // happy case, just shift the buffer
         if n_bits <= self.bits_in_buffer {
             self.bits_in_buffer -= n_bits;
@@ -285,17 +292,17 @@ where
         n_bits -= self.bits_in_buffer;
 
         // skip words as needed
-        while n_bits > WR::Word::BITS {
+        while n_bits > WR::Word::BITS as usize {
             let _ = self.backend.read_word()?;
-            n_bits -= WR::Word::BITS;
+            n_bits -= WR::Word::BITS as usize;
         }
 
         // get the final word
         let new_word = self.backend.read_word()?.to_be();
-        self.bits_in_buffer = WR::Word::BITS - n_bits;
+        self.bits_in_buffer = WR::Word::BITS as usize - n_bits;
 
-        self.buffer = UpcastableInto::<BB<WR>>::upcast(new_word)
-            << (BB::<WR>::BITS - 1 - self.bits_in_buffer)
+        self.buffer = AsPrimitive::<BB<WR>>::as_(new_word)
+            << (BB::<WR>::BITS as usize - 1 - self.bits_in_buffer)
             << 1;
 
         Ok(())
@@ -311,7 +318,7 @@ where
         self.buffer = self.buffer.rotate_left(from_buffer as _);
 
         #[allow(unused_mut)]
-        let mut self_buffer_u64: u64 = self.buffer.cast();
+        let mut self_buffer_u64: u64 = self.buffer.as_();
 
         #[cfg(feature = "checks")]
         {
@@ -338,8 +345,8 @@ where
                         .read_word()
                         .map_err(CopyError::ReadError)?
                         .to_be()
-                        .upcast(),
-                    WR::Word::BITS,
+                        .as_(),
+                    WR::Word::BITS as usize,
                 )
                 .map_err(CopyError::WriteError)?;
             n -= WR::Word::BITS as u64;
@@ -351,12 +358,14 @@ where
             .read_word()
             .map_err(CopyError::ReadError)?
             .to_be();
-        self.bits_in_buffer = WR::Word::BITS - n as usize;
+        self.bits_in_buffer = WR::Word::BITS as usize - n as usize;
         bit_write
-            .write_bits((new_word >> self.bits_in_buffer).upcast(), n as usize)
+            .write_bits(
+                AsPrimitive::<u64>::as_(new_word >> self.bits_in_buffer),
+                n as usize,
+            )
             .map_err(CopyError::WriteError)?;
-        self.buffer = UpcastableInto::<BB<WR>>::upcast(new_word)
-            .rotate_right(WR::Word::BITS as u32 - n as u32);
+        self.buffer = AsPrimitive::<BB<WR>>::as_(new_word).rotate_right(WR::Word::BITS - n as u32);
 
         Ok(())
     }
@@ -368,7 +377,7 @@ impl<
     RP: ReadParams,
 > BitSeek for BufBitReader<BE, WR, RP>
 where
-    WR::Word: DoubleType,
+    WR::Word: DoubleType + AsPrimitive<BB<WR>>,
 {
     type Error = <WR as WordSeek>::Error;
 
@@ -385,9 +394,9 @@ where
         self.buffer = BB::<WR>::ZERO;
         self.bits_in_buffer = 0;
         if bit_offset != 0 {
-            let new_word: BB<WR> = self.backend.read_word()?.to_be().upcast();
-            self.bits_in_buffer = WR::Word::BITS - bit_offset;
-            self.buffer = new_word << (BB::<WR>::BITS - self.bits_in_buffer);
+            let new_word: BB<WR> = self.backend.read_word()?.to_be().as_();
+            self.bits_in_buffer = WR::Word::BITS as usize - bit_offset;
+            self.buffer = new_word << (BB::<WR>::BITS as usize - self.bits_in_buffer);
         }
         Ok(())
     }
@@ -399,35 +408,35 @@ where
 
 impl<WR: WordRead, RP: ReadParams> BufBitReader<LE, WR, RP>
 where
-    WR::Word: DoubleType,
+    WR::Word: DoubleType + AsPrimitive<BB<WR>>,
 {
     /// Ensure that in the buffer there are at least `WR::Word::BITS` bits to read.
     /// This method can be called only if there are at least
     /// `WR::Word::BITS` free bits in the buffer.
     #[inline(always)]
     fn refill(&mut self) -> Result<(), <WR as WordRead>::Error> {
-        debug_assert!(BB::<WR>::BITS - self.bits_in_buffer >= WR::Word::BITS);
+        debug_assert!(BB::<WR>::BITS as usize - self.bits_in_buffer >= WR::Word::BITS as usize);
 
-        let new_word: BB<WR> = self.backend.read_word()?.to_le().upcast();
+        let new_word: BB<WR> = self.backend.read_word()?.to_le().as_();
         self.buffer |= new_word << self.bits_in_buffer;
-        self.bits_in_buffer += WR::Word::BITS;
+        self.bits_in_buffer += WR::Word::BITS as usize;
         Ok(())
     }
 }
 
 impl<WR: WordRead, RP: ReadParams> BitRead<LE> for BufBitReader<LE, WR, RP>
 where
-    WR::Word: DoubleType + UpcastableInto<u64>,
-    BB<WR>: CastableInto<u64>,
+    WR::Word: DoubleType + AsPrimitive<u64> + AsPrimitive<BB<WR>>,
+    BB<WR>: AsPrimitive<u64>,
 {
     type Error = <WR as WordRead>::Error;
     type PeekWord = BB<WR>;
-    const PEEK_BITS: usize = <WR as WordRead>::Word::BITS + 1;
+    const PEEK_BITS: usize = <WR as WordRead>::Word::BITS as usize + 1;
 
     #[inline(always)]
     fn peek_bits(&mut self, n_bits: usize) -> Result<Self::PeekWord, Self::Error> {
         debug_assert!(n_bits > 0);
-        debug_assert!(n_bits <= Self::PeekWord::BITS);
+        debug_assert!(n_bits <= Self::PeekWord::BITS as usize);
 
         // A peek can do at most one refill, otherwise we might lose data
         if n_bits > self.bits_in_buffer {
@@ -437,7 +446,7 @@ where
         debug_assert!(n_bits <= self.bits_in_buffer);
 
         // Keep the n_bits lowest bits of the buffer
-        let sham = BB::<WR>::BITS - n_bits;
+        let sham = BB::<WR>::BITS as usize - n_bits;
         Ok((self.buffer << sham) >> sham)
     }
 
@@ -450,48 +459,48 @@ where
     #[inline]
     fn read_bits(&mut self, mut n_bits: usize) -> Result<u64, Self::Error> {
         debug_assert!(n_bits <= 64);
-        debug_assert!(self.bits_in_buffer < BB::<WR>::BITS);
+        debug_assert!(self.bits_in_buffer < BB::<WR>::BITS as usize);
 
         // most common path, we just read the buffer
         if n_bits <= self.bits_in_buffer {
-            let result: u64 = (self.buffer & ((BB::<WR>::ONE << n_bits) - BB::<WR>::ONE)).cast();
+            let result: u64 = (self.buffer & ((BB::<WR>::ONE << n_bits) - BB::<WR>::ONE)).as_();
             self.bits_in_buffer -= n_bits;
             self.buffer >>= n_bits;
             return Ok(result);
         }
 
-        let mut result: u64 = self.buffer.cast();
+        let mut result: u64 = self.buffer.as_();
         let mut bits_in_res = self.bits_in_buffer;
 
         // Directly read to the result without updating the buffer
-        while n_bits > WR::Word::BITS + bits_in_res {
-            let new_word: u64 = self.backend.read_word()?.to_le().upcast();
+        while n_bits > WR::Word::BITS as usize + bits_in_res {
+            let new_word: u64 = self.backend.read_word()?.to_le().as_();
             result |= new_word << bits_in_res;
-            bits_in_res += WR::Word::BITS;
+            bits_in_res += WR::Word::BITS as usize;
         }
 
         n_bits -= bits_in_res;
 
         debug_assert!(n_bits > 0);
-        debug_assert!(n_bits <= WR::Word::BITS);
+        debug_assert!(n_bits <= WR::Word::BITS as usize);
 
         // get the final word
         let new_word = self.backend.read_word()?.to_le();
-        self.bits_in_buffer = WR::Word::BITS - n_bits;
+        self.bits_in_buffer = WR::Word::BITS as usize - n_bits;
         // compose the remaining bits
         let sham = 64 - n_bits;
-        let upcast: u64 = new_word.upcast();
-        let final_bits: u64 = ((upcast << sham) >> sham).downcast();
+        let upcast: u64 = new_word.as_();
+        let final_bits: u64 = (upcast << sham) >> sham;
         result |= final_bits << bits_in_res;
         // and put the rest in the buffer
-        self.buffer = UpcastableInto::<BB<WR>>::upcast(new_word) >> n_bits;
+        self.buffer = AsPrimitive::<BB<WR>>::as_(new_word) >> n_bits;
 
         Ok(result)
     }
 
     #[inline]
     fn read_unary(&mut self) -> Result<u64, Self::Error> {
-        debug_assert!(self.bits_in_buffer < BB::<WR>::BITS);
+        debug_assert!(self.bits_in_buffer < BB::<WR>::BITS as usize);
 
         // count the zeros from the right
         let zeros: usize = self.buffer.trailing_zeros() as usize;
@@ -510,8 +519,8 @@ where
 
             if new_word != WR::Word::ZERO {
                 let zeros: usize = new_word.trailing_zeros() as _;
-                self.buffer = UpcastableInto::<BB<WR>>::upcast(new_word) >> zeros >> 1;
-                self.bits_in_buffer = WR::Word::BITS - zeros - 1;
+                self.buffer = AsPrimitive::<BB<WR>>::as_(new_word) >> zeros >> 1;
+                self.bits_in_buffer = WR::Word::BITS as usize - zeros - 1;
                 return Ok(result + zeros as u64);
             }
             result += WR::Word::BITS as u64;
@@ -520,7 +529,7 @@ where
 
     #[inline]
     fn skip_bits(&mut self, mut n_bits: usize) -> Result<(), Self::Error> {
-        debug_assert!(self.bits_in_buffer < BB::<WR>::BITS);
+        debug_assert!(self.bits_in_buffer < BB::<WR>::BITS as usize);
         // happy case, just shift the buffer
         if n_bits <= self.bits_in_buffer {
             self.bits_in_buffer -= n_bits;
@@ -531,15 +540,15 @@ where
         n_bits -= self.bits_in_buffer;
 
         // skip words as needed
-        while n_bits > WR::Word::BITS {
+        while n_bits > WR::Word::BITS as usize {
             let _ = self.backend.read_word()?;
-            n_bits -= WR::Word::BITS;
+            n_bits -= WR::Word::BITS as usize;
         }
 
         // get the final word
         let new_word = self.backend.read_word()?.to_le();
-        self.bits_in_buffer = WR::Word::BITS - n_bits;
-        self.buffer = UpcastableInto::<BB<WR>>::upcast(new_word) >> n_bits;
+        self.bits_in_buffer = WR::Word::BITS as usize - n_bits;
+        self.buffer = AsPrimitive::<BB<WR>>::as_(new_word) >> n_bits;
 
         Ok(())
     }
@@ -553,7 +562,7 @@ where
         let from_buffer = Ord::min(n, self.bits_in_buffer as _);
 
         #[allow(unused_mut)]
-        let mut self_buffer_u64: u64 = self.buffer.cast();
+        let mut self_buffer_u64: u64 = self.buffer.as_();
 
         #[cfg(feature = "checks")]
         {
@@ -582,8 +591,8 @@ where
                         .read_word()
                         .map_err(CopyError::ReadError)?
                         .to_le()
-                        .upcast(),
-                    WR::Word::BITS,
+                        .as_(),
+                    WR::Word::BITS as usize,
                 )
                 .map_err(CopyError::WriteError)?;
             n -= WR::Word::BITS as u64;
@@ -595,10 +604,10 @@ where
             .read_word()
             .map_err(CopyError::ReadError)?
             .to_le();
-        self.bits_in_buffer = WR::Word::BITS - n as usize;
+        self.bits_in_buffer = WR::Word::BITS as usize - n as usize;
 
         #[allow(unused_mut)]
-        let mut new_word_u64: u64 = new_word.upcast();
+        let mut new_word_u64: u64 = new_word.as_();
 
         #[cfg(feature = "checks")]
         {
@@ -611,7 +620,7 @@ where
         bit_write
             .write_bits(new_word_u64, n as usize)
             .map_err(CopyError::WriteError)?;
-        self.buffer = UpcastableInto::<BB<WR>>::upcast(new_word) >> n;
+        self.buffer = AsPrimitive::<BB<WR>>::as_(new_word) >> n;
         Ok(())
     }
 }
@@ -622,7 +631,7 @@ impl<
     RP: ReadParams,
 > BitSeek for BufBitReader<LE, WR, RP>
 where
-    WR::Word: DoubleType,
+    WR::Word: DoubleType + AsPrimitive<BB<WR>>,
 {
     type Error = <WR as WordSeek>::Error;
 
@@ -640,8 +649,8 @@ where
         self.buffer = BB::<WR>::ZERO;
         self.bits_in_buffer = 0;
         if bit_offset != 0 {
-            let new_word: BB<WR> = self.backend.read_word()?.to_le().upcast();
-            self.bits_in_buffer = WR::Word::BITS - bit_offset;
+            let new_word: BB<WR> = self.backend.read_word()?.to_le().as_();
+            self.bits_in_buffer = WR::Word::BITS as usize - bit_offset;
             self.buffer = new_word >> bit_offset;
         }
         Ok(())
@@ -651,8 +660,8 @@ where
 #[cfg(feature = "std")]
 impl<WR: WordRead, RP: ReadParams> std::io::Read for BufBitReader<LE, WR, RP>
 where
-    WR::Word: DoubleType + UpcastableInto<u64>,
-    BB<WR>: CastableInto<u64>,
+    WR::Word: DoubleType + AsPrimitive<u64> + AsPrimitive<BB<WR>>,
+    BB<WR>: AsPrimitive<u64>,
 {
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
         let mut iter = buf.chunks_exact_mut(8);
@@ -679,8 +688,8 @@ where
 #[cfg(feature = "std")]
 impl<WR: WordRead, RP: ReadParams> std::io::Read for BufBitReader<BE, WR, RP>
 where
-    WR::Word: DoubleType + UpcastableInto<u64>,
-    BB<WR>: CastableInto<u64>,
+    WR::Word: DoubleType + AsPrimitive<u64> + AsPrimitive<BB<WR>>,
+    BB<WR>: AsPrimitive<u64>,
 {
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
         let mut iter = buf.chunks_exact_mut(8);

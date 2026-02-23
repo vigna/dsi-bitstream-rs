@@ -64,7 +64,7 @@ read_func_merged_table = """
 #[inline(always)]
 pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> Option<(u64, usize)> {
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
-        let idx = idx.cast() as usize;
+        let idx: usize = idx.as_() as usize;
         let (value, len) = READ_%(BO)s[idx];
         if len != MISSING_VALUE_LEN_%(BO)s {
             backend.skip_bits_after_peek(len as usize);
@@ -83,7 +83,7 @@ read_func_two_table = """
 #[inline(always)]
 pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> Option<(u64, usize)> {
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
-        let idx = idx.cast() as usize;
+        let idx: usize = idx.as_() as usize;
         let len = READ_LEN_%(BO)s[idx];
         if len != MISSING_VALUE_LEN_%(BO)s {
             backend.skip_bits_after_peek(len as usize);
@@ -154,7 +154,7 @@ def gen_table(
             )
         )
         f.write("use crate::traits::{BE, BitRead, BitWrite, LE};\n")
-        f.write("use common_traits::*;\n")
+        f.write("use num_traits::AsPrimitive;\n")
 
         f.write("/// How many bits are needed to read the tables in this\n")
         f.write("pub const READ_BITS: usize = {};\n".format(read_bits))
@@ -303,7 +303,7 @@ def gen_table(
 
         # Write check_read_table function
         f.write(
-            '/// Asserts at compile time that `peek_bits` is large enough for these tables.\n'
+            "/// Asserts at compile time that `peek_bits` is large enough for these tables.\n"
         )
         f.write("pub const fn check_read_table(peek_bits: usize) {\n")
         f.write(
@@ -588,7 +588,7 @@ def gen_delta(read_bits, write_max_val, len_max_val=None, merged_table=False):
             )
         )
         f.write("use crate::traits::{BitRead, BitWrite, BE, LE};\n")
-        f.write("use common_traits::*;\n")
+        f.write("use num_traits::AsPrimitive;\n")
 
         f.write("/// How many bits are needed to read the tables in this\n")
         f.write("pub const READ_BITS: usize = {};\n".format(read_bits))
@@ -612,7 +612,7 @@ def gen_delta(read_bits, write_max_val, len_max_val=None, merged_table=False):
 #[inline(always)]
 pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> (i8, u64) {
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
-        let idx = idx.cast() as usize;
+        let idx: usize = idx.as_() as usize;
         let len_with_flag = READ_LEN_%(BO)s[idx];
         let value_or_gamma = READ_%(BO)s[idx] as u64;
         backend.skip_bits_after_peek((len_with_flag & 0x7F) as usize);
@@ -755,7 +755,7 @@ pub fn write_table_be<B: BitWrite<BE>>(backend: &mut B, value: u64) -> Result<Op
 
         # Write check_read_table function
         f.write(
-            '/// Asserts at compile time that `peek_bits` is large enough for these tables.\n'
+            "/// Asserts at compile time that `peek_bits` is large enough for these tables.\n"
         )
         f.write("pub const fn check_read_table(peek_bits: usize) {\n")
         f.write(
@@ -1125,7 +1125,7 @@ def gen_omega(read_bits, write_max_val, len_max_val=None, merged_table=False):
             )
         )
         f.write("use crate::traits::{BitRead, BitWrite, BE, LE};\n")
-        f.write("use common_traits::*;\n")
+        f.write("use num_traits::AsPrimitive;\n")
 
         f.write("/// How many bits are needed to read the tables in this\n")
         f.write("pub const READ_BITS: usize = {};\n".format(read_bits))
@@ -1157,7 +1157,7 @@ def gen_omega(read_bits, write_max_val, len_max_val=None, merged_table=False):
 #[inline(always)]
 pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> (i8, u64) {
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
-        let idx = idx.cast() as usize;
+        let idx: usize = idx.as_() as usize;
         let len_with_flag = READ_LEN_%(BO)s[idx];
         let value = READ_%(BO)s[idx] as u64;
         backend.skip_bits_after_peek((len_with_flag & 0x7F) as usize);
@@ -1321,7 +1321,7 @@ pub fn write_table_be<B: BitWrite<BE>>(backend: &mut B, mut value: u64) -> Resul
 
         # Write check_read_table function
         f.write(
-            '/// Asserts at compile time that `peek_bits` is large enough for these tables.\n'
+            "/// Asserts at compile time that `peek_bits` is large enough for these tables.\n"
         )
         f.write("pub const fn check_read_table(peek_bits: usize) {\n")
         f.write(
@@ -1500,7 +1500,7 @@ def gen_pi(read_bits, write_max_val, len_max_val=None, k=2, merged_table=False):
             )
         )
         f.write("use crate::traits::{BitRead, BitWrite, BE, LE};\n")
-        f.write("use common_traits::*;\n")
+        f.write("use num_traits::AsPrimitive;\n")
 
         f.write("/// How many bits are needed to read the tables in this\n")
         f.write("pub const READ_BITS: usize = {};\n".format(read_bits))
@@ -1526,7 +1526,7 @@ def gen_pi(read_bits, write_max_val, len_max_val=None, k=2, merged_table=False):
 #[inline(always)]
 pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> (i8, u64) {
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
-        let idx = idx.cast() as usize;
+        let idx: usize = idx.as_() as usize;
         let len_with_flag = READ_LEN_%(BO)s[idx];
         let value_or_lambda = READ_%(BO)s[idx] as u64;
         backend.skip_bits_after_peek((len_with_flag & 0x7F) as usize);
@@ -1669,7 +1669,7 @@ pub fn write_table_be<B: BitWrite<BE>>(backend: &mut B, value: u64) -> Result<Op
 
         # Write check_read_table function
         f.write(
-            '/// Asserts at compile time that `peek_bits` is large enough for these tables.\n'
+            "/// Asserts at compile time that `peek_bits` is large enough for these tables.\n"
         )
         f.write("pub const fn check_read_table(peek_bits: usize) {\n")
         f.write(

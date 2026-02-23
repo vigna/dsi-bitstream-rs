@@ -49,6 +49,7 @@ pub fn len_golomb(n: u64, b: u64) -> usize {
 
 /// Returns the optimal value of *b* for a geometric distribution of base *p*,
 /// that is, ⌈−log(2 − *p*) / log(1 − *p*)⌉.
+#[cfg(feature = "std")]
 pub fn b(p: f64) -> u64 {
     (-(2.0 - p).ln() / (1.0 - p).ln()).ceil() as u64
 }

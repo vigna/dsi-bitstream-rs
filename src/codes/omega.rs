@@ -64,7 +64,7 @@
 //! Information Theory, 21(2):194−203, March 1975.
 
 use crate::{codes::omega_tables, prelude::*};
-use common_traits::CastableInto;
+use num_traits::AsPrimitive;
 
 /// Returns the length of the ω code for `n`.
 #[must_use]
@@ -131,7 +131,7 @@ fn read_omega_from_state<E: Endianness, B: BitRead<E>>(
     mut n: u64,
 ) -> Result<u64, B::Error> {
     loop {
-        let bit = backend.peek_bits(1)?.cast();
+        let bit = backend.peek_bits(1)?.as_();
         if bit == 0 {
             backend.skip_bits_after_peek(1);
             return Ok(n - 1);

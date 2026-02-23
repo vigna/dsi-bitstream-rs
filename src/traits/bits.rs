@@ -10,7 +10,7 @@ use core::error::Error;
 use core::fmt::{Display, Formatter};
 
 use crate::traits::*;
-use common_traits::CastableInto;
+use num_traits::AsPrimitive;
 
 /// The error returned by the bit copy methods [`BitRead::copy_to`]
 /// and [`BitWrite::copy_from`].
@@ -64,7 +64,7 @@ pub trait BitRead<E: Endianness> {
     type Error: Error + Send + Sync + 'static;
 
     /// The type we can read from the stream without advancing.
-    type PeekWord: CastableInto<u64>;
+    type PeekWord: AsPrimitive<u64>;
 
     /// The number of bits that [`peek_bits`](BitRead::peek_bits) is guaranteed
     /// to return successfully (with zero-extended EOF).

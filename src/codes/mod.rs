@@ -84,7 +84,6 @@
 //! source. To pass a choice of code dynamically, please have a look at the
 //! [`dispatch`](crate::dispatch) module.
 
-use common_traits::{AsBytes, SignedInt, UnsignedInt};
 pub mod params;
 
 pub mod gamma;
@@ -142,7 +141,7 @@ pub mod zeta_tables;
 /// This pair of bijections makes it possible to use instantaneous codes for
 /// signed integers by mapping them to natural numbers and back.
 ///
-/// This bijection is best known as the “ZigZag” transformation in Google's
+/// This bijection is best known as the "ZigZag" transformation in Google's
 /// [Protocol Buffers](https://protobuf.dev/), albeit it has been used by
 /// [WebGraph](http://webgraph.di.unimi.it/) since 2003, and much likely in
 /// other software, for the same purpose. Note that the compression standards
@@ -150,22 +149,25 @@ pub mod zeta_tables;
 /// mapping a positive integer `x` to `2x − 1` and a zero or negative integer
 /// `x` to `−2x`.
 ///
-/// The implementation is just based on the traits [`UnsignedInt`] and
-/// [`AsBytes`]. We provide blanket implementations for all primitive unsigned
-/// integer types, but it can be used with any type implementing those traits.
-pub trait ToInt: UnsignedInt + AsBytes {
-    #[inline]
-    fn to_int(self) -> Self::SignedInt {
-        (self >> Self::ONE).to_signed() ^ (-(self & Self::ONE).to_signed())
-    }
+/// The implementation uses a blanket implementation for all primitive
+/// unsigned integer types.
+pub trait ToInt {
+    type Signed;
+    fn to_int(self) -> Self::Signed;
 }
 
-impl ToInt for u128 {}
-impl ToInt for u64 {}
-impl ToInt for u32 {}
-impl ToInt for u16 {}
-impl ToInt for u8 {}
-impl ToInt for usize {}
+impl<
+    U: num_primitive::PrimitiveUnsigned + num_traits::ConstOne + num_traits::AsPrimitive<U::Signed>,
+> ToInt for U
+where
+    U::Signed: num_primitive::PrimitiveSigned + Copy + 'static,
+{
+    type Signed = U::Signed;
+    #[inline]
+    fn to_int(self) -> U::Signed {
+        (self >> 1u32).as_() ^ -((self & U::ONE).as_())
+    }
+}
 
 /// Extension trait mapping signed integers bijectively to natural numbers.
 ///
@@ -176,7 +178,7 @@ impl ToInt for usize {}
 /// This pair of bijections makes it possible to use instantaneous codes
 /// for signed integers by mapping them to natural numbers and back.
 ///
-/// This bijection is best known as the “ZigZag” transformation in Google's
+/// This bijection is best known as the "ZigZag" transformation in Google's
 /// [Protocol Buffers](https://protobuf.dev/), albeit it has been used by
 /// [WebGraph](http://webgraph.di.unimi.it/) since 2003, and much likely in
 /// other software, for the same purpose. Note that the compression standards
@@ -184,19 +186,24 @@ impl ToInt for usize {}
 /// mapping a positive integer `x` to `2x − 1` and a zero or negative integer
 /// `x` to `−2x`.
 ///
-/// The implementation is just based on the traits [`SignedInt`] and
-/// [`AsBytes`]. We provide blanket implementations for all primitive signed
-/// integer types, but it can be used with any type implementing those traits.
-pub trait ToNat: SignedInt + AsBytes {
-    #[inline]
-    fn to_nat(self) -> Self::UnsignedInt {
-        (self << Self::ONE).to_unsigned() ^ (self >> (Self::BITS - 1)).to_unsigned()
-    }
+/// The implementation uses a blanket implementation for all primitive
+/// signed integer types.
+pub trait ToNat {
+    type Unsigned;
+    fn to_nat(self) -> Self::Unsigned;
 }
 
-impl ToNat for i128 {}
-impl ToNat for i64 {}
-impl ToNat for i32 {}
-impl ToNat for i16 {}
-impl ToNat for i8 {}
-impl ToNat for isize {}
+impl<
+    S: num_primitive::PrimitiveSigned
+        + num_primitive::PrimitiveInteger
+        + num_traits::AsPrimitive<S::Unsigned>,
+> ToNat for S
+where
+    S::Unsigned: num_primitive::PrimitiveUnsigned + Copy + 'static,
+{
+    type Unsigned = S::Unsigned;
+    #[inline]
+    fn to_nat(self) -> S::Unsigned {
+        (self << 1u32).as_() ^ (self >> (S::BITS - 1)).as_()
+    }
+}

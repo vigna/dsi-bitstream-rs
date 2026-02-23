@@ -3,7 +3,7 @@
 // ~~~~~~~~~~~~~~~~~~~ DO NOT MODIFY ~~~~~~~~~~~~~~~~~~~~~~
 // Methods for reading and writing values using precomputed tables for omega codes
 use crate::traits::{BE, BitRead, BitWrite, LE};
-use common_traits::*;
+use num_traits::AsPrimitive;
 /// How many bits are needed to read the tables in this
 pub const READ_BITS: usize = 10;
 const _: () = assert!(
@@ -29,7 +29,7 @@ pub const WRITE_MAX: u64 = 63;
 #[inline(always)]
 pub fn read_table_le<B: BitRead<LE>>(backend: &mut B) -> (i8, u64) {
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
-        let idx = idx.cast() as usize;
+        let idx: usize = idx.as_() as usize;
         let len_with_flag = READ_LEN_LE[idx];
         let value = READ_LE[idx] as u64;
         backend.skip_bits_after_peek((len_with_flag & 0x7F) as usize);
@@ -53,7 +53,7 @@ pub fn read_table_le<B: BitRead<LE>>(backend: &mut B) -> (i8, u64) {
 #[inline(always)]
 pub fn read_table_be<B: BitRead<BE>>(backend: &mut B) -> (i8, u64) {
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
-        let idx = idx.cast() as usize;
+        let idx: usize = idx.as_() as usize;
         let len_with_flag = READ_LEN_BE[idx];
         let value = READ_BE[idx] as u64;
         backend.skip_bits_after_peek((len_with_flag & 0x7F) as usize);
