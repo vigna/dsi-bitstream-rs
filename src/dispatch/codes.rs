@@ -106,6 +106,11 @@ impl Codes {
     /// The code is [canonicalized](Codes::canonicalize) before
     /// the conversion, so equivalent codes map to the same
     /// constant.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`DispatchError::UnsupportedCode`] if the (canonicalized)
+    /// code has no corresponding constant in [`code_consts`].
     pub const fn to_code_const(&self) -> Result<usize, DispatchError> {
         Ok(match self.canonicalize() {
             Self::Unary => code_consts::UNARY,
@@ -166,6 +171,11 @@ impl Codes {
     }
 
     /// Converts a value from [`code_consts`] to a code.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`DispatchError::UnsupportedCodeConst`] if the value
+    /// does not correspond to any known code constant.
     pub const fn from_code_const(const_code: usize) -> Result<Self, DispatchError> {
         Ok(match const_code {
             code_consts::UNARY => Self::Unary,

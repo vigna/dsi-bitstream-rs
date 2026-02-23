@@ -36,7 +36,7 @@
 //!
 //! The first property is the endianness of the bytes: in big-endian codes, the
 //! first byte contains the highest (most significant) bits, whereas in
-//! little-endian codes, the first byte contains the lowest (less significant)
+//! little-endian codes, the first byte contains the lowest (least significant)
 //! bits.
 //!
 //! The advantage of the big-endian variant is that is lexicographical, that is,

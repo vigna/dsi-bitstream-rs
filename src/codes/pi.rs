@@ -12,7 +12,7 @@
 //! ⌊log₂(*n* + 1)⌋ and of the binary representation of *n* + 1 with the most
 //! significant bit removed.
 //!
-//! The implied distribution of a π code with parameter *k* code is ≈
+//! The implied distribution of a π code with parameter *k* is ≈
 //! 1/*x*<sup>1 + 1/2*ᵏ*</sup>.
 //!
 //! Note that π₀ = [ζ₁](super::zeta) = [γ](super::gamma) and π₁ =
@@ -99,7 +99,7 @@ pub trait PiReadParam<E: Endianness>: BitRead<E> {
     fn read_pi2_param<const USE_TABLE: bool>(&mut self) -> Result<u64, Self::Error>;
 }
 
-impl<B: BitRead<BE> + RiceRead<BE>> PiReadParam<BE> for B {
+impl<B: BitRead<BE>> PiReadParam<BE> for B {
     #[inline(always)]
     fn read_pi_param(&mut self, k: usize) -> Result<u64, B::Error> {
         default_read_pi(self, k)
@@ -130,7 +130,7 @@ impl<B: BitRead<BE> + RiceRead<BE>> PiReadParam<BE> for B {
     }
 }
 
-impl<B: BitRead<LE> + RiceRead<LE>> PiReadParam<LE> for B {
+impl<B: BitRead<LE>> PiReadParam<LE> for B {
     #[inline(always)]
     fn read_pi_param(&mut self, k: usize) -> Result<u64, B::Error> {
         default_read_pi(self, k)
@@ -164,7 +164,7 @@ impl<B: BitRead<LE> + RiceRead<LE>> PiReadParam<LE> for B {
 /// Default, internal non-table based implementation that works
 /// for any endianness.
 #[inline(always)]
-fn default_read_pi<E: Endianness, B: BitRead<E> + RiceRead<E>>(
+fn default_read_pi<E: Endianness, B: BitRead<E>>(
     backend: &mut B,
     k: usize,
 ) -> Result<u64, B::Error> {
@@ -195,7 +195,7 @@ pub trait PiWriteParam<E: Endianness>: BitWrite<E> {
     fn write_pi2_param<const USE_TABLE: bool>(&mut self, n: u64) -> Result<usize, Self::Error>;
 }
 
-impl<B: BitWrite<BE> + RiceWrite<BE>> PiWriteParam<BE> for B {
+impl<B: BitWrite<BE>> PiWriteParam<BE> for B {
     #[inline(always)]
     fn write_pi_param(&mut self, n: u64, k: usize) -> Result<usize, Self::Error> {
         default_write_pi(self, n, k)
@@ -213,7 +213,7 @@ impl<B: BitWrite<BE> + RiceWrite<BE>> PiWriteParam<BE> for B {
     }
 }
 
-impl<B: BitWrite<LE> + RiceWrite<LE>> PiWriteParam<LE> for B {
+impl<B: BitWrite<LE>> PiWriteParam<LE> for B {
     #[inline(always)]
     fn write_pi_param(&mut self, n: u64, k: usize) -> Result<usize, Self::Error> {
         default_write_pi(self, n, k)
@@ -234,7 +234,7 @@ impl<B: BitWrite<LE> + RiceWrite<LE>> PiWriteParam<LE> for B {
 /// Default, internal non-table based implementation that works
 /// for any endianness.
 #[inline(always)]
-fn default_write_pi<E: Endianness, B: BitWrite<E> + RiceWrite<E>>(
+fn default_write_pi<E: Endianness, B: BitWrite<E>>(
     backend: &mut B,
     mut n: u64,
     k: usize,
