@@ -87,5 +87,5 @@ pub type NativeEndian = LittleEndian;
 /// A type alias for the native endianness of the target platform.
 pub type NativeEndian = BigEndian;
 
-/// An Alias for [`NativeEndian`]
+/// Alias for [`NativeEndian`]
 pub type NE = NativeEndian;

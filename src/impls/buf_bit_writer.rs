@@ -104,7 +104,7 @@ impl<E: Endianness, WW: WordWrite, WP: WriteParams> BufBitWriter<E, WW, WP> {
 
     /// Creates a new [`BufBitWriter`] around a [`WordWrite`].
     ///
-    /// ### Example
+    /// # Examples
     /// ```
     /// #[cfg(not(feature = "std"))]
     /// # fn main() {}

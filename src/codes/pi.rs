@@ -94,7 +94,7 @@ pub trait PiRead<E: Endianness>: BitRead<E> {
 /// We provide an implementation of this trait for [`BitRead`]. An implementation
 /// of [`PiRead`] using default values is usually provided exploiting the
 /// [`crate::codes::params::ReadParams`] mechanism.
-pub trait PiReadParam<E: Endianness>: BitRead<E> + RiceRead<E> {
+pub trait PiReadParam<E: Endianness>: BitRead<E> {
     fn read_pi_param(&mut self, k: usize) -> Result<u64, Self::Error>;
     fn read_pi2_param<const USE_TABLE: bool>(&mut self) -> Result<u64, Self::Error>;
 }
@@ -190,7 +190,7 @@ pub trait PiWrite<E: Endianness>: BitWrite<E> {
 /// We provide an implementation of this trait for [`BitWrite`]. An implementation
 /// of [`PiWrite`] using default values is usually provided exploiting the
 /// [`crate::codes::params::WriteParams`] mechanism.
-pub trait PiWriteParam<E: Endianness>: BitWrite<E> + RiceWrite<E> {
+pub trait PiWriteParam<E: Endianness>: BitWrite<E> {
     fn write_pi_param(&mut self, n: u64, k: usize) -> Result<usize, Self::Error>;
     fn write_pi2_param<const USE_TABLE: bool>(&mut self, n: u64) -> Result<usize, Self::Error>;
 }

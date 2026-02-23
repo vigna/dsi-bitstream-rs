@@ -82,7 +82,7 @@
 //!
 //! We provide two unsigned, ungrouped, complete representations, one
 //! [big-endian](VByteBeRead) and one [little-endian](VByteLeRead). We recommend
-//! in general big-endian version as it is lexicographical. However, the
+//! in general the big-endian version as it is lexicographical. However, the
 //! big-endian version needs a small buffer when writing, so on some hardware
 //! the little-endian version might be faster.
 //!
@@ -100,7 +100,7 @@
 //!
 //! - The [LEB128](https://en.wikipedia.org/wiki/LEB128) code used by LLVM is a
 //!   little-endian incomplete ungrouped representation. There is both a signed
-//!   and an unsigned version; the signed version represent negative numbers
+//!   and an unsigned version; the signed version represents negative numbers
 //!   using two's complement.
 //!
 //! - The [code used by

@@ -322,9 +322,9 @@ impl<E: Endianness, B> CodesRead<E> for B where
 /// necessary traits.
 ///
 /// This trait is mainly useful internally to implement the dispatch
-/// traits [`DynamicCodeRead`], [`StaticCodeRead`], [`DynamicCodeWrite`], and
-/// [`StaticCodeWrite`]. The user might find it more useful to define their own
-/// convenience trait that includes only the codes they need.
+/// traits [`DynamicCodeWrite`] and [`StaticCodeWrite`]. The user might find it
+/// more useful to define their own convenience trait that includes only the
+/// codes they need.
 pub trait CodesWrite<E: Endianness>:
     BitWrite<E>
     + GammaWrite<E>
