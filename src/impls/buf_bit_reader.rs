@@ -161,7 +161,7 @@ where
 
 impl<WR: WordRead, RP: ReadParams> BufBitReader<BE, WR, RP>
 where
-    WR::Word: DoubleType + AsPrimitive<BB<WR>>,
+    WR::Word: DoubleType,
 {
     /// Ensure that in the buffer there are at least `Self::WORD_BITS` bits to read.
     /// This method can be called only if there are at least
@@ -170,7 +170,7 @@ where
     fn refill(&mut self) -> Result<(), <WR as WordRead>::Error> {
         debug_assert!(Self::BUFFER_BITS - self.bits_in_buffer >= Self::WORD_BITS);
 
-        let new_word: BB<WR> = self.backend.read_word()?.to_be().as_();
+        let new_word: BB<WR> = self.backend.read_word()?.to_be().as_double();
         self.bits_in_buffer += Self::WORD_BITS;
         self.buffer |= new_word << (Self::BUFFER_BITS - self.bits_in_buffer);
         Ok(())
@@ -179,8 +179,7 @@ where
 
 impl<WR: WordRead, RP: ReadParams> BitRead<BE> for BufBitReader<BE, WR, RP>
 where
-    WR::Word: DoubleType + AsPrimitive<u64> + AsPrimitive<BB<WR>>,
-    BB<WR>: AsPrimitive<u64>,
+    WR::Word: DoubleType,
 {
     type Error = <WR as WordRead>::Error;
     type PeekWord = BB<WR>;
@@ -228,7 +227,7 @@ where
 
         // Directly read to the result without updating the buffer
         while n_bits > Self::WORD_BITS {
-            let new_word: u64 = self.backend.read_word()?.to_be().as_();
+            let new_word: u64 = self.backend.read_word()?.to_be().as_u64();
             result = (result << Self::WORD_BITS) | new_word;
             n_bits -= Self::WORD_BITS;
         }
@@ -240,13 +239,11 @@ where
         let new_word = self.backend.read_word()?.to_be();
         self.bits_in_buffer = Self::WORD_BITS - n_bits;
         // compose the remaining bits
-        let upcast: u64 = new_word.as_();
+        let upcast: u64 = new_word.as_u64();
         let final_bits: u64 = upcast >> self.bits_in_buffer;
         result = (result << (n_bits - 1) << 1) | final_bits;
         // and put the rest in the buffer
-        self.buffer = (AsPrimitive::<BB<WR>>::as_(new_word)
-            << (Self::BUFFER_BITS - self.bits_in_buffer - 1))
-            << 1;
+        self.buffer = (new_word.as_double() << (Self::BUFFER_BITS - self.bits_in_buffer - 1)) << 1;
 
         Ok(result)
     }
@@ -272,8 +269,7 @@ where
 
             if new_word != WR::Word::ZERO {
                 let zeros: usize = new_word.leading_zeros() as _;
-                self.buffer =
-                    AsPrimitive::<BB<WR>>::as_(new_word) << (Self::WORD_BITS + zeros) << 1;
+                self.buffer = new_word.as_double() << (Self::WORD_BITS + zeros) << 1;
                 self.bits_in_buffer = Self::WORD_BITS - zeros - 1;
                 return Ok(result + zeros as u64);
             }
@@ -303,9 +299,7 @@ where
         let new_word = self.backend.read_word()?.to_be();
         self.bits_in_buffer = Self::WORD_BITS - n_bits;
 
-        self.buffer = AsPrimitive::<BB<WR>>::as_(new_word)
-            << (Self::BUFFER_BITS - 1 - self.bits_in_buffer)
-            << 1;
+        self.buffer = new_word.as_double() << (Self::BUFFER_BITS - 1 - self.bits_in_buffer) << 1;
 
         Ok(())
     }
@@ -347,7 +341,7 @@ where
                         .read_word()
                         .map_err(CopyError::ReadError)?
                         .to_be()
-                        .as_(),
+                        .as_u64(),
                     Self::WORD_BITS,
                 )
                 .map_err(CopyError::WriteError)?;
@@ -362,13 +356,11 @@ where
             .to_be();
         self.bits_in_buffer = Self::WORD_BITS - n as usize;
         bit_write
-            .write_bits(
-                AsPrimitive::<u64>::as_(new_word >> self.bits_in_buffer),
-                n as usize,
-            )
+            .write_bits((new_word >> self.bits_in_buffer).as_u64(), n as usize)
             .map_err(CopyError::WriteError)?;
-        self.buffer =
-            AsPrimitive::<BB<WR>>::as_(new_word).rotate_right(Self::WORD_BITS as u32 - n as u32);
+        self.buffer = new_word
+            .as_double()
+            .rotate_right(Self::WORD_BITS as u32 - n as u32);
 
         Ok(())
     }
@@ -380,7 +372,7 @@ impl<
     RP: ReadParams,
 > BitSeek for BufBitReader<BE, WR, RP>
 where
-    WR::Word: DoubleType + AsPrimitive<BB<WR>>,
+    WR::Word: DoubleType,
 {
     type Error = <WR as WordSeek>::Error;
 
@@ -397,7 +389,7 @@ where
         self.buffer = BB::<WR>::ZERO;
         self.bits_in_buffer = 0;
         if bit_offset != 0 {
-            let new_word: BB<WR> = self.backend.read_word()?.to_be().as_();
+            let new_word: BB<WR> = self.backend.read_word()?.to_be().as_double();
             self.bits_in_buffer = Self::WORD_BITS - bit_offset;
             self.buffer = new_word << (Self::BUFFER_BITS - self.bits_in_buffer);
         }
@@ -411,7 +403,7 @@ where
 
 impl<WR: WordRead, RP: ReadParams> BufBitReader<LE, WR, RP>
 where
-    WR::Word: DoubleType + AsPrimitive<BB<WR>>,
+    WR::Word: DoubleType,
 {
     /// Ensure that in the buffer there are at least `Self::WORD_BITS` bits to read.
     /// This method can be called only if there are at least
@@ -420,7 +412,7 @@ where
     fn refill(&mut self) -> Result<(), <WR as WordRead>::Error> {
         debug_assert!(Self::BUFFER_BITS - self.bits_in_buffer >= Self::WORD_BITS);
 
-        let new_word: BB<WR> = self.backend.read_word()?.to_le().as_();
+        let new_word: BB<WR> = self.backend.read_word()?.to_le().as_double();
         self.buffer |= new_word << self.bits_in_buffer;
         self.bits_in_buffer += Self::WORD_BITS;
         Ok(())
@@ -429,8 +421,7 @@ where
 
 impl<WR: WordRead, RP: ReadParams> BitRead<LE> for BufBitReader<LE, WR, RP>
 where
-    WR::Word: DoubleType + AsPrimitive<u64> + AsPrimitive<BB<WR>>,
-    BB<WR>: AsPrimitive<u64>,
+    WR::Word: DoubleType,
 {
     type Error = <WR as WordRead>::Error;
     type PeekWord = BB<WR>;
@@ -477,7 +468,7 @@ where
 
         // Directly read to the result without updating the buffer
         while n_bits > Self::WORD_BITS + bits_in_res {
-            let new_word: u64 = self.backend.read_word()?.to_le().as_();
+            let new_word: u64 = self.backend.read_word()?.to_le().as_u64();
             result |= new_word << bits_in_res;
             bits_in_res += Self::WORD_BITS;
         }
@@ -492,11 +483,11 @@ where
         self.bits_in_buffer = Self::WORD_BITS - n_bits;
         // compose the remaining bits
         let sham = 64 - n_bits;
-        let upcast: u64 = new_word.as_();
+        let upcast: u64 = new_word.as_u64();
         let final_bits: u64 = (upcast << sham) >> sham;
         result |= final_bits << bits_in_res;
         // and put the rest in the buffer
-        self.buffer = AsPrimitive::<BB<WR>>::as_(new_word) >> n_bits;
+        self.buffer = new_word.as_double() >> n_bits;
 
         Ok(result)
     }
@@ -522,7 +513,7 @@ where
 
             if new_word != WR::Word::ZERO {
                 let zeros: usize = new_word.trailing_zeros() as _;
-                self.buffer = AsPrimitive::<BB<WR>>::as_(new_word) >> zeros >> 1;
+                self.buffer = new_word.as_double() >> zeros >> 1;
                 self.bits_in_buffer = Self::WORD_BITS - zeros - 1;
                 return Ok(result + zeros as u64);
             }
@@ -551,7 +542,7 @@ where
         // get the final word
         let new_word = self.backend.read_word()?.to_le();
         self.bits_in_buffer = Self::WORD_BITS - n_bits;
-        self.buffer = AsPrimitive::<BB<WR>>::as_(new_word) >> n_bits;
+        self.buffer = new_word.as_double() >> n_bits;
 
         Ok(())
     }
@@ -594,7 +585,7 @@ where
                         .read_word()
                         .map_err(CopyError::ReadError)?
                         .to_le()
-                        .as_(),
+                        .as_u64(),
                     Self::WORD_BITS,
                 )
                 .map_err(CopyError::WriteError)?;
@@ -610,7 +601,7 @@ where
         self.bits_in_buffer = Self::WORD_BITS - n as usize;
 
         #[allow(unused_mut)]
-        let mut new_word_u64: u64 = new_word.as_();
+        let mut new_word_u64: u64 = new_word.as_u64();
 
         #[cfg(feature = "checks")]
         {
@@ -623,7 +614,7 @@ where
         bit_write
             .write_bits(new_word_u64, n as usize)
             .map_err(CopyError::WriteError)?;
-        self.buffer = AsPrimitive::<BB<WR>>::as_(new_word) >> n;
+        self.buffer = new_word.as_double() >> n;
         Ok(())
     }
 }
@@ -634,7 +625,7 @@ impl<
     RP: ReadParams,
 > BitSeek for BufBitReader<LE, WR, RP>
 where
-    WR::Word: DoubleType + AsPrimitive<BB<WR>>,
+    WR::Word: DoubleType,
 {
     type Error = <WR as WordSeek>::Error;
 
@@ -652,7 +643,7 @@ where
         self.buffer = BB::<WR>::ZERO;
         self.bits_in_buffer = 0;
         if bit_offset != 0 {
-            let new_word: BB<WR> = self.backend.read_word()?.to_le().as_();
+            let new_word: BB<WR> = self.backend.read_word()?.to_le().as_double();
             self.bits_in_buffer = Self::WORD_BITS - bit_offset;
             self.buffer = new_word >> bit_offset;
         }
@@ -663,8 +654,7 @@ where
 #[cfg(feature = "std")]
 impl<WR: WordRead, RP: ReadParams> std::io::Read for BufBitReader<LE, WR, RP>
 where
-    WR::Word: DoubleType + AsPrimitive<u64> + AsPrimitive<BB<WR>>,
-    BB<WR>: AsPrimitive<u64>,
+    WR::Word: DoubleType,
 {
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
         let mut iter = buf.chunks_exact_mut(8);
@@ -691,8 +681,7 @@ where
 #[cfg(feature = "std")]
 impl<WR: WordRead, RP: ReadParams> std::io::Read for BufBitReader<BE, WR, RP>
 where
-    WR::Word: DoubleType + AsPrimitive<u64> + AsPrimitive<BB<WR>>,
-    BB<WR>: AsPrimitive<u64>,
+    WR::Word: DoubleType,
 {
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
         let mut iter = buf.chunks_exact_mut(8);

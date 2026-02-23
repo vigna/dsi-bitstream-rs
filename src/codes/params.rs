@@ -81,11 +81,8 @@ impl ReadParams for DefaultReadParams {}
 
 macro_rules! impl_default_read_codes {
     ($($endianess:ident),*) => {$(
-        impl<WR: WordRead> GammaRead<$endianess>
+        impl<WR: WordRead<Word: DoubleType>> GammaRead<$endianess>
             for BufBitReader<$endianess, WR, DefaultReadParams>
-        where
-            WR:: Word: DoubleType + AsPrimitive<u64> + AsPrimitive<<<WR as WordRead>::Word as DoubleType>::DoubleType>,
-            <WR::Word as DoubleType>::DoubleType: AsPrimitive<u64>,
         {
             #[inline(always)]
             fn read_gamma(&mut self) -> Result<u64, Self::Error> {
@@ -95,11 +92,8 @@ macro_rules! impl_default_read_codes {
             }
         }
 
-        impl<WR: WordRead> DeltaRead<$endianess>
+        impl<WR: WordRead<Word: DoubleType>> DeltaRead<$endianess>
             for BufBitReader<$endianess, WR, DefaultReadParams>
-        where
-            WR:: Word: DoubleType + AsPrimitive<u64> + AsPrimitive<<<WR as WordRead>::Word as DoubleType>::DoubleType>,
-            <WR::Word as DoubleType>::DoubleType: AsPrimitive<u64>,
         {
             #[inline(always)]
             fn read_delta(&mut self) -> Result<u64, Self::Error> {
@@ -107,11 +101,8 @@ macro_rules! impl_default_read_codes {
             }
         }
 
-        impl<WR: WordRead> OmegaRead<$endianess>
+        impl<WR: WordRead<Word: DoubleType>> OmegaRead<$endianess>
             for BufBitReader<$endianess, WR, DefaultReadParams>
-        where
-            WR:: Word: DoubleType + AsPrimitive<u64> + AsPrimitive<<<WR as WordRead>::Word as DoubleType>::DoubleType>,
-            <WR::Word as DoubleType>::DoubleType: AsPrimitive<u64>,
         {
             #[inline(always)]
             fn read_omega(&mut self) -> Result<u64, Self::Error> {
@@ -119,11 +110,8 @@ macro_rules! impl_default_read_codes {
             }
         }
 
-        impl<WR: WordRead> ZetaRead<$endianess>
+        impl<WR: WordRead<Word: DoubleType>> ZetaRead<$endianess>
             for BufBitReader<$endianess, WR, DefaultReadParams>
-        where
-            WR:: Word: DoubleType + AsPrimitive<u64> + AsPrimitive<<<WR as WordRead>::Word as DoubleType>::DoubleType>,
-            <WR::Word as DoubleType>::DoubleType: AsPrimitive<u64>,
         {
             #[inline(always)]
             fn read_zeta(&mut self, k: usize) -> Result<u64, Self::Error> {
@@ -136,11 +124,8 @@ macro_rules! impl_default_read_codes {
             }
         }
 
-        impl<WR: WordRead> PiRead<$endianess>
+        impl<WR: WordRead<Word: DoubleType>> PiRead<$endianess>
             for BufBitReader<$endianess, WR, DefaultReadParams>
-        where
-            WR:: Word: DoubleType + AsPrimitive<u64> + AsPrimitive<<<WR as WordRead>::Word as DoubleType>::DoubleType>,
-            <WR::Word as DoubleType>::DoubleType: AsPrimitive<u64>,
         {
             #[inline(always)]
             fn read_pi(&mut self, k: usize) -> Result<u64, Self::Error> {
@@ -155,9 +140,6 @@ macro_rules! impl_default_read_codes {
 
         impl<E: Error + Send + Sync + 'static, WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>> GammaRead<$endianess>
             for BitReader<$endianess, WR, DefaultReadParams>
-        where
-            WR:: Word: DoubleType + AsPrimitive<u64> + AsPrimitive<<<WR as WordRead>::Word as DoubleType>::DoubleType>,
-            <WR::Word as DoubleType>::DoubleType: AsPrimitive<u64>,
         {
             #[inline(always)]
             fn read_gamma(&mut self) -> Result<u64, Self::Error> {
@@ -169,9 +151,6 @@ macro_rules! impl_default_read_codes {
 
         impl<E: Error + Send + Sync + 'static, WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>> DeltaRead<$endianess>
             for BitReader<$endianess, WR, DefaultReadParams>
-        where
-            WR:: Word: DoubleType + AsPrimitive<u64> + AsPrimitive<<<WR as WordRead>::Word as DoubleType>::DoubleType>,
-            <WR::Word as DoubleType>::DoubleType: AsPrimitive<u64>,
         {
             #[inline(always)]
             fn read_delta(&mut self) -> Result<u64, Self::Error> {
@@ -181,9 +160,6 @@ macro_rules! impl_default_read_codes {
 
         impl<E: Error + Send + Sync + 'static, WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>> OmegaRead<$endianess>
             for BitReader<$endianess, WR, DefaultReadParams>
-        where
-            WR:: Word: DoubleType + AsPrimitive<u64> + AsPrimitive<<<WR as WordRead>::Word as DoubleType>::DoubleType>,
-            <WR::Word as DoubleType>::DoubleType: AsPrimitive<u64>,
         {
             #[inline(always)]
             fn read_omega(&mut self) -> Result<u64, Self::Error> {
@@ -193,9 +169,6 @@ macro_rules! impl_default_read_codes {
 
         impl<E: Error + Send + Sync + 'static, WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>> ZetaRead<$endianess>
             for BitReader<$endianess, WR, DefaultReadParams>
-        where
-            WR:: Word: DoubleType + AsPrimitive<u64> + AsPrimitive<<<WR as WordRead>::Word as DoubleType>::DoubleType>,
-            <WR::Word as DoubleType>::DoubleType: AsPrimitive<u64>,
         {
             #[inline(always)]
             fn read_zeta(&mut self, k: usize) -> Result<u64, Self::Error> {
@@ -210,9 +183,6 @@ macro_rules! impl_default_read_codes {
 
         impl<E: Error + Send + Sync + 'static, WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>> PiRead<$endianess>
             for BitReader<$endianess, WR, DefaultReadParams>
-        where
-            WR:: Word: DoubleType + AsPrimitive<u64> + AsPrimitive<<<WR as WordRead>::Word as DoubleType>::DoubleType>,
-            <WR::Word as DoubleType>::DoubleType: AsPrimitive<u64>,
         {
             #[inline(always)]
             fn read_pi(&mut self, k: usize) -> Result<u64, Self::Error> {
