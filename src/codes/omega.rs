@@ -21,8 +21,8 @@
 //!
 //! The supported range is [0 . . 2⁶⁴ – 1).
 //!
-//! The ω code is easier to describe the format of a code, rather than the
-//! encoding algorithm.
+//! For the ω code it is easier to describe the format of a codeword, rather
+//! than the encoding algorithm.
 //!
 //! A codeword is given by the concatenation of blocks *b*₀ *b*₁ …  *b*ₙ `0`,
 //! where each block *b*ᵢ is a binary string starting with `1` and *b*₀ = `10`
@@ -198,7 +198,7 @@ impl<B: BitRead<LE>> OmegaReadParam<LE> for B {
 ///
 /// This is the trait you should usually pull in scope to write ω codes.
 pub trait OmegaWrite<E: Endianness>: BitWrite<E> {
-    fn write_omega(&mut self, value: u64) -> Result<usize, Self::Error>;
+    fn write_omega(&mut self, n: u64) -> Result<usize, Self::Error>;
 }
 
 /// Parametric trait for writing ω codes.

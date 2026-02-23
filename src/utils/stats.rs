@@ -570,10 +570,10 @@ impl<
     fn write<E: Endianness, CW: CodesWrite<E> + ?Sized>(
         &self,
         writer: &mut CW,
-        value: u64,
+        n: u64,
     ) -> Result<usize, CW::Error> {
-        let res = self.wrapped.write(writer, value)?;
-        self.stats.lock().unwrap().update(value);
+        let res = self.wrapped.write(writer, n)?;
+        self.stats.lock().unwrap().update(n);
         Ok(res)
     }
 }
@@ -591,9 +591,9 @@ impl<
 > StaticCodeWrite<E, CW> for CodesStatsWrapper<W, ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
 {
     #[inline]
-    fn write(&self, writer: &mut CW, value: u64) -> Result<usize, CW::Error> {
-        let res = self.wrapped.write(writer, value)?;
-        self.stats.lock().unwrap().update(value);
+    fn write(&self, writer: &mut CW, n: u64) -> Result<usize, CW::Error> {
+        let res = self.wrapped.write(writer, n)?;
+        self.stats.lock().unwrap().update(n);
         Ok(res)
     }
 }

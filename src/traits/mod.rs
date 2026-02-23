@@ -29,7 +29,7 @@ interacting with memory. For example,
 [`MemWordReader`](crate::impls::MemWordReader) is a [`WordRead`] that
 reads word-by-word from a slice.
 
-All traits have an internal error type `Error`, which usually propagates
+All traits have an associated error type `Error`, which usually propagates
 the error of the underlying backend. However, in some cases (e.g.,
 [`MemWordReader`](crate::impls::MemWordReader) with infinite zero
 extension) the error type is
@@ -53,8 +53,8 @@ makes for more efficient implementations.
 
 Byte-level endianness is used to read memory word-by-word, greatly
 reducing the number of memory accesses when reading from slices.
-However, it is important to note that fixed-width values have their
-least significant bit always stored at the lowest bit position,
+However, it is important to note that fixed-width values always have their
+least significant bit stored at the lowest bit position,
 independently of endianness, as current CPUs always use big-endian
 bit order. In particular, reversing the order of the bits of each
 byte of a file containing a sequence of fixed-width integers or

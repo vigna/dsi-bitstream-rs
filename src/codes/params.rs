@@ -223,8 +223,8 @@ macro_rules! impl_default_write_codes {
             where u64: AsPrimitive<WR::Word>,
         {
             #[inline(always)]
-            fn write_gamma(&mut self, value: u64) -> Result<usize, Self::Error> {
-                self.write_gamma_param::<true>(value)
+            fn write_gamma(&mut self, n: u64) -> Result<usize, Self::Error> {
+                self.write_gamma_param::<true>(n)
             }
         }
 
@@ -233,8 +233,8 @@ macro_rules! impl_default_write_codes {
             where u64: AsPrimitive<WR::Word>,
         {
             #[inline(always)]
-            fn write_delta(&mut self, value: u64) -> Result<usize, Self::Error> {
-                self.write_delta_param::<true, true>(value)
+            fn write_delta(&mut self, n: u64) -> Result<usize, Self::Error> {
+                self.write_delta_param::<true, true>(n)
             }
         }
 
@@ -243,8 +243,8 @@ macro_rules! impl_default_write_codes {
             where u64: AsPrimitive<WR::Word>,
         {
             #[inline(always)]
-            fn write_omega(&mut self, value: u64) -> Result<usize, Self::Error> {
-                self.write_omega_param::<true>(value)
+            fn write_omega(&mut self, n: u64) -> Result<usize, Self::Error> {
+                self.write_omega_param::<true>(n)
             }
         }
 
@@ -253,13 +253,13 @@ macro_rules! impl_default_write_codes {
             where u64: AsPrimitive<WR::Word>,
         {
             #[inline(always)]
-            fn write_zeta(&mut self, value: u64, k: usize) -> Result<usize, Self::Error> {
-                self.write_zeta_param(value, k)
+            fn write_zeta(&mut self, n: u64, k: usize) -> Result<usize, Self::Error> {
+                self.write_zeta_param(n, k)
             }
 
             #[inline(always)]
-            fn write_zeta3(&mut self, value: u64) -> Result<usize, Self::Error> {
-                self.write_zeta3_param::<true>(value)
+            fn write_zeta3(&mut self, n: u64) -> Result<usize, Self::Error> {
+                self.write_zeta3_param::<true>(n)
             }
         }
 
@@ -268,13 +268,13 @@ macro_rules! impl_default_write_codes {
             where u64: AsPrimitive<WR::Word>,
         {
             #[inline(always)]
-            fn write_pi(&mut self, value: u64, k: usize) -> Result<usize, Self::Error> {
-                self.write_pi_param(value, k)
+            fn write_pi(&mut self, n: u64, k: usize) -> Result<usize, Self::Error> {
+                self.write_pi_param(n, k)
             }
 
             #[inline(always)]
-            fn write_pi2(&mut self, value: u64) -> Result<usize, Self::Error> {
-                self.write_pi2_param::<true>(value)
+            fn write_pi2(&mut self, n: u64) -> Result<usize, Self::Error> {
+                self.write_pi2_param::<true>(n)
             }
         }
 

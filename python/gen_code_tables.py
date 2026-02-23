@@ -101,8 +101,8 @@ write_func_merged_table = """
 /// length of the code is returned.
 #[inline(always)]
 #[allow(clippy::unnecessary_cast)]  // rationale: "*bits as u64" is flaky redundant
-pub fn write_table_%(bo)s<B: BitWrite<%(BO)s>>(backend: &mut B, value: u64) -> Result<Option<usize>, B::Error> {
-    Ok(if let Some((bits, len)) = WRITE_%(BO)s.get(value as usize) {
+pub fn write_table_%(bo)s<B: BitWrite<%(BO)s>>(backend: &mut B, n: u64) -> Result<Option<usize>, B::Error> {
+    Ok(if let Some((bits, len)) = WRITE_%(BO)s.get(n as usize) {
         backend.write_bits(*bits as u64, *len as usize)?;
         Some(*len as usize)
     } else {
@@ -117,9 +117,9 @@ write_func_two_table = """
 /// If the result is `Some` the encoding was successful, and
 /// length of the code is returned.
 #[inline(always)]
-pub fn write_table_%(bo)s<B: BitWrite<%(BO)s>>(backend: &mut B, value: u64) -> Result<Option<usize>, B::Error> {
-    Ok(if let Some(bits) = WRITE_%(BO)s.get(value as usize) {
-        let len = WRITE_LEN_%(BO)s[value as usize] as usize;
+pub fn write_table_%(bo)s<B: BitWrite<%(BO)s>>(backend: &mut B, n: u64) -> Result<Option<usize>, B::Error> {
+    Ok(if let Some(bits) = WRITE_%(BO)s.get(n as usize) {
+        let len = WRITE_LEN_%(BO)s[n as usize] as usize;
         backend.write_bits(*bits as u64, len)?;
         Some(len)
     } else {
@@ -254,8 +254,8 @@ def gen_table(
                     "pub const WRITE_%s: &[(%s, u8)] = &["
                     % (bo, get_best_fitting_type(len_func(write_max_val)))
                 )
-                for value in range(write_max_val + 1):
-                    bits = write_func(value, "", bo == "BE")
+                for n in range(write_max_val + 1):
+                    bits = write_func(n, "", bo == "BE")
                     f.write("({}, {}),".format(int(bits, 2), len(bits)))
                 f.write("];\n")
             else:
@@ -269,8 +269,8 @@ def gen_table(
                     % (bo, get_best_fitting_type(len_func(write_max_val)))
                 )
                 len_bits = []
-                for value in range(write_max_val + 1):
-                    bits = write_func(value, "", bo == "BE")
+                for n in range(write_max_val + 1):
+                    bits = write_func(n, "", bo == "BE")
                     len_bits.append(len(bits))
                     f.write("{},".format(int(bits, 2)))
 
@@ -297,8 +297,8 @@ def gen_table(
             "pub const LEN: &[%s] = &["
             % (get_best_fitting_type(ceil(log2(len_func(len_max_val)))))
         )
-        for value in range(write_max_val + 1):
-            f.write("{}, ".format(len_func(value)))
+        for n in range(write_max_val + 1):
+            f.write("{}, ".format(len_func(n)))
         f.write("];\n")
 
         # Write check_read_table function
@@ -352,17 +352,17 @@ def read_unary(bitstream, be):
         return l, bitstream[: -l - 1]
 
 
-def write_unary(value, bitstream, be):
+def write_unary(n, bitstream, be):
     """Write an unary code"""
     if be:
-        return bitstream + "0" * value + "1"
+        return bitstream + "0" * n + "1"
     else:
-        return "1" + "0" * value + bitstream
+        return "1" + "0" * n + bitstream
 
 
-def len_unary(value):
-    """The len of an unary code for value"""
-    return value + 1
+def len_unary(n):
+    """The len of an unary code for n"""
+    return n + 1
 
 
 # Test that the impl is reasonable
@@ -416,21 +416,21 @@ def read_gamma(bitstream, be):
     return v, bitstream
 
 
-def write_gamma(value, bitstream, be):
+def write_gamma(n, bitstream, be):
     """Write a gamma code"""
-    value += 1
-    l = floor(log2(value))  # NoQA: E741
-    s = value - (1 << l)
+    n += 1
+    l = floor(log2(n))  # NoQA: E741
+    s = n - (1 << l)
     bitstream = write_unary(l, bitstream, be)
     if l != 0:
         bitstream = write_fixed(s, l, bitstream, be)
     return bitstream
 
 
-def len_gamma(value):
-    """Length of the gamma code of `value`"""
-    value += 1
-    l = floor(log2(value))  # NoQA: E741
+def len_gamma(n):
+    """Length of the gamma code of `n`"""
+    n += 1
+    l = floor(log2(n))  # NoQA: E741
     return 2 * l + 1
 
 
@@ -524,21 +524,21 @@ def read_delta_partial(bitstream, be):
         raise ValueError()
 
 
-def write_delta(value, bitstream, be):
+def write_delta(n, bitstream, be):
     """Write a delta code"""
-    value += 1
-    l = floor(log2(value))  # NoQA: E741
-    s = value - (1 << l)
+    n += 1
+    l = floor(log2(n))  # NoQA: E741
+    s = n - (1 << l)
     bitstream = write_gamma(l, bitstream, be)
     if l != 0:
         bitstream = write_fixed(s, l, bitstream, be)
     return bitstream
 
 
-def len_delta(value):
-    """Length of the delta code of `value`"""
-    value += 1
-    l = floor(log2(value))  # NoQA: E741
+def len_delta(n):
+    """Length of the delta code of `n`"""
+    n += 1
+    l = floor(log2(n))  # NoQA: E741
     return l + len_gamma(l)
 
 
@@ -633,9 +633,9 @@ pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> (i8, u64) {
 /// If the result is `Some` the encoding was successful, and
 /// length of the code is returned.
 #[inline(always)]
-pub fn write_table_le<B: BitWrite<LE>>(backend: &mut B, value: u64) -> Result<Option<usize>, B::Error> {
-    Ok(if let Some(bits) = WRITE_LE.get(value as usize) {
-        let len = WRITE_LEN_LE[value as usize] as usize;
+pub fn write_table_le<B: BitWrite<LE>>(backend: &mut B, n: u64) -> Result<Option<usize>, B::Error> {
+    Ok(if let Some(bits) = WRITE_LE.get(n as usize) {
+        let len = WRITE_LEN_LE[n as usize] as usize;
         backend.write_bits(*bits as u64, len)?;
         Some(len)
     } else {
@@ -648,9 +648,9 @@ pub fn write_table_le<B: BitWrite<LE>>(backend: &mut B, value: u64) -> Result<Op
 /// If the result is `Some` the encoding was successful, and
 /// length of the code is returned.
 #[inline(always)]
-pub fn write_table_be<B: BitWrite<BE>>(backend: &mut B, value: u64) -> Result<Option<usize>, B::Error> {
-    Ok(if let Some(bits) = WRITE_BE.get(value as usize) {
-        let len = WRITE_LEN_BE[value as usize] as usize;
+pub fn write_table_be<B: BitWrite<BE>>(backend: &mut B, n: u64) -> Result<Option<usize>, B::Error> {
+    Ok(if let Some(bits) = WRITE_BE.get(n as usize) {
+        let len = WRITE_LEN_BE[n as usize] as usize;
         backend.write_bits(*bits as u64, len)?;
         Some(len)
     } else {
@@ -724,8 +724,8 @@ pub fn write_table_be<B: BitWrite<BE>>(backend: &mut B, value: u64) -> Result<Op
                 % (bo, get_best_fitting_type(len_delta(write_max_val)))
             )
             len_bits = []
-            for value in range(write_max_val + 1):
-                bits = write_delta(value, "", bo == "BE")
+            for n in range(write_max_val + 1):
+                bits = write_delta(n, "", bo == "BE")
                 len_bits.append(len(bits))
                 f.write("{},".format(int(bits, 2)))
             f.write("];\n")
@@ -749,8 +749,8 @@ pub fn write_table_be<B: BitWrite<BE>>(backend: &mut B, value: u64) -> Result<Op
             "pub const LEN: &[%s] = &["
             % (get_best_fitting_type(ceil(log2(len_delta(len_max_val)))))
         )
-        for value in range(write_max_val + 1):
-            f.write("{}, ".format(len_delta(value)))
+        for n in range(write_max_val + 1):
+            f.write("{}, ".format(len_delta(n)))
         f.write("];\n")
 
         # Write check_read_table function
@@ -782,24 +782,24 @@ def read_minimal_binary(max, bitstream, be):
         return v - limit, bitstream
 
 
-def write_minimal_binary(value, max, bitstream, be):
+def write_minimal_binary(n, max, bitstream, be):
     """Write a minimal binary code with max `max`"""
     l = int(floor(log2(max)))  # NoQA: E741
     limit = (1 << (l + 1)) - max
 
-    if value < limit:
-        return write_fixed(value, l, bitstream, be)
+    if n < limit:
+        return write_fixed(n, l, bitstream, be)
     else:
-        to_write = value + limit
+        to_write = n + limit
         bitstream = write_fixed(to_write >> 1, l, bitstream, be)
         return write_fixed(to_write & 1, 1, bitstream, be)
 
 
-def len_minimal_binary(value, max):
-    """Length of the minimal binary code of `value` with max `max`"""
+def len_minimal_binary(n, max):
+    """Length of the minimal binary code of `n` with max `max`"""
     l = int(floor(log2(max)))  # NoQA: E741
     limit = (1 << (l + 1)) - max
-    if value >= limit:
+    if n >= limit:
         return l + 1
     else:
         return l
@@ -853,25 +853,25 @@ def read_zeta(bitstream, k, be):
     return l + r - 1, bitstream
 
 
-def write_zeta(value, k, bitstream, be):
+def write_zeta(n, k, bitstream, be):
     """Write a zeta code"""
-    value += 1
-    h = int(floor(log2(value)) / k)
+    n += 1
+    h = int(floor(log2(n)) / k)
     u = 2 ** ((h + 1) * k)
     l = 2 ** (h * k)  # NoQA: E741
 
     bitstream = write_unary(h, bitstream, be)
-    bitstream = write_minimal_binary(value - l, u - l, bitstream, be)
+    bitstream = write_minimal_binary(n - l, u - l, bitstream, be)
     return bitstream
 
 
-def len_zeta(value, k):
-    """Length of the zeta code of `value`"""
-    value += 1
-    h = int(floor(log2(value)) / k)
+def len_zeta(n, k):
+    """Length of the zeta code of `n`"""
+    n += 1
+    h = int(floor(log2(n)) / k)
     u = 2 ** ((h + 1) * k)
     l = 2 ** (h * k)  # NoQA: E741
-    return len_unary(h) + len_minimal_binary(value - l, u - l)
+    return len_unary(h) + len_minimal_binary(n - l, u - l)
 
 
 # Test that the impl is reasonable
@@ -921,9 +921,9 @@ def gen_zeta(read_bits, write_max_val, len_max_val=None, k=3, merged_table=False
         write_max_val,
         len_max_val,
         "zeta",
-        lambda value: len_zeta(value, k),
+        lambda n: len_zeta(n, k),
         lambda bitstream, be: read_zeta(bitstream, k, be),
-        lambda value, bitstream, be: write_zeta(value, k, bitstream, be),
+        lambda n, bitstream, be: write_zeta(n, k, bitstream, be),
         merged_table,
     )
     with open(os.path.join(ROOT, "zeta_tables.rs"), "a") as f:
@@ -1024,44 +1024,44 @@ def read_omega(bitstream, be):
     return value_or_n, bitstream[len_with_flag:] if be else bitstream[:-len_with_flag]
 
 
-def _recursive_write_omega(value, bitstream, be):
+def _recursive_write_omega(n, bitstream, be):
     """Recursively write the omega code"""
-    if value <= 1:
+    if n <= 1:
         return bitstream
-    l = floor(log2(value))  # NoQA: E741
+    l = floor(log2(n))  # NoQA: E741
     bitstream = _recursive_write_omega(l, bitstream, be)
     if be:
-        return bitstream + ("{:0%sb}" % (l + 1)).format(value)
+        return bitstream + ("{:0%sb}" % (l + 1)).format(n)
     else:
         # Little-endian case: rotate left the lower λ + 1 bits (the bit in
         # position λ is a one) so that the lowest bit can be peeked to find the
         # block.
-        value = (value << 1) | 1
+        n = (n << 1) | 1
         mask = (1 << (l + 1)) - 1
-        value &= mask
-        return ("{:0%sb}" % (l + 1)).format(value) + bitstream
+        n &= mask
+        return ("{:0%sb}" % (l + 1)).format(n) + bitstream
 
 
-def write_omega(value, bitstream, be):
+def write_omega(n, bitstream, be):
     """Write an omega code"""
-    value += 1
-    bitstream = _recursive_write_omega(value, bitstream, be)
+    n += 1
+    bitstream = _recursive_write_omega(n, bitstream, be)
     if be:
         return bitstream + "0"
     else:
         return "0" + bitstream
 
 
-def _recursive_len_omega(value):
-    if value <= 1:
+def _recursive_len_omega(n):
+    if n <= 1:
         return 1
-    l = floor(log2(value))  # NoQA: E741
+    l = floor(log2(n))  # NoQA: E741
     return _recursive_len_omega(l) + l + 1
 
 
-def len_omega(value):
-    """Length of the omega code of `value`"""
-    return _recursive_len_omega(value + 1)
+def len_omega(n):
+    """Length of the omega code of `n`"""
+    return _recursive_len_omega(n + 1)
 
 
 # Test that the impl is reasonable
@@ -1179,26 +1179,26 @@ pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> (i8, u64) {
 /// If the result is `Some` the encoding was successful, and
 /// length of the code is returned.
 #[inline(always)]
-pub fn write_table_le<B: BitWrite<LE>>(backend: &mut B, mut value: u64) -> Result<Option<usize>, B::Error> {
-    Ok(if let Some(bits) = WRITE_LE.get(value as usize) {
-    let len = WRITE_LEN_LE[value as usize] as usize;
+pub fn write_table_le<B: BitWrite<LE>>(backend: &mut B, mut n: u64) -> Result<Option<usize>, B::Error> {
+    Ok(if let Some(bits) = WRITE_LE.get(n as usize) {
+    let len = WRITE_LEN_LE[n as usize] as usize;
         backend.write_bits(*bits as u64, len)?;
         Some(len)
     } else {
-        value += 1;
-        let λ = value.ilog2() as usize;
+        n += 1;
+        let λ = n.ilog2() as usize;
         let bits = WRITE_LE[λ - 1];
         let len = WRITE_LEN_LE[λ - 1] as usize;
         backend.write_bits(bits as u64, len - 1)?;
         #[cfg(feature = "checks")]
         {
             // Clean up after the lowest λ bits in case checks are enabled
-            value &= u64::MAX >> (u64::BITS - (λ as u32));
+            n &= u64::MAX >> (u64::BITS - (λ as u32));
         }
         // Little-endian case: rotate left the lower λ + 1 bits (the bit in
         // position λ is a one) so that the lowest bit can be peeked to find the
         // block.
-        backend.write_bits(value << 1 | 1, λ + 1)?;
+        backend.write_bits(n << 1 | 1, λ + 1)?;
         backend.write_bits(0, 1)?;
         Some(λ + len + 1)
     })
@@ -1209,18 +1209,18 @@ pub fn write_table_le<B: BitWrite<LE>>(backend: &mut B, mut value: u64) -> Resul
 /// If the result is `Some` the encoding was successful, and
 /// length of the code is returned.
 #[inline(always)]
-pub fn write_table_be<B: BitWrite<BE>>(backend: &mut B, mut value: u64) -> Result<Option<usize>, B::Error> {
-    Ok(if let Some(bits) = WRITE_BE.get(value as usize) {
-    let len = WRITE_LEN_BE[value as usize] as usize;
+pub fn write_table_be<B: BitWrite<BE>>(backend: &mut B, mut n: u64) -> Result<Option<usize>, B::Error> {
+    Ok(if let Some(bits) = WRITE_BE.get(n as usize) {
+    let len = WRITE_LEN_BE[n as usize] as usize;
         backend.write_bits(*bits as u64, len)?;
         Some(len)
     } else {
-        value += 1;
-        let λ = value.ilog2() as usize;
+        n += 1;
+        let λ = n.ilog2() as usize;
         let bits = WRITE_BE[λ - 1];
         let len = WRITE_LEN_BE[λ - 1] as usize;
         backend.write_bits(bits as u64 >> 1, len - 1)?;
-        backend.write_bits(value, λ + 1)?;
+        backend.write_bits(n, λ + 1)?;
         backend.write_bits(0, 1)?;
         Some(λ + len + 1)
     })
@@ -1290,8 +1290,8 @@ pub fn write_table_be<B: BitWrite<BE>>(backend: &mut B, mut value: u64) -> Resul
                 % (bo, get_best_fitting_type(len_omega(write_max_val)))
             )
             len_bits = []
-            for value in range(write_max_val + 1):
-                bits = write_omega(value, "", bo == "BE")
+            for n in range(write_max_val + 1):
+                bits = write_omega(n, "", bo == "BE")
                 len_bits.append(len(bits))
                 f.write("{},".format(int(bits, 2)))
             f.write("];\n")
@@ -1315,8 +1315,8 @@ pub fn write_table_be<B: BitWrite<BE>>(backend: &mut B, mut value: u64) -> Resul
             "pub const LEN: &[%s] = &["
             % (get_best_fitting_type(ceil(log2(len_omega(len_max_val)))))
         )
-        for value in range(write_max_val + 1):
-            f.write("{}, ".format(len_omega(value)))
+        for n in range(write_max_val + 1):
+            f.write("{}, ".format(len_omega(n)))
         f.write("];\n")
 
         # Write check_read_table function
@@ -1343,19 +1343,19 @@ def read_rice(bitstream, k, be):
     return (q << k) | r, bitstream
 
 
-def write_rice(value, k, bitstream, be):
+def write_rice(n, k, bitstream, be):
     """Write a Rice code with parameter 2^k"""
-    q = value >> k
-    r = value & ((1 << k) - 1)
+    q = n >> k
+    r = n & ((1 << k) - 1)
     bitstream = write_unary(q, bitstream, be)
     if k != 0:
         bitstream = write_fixed(r, k, bitstream, be)
     return bitstream
 
 
-def len_rice(value, k):
-    """Length of the Rice code with parameter 2^k for value"""
-    return (value >> k) + 1 + k
+def len_rice(n, k):
+    """Length of the Rice code with parameter 2^k for n"""
+    return (n >> k) + 1 + k
 
 
 # Test that the Rice impl is reasonable
@@ -1431,21 +1431,21 @@ def read_pi_partial(bitstream, k, be):
         raise ValueError()
 
 
-def write_pi(value, k, bitstream, be):
+def write_pi(n, k, bitstream, be):
     """Write a pi code with parameter k"""
-    value += 1
-    lam = floor(log2(value))
-    s = value - (1 << lam)
+    n += 1
+    lam = floor(log2(n))
+    s = n - (1 << lam)
     bitstream = write_rice(lam, k, bitstream, be)
     if lam != 0:
         bitstream = write_fixed(s, lam, bitstream, be)
     return bitstream
 
 
-def len_pi(value, k):
-    """Length of the pi code with parameter k for value"""
-    value += 1
-    lam = floor(log2(value))
+def len_pi(n, k):
+    """Length of the pi code with parameter k for n"""
+    n += 1
+    lam = floor(log2(n))
     return len_rice(lam, k) + lam
 
 
@@ -1547,9 +1547,9 @@ pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> (i8, u64) {
 /// If the result is `Some` the encoding was successful, and
 /// length of the code is returned.
 #[inline(always)]
-pub fn write_table_le<B: BitWrite<LE>>(backend: &mut B, value: u64) -> Result<Option<usize>, B::Error> {
-    Ok(if let Some(bits) = WRITE_LE.get(value as usize) {
-        let len = WRITE_LEN_LE[value as usize] as usize;
+pub fn write_table_le<B: BitWrite<LE>>(backend: &mut B, n: u64) -> Result<Option<usize>, B::Error> {
+    Ok(if let Some(bits) = WRITE_LE.get(n as usize) {
+        let len = WRITE_LEN_LE[n as usize] as usize;
         backend.write_bits(*bits as u64, len)?;
         Some(len)
     } else {
@@ -1562,9 +1562,9 @@ pub fn write_table_le<B: BitWrite<LE>>(backend: &mut B, value: u64) -> Result<Op
 /// If the result is `Some` the encoding was successful, and
 /// length of the code is returned.
 #[inline(always)]
-pub fn write_table_be<B: BitWrite<BE>>(backend: &mut B, value: u64) -> Result<Option<usize>, B::Error> {
-    Ok(if let Some(bits) = WRITE_BE.get(value as usize) {
-        let len = WRITE_LEN_BE[value as usize] as usize;
+pub fn write_table_be<B: BitWrite<BE>>(backend: &mut B, n: u64) -> Result<Option<usize>, B::Error> {
+    Ok(if let Some(bits) = WRITE_BE.get(n as usize) {
+        let len = WRITE_LEN_BE[n as usize] as usize;
         backend.write_bits(*bits as u64, len)?;
         Some(len)
     } else {
@@ -1638,8 +1638,8 @@ pub fn write_table_be<B: BitWrite<BE>>(backend: &mut B, value: u64) -> Result<Op
                 % (bo, get_best_fitting_type(len_pi(write_max_val, k)))
             )
             len_bits = []
-            for value in range(write_max_val + 1):
-                bits = write_pi(value, k, "", bo == "BE")
+            for n in range(write_max_val + 1):
+                bits = write_pi(n, k, "", bo == "BE")
                 len_bits.append(len(bits))
                 f.write("{},".format(int(bits, 2)))
             f.write("];\n")
@@ -1663,8 +1663,8 @@ pub fn write_table_be<B: BitWrite<BE>>(backend: &mut B, value: u64) -> Result<Op
             "pub const LEN: &[%s] = &["
             % (get_best_fitting_type(ceil(log2(len_pi(len_max_val, k)))))
         )
-        for value in range(write_max_val + 1):
-            f.write("{}, ".format(len_pi(value, k)))
+        for n in range(write_max_val + 1):
+            f.write("{}, ".format(len_pi(n, k)))
         f.write("];\n")
 
         # Write check_read_table function

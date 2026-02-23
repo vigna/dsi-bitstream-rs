@@ -186,16 +186,16 @@
 //!     fn write<E: Endianness, CW: CodesWrite<E> + ?Sized>(
 //!         &self,
 //!         writer: &mut CW,
-//!         value: u64,
+//!         n: u64,
 //!     ) -> Result<usize, CW::Error> {
-//!         writer.write_rice(value, LOG2_B)
+//!         writer.write_rice(n, LOG2_B)
 //!     }
 //! }
 //!
 //! impl<const LOG2_B: usize> CodeLen for Rice<LOG2_B> {
 //!     #[inline]
-//!     fn len(&self, value: u64) -> usize {
-//!         len_rice(value, LOG2_B)
+//!     fn len(&self, n: u64) -> usize {
+//!         len_rice(n, LOG2_B)
 //!     }
 //! }
 //! ```
@@ -275,7 +275,7 @@ pub use factory::{CodesReaderFactory, FactoryFuncCodeReader};
 ///
 /// This trait is mainly useful internally to implement the dispatch
 /// traits [`DynamicCodeRead`], [`StaticCodeRead`], [`DynamicCodeWrite`], and
-/// [`StaticCodeWrite`]. The user might find more useful to define its own
+/// [`StaticCodeWrite`]. The user might find it more useful to define their own
 /// convenience trait that includes only the codes they need.
 pub trait CodesRead<E: Endianness>:
     BitRead<E>
@@ -323,7 +323,7 @@ impl<E: Endianness, B> CodesRead<E> for B where
 ///
 /// This trait is mainly useful internally to implement the dispatch
 /// traits [`DynamicCodeRead`], [`StaticCodeRead`], [`DynamicCodeWrite`], and
-/// [`StaticCodeWrite`]. The user might find more useful to define its own
+/// [`StaticCodeWrite`]. The user might find it more useful to define their own
 /// convenience trait that includes only the codes they need.
 pub trait CodesWrite<E: Endianness>:
     BitWrite<E>
@@ -376,7 +376,7 @@ pub trait DynamicCodeWrite {
     fn write<E: Endianness, CW: CodesWrite<E> + ?Sized>(
         &self,
         writer: &mut CW,
-        value: u64,
+        n: u64,
     ) -> Result<usize, CW::Error>;
 }
 
@@ -403,11 +403,11 @@ pub trait StaticCodeRead<E: Endianness, CR: CodesRead<E> + ?Sized> {
 /// For a fixed code this trait may be implemented by storing a function
 /// pointer.
 pub trait StaticCodeWrite<E: Endianness, CW: CodesWrite<E> + ?Sized> {
-    fn write(&self, writer: &mut CW, value: u64) -> Result<usize, CW::Error>;
+    fn write(&self, writer: &mut CW, n: u64) -> Result<usize, CW::Error>;
 }
 
 /// A trait providing a generic method to compute the length of a codeword.
 pub trait CodeLen {
-    /// Returns the length of the codeword for `value`.
-    fn len(&self, value: u64) -> usize;
+    /// Returns the length of the codeword for `n`.
+    fn len(&self, n: u64) -> usize;
 }

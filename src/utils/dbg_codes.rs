@@ -171,10 +171,10 @@ impl<E: Endianness, W: BitWrite<E>> BitWrite<E> for DbgBitWriter<E, W> {
         self.writer.write_bits(value, n_bits)
     }
 
-    fn write_unary(&mut self, value: u64) -> Result<usize, Self::Error> {
+    fn write_unary(&mut self, n: u64) -> Result<usize, Self::Error> {
         #[cfg(feature = "std")]
-        eprintln!("{{U:{}}}", value);
-        self.writer.write_unary(value)
+        eprintln!("{{U:{}}}", n);
+        self.writer.write_unary(n)
     }
 
     fn flush(&mut self) -> Result<usize, Self::Error> {
@@ -183,39 +183,39 @@ impl<E: Endianness, W: BitWrite<E>> BitWrite<E> for DbgBitWriter<E, W> {
 }
 
 impl<E: Endianness, W: GammaWrite<E>> GammaWrite<E> for DbgBitWriter<E, W> {
-    fn write_gamma(&mut self, value: u64) -> Result<usize, W::Error> {
+    fn write_gamma(&mut self, n: u64) -> Result<usize, W::Error> {
         #[cfg(feature = "std")]
-        eprintln!("{{g:{}}}", value);
-        self.writer.write_gamma(value)
+        eprintln!("{{g:{}}}", n);
+        self.writer.write_gamma(n)
     }
 }
 
 impl<E: Endianness, W: DeltaWrite<E>> DeltaWrite<E> for DbgBitWriter<E, W> {
-    fn write_delta(&mut self, value: u64) -> Result<usize, W::Error> {
+    fn write_delta(&mut self, n: u64) -> Result<usize, W::Error> {
         #[cfg(feature = "std")]
-        eprintln!("{{d:{}}}", value);
-        self.writer.write_delta(value)
+        eprintln!("{{d:{}}}", n);
+        self.writer.write_delta(n)
     }
 }
 
 impl<E: Endianness, W: ZetaWrite<E>> ZetaWrite<E> for DbgBitWriter<E, W> {
-    fn write_zeta(&mut self, value: u64, k: usize) -> Result<usize, W::Error> {
+    fn write_zeta(&mut self, n: u64, k: usize) -> Result<usize, W::Error> {
         #[cfg(feature = "std")]
-        eprintln!("{{z{}:{}}}", k, value);
-        self.writer.write_zeta(value, k)
+        eprintln!("{{z{}:{}}}", k, n);
+        self.writer.write_zeta(n, k)
     }
-    fn write_zeta3(&mut self, value: u64) -> Result<usize, W::Error> {
+    fn write_zeta3(&mut self, n: u64) -> Result<usize, W::Error> {
         #[cfg(feature = "std")]
-        eprintln!("{{z3:{}}}", value);
-        self.writer.write_zeta3(value)
+        eprintln!("{{z3:{}}}", n);
+        self.writer.write_zeta3(n)
     }
 }
 
 impl<E: Endianness, W: OmegaWrite<E>> OmegaWrite<E> for DbgBitWriter<E, W> {
-    fn write_omega(&mut self, value: u64) -> Result<usize, W::Error> {
+    fn write_omega(&mut self, n: u64) -> Result<usize, W::Error> {
         #[cfg(feature = "std")]
-        eprintln!("{{o:{}}}", value);
-        self.writer.write_omega(value)
+        eprintln!("{{o:{}}}", n);
+        self.writer.write_omega(n)
     }
 }
 

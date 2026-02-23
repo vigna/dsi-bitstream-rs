@@ -344,7 +344,7 @@ where
             n -= Self::WORD_BITS as u64;
         }
 
-        assert!(n > 0);
+        debug_assert!(n > 0);
         let new_word = self
             .backend
             .read_word()
@@ -585,7 +585,7 @@ where
             n -= Self::WORD_BITS as u64;
         }
 
-        assert!(n > 0);
+        debug_assert!(n > 0);
         let new_word = self
             .backend
             .read_word()

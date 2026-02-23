@@ -131,11 +131,11 @@ pub trait BitWrite<E: Endianness> {
     /// should check that the remaining bits of `value` are zero.
     fn write_bits(&mut self, value: u64, n: usize) -> Result<usize, Self::Error>;
 
-    /// Writes `value` as a unary code to the stream and returns the number of
-    /// bits written, that is, `value` plus one.
+    /// Writes `n` as a unary code to the stream and returns the number of
+    /// bits written, that is, `n` plus one.
     ///
     /// Implementations are required to support the range [0 . . 2⁶⁴ – 1).
-    fn write_unary(&mut self, value: u64) -> Result<usize, Self::Error>;
+    fn write_unary(&mut self, n: u64) -> Result<usize, Self::Error>;
 
     /// Flush the buffer, consuming the bit stream.
     ///

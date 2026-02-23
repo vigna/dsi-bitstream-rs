@@ -216,67 +216,57 @@ impl<E: Endianness, CR: CodesWrite<E> + ?Sized> Clone for FuncCodeWriter<E, CR> 
 }
 
 impl<E: Endianness, CW: CodesWrite<E> + ?Sized> FuncCodeWriter<E, CW> {
-    const UNARY: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_unary(value);
-    const GAMMA: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_gamma(value);
-    const DELTA: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_delta(value);
-    const OMEGA: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_omega(value);
-    const VBYTE_BE: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_vbyte_be(value);
-    const VBYTE_LE: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_vbyte_le(value);
-    const ZETA2: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_zeta(value, 2);
-    const ZETA3: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_zeta3(value);
-    const ZETA4: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_zeta(value, 4);
-    const ZETA5: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_zeta(value, 5);
-    const ZETA6: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_zeta(value, 6);
-    const ZETA7: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_zeta(value, 7);
-    const ZETA8: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_zeta(value, 8);
-    const ZETA9: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_zeta(value, 9);
-    const ZETA10: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_zeta(value, 10);
-    const RICE1: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_rice(value, 1);
-    const RICE2: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_rice(value, 2);
-    const RICE3: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_rice(value, 3);
-    const RICE4: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_rice(value, 4);
-    const RICE5: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_rice(value, 5);
-    const RICE6: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_rice(value, 6);
-    const RICE7: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_rice(value, 7);
-    const RICE8: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_rice(value, 8);
-    const RICE9: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_rice(value, 9);
-    const RICE10: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_rice(value, 10);
-    const PI1: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_pi(value, 1);
-    const PI2: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_pi2(value);
-    const PI3: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_pi(value, 3);
-    const PI4: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_pi(value, 4);
-    const PI5: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_pi(value, 5);
-    const PI6: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_pi(value, 6);
-    const PI7: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_pi(value, 7);
-    const PI8: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_pi(value, 8);
-    const PI9: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_pi(value, 9);
-    const PI10: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_pi(value, 10);
-    const GOLOMB3: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_golomb(value, 3);
-    const GOLOMB5: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_golomb(value, 5);
-    const GOLOMB6: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_golomb(value, 6);
-    const GOLOMB7: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_golomb(value, 7);
-    const GOLOMB9: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_golomb(value, 9);
-    const GOLOMB10: WriteFn<E, CW> = |writer: &mut CW, value: u64| writer.write_golomb(value, 10);
-    const EXP_GOLOMB1: WriteFn<E, CW> =
-        |writer: &mut CW, value: u64| writer.write_exp_golomb(value, 1);
-    const EXP_GOLOMB2: WriteFn<E, CW> =
-        |writer: &mut CW, value: u64| writer.write_exp_golomb(value, 2);
-    const EXP_GOLOMB3: WriteFn<E, CW> =
-        |writer: &mut CW, value: u64| writer.write_exp_golomb(value, 3);
-    const EXP_GOLOMB4: WriteFn<E, CW> =
-        |writer: &mut CW, value: u64| writer.write_exp_golomb(value, 4);
-    const EXP_GOLOMB5: WriteFn<E, CW> =
-        |writer: &mut CW, value: u64| writer.write_exp_golomb(value, 5);
-    const EXP_GOLOMB6: WriteFn<E, CW> =
-        |writer: &mut CW, value: u64| writer.write_exp_golomb(value, 6);
-    const EXP_GOLOMB7: WriteFn<E, CW> =
-        |writer: &mut CW, value: u64| writer.write_exp_golomb(value, 7);
-    const EXP_GOLOMB8: WriteFn<E, CW> =
-        |writer: &mut CW, value: u64| writer.write_exp_golomb(value, 8);
-    const EXP_GOLOMB9: WriteFn<E, CW> =
-        |writer: &mut CW, value: u64| writer.write_exp_golomb(value, 9);
-    const EXP_GOLOMB10: WriteFn<E, CW> =
-        |writer: &mut CW, value: u64| writer.write_exp_golomb(value, 10);
+    const UNARY: WriteFn<E, CW> = |writer: &mut CW, n: u64| writer.write_unary(n);
+    const GAMMA: WriteFn<E, CW> = |writer: &mut CW, n: u64| writer.write_gamma(n);
+    const DELTA: WriteFn<E, CW> = |writer: &mut CW, n: u64| writer.write_delta(n);
+    const OMEGA: WriteFn<E, CW> = |writer: &mut CW, n: u64| writer.write_omega(n);
+    const VBYTE_BE: WriteFn<E, CW> = |writer: &mut CW, n: u64| writer.write_vbyte_be(n);
+    const VBYTE_LE: WriteFn<E, CW> = |writer: &mut CW, n: u64| writer.write_vbyte_le(n);
+    const ZETA2: WriteFn<E, CW> = |writer: &mut CW, n: u64| writer.write_zeta(n, 2);
+    const ZETA3: WriteFn<E, CW> = |writer: &mut CW, n: u64| writer.write_zeta3(n);
+    const ZETA4: WriteFn<E, CW> = |writer: &mut CW, n: u64| writer.write_zeta(n, 4);
+    const ZETA5: WriteFn<E, CW> = |writer: &mut CW, n: u64| writer.write_zeta(n, 5);
+    const ZETA6: WriteFn<E, CW> = |writer: &mut CW, n: u64| writer.write_zeta(n, 6);
+    const ZETA7: WriteFn<E, CW> = |writer: &mut CW, n: u64| writer.write_zeta(n, 7);
+    const ZETA8: WriteFn<E, CW> = |writer: &mut CW, n: u64| writer.write_zeta(n, 8);
+    const ZETA9: WriteFn<E, CW> = |writer: &mut CW, n: u64| writer.write_zeta(n, 9);
+    const ZETA10: WriteFn<E, CW> = |writer: &mut CW, n: u64| writer.write_zeta(n, 10);
+    const RICE1: WriteFn<E, CW> = |writer: &mut CW, n: u64| writer.write_rice(n, 1);
+    const RICE2: WriteFn<E, CW> = |writer: &mut CW, n: u64| writer.write_rice(n, 2);
+    const RICE3: WriteFn<E, CW> = |writer: &mut CW, n: u64| writer.write_rice(n, 3);
+    const RICE4: WriteFn<E, CW> = |writer: &mut CW, n: u64| writer.write_rice(n, 4);
+    const RICE5: WriteFn<E, CW> = |writer: &mut CW, n: u64| writer.write_rice(n, 5);
+    const RICE6: WriteFn<E, CW> = |writer: &mut CW, n: u64| writer.write_rice(n, 6);
+    const RICE7: WriteFn<E, CW> = |writer: &mut CW, n: u64| writer.write_rice(n, 7);
+    const RICE8: WriteFn<E, CW> = |writer: &mut CW, n: u64| writer.write_rice(n, 8);
+    const RICE9: WriteFn<E, CW> = |writer: &mut CW, n: u64| writer.write_rice(n, 9);
+    const RICE10: WriteFn<E, CW> = |writer: &mut CW, n: u64| writer.write_rice(n, 10);
+    const PI1: WriteFn<E, CW> = |writer: &mut CW, n: u64| writer.write_pi(n, 1);
+    const PI2: WriteFn<E, CW> = |writer: &mut CW, n: u64| writer.write_pi2(n);
+    const PI3: WriteFn<E, CW> = |writer: &mut CW, n: u64| writer.write_pi(n, 3);
+    const PI4: WriteFn<E, CW> = |writer: &mut CW, n: u64| writer.write_pi(n, 4);
+    const PI5: WriteFn<E, CW> = |writer: &mut CW, n: u64| writer.write_pi(n, 5);
+    const PI6: WriteFn<E, CW> = |writer: &mut CW, n: u64| writer.write_pi(n, 6);
+    const PI7: WriteFn<E, CW> = |writer: &mut CW, n: u64| writer.write_pi(n, 7);
+    const PI8: WriteFn<E, CW> = |writer: &mut CW, n: u64| writer.write_pi(n, 8);
+    const PI9: WriteFn<E, CW> = |writer: &mut CW, n: u64| writer.write_pi(n, 9);
+    const PI10: WriteFn<E, CW> = |writer: &mut CW, n: u64| writer.write_pi(n, 10);
+    const GOLOMB3: WriteFn<E, CW> = |writer: &mut CW, n: u64| writer.write_golomb(n, 3);
+    const GOLOMB5: WriteFn<E, CW> = |writer: &mut CW, n: u64| writer.write_golomb(n, 5);
+    const GOLOMB6: WriteFn<E, CW> = |writer: &mut CW, n: u64| writer.write_golomb(n, 6);
+    const GOLOMB7: WriteFn<E, CW> = |writer: &mut CW, n: u64| writer.write_golomb(n, 7);
+    const GOLOMB9: WriteFn<E, CW> = |writer: &mut CW, n: u64| writer.write_golomb(n, 9);
+    const GOLOMB10: WriteFn<E, CW> = |writer: &mut CW, n: u64| writer.write_golomb(n, 10);
+    const EXP_GOLOMB1: WriteFn<E, CW> = |writer: &mut CW, n: u64| writer.write_exp_golomb(n, 1);
+    const EXP_GOLOMB2: WriteFn<E, CW> = |writer: &mut CW, n: u64| writer.write_exp_golomb(n, 2);
+    const EXP_GOLOMB3: WriteFn<E, CW> = |writer: &mut CW, n: u64| writer.write_exp_golomb(n, 3);
+    const EXP_GOLOMB4: WriteFn<E, CW> = |writer: &mut CW, n: u64| writer.write_exp_golomb(n, 4);
+    const EXP_GOLOMB5: WriteFn<E, CW> = |writer: &mut CW, n: u64| writer.write_exp_golomb(n, 5);
+    const EXP_GOLOMB6: WriteFn<E, CW> = |writer: &mut CW, n: u64| writer.write_exp_golomb(n, 6);
+    const EXP_GOLOMB7: WriteFn<E, CW> = |writer: &mut CW, n: u64| writer.write_exp_golomb(n, 7);
+    const EXP_GOLOMB8: WriteFn<E, CW> = |writer: &mut CW, n: u64| writer.write_exp_golomb(n, 8);
+    const EXP_GOLOMB9: WriteFn<E, CW> = |writer: &mut CW, n: u64| writer.write_exp_golomb(n, 9);
+    const EXP_GOLOMB10: WriteFn<E, CW> = |writer: &mut CW, n: u64| writer.write_exp_golomb(n, 10);
 
     /// Returns a new [`FuncCodeWriter`] for the given code.
     ///
@@ -361,8 +351,8 @@ impl<E: Endianness, CW: CodesWrite<E> + ?Sized> FuncCodeWriter<E, CW> {
 
 impl<E: Endianness, CW: CodesWrite<E> + ?Sized> StaticCodeWrite<E, CW> for FuncCodeWriter<E, CW> {
     #[inline(always)]
-    fn write(&self, writer: &mut CW, value: u64) -> Result<usize, CW::Error> {
-        (self.0)(writer, value)
+    fn write(&self, writer: &mut CW, n: u64) -> Result<usize, CW::Error> {
+        (self.0)(writer, n)
     }
 }
 
@@ -387,57 +377,57 @@ type LenFn = fn(u64) -> usize;
 pub struct FuncCodeLen(LenFn);
 
 impl FuncCodeLen {
-    const UNARY: LenFn = |value| value as usize + 1;
-    const GAMMA: LenFn = |value| len_gamma(value);
-    const DELTA: LenFn = |value| len_delta(value);
-    const OMEGA: LenFn = |value| len_omega(value);
-    const VBYTE_BE: LenFn = |value| bit_len_vbyte(value);
-    const VBYTE_LE: LenFn = |value| bit_len_vbyte(value);
-    const ZETA2: LenFn = |value| len_zeta(value, 2);
-    const ZETA3: LenFn = |value| len_zeta(value, 3);
-    const ZETA4: LenFn = |value| len_zeta(value, 4);
-    const ZETA5: LenFn = |value| len_zeta(value, 5);
-    const ZETA6: LenFn = |value| len_zeta(value, 6);
-    const ZETA7: LenFn = |value| len_zeta(value, 7);
-    const ZETA8: LenFn = |value| len_zeta(value, 8);
-    const ZETA9: LenFn = |value| len_zeta(value, 9);
-    const ZETA10: LenFn = |value| len_zeta(value, 10);
-    const RICE1: LenFn = |value| len_rice(value, 1);
-    const RICE2: LenFn = |value| len_rice(value, 2);
-    const RICE3: LenFn = |value| len_rice(value, 3);
-    const RICE4: LenFn = |value| len_rice(value, 4);
-    const RICE5: LenFn = |value| len_rice(value, 5);
-    const RICE6: LenFn = |value| len_rice(value, 6);
-    const RICE7: LenFn = |value| len_rice(value, 7);
-    const RICE8: LenFn = |value| len_rice(value, 8);
-    const RICE9: LenFn = |value| len_rice(value, 9);
-    const RICE10: LenFn = |value| len_rice(value, 10);
-    const PI1: LenFn = |value| len_pi(value, 1);
-    const PI2: LenFn = |value| len_pi(value, 2);
-    const PI3: LenFn = |value| len_pi(value, 3);
-    const PI4: LenFn = |value| len_pi(value, 4);
-    const PI5: LenFn = |value| len_pi(value, 5);
-    const PI6: LenFn = |value| len_pi(value, 6);
-    const PI7: LenFn = |value| len_pi(value, 7);
-    const PI8: LenFn = |value| len_pi(value, 8);
-    const PI9: LenFn = |value| len_pi(value, 9);
-    const PI10: LenFn = |value| len_pi(value, 10);
-    const GOLOMB3: LenFn = |value| len_golomb(value, 3);
-    const GOLOMB5: LenFn = |value| len_golomb(value, 5);
-    const GOLOMB6: LenFn = |value| len_golomb(value, 6);
-    const GOLOMB7: LenFn = |value| len_golomb(value, 7);
-    const GOLOMB9: LenFn = |value| len_golomb(value, 9);
-    const GOLOMB10: LenFn = |value| len_golomb(value, 10);
-    const EXP_GOLOMB1: LenFn = |value| len_exp_golomb(value, 1);
-    const EXP_GOLOMB2: LenFn = |value| len_exp_golomb(value, 2);
-    const EXP_GOLOMB3: LenFn = |value| len_exp_golomb(value, 3);
-    const EXP_GOLOMB4: LenFn = |value| len_exp_golomb(value, 4);
-    const EXP_GOLOMB5: LenFn = |value| len_exp_golomb(value, 5);
-    const EXP_GOLOMB6: LenFn = |value| len_exp_golomb(value, 6);
-    const EXP_GOLOMB7: LenFn = |value| len_exp_golomb(value, 7);
-    const EXP_GOLOMB8: LenFn = |value| len_exp_golomb(value, 8);
-    const EXP_GOLOMB9: LenFn = |value| len_exp_golomb(value, 9);
-    const EXP_GOLOMB10: LenFn = |value| len_exp_golomb(value, 10);
+    const UNARY: LenFn = |n| n as usize + 1;
+    const GAMMA: LenFn = |n| len_gamma(n);
+    const DELTA: LenFn = |n| len_delta(n);
+    const OMEGA: LenFn = |n| len_omega(n);
+    const VBYTE_BE: LenFn = |n| bit_len_vbyte(n);
+    const VBYTE_LE: LenFn = |n| bit_len_vbyte(n);
+    const ZETA2: LenFn = |n| len_zeta(n, 2);
+    const ZETA3: LenFn = |n| len_zeta(n, 3);
+    const ZETA4: LenFn = |n| len_zeta(n, 4);
+    const ZETA5: LenFn = |n| len_zeta(n, 5);
+    const ZETA6: LenFn = |n| len_zeta(n, 6);
+    const ZETA7: LenFn = |n| len_zeta(n, 7);
+    const ZETA8: LenFn = |n| len_zeta(n, 8);
+    const ZETA9: LenFn = |n| len_zeta(n, 9);
+    const ZETA10: LenFn = |n| len_zeta(n, 10);
+    const RICE1: LenFn = |n| len_rice(n, 1);
+    const RICE2: LenFn = |n| len_rice(n, 2);
+    const RICE3: LenFn = |n| len_rice(n, 3);
+    const RICE4: LenFn = |n| len_rice(n, 4);
+    const RICE5: LenFn = |n| len_rice(n, 5);
+    const RICE6: LenFn = |n| len_rice(n, 6);
+    const RICE7: LenFn = |n| len_rice(n, 7);
+    const RICE8: LenFn = |n| len_rice(n, 8);
+    const RICE9: LenFn = |n| len_rice(n, 9);
+    const RICE10: LenFn = |n| len_rice(n, 10);
+    const PI1: LenFn = |n| len_pi(n, 1);
+    const PI2: LenFn = |n| len_pi(n, 2);
+    const PI3: LenFn = |n| len_pi(n, 3);
+    const PI4: LenFn = |n| len_pi(n, 4);
+    const PI5: LenFn = |n| len_pi(n, 5);
+    const PI6: LenFn = |n| len_pi(n, 6);
+    const PI7: LenFn = |n| len_pi(n, 7);
+    const PI8: LenFn = |n| len_pi(n, 8);
+    const PI9: LenFn = |n| len_pi(n, 9);
+    const PI10: LenFn = |n| len_pi(n, 10);
+    const GOLOMB3: LenFn = |n| len_golomb(n, 3);
+    const GOLOMB5: LenFn = |n| len_golomb(n, 5);
+    const GOLOMB6: LenFn = |n| len_golomb(n, 6);
+    const GOLOMB7: LenFn = |n| len_golomb(n, 7);
+    const GOLOMB9: LenFn = |n| len_golomb(n, 9);
+    const GOLOMB10: LenFn = |n| len_golomb(n, 10);
+    const EXP_GOLOMB1: LenFn = |n| len_exp_golomb(n, 1);
+    const EXP_GOLOMB2: LenFn = |n| len_exp_golomb(n, 2);
+    const EXP_GOLOMB3: LenFn = |n| len_exp_golomb(n, 3);
+    const EXP_GOLOMB4: LenFn = |n| len_exp_golomb(n, 4);
+    const EXP_GOLOMB5: LenFn = |n| len_exp_golomb(n, 5);
+    const EXP_GOLOMB6: LenFn = |n| len_exp_golomb(n, 6);
+    const EXP_GOLOMB7: LenFn = |n| len_exp_golomb(n, 7);
+    const EXP_GOLOMB8: LenFn = |n| len_exp_golomb(n, 8);
+    const EXP_GOLOMB9: LenFn = |n| len_exp_golomb(n, 9);
+    const EXP_GOLOMB10: LenFn = |n| len_exp_golomb(n, 10);
     /// Returns a new [`FuncCodeLen`] for the given code.
     ///
     /// The code is [canonicalized](Codes::canonicalize) before
@@ -523,7 +513,7 @@ impl FuncCodeLen {
 /// version of the trait.
 impl CodeLen for FuncCodeLen {
     #[inline(always)]
-    fn len(&self, value: u64) -> usize {
-        (self.0)(value)
+    fn len(&self, n: u64) -> usize {
+        (self.0)(n)
     }
 }

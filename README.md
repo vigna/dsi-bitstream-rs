@@ -142,6 +142,9 @@ contains reference results of these benchmarks on a few architectures.
 
 ## Features
 
+- `checks`: enables additional runtime checks on some
+  parameters (in particular, written value must fit within
+  the provided bit width).
 - `std` (default): enables standard library support, including
   [`WordAdapter`] and convenience functions such as [`from_path`].
   Implies `alloc`.

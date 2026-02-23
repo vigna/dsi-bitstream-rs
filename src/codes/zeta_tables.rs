@@ -31,12 +31,9 @@ pub fn read_table_le<B: BitRead<LE>>(backend: &mut B) -> Option<(u64, usize)> {
 /// If the result is `Some` the encoding was successful, and
 /// length of the code is returned.
 #[inline(always)]
-pub fn write_table_le<B: BitWrite<LE>>(
-    backend: &mut B,
-    value: u64,
-) -> Result<Option<usize>, B::Error> {
-    Ok(if let Some(bits) = WRITE_LE.get(value as usize) {
-        let len = WRITE_LEN_LE[value as usize] as usize;
+pub fn write_table_le<B: BitWrite<LE>>(backend: &mut B, n: u64) -> Result<Option<usize>, B::Error> {
+    Ok(if let Some(bits) = WRITE_LE.get(n as usize) {
+        let len = WRITE_LEN_LE[n as usize] as usize;
         backend.write_bits(*bits as u64, len)?;
         Some(len)
     } else {
@@ -66,12 +63,9 @@ pub fn read_table_be<B: BitRead<BE>>(backend: &mut B) -> Option<(u64, usize)> {
 /// If the result is `Some` the encoding was successful, and
 /// length of the code is returned.
 #[inline(always)]
-pub fn write_table_be<B: BitWrite<BE>>(
-    backend: &mut B,
-    value: u64,
-) -> Result<Option<usize>, B::Error> {
-    Ok(if let Some(bits) = WRITE_BE.get(value as usize) {
-        let len = WRITE_LEN_BE[value as usize] as usize;
+pub fn write_table_be<B: BitWrite<BE>>(backend: &mut B, n: u64) -> Result<Option<usize>, B::Error> {
+    Ok(if let Some(bits) = WRITE_BE.get(n as usize) {
+        let len = WRITE_LEN_BE[n as usize] as usize;
         backend.write_bits(*bits as u64, len)?;
         Some(len)
     } else {

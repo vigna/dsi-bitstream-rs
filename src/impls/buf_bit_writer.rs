@@ -33,6 +33,13 @@ use num_traits::{AsPrimitive, ConstOne, ConstZero};
 /// structure implements [`std::io::Write`]. Note that because of coherence
 /// rules it is not possible to implement [`std::io::Write`] for a generic
 /// [`BitWrite`].
+///
+/// # Panics on drop
+///
+/// The [`Drop`] implementation flushes the buffer, which requires writing to
+/// the backend. If the backend write fails, the drop will panic. To handle
+/// errors gracefully, call [`flush`](BitWrite::flush) or [`into_inner`](Self::into_inner)
+/// explicitly before dropping.
 
 #[derive(Debug)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
@@ -224,16 +231,16 @@ where
 
     #[inline(always)]
     #[allow(clippy::collapsible_if)]
-    fn write_unary(&mut self, mut value: u64) -> Result<usize, Self::Error> {
-        debug_assert!(value < u64::MAX);
+    fn write_unary(&mut self, mut n: u64) -> Result<usize, Self::Error> {
+        debug_assert!(n < u64::MAX);
         debug_assert!(self.space_left_in_buffer > 0);
 
-        let code_length = value + 1;
+        let code_length = n + 1;
 
         // Easy way out: we fit the buffer
         if code_length <= self.space_left_in_buffer as u64 {
             self.space_left_in_buffer -= code_length as usize;
-            self.buffer = self.buffer << value << 1;
+            self.buffer = self.buffer << n << 1;
             self.buffer |= WW::Word::ONE;
             if self.space_left_in_buffer == 0 {
                 self.backend.write_word(self.buffer.to_be())?;
@@ -245,20 +252,20 @@ where
         self.buffer = self.buffer << (self.space_left_in_buffer - 1) << 1;
         self.backend.write_word(self.buffer.to_be())?;
 
-        value -= self.space_left_in_buffer as u64;
+        n -= self.space_left_in_buffer as u64;
 
-        for _ in 0..value / WW::Word::BITS as u64 {
+        for _ in 0..n / WW::Word::BITS as u64 {
             self.backend.write_word(WW::Word::ZERO)?;
         }
 
-        value %= WW::Word::BITS as u64;
+        n %= WW::Word::BITS as u64;
 
-        if value == WW::Word::BITS as u64 - 1 {
+        if n == WW::Word::BITS as u64 - 1 {
             self.backend.write_word(WW::Word::ONE.to_be())?;
             self.space_left_in_buffer = Self::WORD_BITS;
         } else {
             self.buffer = WW::Word::ONE;
-            self.space_left_in_buffer = Self::WORD_BITS - (value as usize + 1);
+            self.space_left_in_buffer = Self::WORD_BITS - (n as usize + 1);
         }
 
         Ok(code_length as usize)
@@ -393,16 +400,16 @@ where
 
     #[inline(always)]
     #[allow(clippy::collapsible_if)]
-    fn write_unary(&mut self, mut value: u64) -> Result<usize, Self::Error> {
-        debug_assert!(value < u64::MAX);
+    fn write_unary(&mut self, mut n: u64) -> Result<usize, Self::Error> {
+        debug_assert!(n < u64::MAX);
         debug_assert!(self.space_left_in_buffer > 0);
 
-        let code_length = value + 1;
+        let code_length = n + 1;
 
         // Easy way out: we fit the buffer
         if code_length <= self.space_left_in_buffer as u64 {
             self.space_left_in_buffer -= code_length as usize;
-            self.buffer = self.buffer >> value >> 1;
+            self.buffer = self.buffer >> n >> 1;
             self.buffer |= WW::Word::ONE << (Self::WORD_BITS - 1);
             if self.space_left_in_buffer == 0 {
                 self.backend.write_word(self.buffer.to_le())?;
@@ -414,21 +421,21 @@ where
         self.buffer = self.buffer >> (self.space_left_in_buffer - 1) >> 1;
         self.backend.write_word(self.buffer.to_le())?;
 
-        value -= self.space_left_in_buffer as u64;
+        n -= self.space_left_in_buffer as u64;
 
-        for _ in 0..value / WW::Word::BITS as u64 {
+        for _ in 0..n / WW::Word::BITS as u64 {
             self.backend.write_word(WW::Word::ZERO)?;
         }
 
-        value %= WW::Word::BITS as u64;
+        n %= WW::Word::BITS as u64;
 
-        if value == WW::Word::BITS as u64 - 1 {
+        if n == WW::Word::BITS as u64 - 1 {
             self.backend
                 .write_word((WW::Word::ONE << (Self::WORD_BITS - 1)).to_le())?;
             self.space_left_in_buffer = Self::WORD_BITS;
         } else {
             self.buffer = WW::Word::ONE << (Self::WORD_BITS - 1);
-            self.space_left_in_buffer = Self::WORD_BITS - (value as usize + 1);
+            self.space_left_in_buffer = Self::WORD_BITS - (n as usize + 1);
         }
 
         Ok(code_length as usize)

@@ -16,7 +16,7 @@ use crate::traits::*;
 /// An implementation of [`BitRead`] for a [`WordRead`] with word `u64` and of
 /// [`BitSeek`] for a [`WordSeek`].
 ///
-/// This implementation accesses randomly the underlying [`WordRead`] without
+/// This implementation randomly accesses the underlying [`WordRead`] without
 /// any buffering. It is usually slower than
 /// [`BufBitReader`](crate::impls::BufBitReader).
 ///
@@ -73,6 +73,7 @@ impl<WR: WordRead<Word = u64> + WordSeek<Error = <WR as WordRead>::Error>, RP: R
             return Ok(0);
         }
 
+        #[cfg(feature = "checks")]
         assert!(n_bits <= 64);
 
         self.data.set_word_pos(self.bit_index / 64)?;
@@ -100,6 +101,7 @@ impl<WR: WordRead<Word = u64> + WordSeek<Error = <WR as WordRead>::Error>, RP: R
             return Ok(0);
         }
 
+        #[cfg(feature = "checks")]
         assert!(n_bits <= 32);
 
         self.data.set_word_pos(self.bit_index / 64)?;
@@ -222,6 +224,7 @@ impl<WR: WordRead<Word = u64> + WordSeek<Error = <WR as WordRead>::Error>, RP: R
             return Ok(0);
         }
 
+        #[cfg(feature = "checks")]
         assert!(n_bits <= 32);
 
         self.data.set_word_pos(self.bit_index / 64)?;
