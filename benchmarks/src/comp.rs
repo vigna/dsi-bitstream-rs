@@ -1,7 +1,7 @@
 use dsi_bitstream::prelude::*;
 use dsi_bitstream::utils::sample_implied_distribution;
 use rand::rngs::SmallRng;
-use rand::{Rng, SeedableRng};
+use rand::{RngExt, SeedableRng};
 use std::hint::black_box;
 use std::time::Instant;
 
@@ -43,7 +43,7 @@ fn bench<E: Endianness>(
         .collect::<Vec<_>>();
 
     let samples_univ = if univ {
-        let distr = rand_distr::Zipf::new(1E9 as f64, 1.0).unwrap();
+        let distr = rand_distr::Zipf::new(1E9_f64, 1.0).unwrap();
         rng.sample_iter(distr)
             .map(|x| x as u64 - 1)
             .take(N)
@@ -179,19 +179,23 @@ pub fn main() {
         len_omega,
         true
     );
-    bench!(
+    // VByte byte order is independent of stream endianness, so we bench
+    // only on LE; the meaningful dimension is vbyte_be vs vbyte_le.
+    bench::<LE>(
+        calibration,
         "vbyte_be",
         |w, x| w.write_vbyte_be(x).unwrap(),
         |r| r.read_vbyte_be().unwrap(),
         bit_len_vbyte,
-        true
+        true,
     );
-    bench!(
+    bench::<LE>(
+        calibration,
         "vbyte_le",
         |w, x| w.write_vbyte_le(x).unwrap(),
         |r| r.read_vbyte_le().unwrap(),
         bit_len_vbyte,
-        true
+        true,
     );
     bench!(
         "zeta_3_table",
@@ -268,9 +272,9 @@ pub fn main() {
         );
         bench!(
             format!("golomb_{}", k),
-            |w, x| w.write_exp_golomb(x, k).unwrap(),
-            |r| r.read_exp_golomb(k).unwrap(),
-            |x| len_exp_golomb(x, k),
+            |w, x| w.write_golomb(x, k as u64).unwrap(),
+            |r| r.read_golomb(k as u64).unwrap(),
+            |x| len_golomb(x, k as u64),
             false
         );
     }

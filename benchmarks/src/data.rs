@@ -15,7 +15,7 @@
 //! exponent one). Moreover, the functions return the hit ratio, that is, the
 //! ratio of values that is decodable using tables.
 use super::*;
-use rand::{SeedableRng, rngs::SmallRng};
+use rand::{rngs::SmallRng, SeedableRng};
 
 // Given data to benchmark a code, tables for that code, and a length
 // function for the code, this macro computes the hit ratio, that is,
@@ -42,18 +42,19 @@ macro_rules! compute_hit_ratio {
 /// distribution ≈1/x on the first billion integers (if the `univ` feature is
 /// enabled).
 pub fn gen_data(_len: fn(u64) -> usize) -> Vec<u64> {
+    #[allow(unused_mut)]
     let mut rng = SmallRng::seed_from_u64(42);
 
     #[cfg(not(feature = "univ"))]
     let samples = sample_implied_distribution(&_len, &mut rng);
     #[cfg(feature = "univ")]
     let samples = {
-        use rand::Rng;
-        let distr = rand_distr::Zipf::new(1E9 as f64, 1.0).unwrap();
-        (&mut rng).sample_iter(distr).map(|x| x as u64 - 1)
+        use rand::RngExt;
+        let distr = rand_distr::Zipf::new(1E9_f64, 1.0).unwrap();
+        rng.sample_iter(distr).map(|x| x as u64 - 1)
     };
 
-    return samples.take(N).collect();
+    samples.take(N).collect()
 }
 
 /// Generates data to benchmark γ code.
