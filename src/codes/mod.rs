@@ -97,6 +97,8 @@ pub use delta::{
 };
 
 pub mod omega;
+use num_primitive::{PrimitiveSigned, PrimitiveUnsigned};
+use num_traits::{AsPrimitive, ConstOne};
 pub use omega::{OmegaRead, OmegaReadParam, OmegaWrite, OmegaWriteParam, len_omega};
 
 pub mod minimal_binary;
@@ -156,11 +158,9 @@ pub trait ToInt {
     fn to_int(self) -> Self::Signed;
 }
 
-impl<
-    U: num_primitive::PrimitiveUnsigned + num_traits::ConstOne + num_traits::AsPrimitive<U::Signed>,
-> ToInt for U
+impl<U: PrimitiveUnsigned + ConstOne + AsPrimitive<U::Signed>> ToInt for U
 where
-    U::Signed: num_primitive::PrimitiveSigned + Copy + 'static,
+    U::Signed: PrimitiveSigned + Copy + 'static,
 {
     type Signed = U::Signed;
     #[inline]
@@ -193,13 +193,9 @@ pub trait ToNat {
     fn to_nat(self) -> Self::Unsigned;
 }
 
-impl<
-    S: num_primitive::PrimitiveSigned
-        + num_primitive::PrimitiveInteger
-        + num_traits::AsPrimitive<S::Unsigned>,
-> ToNat for S
+impl<S: PrimitiveSigned + AsPrimitive<S::Unsigned>> ToNat for S
 where
-    S::Unsigned: num_primitive::PrimitiveUnsigned + Copy + 'static,
+    S::Unsigned: PrimitiveUnsigned + Copy + 'static,
 {
     type Unsigned = S::Unsigned;
     #[inline]
