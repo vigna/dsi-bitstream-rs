@@ -77,7 +77,7 @@ pub trait BitRead<E: Endianness> {
     fn read_bits(&mut self, num_bits: usize) -> Result<u64, Self::Error>;
 
     /// Peeks at `n` bits without advancing the stream position.
-    /// `n` must be nonzero, and at most `PeekWord::BITS`.
+    /// `n` must be nonzero, and at most `Self::PeekWord::BITS`.
     fn peek_bits(&mut self, n: usize) -> Result<Self::PeekWord, Self::Error>;
 
     /// Skip `n` bits from the stream.
@@ -86,12 +86,12 @@ pub trait BitRead<E: Endianness> {
     /// more efficient than [`BitSeek::set_bit_pos`].
     fn skip_bits(&mut self, n: usize) -> Result<(), Self::Error>;
 
-    #[doc(hidden)]
     /// Skip bits from the stream after a call to [`BitRead::peek_bits`].
     ///
     /// This is an internal optimization used to skip bits we know
     /// are already in some internal buffer as we [peeked](BitRead::peek_bits)
     /// at them. Please don't use.
+    #[doc(hidden)]
     fn skip_bits_after_peek(&mut self, n: usize);
 
     /// Reads a unary code.

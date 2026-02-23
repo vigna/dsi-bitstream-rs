@@ -89,6 +89,7 @@ impl<W: Word, B: AsRef<[W]>> MemWordWriterSlice<W, B> {
         self.len() == 0
     }
 
+    /// Consumes this writer and returns the underlying data.
     #[must_use]
     pub fn into_inner(self) -> B {
         self.data
@@ -151,6 +152,7 @@ impl<W: Word, B: AsRef<Vec<W>>> MemWordWriterVec<W, B> {
         self.len() == 0
     }
 
+    /// Consumes this writer and returns the underlying data.
     #[must_use]
     pub fn into_inner(self) -> B {
         self.data

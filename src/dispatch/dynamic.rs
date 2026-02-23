@@ -11,7 +11,7 @@
 //! This kind of dispatch is resolved at runtime, but just once, at construction
 //! time, against a specific [`CodesRead`]. The code is stored in a function
 //! pointer, so it cannot be inlined like in the [static
-//! case](crate::dispatch::static), but the approach is more flexible.
+//! case](crate::dispatch::r#static), but the approach is more flexible.
 
 use super::*;
 #[cfg(feature = "mem_dbg")]
@@ -173,7 +173,8 @@ impl<E: Endianness, CR: CodesRead<E> + ?Sized> FuncCodeReader<E, CR> {
         Self(read_func)
     }
 
-    /// Gets the function pointer for the code.
+    /// Returns the function pointer for the code.
+    #[must_use]
     #[inline(always)]
     pub fn get_func(&self) -> ReadFn<E, CR> {
         self.0
@@ -343,7 +344,8 @@ impl<E: Endianness, CW: CodesWrite<E> + ?Sized> FuncCodeWriter<E, CW> {
         Self(write_func)
     }
 
-    /// Gets the function pointer for the code.
+    /// Returns the function pointer for the code.
+    #[must_use]
     #[inline(always)]
     pub fn get_func(&self) -> WriteFn<E, CW> {
         self.0
@@ -504,7 +506,8 @@ impl FuncCodeLen {
     pub fn new_with_func(len_func: LenFn) -> Self {
         Self(len_func)
     }
-    /// Gets the function pointer for the code.
+    /// Returns the function pointer for the code.
+    #[must_use]
     #[inline(always)]
     pub fn get_func(&self) -> LenFn {
         self.0

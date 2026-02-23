@@ -264,6 +264,7 @@ impl<E: Endianness, CRF: CodesReaderFactoryHelper<E> + ?Sized> FactoryFuncCodeRe
     }
 
     /// Returns the function pointer for the code.
+    #[must_use]
     #[inline(always)]
     pub fn get_func(&self) -> FactoryReadFn<E, CRF> {
         self.0
@@ -271,6 +272,7 @@ impl<E: Endianness, CRF: CodesReaderFactoryHelper<E> + ?Sized> FactoryFuncCodeRe
 
     /// Returns a [`FuncCodeReader`] compatible with `CRF`'s
     /// [`CodesReaderFactory::CodesReader`] for a given lifetime `'a`.
+    #[must_use]
     #[inline(always)]
     pub fn get<'a>(
         &self,

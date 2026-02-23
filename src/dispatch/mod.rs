@@ -265,7 +265,7 @@ pub mod dynamic;
 pub use dynamic::{FuncCodeLen, FuncCodeReader, FuncCodeWriter};
 
 pub mod factory;
-pub use factory::{CodesReaderFactory, FactoryFuncCodeReader};
+pub use factory::{CodesReaderFactory, CodesReaderFactoryHelper, FactoryFuncCodeReader};
 
 /// Convenience extension trait for reading all the codes supported by the
 /// library.

@@ -47,6 +47,7 @@ impl<W: Word, B> WordAdapter<W, B> {
         }
     }
 
+    /// Consumes this adapter and returns the underlying backend.
     #[must_use]
     pub fn into_inner(self) -> B {
         self.backend

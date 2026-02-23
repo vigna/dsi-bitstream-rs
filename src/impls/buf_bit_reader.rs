@@ -145,7 +145,7 @@ where
         }
     }
 
-    /// Returns the backend, consuming this reader.
+    /// Consumes this reader and returns the underlying [`WordRead`].
     pub fn into_inner(self) -> WR {
         self.backend
     }

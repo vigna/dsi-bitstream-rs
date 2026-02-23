@@ -63,6 +63,7 @@ impl<W: Word, B: AsRef<[W]>> MemWordReader<W, B> {
         }
     }
 
+    /// Consumes this reader and returns the underlying data.
     #[must_use]
     pub fn into_inner(self) -> B {
         self.data

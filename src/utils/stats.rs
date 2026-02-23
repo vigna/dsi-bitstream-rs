@@ -127,6 +127,7 @@ impl<
         self.update_many(n, 1)
     }
 
+    /// Update the stats with `count` occurrences of `n` and return `n` for convenience.
     #[inline]
     pub fn update_many(&mut self, n: u64, count: u64) -> u64 {
         self.total += count;
@@ -181,6 +182,10 @@ impl<
     }
 
     /// Returns the best code for the stream and its space usage.
+    ///
+    /// When VByte is the best code, [`Codes::VByteBe`] is returned as the
+    /// canonical representative (both variants have the same bit length).
+    #[must_use]
     pub fn best_code(&self) -> (Codes, u64) {
         let mut best = (Codes::Unary, self.unary);
         if self.gamma < best.1 {
@@ -225,6 +230,7 @@ impl<
 
     /// Returns a vector of all codes and their space usage, in ascending order by space usage.
     #[cfg(feature = "alloc")]
+    #[must_use]
     pub fn get_codes(&self) -> Vec<(Codes, u64)> {
         let mut codes = vec![
             (Codes::Unary, self.unary),
@@ -254,6 +260,7 @@ impl<
     }
 
     /// Returns the number of bits used by the given code.
+    #[must_use]
     pub fn bits_for(&self, code: Codes) -> Option<u64> {
         match code {
             Codes::Unary => Some(self.unary),

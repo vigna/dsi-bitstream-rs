@@ -147,7 +147,7 @@ impl<E: Endianness, WW: WordWrite, WP: WriteParams> core::ops::Drop for BufBitWr
         if TypeId::of::<E>() == TypeId::of::<LE>() {
             flush_le(self).unwrap();
         } else {
-            // TypeId::of::<E>() = TypeId::of::<BE>()
+            // TypeId::of::<E>() == TypeId::of::<BE>()
             flush_be(self).unwrap();
         }
     }

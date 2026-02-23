@@ -10,7 +10,7 @@
 //!
 //! This is the slower and more generic form of dispatching, mostly used for
 //! testing and writing examples. For faster dispatching, consider using
-//! [dynamic] or [static] dispatch.
+//! [dynamic](super::dynamic) or [static](super::r#static) dispatch.
 
 use super::*;
 #[cfg(feature = "serde")]
@@ -65,6 +65,7 @@ impl Codes {
     ///   [`Gamma`](Codes::Gamma)
     ///
     /// - [`Golomb(2ⁿ)`](Codes::Golomb) → [`Rice(n)`](Codes::Rice)
+    #[must_use]
     pub const fn canonicalize(self) -> Self {
         match self {
             Self::Zeta(1) | Self::ExpGolomb(0) | Self::Pi(0) => Self::Gamma,
@@ -368,10 +369,8 @@ impl core::fmt::Display for Codes {
 
 fn array_format_error(s: &str) -> [u8; 32] {
     let mut error_buffer = [0u8; 32];
-    const ERROR_PREFIX: &[u8] = b"could not parse ";
-    error_buffer[..ERROR_PREFIX.len()].copy_from_slice(ERROR_PREFIX);
-    error_buffer[ERROR_PREFIX.len()..ERROR_PREFIX.len() + s.len().min(32 - ERROR_PREFIX.len())]
-        .copy_from_slice(&s.as_bytes()[..s.len().min(32 - ERROR_PREFIX.len())]);
+    let len = s.len().min(32);
+    error_buffer[..len].copy_from_slice(&s.as_bytes()[..len]);
     error_buffer
 }
 
