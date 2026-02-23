@@ -79,7 +79,7 @@ where
 /// # Ok::<(), Box<dyn std::error::Error>>(())
 /// ```
 #[cfg(feature = "std")]
-pub fn from_path<E: Endianness, W: PrimitiveUnsigned + ConstZero + ConstOne + DoubleType>(
+pub fn from_path<E: Endianness, W: Word + DoubleType>(
     path: impl AsRef<std::path::Path>,
 ) -> std::io::Result<
     BufBitReader<E, super::WordAdapter<W, std::io::BufReader<std::fs::File>>, DefaultReadParams>,
@@ -96,7 +96,7 @@ where
 ///
 /// See also [`from_path`] for a version that takes a path.
 #[cfg(feature = "std")]
-pub fn from_file<E: Endianness, W: PrimitiveUnsigned + ConstZero + ConstOne + DoubleType>(
+pub fn from_file<E: Endianness, W: Word + DoubleType>(
     file: std::fs::File,
 ) -> BufBitReader<E, super::WordAdapter<W, std::io::BufReader<std::fs::File>>, DefaultReadParams>
 where

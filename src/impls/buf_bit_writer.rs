@@ -62,7 +62,7 @@ pub struct BufBitWriter<E: Endianness, WW: WordWrite, WP: WriteParams = DefaultW
 /// # Ok::<(), Box<dyn std::error::Error>>(())
 /// ```
 #[cfg(feature = "std")]
-pub fn from_path<E: Endianness, W: PrimitiveUnsigned + ConstZero + ConstOne>(
+pub fn from_path<E: Endianness, W: Word>(
     path: impl AsRef<std::path::Path>,
 ) -> std::io::Result<
     BufBitWriter<E, super::WordAdapter<W, std::io::BufWriter<std::fs::File>>, DefaultWriteParams>,
@@ -79,7 +79,7 @@ where
 ///
 /// See also [`from_path`] for a version that takes a path.
 #[cfg(feature = "std")]
-pub fn from_file<E: Endianness, W: PrimitiveUnsigned + ConstZero + ConstOne>(
+pub fn from_file<E: Endianness, W: Word>(
     file: std::fs::File,
 ) -> BufBitWriter<E, super::WordAdapter<W, std::io::BufWriter<std::fs::File>>, DefaultWriteParams>
 where

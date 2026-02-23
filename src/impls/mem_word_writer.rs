@@ -60,15 +60,13 @@ use crate::traits::*;
 /// ```
 #[derive(Debug, PartialEq)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
-pub struct MemWordWriterSlice<W: PrimitiveUnsigned + ConstZero + ConstOne, B: AsMut<[W]>> {
+pub struct MemWordWriterSlice<W: Word, B: AsMut<[W]>> {
     data: B,
     word_index: usize,
     _marker: core::marker::PhantomData<W>,
 }
 
-impl<W: PrimitiveUnsigned + ConstZero + ConstOne, B: AsMut<[W]> + AsRef<[W]>>
-    MemWordWriterSlice<W, B>
-{
+impl<W: Word, B: AsMut<[W]> + AsRef<[W]>> MemWordWriterSlice<W, B> {
     /// Creates a new [`MemWordWriterSlice`] from a slice.
     #[must_use]
     pub fn new(data: B) -> Self {
@@ -123,21 +121,14 @@ impl<W: PrimitiveUnsigned + ConstZero + ConstOne, B: AsMut<[W]> + AsRef<[W]>>
 #[derive(Debug, PartialEq)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
 #[cfg(feature = "alloc")]
-pub struct MemWordWriterVec<
-    W: PrimitiveUnsigned + ConstZero + ConstOne,
-    B: AsMut<alloc::vec::Vec<W>>,
-> {
+pub struct MemWordWriterVec<W: Word, B: AsMut<alloc::vec::Vec<W>>> {
     data: B,
     word_index: usize,
     _marker: core::marker::PhantomData<W>,
 }
 
 #[cfg(feature = "alloc")]
-impl<
-    W: PrimitiveUnsigned + ConstZero + ConstOne,
-    B: AsMut<alloc::vec::Vec<W>> + AsRef<alloc::vec::Vec<W>>,
-> MemWordWriterVec<W, B>
-{
+impl<W: Word, B: AsMut<alloc::vec::Vec<W>> + AsRef<alloc::vec::Vec<W>>> MemWordWriterVec<W, B> {
     /// Creates a new [`MemWordWriterVec`] from a vector.
     #[must_use]
     pub fn new(data: B) -> Self {
@@ -164,9 +155,7 @@ impl<
     }
 }
 
-impl<W: PrimitiveUnsigned + ConstZero + ConstOne, B: AsMut<[W]>> WordRead
-    for MemWordWriterSlice<W, B>
-{
+impl<W: Word, B: AsMut<[W]>> WordRead for MemWordWriterSlice<W, B> {
     type Error = WordError;
     type Word = W;
 
@@ -184,9 +173,7 @@ impl<W: PrimitiveUnsigned + ConstZero + ConstOne, B: AsMut<[W]>> WordRead
     }
 }
 
-impl<W: PrimitiveUnsigned + ConstZero + ConstOne, B: AsRef<[W]> + AsMut<[W]>> WordSeek
-    for MemWordWriterSlice<W, B>
-{
+impl<W: Word, B: AsRef<[W]> + AsMut<[W]>> WordSeek for MemWordWriterSlice<W, B> {
     type Error = WordError;
 
     #[inline(always)]
@@ -207,9 +194,7 @@ impl<W: PrimitiveUnsigned + ConstZero + ConstOne, B: AsRef<[W]> + AsMut<[W]>> Wo
     }
 }
 
-impl<W: PrimitiveUnsigned + ConstZero + ConstOne, B: AsMut<[W]>> WordWrite
-    for MemWordWriterSlice<W, B>
-{
+impl<W: Word, B: AsMut<[W]>> WordWrite for MemWordWriterSlice<W, B> {
     type Error = WordError;
     type Word = W;
 
@@ -233,9 +218,7 @@ impl<W: PrimitiveUnsigned + ConstZero + ConstOne, B: AsMut<[W]>> WordWrite
 }
 
 #[cfg(feature = "alloc")]
-impl<W: PrimitiveUnsigned + ConstZero + ConstOne, B: AsMut<alloc::vec::Vec<W>>> WordWrite
-    for MemWordWriterVec<W, B>
-{
+impl<W: Word, B: AsMut<alloc::vec::Vec<W>>> WordWrite for MemWordWriterVec<W, B> {
     type Error = Infallible;
     type Word = W;
 
@@ -255,9 +238,7 @@ impl<W: PrimitiveUnsigned + ConstZero + ConstOne, B: AsMut<alloc::vec::Vec<W>>> 
 }
 
 #[cfg(feature = "alloc")]
-impl<W: PrimitiveUnsigned + ConstZero + ConstOne, B: AsMut<alloc::vec::Vec<W>>> WordRead
-    for MemWordWriterVec<W, B>
-{
+impl<W: Word, B: AsMut<alloc::vec::Vec<W>>> WordRead for MemWordWriterVec<W, B> {
     type Error = WordError;
     type Word = W;
 
@@ -276,10 +257,8 @@ impl<W: PrimitiveUnsigned + ConstZero + ConstOne, B: AsMut<alloc::vec::Vec<W>>> 
 }
 
 #[cfg(feature = "alloc")]
-impl<
-    W: PrimitiveUnsigned + ConstZero + ConstOne,
-    B: AsMut<alloc::vec::Vec<W>> + AsRef<alloc::vec::Vec<W>>,
-> WordSeek for MemWordWriterVec<W, B>
+impl<W: Word, B: AsMut<alloc::vec::Vec<W>> + AsRef<alloc::vec::Vec<W>>> WordSeek
+    for MemWordWriterVec<W, B>
 {
     type Error = WordError;
 

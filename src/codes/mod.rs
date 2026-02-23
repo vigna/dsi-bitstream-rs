@@ -143,7 +143,7 @@ pub mod zeta_tables;
 /// This pair of bijections makes it possible to use instantaneous codes for
 /// signed integers by mapping them to natural numbers and back.
 ///
-/// This bijection is best known as the "ZigZag" transformation in Google's
+/// This bijection is best known as the “ZigZag” transformation in Google's
 /// [Protocol Buffers](https://protobuf.dev/), albeit it has been used by
 /// [WebGraph](http://webgraph.di.unimi.it/) since 2003, and much likely in
 /// other software, for the same purpose. Note that the compression standards
@@ -178,7 +178,7 @@ where
 /// This pair of bijections makes it possible to use instantaneous codes
 /// for signed integers by mapping them to natural numbers and back.
 ///
-/// This bijection is best known as the "ZigZag" transformation in Google's
+/// This bijection is best known as the “ZigZag” transformation in Google's
 /// [Protocol Buffers](https://protobuf.dev/), albeit it has been used by
 /// [WebGraph](http://webgraph.di.unimi.it/) since 2003, and much likely in
 /// other software, for the same purpose. Note that the compression standards

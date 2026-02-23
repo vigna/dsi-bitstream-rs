@@ -8,9 +8,7 @@
 use dsi_bitstream::prelude::{
     BitRead, BitWrite, BufBitReader, BufBitWriter, MemWordReader, MemWordWriterVec,
 };
-use dsi_bitstream::traits::{
-    BE, ConstOne, ConstZero, DoubleType, Endianness, LE, PrimitiveInteger, PrimitiveUnsigned,
-};
+use dsi_bitstream::traits::{BE, DoubleType, Endianness, LE, PrimitiveInteger, Word};
 use rand::rngs::SmallRng;
 use rand::{RngExt, SeedableRng};
 use std::error::Error;
@@ -45,11 +43,7 @@ fn verify_read<E: Endianness>(
     Ok(())
 }
 
-fn verify_write<
-    E: Endianness,
-    W: PrimitiveUnsigned + ConstZero + ConstOne + DoubleType,
-    A: AsRef<[W]>,
->(
+fn verify_write<E: Endianness, W: Word + DoubleType, A: AsRef<[W]>>(
     buffer: A,
     mut len: u64,
     skip: usize,
@@ -83,10 +77,8 @@ where
 
 const MAX_LEN: u64 = 500;
 
-fn test_endianness<
-    E: Endianness,
-    W: PrimitiveUnsigned + ConstZero + ConstOne + PrimitiveInteger + DoubleType + 'static,
->() -> Result<(), Box<dyn Error + Send + Sync + 'static>>
+fn test_endianness<E: Endianness, W: Word + PrimitiveInteger + DoubleType + 'static>()
+-> Result<(), Box<dyn Error + Send + Sync + 'static>>
 where
     BufBitReader<E, MemWordReader<W, Vec<W>>>: BitRead<E>,
     BufBitWriter<E, MemWordWriterVec<W, Vec<W>>>: BitWrite<E>,

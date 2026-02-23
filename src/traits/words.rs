@@ -11,12 +11,18 @@ use core::error::Error;
 pub use num_primitive::{PrimitiveInteger, PrimitiveUnsigned};
 pub use num_traits::{ConstOne, ConstZero};
 
+/// This is a trait alias for all the properties that we need for words of
+/// memory read and written by either a [`WordRead`] or [`WordWrite`],
+/// respectively.
+pub trait Word: PrimitiveUnsigned + ConstZero + ConstOne {}
+impl<W: PrimitiveUnsigned + ConstZero + ConstOne> Word for W {}
+
 /// Trait providing the double-width type for a given unsigned integer type.
 ///
 /// This is used by [`crate::impls::BufBitReader`] to provide a bit buffer
 /// that is twice the width of the word read from the backend.
 pub trait DoubleType {
-    type DoubleType: PrimitiveUnsigned + ConstZero + ConstOne;
+    type DoubleType: Word;
 }
 
 impl DoubleType for u8 {
@@ -37,7 +43,7 @@ pub trait WordRead {
     type Error: Error + Send + Sync + 'static;
 
     /// The word type (the type of the result of [`WordRead::read_word`]).
-    type Word: PrimitiveUnsigned + ConstZero + ConstOne;
+    type Word: Word;
 
     /// Reads a word and advances the current position.
     fn read_word(&mut self) -> Result<Self::Word, Self::Error>;
@@ -48,7 +54,7 @@ pub trait WordWrite {
     type Error: Error + Send + Sync + 'static;
 
     /// The word type (the type of the argument of [`WordWrite::write_word`]).
-    type Word: PrimitiveUnsigned + ConstZero + ConstOne;
+    type Word: Word;
 
     /// Writes a word and advances the current position.
     fn write_word(&mut self, word: Self::Word) -> Result<(), Self::Error>;

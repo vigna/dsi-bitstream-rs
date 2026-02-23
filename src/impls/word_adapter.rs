@@ -32,12 +32,12 @@ use std::io::{Read, Seek, SeekFrom, Write};
 /// will be shifted by the rounding.
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
-pub struct WordAdapter<W: PrimitiveUnsigned + ConstZero + ConstOne, B> {
+pub struct WordAdapter<W: Word, B> {
     backend: B,
     _marker: core::marker::PhantomData<W>,
 }
 
-impl<W: PrimitiveUnsigned + ConstZero + ConstOne, B> WordAdapter<W, B> {
+impl<W: Word, B> WordAdapter<W, B> {
     /// Creates a new WordAdapter
     #[must_use]
     pub fn new(backend: B) -> Self {
@@ -53,7 +53,7 @@ impl<W: PrimitiveUnsigned + ConstZero + ConstOne, B> WordAdapter<W, B> {
     }
 }
 
-impl<W: PrimitiveUnsigned + ConstZero + ConstOne, B: Read> WordRead for WordAdapter<W, B>
+impl<W: Word, B: Read> WordRead for WordAdapter<W, B>
 where
     W::Bytes: Default + AsMut<[u8]>,
 {
@@ -83,7 +83,7 @@ where
     }
 }
 
-impl<W: PrimitiveUnsigned + ConstZero + ConstOne, B: Write> WordWrite for WordAdapter<W, B>
+impl<W: Word, B: Write> WordWrite for WordAdapter<W, B>
 where
     W::Bytes: AsRef<[u8]>,
 {
@@ -101,7 +101,7 @@ where
     }
 }
 
-impl<W: PrimitiveUnsigned + ConstZero + ConstOne, B: Seek> WordSeek for WordAdapter<W, B> {
+impl<W: Word, B: Seek> WordSeek for WordAdapter<W, B> {
     type Error = std::io::Error;
 
     #[inline(always)]
