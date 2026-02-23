@@ -204,40 +204,40 @@ where
     }
 
     #[inline]
-    fn read_bits(&mut self, mut n_bits: usize) -> Result<u64, Self::Error> {
-        debug_assert!(n_bits <= 64);
+    fn read_bits(&mut self, mut num_bits: usize) -> Result<u64, Self::Error> {
+        debug_assert!(num_bits <= 64);
         debug_assert!(self.bits_in_buffer < Self::BUFFER_BITS);
 
         // most common path, we just read the buffer
-        if n_bits <= self.bits_in_buffer {
-            // Valid right shift of BB::<WR>::BITS - n_bits, even when n_bits is zero
-            let result: u64 = (self.buffer >> (Self::BUFFER_BITS - n_bits - 1) >> 1_u32).as_();
-            self.bits_in_buffer -= n_bits;
-            self.buffer <<= n_bits;
+        if num_bits <= self.bits_in_buffer {
+            // Valid right shift of BB::<WR>::BITS - num_bits, even when num_bits is zero
+            let result: u64 = (self.buffer >> (Self::BUFFER_BITS - num_bits - 1) >> 1_u32).as_();
+            self.bits_in_buffer -= num_bits;
+            self.buffer <<= num_bits;
             return Ok(result);
         }
 
         let mut result: u64 =
             (self.buffer >> (Self::BUFFER_BITS - 1 - self.bits_in_buffer) >> 1_u8).as_();
-        n_bits -= self.bits_in_buffer;
+        num_bits -= self.bits_in_buffer;
 
         // Directly read to the result without updating the buffer
-        while n_bits > Self::WORD_BITS {
+        while num_bits > Self::WORD_BITS {
             let new_word: u64 = self.backend.read_word()?.to_be().as_u64();
             result = (result << Self::WORD_BITS) | new_word;
-            n_bits -= Self::WORD_BITS;
+            num_bits -= Self::WORD_BITS;
         }
 
-        debug_assert!(n_bits > 0);
-        debug_assert!(n_bits <= Self::WORD_BITS);
+        debug_assert!(num_bits > 0);
+        debug_assert!(num_bits <= Self::WORD_BITS);
 
         // get the final word
         let new_word = self.backend.read_word()?.to_be();
-        self.bits_in_buffer = Self::WORD_BITS - n_bits;
+        self.bits_in_buffer = Self::WORD_BITS - num_bits;
         // compose the remaining bits
         let upcast: u64 = new_word.as_u64();
         let final_bits: u64 = upcast >> self.bits_in_buffer;
-        result = (result << (n_bits - 1) << 1) | final_bits;
+        result = (result << (num_bits - 1) << 1) | final_bits;
         // and put the rest in the buffer
         self.buffer = (new_word.as_double() << (Self::BUFFER_BITS - self.bits_in_buffer - 1)) << 1;
 
@@ -444,15 +444,15 @@ where
     }
 
     #[inline]
-    fn read_bits(&mut self, mut n_bits: usize) -> Result<u64, Self::Error> {
-        debug_assert!(n_bits <= 64);
+    fn read_bits(&mut self, mut num_bits: usize) -> Result<u64, Self::Error> {
+        debug_assert!(num_bits <= 64);
         debug_assert!(self.bits_in_buffer < Self::BUFFER_BITS);
 
         // most common path, we just read the buffer
-        if n_bits <= self.bits_in_buffer {
-            let result: u64 = (self.buffer & ((BB::<WR>::ONE << n_bits) - BB::<WR>::ONE)).as_();
-            self.bits_in_buffer -= n_bits;
-            self.buffer >>= n_bits;
+        if num_bits <= self.bits_in_buffer {
+            let result: u64 = (self.buffer & ((BB::<WR>::ONE << num_bits) - BB::<WR>::ONE)).as_();
+            self.bits_in_buffer -= num_bits;
+            self.buffer >>= num_bits;
             return Ok(result);
         }
 
@@ -460,27 +460,27 @@ where
         let mut bits_in_res = self.bits_in_buffer;
 
         // Directly read to the result without updating the buffer
-        while n_bits > Self::WORD_BITS + bits_in_res {
+        while num_bits > Self::WORD_BITS + bits_in_res {
             let new_word: u64 = self.backend.read_word()?.to_le().as_u64();
             result |= new_word << bits_in_res;
             bits_in_res += Self::WORD_BITS;
         }
 
-        n_bits -= bits_in_res;
+        num_bits -= bits_in_res;
 
-        debug_assert!(n_bits > 0);
-        debug_assert!(n_bits <= Self::WORD_BITS);
+        debug_assert!(num_bits > 0);
+        debug_assert!(num_bits <= Self::WORD_BITS);
 
         // get the final word
         let new_word = self.backend.read_word()?.to_le();
-        self.bits_in_buffer = Self::WORD_BITS - n_bits;
+        self.bits_in_buffer = Self::WORD_BITS - num_bits;
         // compose the remaining bits
-        let sham = 64 - n_bits;
+        let sham = 64 - num_bits;
         let upcast: u64 = new_word.as_u64();
         let final_bits: u64 = (upcast << sham) >> sham;
         result |= final_bits << bits_in_res;
         // and put the rest in the buffer
-        self.buffer = new_word.as_double() >> n_bits;
+        self.buffer = new_word.as_double() >> num_bits;
 
         Ok(result)
     }

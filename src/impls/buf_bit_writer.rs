@@ -185,39 +185,39 @@ where
 
     #[allow(unused_mut)]
     #[inline]
-    fn write_bits(&mut self, mut value: u64, n_bits: usize) -> Result<usize, Self::Error> {
-        debug_assert!(n_bits <= 64);
+    fn write_bits(&mut self, mut value: u64, num_bits: usize) -> Result<usize, Self::Error> {
+        debug_assert!(num_bits <= 64);
         #[cfg(feature = "checks")]
         assert!(
-            value & (1_u128 << n_bits).wrapping_sub(1) as u64 == value,
+            value & (1_u128 << num_bits).wrapping_sub(1) as u64 == value,
             "Error: value {} does not fit in {} bits",
             value,
-            n_bits
+            num_bits
         );
         debug_assert!(self.space_left_in_buffer > 0);
 
         #[cfg(test)]
-        if n_bits < 64 {
+        if num_bits < 64 {
             // We put garbage in the higher bits for testing
-            value |= u64::MAX << n_bits;
+            value |= u64::MAX << num_bits;
         }
 
         // Easy way out: we fit the buffer
-        if n_bits < self.space_left_in_buffer {
-            self.buffer <<= n_bits;
-            // Clean up bits higher than n_bits
-            self.buffer |= value.as_() & !(WW::Word::MAX << n_bits as u32);
-            self.space_left_in_buffer -= n_bits;
-            return Ok(n_bits);
+        if num_bits < self.space_left_in_buffer {
+            self.buffer <<= num_bits;
+            // Clean up bits higher than num_bits
+            self.buffer |= value.as_() & !(WW::Word::MAX << num_bits as u32);
+            self.space_left_in_buffer -= num_bits;
+            return Ok(num_bits);
         }
 
         // Load the bottom of the buffer, if necessary, and dump the whole buffer
         self.buffer = self.buffer << (self.space_left_in_buffer - 1) << 1;
-        // The first shift discards bits higher than n_bits
-        self.buffer |= (value << (64 - n_bits) >> (64 - self.space_left_in_buffer)).as_();
+        // The first shift discards bits higher than num_bits
+        self.buffer |= (value << (64 - num_bits) >> (64 - self.space_left_in_buffer)).as_();
         self.backend.write_word(self.buffer.to_be())?;
 
-        let mut to_write = n_bits - self.space_left_in_buffer;
+        let mut to_write = num_bits - self.space_left_in_buffer;
 
         for _ in 0..to_write / (Self::WORD_BITS) {
             to_write -= Self::WORD_BITS;
@@ -226,7 +226,7 @@ where
 
         self.space_left_in_buffer = Self::WORD_BITS - to_write;
         self.buffer = value.as_();
-        Ok(n_bits)
+        Ok(num_bits)
     }
 
     #[inline(always)]
@@ -352,31 +352,31 @@ where
     }
 
     #[inline]
-    fn write_bits(&mut self, mut value: u64, n_bits: usize) -> Result<usize, Self::Error> {
-        debug_assert!(n_bits <= 64);
+    fn write_bits(&mut self, mut value: u64, num_bits: usize) -> Result<usize, Self::Error> {
+        debug_assert!(num_bits <= 64);
         #[cfg(feature = "checks")]
         assert!(
-            value & (1_u128 << n_bits).wrapping_sub(1) as u64 == value,
+            value & (1_u128 << num_bits).wrapping_sub(1) as u64 == value,
             "Error: value {} does not fit in {} bits",
             value,
-            n_bits
+            num_bits
         );
         debug_assert!(self.space_left_in_buffer > 0);
 
         #[cfg(test)]
-        if n_bits < 64 {
+        if num_bits < 64 {
             // We put garbage in the higher bits for testing
-            value |= u64::MAX << n_bits;
+            value |= u64::MAX << num_bits;
         }
 
         // Easy way out: we fit the buffer
-        if n_bits < self.space_left_in_buffer {
-            self.buffer >>= n_bits;
-            // Clean up bits higher than n_bits
+        if num_bits < self.space_left_in_buffer {
+            self.buffer >>= num_bits;
+            // Clean up bits higher than num_bits
             self.buffer |=
-                (value.as_() & !(WW::Word::MAX << n_bits as u32)).rotate_right(n_bits as u32);
-            self.space_left_in_buffer -= n_bits;
-            return Ok(n_bits);
+                (value.as_() & !(WW::Word::MAX << num_bits as u32)).rotate_right(num_bits as u32);
+            self.space_left_in_buffer -= num_bits;
+            return Ok(num_bits);
         }
 
         // Load the top of the buffer, if necessary, and dump the whole buffer
@@ -384,7 +384,7 @@ where
         self.buffer |= value.as_() << (Self::WORD_BITS - self.space_left_in_buffer);
         self.backend.write_word(self.buffer.to_le())?;
 
-        let to_write = n_bits - self.space_left_in_buffer;
+        let to_write = num_bits - self.space_left_in_buffer;
         value = value >> (self.space_left_in_buffer - 1) >> 1;
 
         for _ in 0..to_write / (Self::WORD_BITS) {
@@ -395,7 +395,7 @@ where
 
         self.space_left_in_buffer = Self::WORD_BITS - to_write % (Self::WORD_BITS);
         self.buffer = value.as_().rotate_right(to_write as u32);
-        Ok(n_bits)
+        Ok(num_bits)
     }
 
     #[inline(always)]

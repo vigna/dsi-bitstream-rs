@@ -50,10 +50,10 @@ where
         self.reader.skip_bits(n_bits)
     }
 
-    fn read_bits(&mut self, n_bits: usize) -> Result<u64, Self::Error> {
-        let value = self.reader.read_bits(n_bits)?;
+    fn read_bits(&mut self, num_bits: usize) -> Result<u64, Self::Error> {
+        let value = self.reader.read_bits(num_bits)?;
         #[cfg(feature = "std")]
-        eprintln!("read_bits({}): {}", n_bits, value);
+        eprintln!("read_bits({}): {}", num_bits, value);
         Ok(value)
     }
 
@@ -165,10 +165,10 @@ impl<E: Endianness, W> DbgBitWriter<E, W> {
 impl<E: Endianness, W: BitWrite<E>> BitWrite<E> for DbgBitWriter<E, W> {
     type Error = W::Error;
 
-    fn write_bits(&mut self, value: u64, n_bits: usize) -> Result<usize, Self::Error> {
+    fn write_bits(&mut self, value: u64, num_bits: usize) -> Result<usize, Self::Error> {
         #[cfg(feature = "std")]
-        eprintln!("write_bits({}, {})", value, n_bits);
-        self.writer.write_bits(value, n_bits)
+        eprintln!("write_bits({}, {})", value, num_bits);
+        self.writer.write_bits(value, num_bits)
     }
 
     fn write_unary(&mut self, n: u64) -> Result<usize, Self::Error> {

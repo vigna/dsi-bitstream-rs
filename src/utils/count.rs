@@ -47,14 +47,14 @@ impl<E: Endianness, BW: BitWrite<E>, const PRINT: bool> BitWrite<E>
 {
     type Error = <BW as BitWrite<E>>::Error;
 
-    fn write_bits(&mut self, value: u64, n_bits: usize) -> Result<usize, Self::Error> {
-        self.bit_write.write_bits(value, n_bits).inspect(|x| {
+    fn write_bits(&mut self, value: u64, num_bits: usize) -> Result<usize, Self::Error> {
+        self.bit_write.write_bits(value, num_bits).inspect(|x| {
             self.bits_written += *x;
             if PRINT {
                 #[cfg(feature = "std")]
                 eprintln!(
                     "write_bits({:#016x}, {}) = {} (total = {})",
-                    value, n_bits, x, self.bits_written
+                    value, num_bits, x, self.bits_written
                 );
             }
         })
@@ -224,15 +224,15 @@ impl<E: Endianness, BR: BitRead<E>, const PRINT: bool> BitRead<E> for CountBitRe
     type PeekWord = BR::PeekWord;
     const PEEK_BITS: usize = BR::PEEK_BITS;
 
-    fn read_bits(&mut self, n_bits: usize) -> Result<u64, Self::Error> {
-        self.bit_read.read_bits(n_bits).inspect(|x| {
+    fn read_bits(&mut self, num_bits: usize) -> Result<u64, Self::Error> {
+        self.bit_read.read_bits(num_bits).inspect(|x| {
             let _ = x;
-            self.bits_read += n_bits;
+            self.bits_read += num_bits;
             if PRINT {
                 #[cfg(feature = "std")]
                 eprintln!(
                     "read_bits({}) = {:#016x} (total = {})",
-                    n_bits, x, self.bits_read
+                    num_bits, x, self.bits_read
                 );
             }
         })

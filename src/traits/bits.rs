@@ -70,11 +70,11 @@ pub trait BitRead<E: Endianness> {
     /// to return successfully (with zero-extended EOF).
     const PEEK_BITS: usize;
 
-    /// Reads `n` bits and returns them in the lowest bits.
+    /// Reads `num_bits` bits and returns them in the lowest bits.
     ///
-    /// Implementors should check the value of `n` when in test mode
+    /// Implementors should check the value of `num_bits` when in test mode
     /// and panic if it is greater than 64.
-    fn read_bits(&mut self, n: usize) -> Result<u64, Self::Error>;
+    fn read_bits(&mut self, num_bits: usize) -> Result<u64, Self::Error>;
 
     /// Peeks at `n` bits without advancing the stream position.
     /// `n` must be nonzero, and at most `PeekWord::BITS`.
@@ -123,13 +123,13 @@ pub trait BitRead<E: Endianness> {
 pub trait BitWrite<E: Endianness> {
     type Error: Error + Send + Sync + 'static;
 
-    /// Writes the lowest `n` bits of `value` to the stream and
-    /// returns the number of bits written, that is, `n`.
+    /// Writes the lowest `num_bits` bits of `value` to the stream and
+    /// returns the number of bits written, that is, `num_bits`.
     ///
-    /// Implementors should check the value of `n` in test mode and panic if it
-    /// is greater than 64. Moreover, if the feature `checks` is enabled they
-    /// should check that the remaining bits of `value` are zero.
-    fn write_bits(&mut self, value: u64, n: usize) -> Result<usize, Self::Error>;
+    /// Implementors should check the value of `num_bits` in test mode and panic
+    /// if it is greater than 64. Moreover, if the feature `checks` is enabled
+    /// they should check that the remaining bits of `value` are zero.
+    fn write_bits(&mut self, value: u64, num_bits: usize) -> Result<usize, Self::Error>;
 
     /// Writes `n` as a unary code to the stream and returns the number of
     /// bits written, that is, `n` plus one.
