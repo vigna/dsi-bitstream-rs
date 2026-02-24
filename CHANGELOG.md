@@ -2,6 +2,12 @@
 
 ## [0.8.0] - unreleased
 
+### New
+
+- A new method `Codes::canonicalize`
+  returns equivalent, canonical, more efficient implementations of a code
+  (e.g., π₀ = ɣ).
+
 ### Improved
 
 - Replaced `check_tables` with per-code `check_read_table` const functions
@@ -39,11 +45,7 @@
   / `Codes::from_code_const` now return `Result<_, DispatchError>`
   instead of `anyhow::Result`.
 
-- A new method `Codes::canonicalize`
-  returns equivalent, canonical, more efficient implementations of a code
-  (e.g., π₀ = ɣ).
-
-- Removed `PartialEq` implementation for `Codes`. It was equating codes
+- Removed manual `PartialEq` implementation for `Codes`. It was equating codes
   with the same canonical form, which was confusing.
 
 - We use `core::error::Error` everywhere.

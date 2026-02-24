@@ -11,20 +11,16 @@ use alloc::vec::Vec;
 use rand::distr::weighted::WeightedIndex;
 use rand::prelude::*;
 
-/// Given the len function of a code, generates data that allows to sample
-/// its implied distribution, i.e. a code-word with length l has
-/// probability 2^(-l).
+/// Given the length function of a code, generates data that allows to sample
+/// its implied distribution, in which a codeword with length *n* has
+/// probability 2⁻*ⁿ*.
 ///
-/// This code works only with monotonic non-decreasing len functions.
-///
-/// Returns two vectors. The first contains one entry per distinct code length
-/// up to 128, plus one sentinel entry (the first change point with length >
-/// 128) that serves as the upper bound for the last valid group. The second
-/// vector contains the probability of each valid length group; its length is
-/// always one less than that of the first vector.
-///
-/// Since we cannot write more than 64 bits at once, the codes are limited to
-/// 128 bits.
+/// This function works only with monotonic non-decreasing length functions. It
+/// returns two vectors: the first vector contains one entry per distinct code
+/// length up to 128, plus one sentinel entry (the first change point with
+/// length > 128) that serves as the upper bound for the last valid group; the
+/// second vector contains the probability of each valid length group; its
+/// length is always one less than that of the first vector.
 pub fn get_implied_distribution(f: impl Fn(u64) -> usize) -> (Vec<(u64, usize)>, Vec<f64>) {
     // Collect change points with code length up to 128, plus the first
     // change point with length > 128 as a sentinel upper bound for the
