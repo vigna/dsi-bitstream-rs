@@ -19,7 +19,8 @@
 //! in *s* − 1 bits; otherwise, *x* is coded as the binary representation of *x*
 //! − *u* + 2*ˢ* in *s* bits.
 //!
-//! The supported range for *u* is [0 . . 2⁶⁴).
+//! The supported range for *u* is [1 . . 2⁶⁴). Note that calling any method
+//! with *u* = 0 will cause an arithmetic error.
 //!
 //! See the [codes module documentation](crate::codes) for some elaboration on
 //! the difference between the big-endian and little-endian versions of the
@@ -32,9 +33,6 @@ use crate::traits::*;
 #[inline(always)]
 pub fn len_minimal_binary(n: u64, u: u64) -> usize {
     debug_assert!(n < u);
-    if u == 0 {
-        return 0;
-    }
     let l = u.ilog2();
     let limit = ((1_u64 << l) << 1).wrapping_sub(u);
     let mut result = l as usize;

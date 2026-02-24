@@ -51,7 +51,7 @@ pub fn get_implied_distribution(f: impl Fn(u64) -> usize) -> (Vec<(u64, usize)>,
 
 /// An infinite iterator that always returns ().
 #[derive(Clone, Copy, Debug)]
-pub struct InfiniteIterator;
+struct InfiniteIterator;
 
 impl Iterator for InfiniteIterator {
     type Item = ();

@@ -11,7 +11,7 @@
 //! # Motivation
 //!
 //! [`FuncCodeReader`] already provides dynamic dispatching of read functions,
-//! but in some uses cases the reader has to reference some data (e.g., readers
+//! but in some use cases the reader has to reference some data (e.g., readers
 //! based on the same memory buffer). In this case, one would need to create a
 //! dispatching function pointer for each code and each reader because the
 //! lifetime of different readers make the function pointers incompatible.
@@ -198,7 +198,7 @@ impl<E: Endianness, CRF: CodesReaderFactoryHelper<E> + ?Sized> FactoryFuncCodeRe
     ///
     /// The method will return an error if there is no constant
     /// for the given code in [`FactoryFuncCodeReader`].
-    pub fn new(code: Codes) -> Result<Self, DispatchError> {
+    pub const fn new(code: Codes) -> Result<Self, DispatchError> {
         let code = code.canonicalize();
         let read_func = match code {
             Codes::Unary => Self::UNARY,
