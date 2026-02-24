@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
-use crate::prelude::{delta::*, gamma::*, pi::*, zeta::*, *};
+use crate::prelude::{delta::*, gamma::*, omega::*, pi::*, zeta::*, *};
 use arbitrary::Arbitrary;
 use std::io::{Read, Write};
 
@@ -47,7 +47,7 @@ enum RandomCommand {
     Bytes(Vec<u8>),
     VByteBe(u64),
     VByteLe(u64),
-    Omega(u64),
+    Omega(u64, bool, bool),
     Pi(u64, usize, bool, bool),
 }
 
@@ -91,7 +91,7 @@ pub fn harness(data: FuzzCase) {
             RandomCommand::Bytes(_) => {}
             RandomCommand::VByteLe(_) => {}
             RandomCommand::VByteBe(_) => {}
-            RandomCommand::Omega(value) => {
+            RandomCommand::Omega(value, _, _) => {
                 *value = (*value).min(u64::MAX - 1);
             }
             RandomCommand::Pi(value, k, _, _) => {
@@ -163,11 +163,25 @@ pub fn harness(data: FuzzCase) {
                     assert_eq!(big_success, little_success);
                     writes.push(big_success);
                 }
-                RandomCommand::Zeta(value, k, _, _write_tab) => {
-                    let (big_success, little_success) = (
-                        big.write_zeta_param(*value, *k).is_ok(),
-                        little.write_zeta_param(*value, *k).is_ok(),
-                    );
+                RandomCommand::Zeta(value, k, _, write_tab) => {
+                    let (big_success, little_success) = if *k == 3 {
+                        if *write_tab {
+                            (
+                                big.write_zeta3_param::<true>(*value).is_ok(),
+                                little.write_zeta3_param::<true>(*value).is_ok(),
+                            )
+                        } else {
+                            (
+                                big.write_zeta3_param::<false>(*value).is_ok(),
+                                little.write_zeta3_param::<false>(*value).is_ok(),
+                            )
+                        }
+                    } else {
+                        (
+                            big.write_zeta_param(*value, *k).is_ok(),
+                            little.write_zeta_param(*value, *k).is_ok(),
+                        )
+                    };
 
                     assert_eq!(big_success, little_success);
                     writes.push(big_success);
@@ -218,19 +232,40 @@ pub fn harness(data: FuzzCase) {
                     assert_eq!(big_success, little_success);
                     writes.push(big_success);
                 }
-                RandomCommand::Omega(value) => {
-                    let (big_success, little_success) = (
-                        big.write_omega(*value).is_ok(),
-                        little.write_omega(*value).is_ok(),
-                    );
+                RandomCommand::Omega(value, _, write_tab) => {
+                    let (big_success, little_success) = if *write_tab {
+                        (
+                            big.write_omega_param::<true>(*value).is_ok(),
+                            little.write_omega_param::<true>(*value).is_ok(),
+                        )
+                    } else {
+                        (
+                            big.write_omega_param::<false>(*value).is_ok(),
+                            little.write_omega_param::<false>(*value).is_ok(),
+                        )
+                    };
                     assert_eq!(big_success, little_success);
                     writes.push(big_success);
                 }
-                RandomCommand::Pi(value, k, _, _write_tab) => {
-                    let (big_success, little_success) = (
-                        big.write_pi_param(*value, *k).is_ok(),
-                        little.write_pi_param(*value, *k).is_ok(),
-                    );
+                RandomCommand::Pi(value, k, _, write_tab) => {
+                    let (big_success, little_success) = if *k == 2 {
+                        if *write_tab {
+                            (
+                                big.write_pi2_param::<true>(*value).is_ok(),
+                                little.write_pi2_param::<true>(*value).is_ok(),
+                            )
+                        } else {
+                            (
+                                big.write_pi2_param::<false>(*value).is_ok(),
+                                little.write_pi2_param::<false>(*value).is_ok(),
+                            )
+                        }
+                    } else {
+                        (
+                            big.write_pi_param(*value, *k).is_ok(),
+                            little.write_pi_param(*value, *k).is_ok(),
+                        )
+                    };
 
                     assert_eq!(big_success, little_success);
                     writes.push(big_success);
@@ -933,31 +968,57 @@ pub fn harness(data: FuzzCase) {
                         assert_eq!(pos, little_buff.bit_pos().unwrap());
                     }
                 }
-                RandomCommand::Omega(value) => {
-                    let (b, l, bb, lb) = (
-                        big.read_omega(),
-                        little.read_omega(),
-                        big_buff.read_omega(),
-                        little_buff.read_omega(),
-                    );
+                RandomCommand::Omega(value, read_tab, _) => {
+                    let (b, l, bb, lb) = if read_tab {
+                        (
+                            big.read_omega_param::<true>(),
+                            little.read_omega_param::<true>(),
+                            big_buff.read_omega_param::<true>(),
+                            little_buff.read_omega_param::<true>(),
+                        )
+                    } else {
+                        (
+                            big.read_omega_param::<false>(),
+                            little.read_omega_param::<false>(),
+                            big_buff.read_omega_param::<false>(),
+                            little_buff.read_omega_param::<false>(),
+                        )
+                    };
                     if succ {
                         assert_eq!(b.unwrap(), value, "b");
                         assert_eq!(l.unwrap(), value, "l");
                         assert_eq!(bb.unwrap(), value, "bb");
                         assert_eq!(lb.unwrap(), value, "lb");
-                        assert_eq!(pos + len_omega(value) as u64, big.bit_pos().unwrap());
-                        assert_eq!(pos + len_omega(value) as u64, little.bit_pos().unwrap());
-                        assert_eq!(pos + len_omega(value) as u64, big_buff.bit_pos().unwrap());
                         assert_eq!(
-                            pos + len_omega(value) as u64,
+                            pos + len_omega_param::<false>(value) as u64,
+                            big.bit_pos().unwrap()
+                        );
+                        assert_eq!(
+                            pos + len_omega_param::<false>(value) as u64,
+                            little.bit_pos().unwrap()
+                        );
+                        assert_eq!(
+                            pos + len_omega_param::<false>(value) as u64,
+                            big_buff.bit_pos().unwrap()
+                        );
+                        assert_eq!(
+                            pos + len_omega_param::<false>(value) as u64,
                             little_buff.bit_pos().unwrap()
                         );
-
-                        assert_eq!(pos + len_omega(value) as u64, big.bit_pos().unwrap());
-                        assert_eq!(pos + len_omega(value) as u64, little.bit_pos().unwrap());
-                        assert_eq!(pos + len_omega(value) as u64, big_buff.bit_pos().unwrap());
                         assert_eq!(
-                            pos + len_omega(value) as u64,
+                            pos + len_omega_param::<true>(value) as u64,
+                            big.bit_pos().unwrap()
+                        );
+                        assert_eq!(
+                            pos + len_omega_param::<true>(value) as u64,
+                            little.bit_pos().unwrap()
+                        );
+                        assert_eq!(
+                            pos + len_omega_param::<true>(value) as u64,
+                            big_buff.bit_pos().unwrap()
+                        );
+                        assert_eq!(
+                            pos + len_omega_param::<true>(value) as u64,
                             little_buff.bit_pos().unwrap()
                         );
                     } else {
