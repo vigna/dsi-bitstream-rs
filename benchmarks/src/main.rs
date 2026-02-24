@@ -95,7 +95,7 @@ for iter in 0..(WARMUP_ITERS + BENCH_ITERS) {
         )};
 
         let mut r = BufBitReader::<$bo, _>::new(
-            MemWordReader::<ReadWord, _>::new(&transmuted_buff)
+            MemWordReader::<ReadWord, _>::new(transmuted_buff)
         );
 
         let r_start = Instant::now();

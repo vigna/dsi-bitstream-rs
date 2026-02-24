@@ -146,6 +146,7 @@ where
     }
 
     /// Consumes this reader and returns the underlying [`WordRead`].
+    #[must_use]
     pub fn into_inner(self) -> WR {
         self.backend
     }

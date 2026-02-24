@@ -156,6 +156,7 @@ pub mod zeta_tables;
 /// unsigned integer types.
 pub trait ToInt {
     type Signed;
+    #[must_use]
     fn to_int(self) -> Self::Signed;
 }
 

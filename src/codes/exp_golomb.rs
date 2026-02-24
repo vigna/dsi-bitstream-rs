@@ -9,9 +9,9 @@
 //! Exponential Golomb codes are a variant of Golomb codes with power-of-two
 //! modulus (i.e., [Rice codes](super::rice)) in which the prefix is written
 //! using [Elias γ code](super::gamma) instead of unary code. More precisely,
-//! the exponential Golomb code with parameter *k* ≥ 0 of a natural number *n*
-//! is given ⌊*x* / 2*ᵏ*⌋ in [γ code](super::gamma) followed by *x* mod 2*ᵏ* in
-//! binary *k*-bit representation.
+//! the exponential Golomb code with parameter *k* ≥ 0 of a natural number *x*
+//! is given by ⌊*x* / 2*ᵏ*⌋ in [γ code](super::gamma) followed by *x* mod 2*ᵏ*
+//! in binary *k*-bit representation.
 //!
 //! The implied distribution of an exponential Golomb code with parameter *k* is
 //! ≈ 2²*ᵏ*/2*x*².

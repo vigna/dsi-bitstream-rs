@@ -297,11 +297,11 @@ pub fn vbyte_write_le<W: std::io::Write>(mut n: u64, writer: &mut W) -> std::io:
     Ok(len)
 }
 
-#[inline(always)]
-#[cfg(feature = "std")]
 /// Decode a natural number from a byte stream using variable-length byte codes.
 ///
 /// This method just delegates to the correct endianness-specific method.
+#[inline(always)]
+#[cfg(feature = "std")]
 pub fn vbyte_read<E: Endianness, R: std::io::Read>(reader: &mut R) -> std::io::Result<u64> {
     if core::any::TypeId::of::<E>() == core::any::TypeId::of::<BigEndian>() {
         vbyte_read_be(reader)

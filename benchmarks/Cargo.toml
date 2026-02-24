@@ -1,8 +1,9 @@
 [package]
 name = "benchmarks"
 version = "0.2.0"
-edition = "2021"
+edition = "2024"
 default-run = "main"
+rust-version = "1.85"
 
 [dependencies]
 rand = "0.10.0"

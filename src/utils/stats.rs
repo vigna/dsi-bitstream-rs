@@ -149,7 +149,7 @@ impl<
         for (log2_b, val) in self.rice.iter_mut().enumerate() {
             *val += (len_rice(n, log2_b as _) as u64) * count;
         }
-        // +2 because π0 = gamma and π1 = zeta_2
+        // +2 because π0 = gamma and π1 has the same codeword lengths as zeta_2
         for (k, val) in self.pi.iter_mut().enumerate() {
             *val += (len_pi(n, (k + 2) as _) as u64) * count;
         }
@@ -474,7 +474,7 @@ pub struct CodesStatsWrapper<
     // How many ζ codes to consider.
     const ZETA: usize = 10,
     // How many Golomb codes to consider.
-    const GOLOMB: usize = 20,
+    const GOLOMB: usize = 10,
     // How many Exponential Golomb codes to consider.
     const EXP_GOLOMB: usize = 10,
     // How many Rice codes to consider.
