@@ -1,7 +1,7 @@
 use dsi_bitstream::prelude::*;
 use dsi_bitstream::utils::sample_implied_distribution;
 use rand::rngs::SmallRng;
-use rand::{Rng, SeedableRng};
+use rand::{RngExt, SeedableRng};
 use std::hint::black_box;
 use std::time::Instant;
 

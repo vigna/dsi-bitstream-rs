@@ -173,7 +173,7 @@ where
     }
 
     #[allow(unused_mut)]
-    #[inline]
+    #[inline(always)]
     fn write_bits(&mut self, mut value: u64, n_bits: usize) -> Result<usize, Self::Error> {
         debug_assert!(n_bits <= 64);
         #[cfg(feature = "checks")]
@@ -340,7 +340,7 @@ where
         flush_le(self)
     }
 
-    #[inline]
+    #[inline(always)]
     fn write_bits(&mut self, mut value: u64, n_bits: usize) -> Result<usize, Self::Error> {
         debug_assert!(n_bits <= 64);
         #[cfg(feature = "checks")]
