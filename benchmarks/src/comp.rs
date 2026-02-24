@@ -194,14 +194,14 @@ pub fn main() {
         true
     );
     bench!(
-        "zeta_3_table",
+        "zeta_3_spec",
         |w, x| w.write_zeta3(x).unwrap(),
         |r| r.read_zeta3().unwrap(),
         |x| len_zeta(x, 3),
         true
     );
     bench!(
-        "pi_2_table",
+        "pi_2_spec",
         |w, x| w.write_pi2(x).unwrap(),
         |r| r.read_pi2().unwrap(),
         |x| len_pi(x, 2),
