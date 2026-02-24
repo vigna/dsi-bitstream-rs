@@ -48,12 +48,17 @@
 
 - We use `core::error::Error` everywhere.
 
+- Parametric-codes traits and function are no longer exported at the top
+  level.
+
 ### Fixed
 
 - `[Count|Dbg]Bit[Reader|Writer]` were missing recent code implementations.
 
 - Fixed bug in `Write` implementations for `BufBitWriter`, which would
   work only with word `u64`.
+
+- `get_implied_distribution` now uses also the last data point.
 
 ## [0.7.0] - 2026-01-27
 

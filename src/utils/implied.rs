@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
+use core::iter::FusedIterator;
+
 use crate::utils::FindChangePoints;
 use alloc::vec::Vec;
 use rand::distr::weighted::WeightedIndex;
@@ -63,6 +65,8 @@ impl Iterator for InfiniteIterator {
         Some(())
     }
 }
+
+impl FusedIterator for InfiniteIterator {}
 
 /// Returns an **infinite iterator** of samples from the implied distribution of
 /// the given code length function.

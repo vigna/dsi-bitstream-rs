@@ -33,7 +33,7 @@ serde_json = "1.0"
 default = ["std", "mem_dbg", "serde"]
 std = ["alloc", "num-primitive/std", "num-traits/std"]
 alloc = []
-implied = ["alloc", "dep:rand"]
+implied = ["dep:rand"]
 fuzz = ["dep:arbitrary"]
 # Enable additional checks on the argument of some methods; in particular, the
 # value of words to be written must fit the provided bit width

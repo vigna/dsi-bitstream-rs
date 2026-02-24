@@ -256,7 +256,10 @@ fn default_write_pi<E: Endianness, B: BitWrite<E>>(
 
 #[cfg(test)]
 mod tests {
-    use crate::prelude::*;
+    use crate::{
+        codes::pi::{PiReadParam, PiWriteParam},
+        prelude::*,
+    };
 
     #[test]
     fn test_roundtrip() {

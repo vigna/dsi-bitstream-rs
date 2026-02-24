@@ -11,7 +11,7 @@
 //! This kind of dispatch is resolved at runtime, but just once, at construction
 //! time, against a specific [`CodesRead`]. The code is stored in a function
 //! pointer, so it cannot be inlined like in the [static
-//! case](crate::dispatch::r#static), but the approach is more flexible.
+//! case](crate::dispatch::static), but the approach is more flexible.
 
 use super::*;
 #[cfg(feature = "mem_dbg")]

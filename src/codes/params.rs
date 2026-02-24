@@ -53,7 +53,7 @@
 //! `true`. These checks are short-circuited when the table is not used, so they
 //! are only triggered for the tables actually selected.
 
-use crate::codes::*;
+use crate::codes::{delta::*, gamma::*, omega::*, pi::*, zeta::*};
 use crate::impls::*;
 use crate::traits::*;
 #[cfg(feature = "mem_dbg")]

@@ -10,7 +10,7 @@
 //!
 //! This is the slower and more generic form of dispatching, mostly used for
 //! testing and writing examples. For faster dispatching, consider using
-//! [dynamic](super::dynamic) or [static](super::r#static) dispatch.
+//! [dynamic] or [static] dispatch.
 
 use super::*;
 #[cfg(feature = "serde")]

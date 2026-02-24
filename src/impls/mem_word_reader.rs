@@ -158,7 +158,7 @@ impl<W: Word, B: AsRef<[W]>> WordSeek for MemWordReader<W, B, false> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::codes::{DeltaReadParam, DeltaWrite};
+    use crate::codes::{DeltaWrite, delta::DeltaReadParam};
 
     #[test]
     fn test_eof_table_read() {

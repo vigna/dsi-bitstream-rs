@@ -8,10 +8,10 @@
 
 //! Programmable static and dynamic dispatch for codes.
 //!
-//! The modules in [codes](super::codes), such as
-//! [`omega`](crate::codes::omega), extend [`BitRead`] and [`BitWrite`] to
-//! provide a way to read and write codes from a bitstream. The user can thus
-//! select at compile time the desired trait and use the associated codes.
+//! The modules in [codes](super::codes), such as [`omega`], extend [`BitRead`]
+//! and [`BitWrite`] to provide a way to read and write codes from a bitstream.
+//! The user can thus select at compile time the desired trait and use the
+//! associated codes.
 //!
 //! In many contexts, however, one does not want to commit to a specific set of
 //! codes, but rather would like to write generic methods that accept some code
@@ -280,14 +280,11 @@ pub use factory::{CodesReaderFactory, CodesReaderFactoryHelper, FactoryFuncCodeR
 pub trait CodesRead<E: Endianness>:
     BitRead<E>
     + GammaRead<E>
-    + GammaReadParam<E>
     + DeltaRead<E>
-    + DeltaReadParam<E>
     + ZetaRead<E>
-    + ZetaReadParam<E>
     + OmegaRead<E>
-    + MinimalBinaryRead<E>
     + PiRead<E>
+    + MinimalBinaryRead<E>
     + GolombRead<E>
     + RiceRead<E>
     + ExpGolombRead<E>
@@ -299,14 +296,11 @@ pub trait CodesRead<E: Endianness>:
 impl<E: Endianness, B> CodesRead<E> for B where
     B: BitRead<E>
         + GammaRead<E>
-        + GammaReadParam<E>
         + DeltaRead<E>
-        + DeltaReadParam<E>
         + ZetaRead<E>
-        + ZetaReadParam<E>
         + OmegaRead<E>
-        + MinimalBinaryRead<E>
         + PiRead<E>
+        + MinimalBinaryRead<E>
         + GolombRead<E>
         + RiceRead<E>
         + ExpGolombRead<E>
