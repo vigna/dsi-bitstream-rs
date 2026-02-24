@@ -13,7 +13,7 @@ We provide three bit-based traits, [`BitRead`], [`BitWrite`], and
 [`BitSeek`], analogous to [`std::io::Read`], [`std::io::Write`],
 and [`std::io::Seek`], respectively. They provide read/write operations
 on fixed-width blocks of bits and unary codes. More complex operations,
-such as [reading instantaneous codes](crate::codes::GammaReadParam),
+such as [reading instantaneous codes](crate::codes::gamma::GammaReadParam),
 are built on these basic traits.
 
 The endianness of a bit stream is specified by using the selector types

@@ -79,11 +79,13 @@ impl<W: Word, B: AsRef<[W]>> MemWordWriterSlice<W, B> {
         }
     }
 
+    /// Returns the number of words in the underlying slice.
     #[must_use]
     pub fn len(&self) -> usize {
         self.data.as_ref().len()
     }
 
+    /// Returns `true` if the underlying slice is empty.
     #[must_use]
     pub fn is_empty(&self) -> bool {
         self.len() == 0
@@ -142,11 +144,13 @@ impl<W: Word, B: AsRef<Vec<W>>> MemWordWriterVec<W, B> {
         }
     }
 
+    /// Returns the number of words in the underlying vector.
     #[must_use]
     pub fn len(&self) -> usize {
         self.data.as_ref().len()
     }
 
+    /// Returns `true` if the underlying vector is empty.
     #[must_use]
     pub fn is_empty(&self) -> bool {
         self.len() == 0

@@ -51,7 +51,7 @@ pub struct CodesStats<
     const EXP_GOLOMB: usize = 10,
     // How many Rice codes to consider.
     const RICE: usize = 10,
-    // How many Pi and Pi web codes to consider.
+    // How many streamlined π codes to consider.
     const PI: usize = 10,
 > {
     /// The total number of elements observed.
@@ -479,7 +479,7 @@ pub struct CodesStatsWrapper<
     const EXP_GOLOMB: usize = 10,
     // How many Rice codes to consider.
     const RICE: usize = 10,
-    // How many Pi and Pi web codes to consider.
+    // How many streamlined π codes to consider.
     const PI: usize = 10,
 > {
     // TODO: figure out how we can do this without a lock.

@@ -38,7 +38,7 @@ pub struct WordAdapter<W: Word, B> {
 }
 
 impl<W: Word, B> WordAdapter<W, B> {
-    /// Creates a new WordAdapter
+    /// Creates a new [`WordAdapter`].
     #[must_use]
     pub fn new(backend: B) -> Self {
         Self {

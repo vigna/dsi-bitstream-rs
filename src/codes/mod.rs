@@ -29,7 +29,8 @@
 //! natural numbers.
 //!
 //! Each code is implemented as a pair of traits for reading and writing (e.g.,
-//! [`GammaReadParam`] and [`GammaWriteParam`]). The traits for reading depend
+//! [`GammaReadParam`](gamma::GammaReadParam) and
+//! [`GammaWriteParam`](gamma::GammaWriteParam)). The traits for reading depend
 //! on [`BitRead`](crate::traits::BitRead), whereas the traits for writing
 //! depend on [`BitWrite`](crate::traits::BitWrite). Note that most codes cannot
 //! write the number [`u64::MAX`] because of overflow issues, which could be

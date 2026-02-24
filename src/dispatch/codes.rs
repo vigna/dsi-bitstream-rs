@@ -23,7 +23,7 @@ use mem_dbg::{MemDbg, MemSize};
 /// This enum is kept in sync with implementations in the
 /// [`codes`](crate::codes) module.
 ///
-/// Both [`Display`](std::fmt::Display) and [`FromStr`](std::str::FromStr) are
+/// Both [`Display`](core::fmt::Display) and [`FromStr`](core::str::FromStr) are
 /// implemented for this enum in a compatible way, making it possible to store a
 /// code as a string in a configuration file and then parse it back.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

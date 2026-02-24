@@ -48,7 +48,7 @@ impl<RE: Error + Send + Sync + 'static, WE: Error + Send + Sync + 'static> Error
 /// Sequential, streaming bit-by-bit reads.
 ///
 /// This trait specifies basic operations over which codes can be implemented by
-/// traits such as [`GammaReadParam`](crate::codes::GammaReadParam).
+/// traits such as [`GammaReadParam`](crate::codes::gamma::GammaReadParam).
 ///
 /// To read quickly complex codes, such traits may use the
 /// [`peek_bits`](BitRead::peek_bits) method to read a few bits in advance and
@@ -126,7 +126,7 @@ pub trait BitRead<E: Endianness> {
 /// Sequential, streaming bit-by-bit writes.
 ///
 /// This trait specifies basic operations over which codes can be implemented
-/// by traits such as [`crate::codes::GammaWriteParam`].
+/// by traits such as [`crate::codes::gamma::GammaWriteParam`].
 pub trait BitWrite<E: Endianness> {
     type Error: Error + Send + Sync + 'static;
 

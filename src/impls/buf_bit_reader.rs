@@ -434,8 +434,8 @@ where
         debug_assert!(n_bits <= self.bits_in_buffer);
 
         // Keep the n_bits lowest bits of the buffer
-        let sham = Self::BUFFER_BITS - n_bits;
-        Ok((self.buffer << sham) >> sham)
+        let shamt = Self::BUFFER_BITS - n_bits;
+        Ok((self.buffer << shamt) >> shamt)
     }
 
     #[inline(always)]
@@ -476,9 +476,9 @@ where
         let new_word = self.backend.read_word()?.to_le();
         self.bits_in_buffer = Self::WORD_BITS - num_bits;
         // compose the remaining bits
-        let sham = 64 - num_bits;
+        let shamt = 64 - num_bits;
         let upcast: u64 = new_word.as_u64();
-        let final_bits: u64 = (upcast << sham) >> sham;
+        let final_bits: u64 = (upcast << shamt) >> shamt;
         result |= final_bits << bits_in_res;
         // and put the rest in the buffer
         self.buffer = new_word.as_double() >> num_bits;

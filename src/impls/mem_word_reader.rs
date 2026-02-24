@@ -53,7 +53,7 @@ pub struct MemWordReader<W: Word, B, const INF: bool = true> {
 }
 
 impl<W: Word, B: AsRef<[W]>> MemWordReader<W, B> {
-    /// Creates a new [`MemWordReader`] from a slice of data
+    /// Creates a new [`MemWordReader`] from a slice of data.
     #[must_use]
     pub fn new(data: B) -> Self {
         Self {
@@ -71,7 +71,7 @@ impl<W: Word, B: AsRef<[W]>> MemWordReader<W, B> {
 }
 
 impl<W: Word, B: AsRef<[W]>> MemWordReader<W, B, false> {
-    /// Creates a new [`MemWordReader`] from a slice of data
+    /// Creates a new [`MemWordReader`] from a slice of data.
     #[must_use]
     pub fn new_strict(data: B) -> Self {
         Self {
