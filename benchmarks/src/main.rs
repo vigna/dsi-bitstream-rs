@@ -9,6 +9,11 @@
 #![doc = include_str!("../README.md")]
 #![allow(unused_macros)]
 
+use dsi_bitstream::codes::delta::{DeltaReadParam, DeltaWriteParam};
+use dsi_bitstream::codes::gamma::{GammaReadParam, GammaWriteParam};
+use dsi_bitstream::codes::omega::{OmegaReadParam, OmegaWriteParam};
+use dsi_bitstream::codes::pi::{PiReadParam, PiWriteParam};
+use dsi_bitstream::codes::zeta::{ZetaReadParam, ZetaWriteParam};
 use dsi_bitstream::prelude::*;
 use std::hint::black_box;
 
