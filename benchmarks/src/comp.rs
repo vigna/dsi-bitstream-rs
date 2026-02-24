@@ -179,23 +179,19 @@ pub fn main() {
         len_omega,
         true
     );
-    // VByte byte order is independent of stream endianness, so we bench
-    // only on LE; the meaningful dimension is vbyte_be vs vbyte_le.
-    bench::<LE>(
-        calibration,
+    bench!(
         "vbyte_be",
         |w, x| w.write_vbyte_be(x).unwrap(),
         |r| r.read_vbyte_be().unwrap(),
         bit_len_vbyte,
-        true,
+        true
     );
-    bench::<LE>(
-        calibration,
+    bench!(
         "vbyte_le",
         |w, x| w.write_vbyte_le(x).unwrap(),
         |r| r.read_vbyte_le().unwrap(),
         bit_len_vbyte,
-        true,
+        true
     );
     bench!(
         "zeta_3_table",
