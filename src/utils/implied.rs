@@ -64,14 +64,14 @@ impl Iterator for InfiniteIterator {
 
 impl FusedIterator for InfiniteIterator {}
 
-/// Returns an **infinite iterator** of samples from the implied distribution of
+/// Returns an infinite iterator of samples from the implied distribution of
 /// the given code length function.
-/// The function f should be the len function of the code.
 ///
-/// This code works only with monotonic non-decreasing len functions and
-/// the codes are limited to 128 bits as we cannot write more than 64 bits at once.
+/// The function `len` must be the length function of the code.
 ///
-/// # Example
+/// This function works only with monotonic non-decreasing length functions.
+///
+/// # Examples
 ///
 /// ```rust
 /// use dsi_bitstream::utils::sample_implied_distribution;
@@ -86,10 +86,10 @@ impl FusedIterator for InfiniteIterator {}
 /// assert_eq!(vals.len(), 1000);
 /// ```
 pub fn sample_implied_distribution(
-    f: impl Fn(u64) -> usize,
+    len: impl Fn(u64) -> usize,
     rng: &mut impl Rng,
 ) -> impl Iterator<Item = u64> + '_ {
-    let (change_points, probabilities) = get_implied_distribution(f);
+    let (change_points, probabilities) = get_implied_distribution(len);
     let dist = WeightedIndex::new(probabilities)
         .expect("get_implied_distribution returns non-empty, positive weights");
 

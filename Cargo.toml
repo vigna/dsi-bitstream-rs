@@ -23,9 +23,9 @@ mem_dbg = { version = "0.4.0", optional = true }
 serde = { version = "1.0.228", optional = true }
 
 [dev-dependencies]
-criterion = "0.8.2"
+criterion = "0.6.0"
 rand = "0.10.0"
-zip = "8.1.0"
+zip = "7.0.0"
 rand_distr = "0.6.0"
 serde_json = "1.0"
 
@@ -33,7 +33,7 @@ serde_json = "1.0"
 default = ["std", "mem_dbg", "serde"]
 std = ["alloc", "num-primitive/std", "num-traits/std"]
 alloc = []
-implied = ["dep:rand"]
+implied = ["dep:rand", "alloc"]
 fuzz = ["dep:arbitrary"]
 # Enable additional checks on the argument of some methods; in particular, the
 # value of words to be written must fit the provided bit width

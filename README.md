@@ -46,7 +46,7 @@ let data = writer.into_inner()?.into_inner();
 
 // Reading back the data is similar, but since a reader has a bit buffer
 // twice as large as the read word size, it is more efficient to use a
-// u32 as read word, so we need to transmute the data.
+// u32 as read word, so we need to reinterpret the data.
 let data = unsafe{data.align_to::<u32>().1};
 let mut reader = BufBitReader::<LE, _>::new(MemWordReader::new(data));
 assert_eq!(reader.read_bits(10)?, 0);

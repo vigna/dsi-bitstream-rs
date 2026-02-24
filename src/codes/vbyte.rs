@@ -9,7 +9,7 @@
 //!
 //! These codes represent a natural number as a sequence of bytes, the length of
 //! the sequence depends on the magnitude of the number. They are used in many
-//! contexts, and they are known under a plethora of different names such
+//! contexts, and they are known under a plethora of different names such as
 //! “vbyte”, “varint”, “[variable-length
 //! quantity](https://en.wikipedia.org/wiki/Variable-length_quantity)”, “LEB”,
 //! and so on.

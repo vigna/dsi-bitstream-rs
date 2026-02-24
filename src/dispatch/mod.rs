@@ -84,7 +84,7 @@
 //! [`MinimalBinary`] structure with the same functionality, as they cannot
 //! represent all integers.
 //!
-//! If Rust would support const enums in traits, one could create structures
+//! If Rust supported const enums in traits, one could create structures
 //! with const enum type parameters of type [`Codes`], and then the compiler
 //! would be able to optimize away the code selection at compile time. However,
 //! this is not currently possible, so we provide a workaround using a
@@ -162,7 +162,7 @@
 //! Both [`ConstCode`] and [`FuncCodeReader`] / [`FuncCodeWriter`] are limited
 //! to a fixed set of codes. If you need to work with a code that is not
 //! supported by them, you can implement your own version. For example, here we
-//! define a zero-sized struct that represent a Rice code with a fixed parameter
+//! define a zero-sized struct that represents a Rice code with a fixed parameter
 //! `LOG2_B`:
 //! ```rust
 //! use dsi_bitstream::prelude::*;
