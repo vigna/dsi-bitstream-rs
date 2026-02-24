@@ -48,7 +48,7 @@ pub fn gen_data(_len: fn(u64) -> usize) -> Vec<u64> {
     let samples = sample_implied_distribution(&_len, &mut rng);
     #[cfg(feature = "univ")]
     let samples = {
-        use rand::Rng;
+        use rand::RngExt;
         let distr = rand_distr::Zipf::new(1E9 as f64, 1.0).unwrap();
         (&mut rng).sample_iter(distr).map(|x| x as u64 - 1)
     };
