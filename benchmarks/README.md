@@ -23,10 +23,10 @@ zeta3, pi2, omega) is tested in all combinations of:
 
 - Big endian / little endian
 - Buffered / unbuffered (reads only)
-- Tables enabled / disabled
+- Table enabled / disabled
 
 The distribution is controlled by the `univ` feature: without it, each code's
-implied distribution is used; with it, a universal distribution ~1/_x_ on the
+implied distribution is used; with it, a universal distribution ~1/x on the
 first billion integers is used.
 
 Word size is controlled by features: `u16`, `u32`, or `u64` (default: `u32`).
