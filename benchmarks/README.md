@@ -9,11 +9,11 @@ writing instantaneous codes (gamma, delta, zeta3, pi2, omega, unary).
 # Run all benchmarks (table-sweep + comparative)
 cargo bench
 
-# Run only comparative benchmarks
-cargo bench -- comparative
-
 # Run only table-sweep benchmarks
-cargo bench -- tables
+cargo bench --bench tables
+
+# Run only comparative benchmarks
+cargo bench --bench comparative
 ```
 
 ## Table Benchmarks
@@ -63,7 +63,7 @@ Compares all codes side by side using both implied and universal distributions.
 
 ```bash
 # Run comparative benchmarks
-cargo bench -- comparative
+cargo bench --bench comparative
 
 # Extract results and generate plots
 cd benchmarks
@@ -84,7 +84,7 @@ Example:
 
 ```bash
 # Only benchmark gamma and delta, big endian, reads
-BENCH_CODES=gamma,delta BENCH_ENDIAN=BE BENCH_OPS=read cargo bench -- comparative
+BENCH_CODES=gamma,delta BENCH_ENDIAN=BE BENCH_OPS=read cargo bench --bench comparative
 ```
 
 Criterion's built-in `--bench` regex filter also works for ad-hoc selection:

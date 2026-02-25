@@ -25,7 +25,11 @@ delta_gamma = []
 univ = [] # Test using a Zipf distribution of exponent one instead of using implied distributions
 
 [[bench]]
-name = "bench"
+name = "tables"
+harness = false
+
+[[bench]]
+name = "comparative"
 harness = false
 
 [profile.release]

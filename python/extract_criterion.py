@@ -11,9 +11,11 @@
 Provides functions to parse Criterion's JSON output directory structure
 and extract mean estimates with confidence intervals.
 
-Criterion flattens benchmark IDs with "/" separators into directory names
-with "_" separators. For example, "gamma::BE::Table/read_b" becomes
-the directory "gamma::BE::Table_read_b".
+Benchmarks use BenchmarkGroup, so results are nested under group
+subdirectories (e.g., "tables/", "comparative/").  Within each group,
+Criterion may create nested directories for "/" in benchmark IDs.
+The get_criterion_results function walks the tree recursively and
+normalizes paths back to flat IDs with "_" separators.
 """
 
 import json
@@ -24,6 +26,11 @@ import sys
 def get_criterion_results(target_dir="benchmarks/target/criterion"):
     """Parse all Criterion benchmark results from the target directory.
 
+    Recursively walks the directory tree looking for new/estimates.json
+    files.  The benchmark ID is reconstructed from the relative path,
+    joining components with "_" so that nested directories are flattened
+    back to the same format as before grouping.
+
     Returns a dict mapping benchmark ID to a dict with keys:
         mean_ns: mean estimate in nanoseconds
         ci_lower: confidence interval lower bound in ns
@@ -33,24 +40,26 @@ def get_criterion_results(target_dir="benchmarks/target/criterion"):
     if not os.path.isdir(target_dir):
         return results
 
-    for entry in os.listdir(target_dir):
-        entry_dir = os.path.join(target_dir, entry)
-        if not os.path.isdir(entry_dir) or entry == "report":
-            continue
+    for root, dirs, files in os.walk(target_dir):
+        # Skip report directories
+        if "report" in dirs:
+            dirs.remove("report")
 
-        estimates_path = os.path.join(entry_dir, "new", "estimates.json")
-        if not os.path.exists(estimates_path):
-            continue
+        if os.path.basename(root) == "new" and "estimates.json" in files:
+            estimates_path = os.path.join(root, "estimates.json")
+            bench_dir = os.path.dirname(root)  # parent of "new"
+            # Reconstruct bench ID from relative path, joining with "_"
+            bench_id = os.path.relpath(bench_dir, target_dir).replace(os.sep, "_")
 
-        with open(estimates_path) as f:
-            estimates = json.load(f)
+            with open(estimates_path) as f:
+                estimates = json.load(f)
 
-        mean = estimates["mean"]
-        results[entry] = {
-            "mean_ns": mean["point_estimate"],
-            "ci_lower": mean["confidence_interval"]["lower_bound"],
-            "ci_upper": mean["confidence_interval"]["upper_bound"],
-        }
+            mean = estimates["mean"]
+            results[bench_id] = {
+                "mean_ns": mean["point_estimate"],
+                "ci_lower": mean["confidence_interval"]["lower_bound"],
+                "ci_upper": mean["confidence_interval"]["upper_bound"],
+            }
 
     return results
 
@@ -58,22 +67,24 @@ def get_criterion_results(target_dir="benchmarks/target/criterion"):
 def get_table_bench_results(target_dir="benchmarks/target/criterion"):
     """Parse table-sweep benchmark results.
 
-    Criterion flattens "gamma::BE::Table/read_b" to directory name
-    "gamma::BE::Table_read_b". We split on the last "_" that matches
-    a known operation type to recover the config and op, then further
-    split the config on "::" into code, endian, and tables.
+    Looks inside the "tables" group subdirectory.  Criterion flattens
+    "gamma::BE::Table/read_b" to directory name "gamma::BE::Table_read_b"
+    (or nested directories joined with "_").  We split on the last "_"
+    that matches a known operation type to recover the config and op,
+    then further split the config on "::" into code, endian, and tables.
 
     Returns a list of dicts, each with keys:
         code: code name (e.g., "gamma")
         endian: "BE" or "LE"
-        tables: "true" or "false"
+        use_table: True or False
         op: operation type (e.g., "read_b", "write", "read_ub")
         mean_ns: mean estimate in nanoseconds (for the whole iteration)
         ci_lower: confidence interval lower bound
         ci_upper: confidence interval upper bound
     """
     results = []
-    all_results = get_criterion_results(target_dir)
+    group_dir = os.path.join(target_dir, "tables")
+    all_results = get_criterion_results(group_dir)
     op_types = ["read_b", "read_ub", "write"]
 
     def _parse_config(config_str):
@@ -133,15 +144,17 @@ def get_table_bench_results(target_dir="benchmarks/target/criterion"):
 def get_comp_bench_results(target_dir="benchmarks/target/criterion"):
     """Parse comparative benchmark results.
 
-    Criterion flattens "gamma/BE/implied/read" to directory name
-    "gamma_BE_implied_read". We parse this knowing the structure:
-    {code}_{endianness}_{dist}_{op}.
+    Looks inside the "comparative" group subdirectory.  Criterion flattens
+    "gamma/BE/implied/read" to directory name "gamma_BE_implied_read"
+    (or nested directories joined with "_").  We parse this knowing the
+    structure: {code}_{endianness}_{dist}_{op}.
 
     Returns a list of dicts with keys:
         code, op, dist, endian, mean_ns, ci_lower, ci_upper
     """
     results = []
-    all_results = get_criterion_results(target_dir)
+    group_dir = os.path.join(target_dir, "comparative")
+    all_results = get_criterion_results(group_dir)
 
     for bench_id, stats in all_results.items():
         # Try "/" first (in case Criterion preserves it)
