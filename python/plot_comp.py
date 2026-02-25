@@ -152,29 +152,29 @@ def create_plot(operations, title):
     return fig
 
 
-for op_filter, title, filename in [
+for op_val, dist_val, title, filename in [
     (
-        "read:implied",
+        "read", "implied",
         "Read (u32 read word) on implied distribution",
         "read_implied_performance.svg",
     ),
     (
-        "write:implied",
+        "write", "implied",
         "Write (u64 write word) on implied distribution",
         "write_implied_performance.svg",
     ),
     (
-        "read:univ",
+        "read", "univ",
         "Read (u32 read word) on distribution ≈1/x (first billion integers)",
         "read_univ_performance.svg",
     ),
     (
-        "write:univ",
+        "write", "univ",
         "Write (u64 write word) on distribution ≈1/x (first billion integers)",
         "write_univ_performance.svg",
     ),
 ]:
-    ops = [d for d in data if d["op"].startswith(op_filter)]
+    ops = [d for d in data if d["op"] == op_val and d["dist"] == dist_val]
     fig = create_plot(ops, title)
     fig.savefig(filename, dpi=300, bbox_inches="tight")
 

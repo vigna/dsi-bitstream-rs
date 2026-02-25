@@ -15,7 +15,7 @@ Usage:
     python3 extract_comp_results.py [--target-dir DIR]
 
 CHANGED: Output uses mean + confidence interval instead of median + percentiles.
-The columns are: code, op, endian, mean, min, max
+The columns are: code, op, dist, endian, mean, min, max
 """
 
 import argparse
@@ -38,18 +38,17 @@ def main():
     if not results:
         sys.exit(f"No comparative benchmark results found in: {args.target_dir}")
 
-    # CHANGED: header uses "mean", "min", "max" instead of
-    # "avg", "std", "25%", "median", "75%"
-    print("code\top\tendian\tmean\tmin\tmax")
+    print("code\top\tdist\tendian\tmean\tmin\tmax")
 
     # Divide by N to get per-operation nanoseconds
     n = 1_000_000  # matches benchmarks::N
 
-    for r in sorted(results, key=lambda x: (x["code"], x["op"], x["endian"])):
+    for r in sorted(results, key=lambda x: (x["code"], x["op"], x["dist"], x["endian"])):
         print(
-            "{}\t{}\t{}\t{:.3f}\t{:.3f}\t{:.3f}".format(
+            "{}\t{}\t{}\t{}\t{:.3f}\t{:.3f}\t{:.3f}".format(
                 r["code"],
                 r["op"],
+                r["dist"],
                 r["endian"],
                 r["mean_ns"] / n,
                 r["ci_lower"] / n,

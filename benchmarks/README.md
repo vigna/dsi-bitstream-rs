@@ -111,7 +111,7 @@ max_val	type	code	op	ratio	mean	min	max
 ### Comparative TSV
 
 ```
-code	op	endian	mean	min	max
+code	op	dist	endian	mean	min	max
 ```
 
 ## Build Options
