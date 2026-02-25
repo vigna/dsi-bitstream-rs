@@ -67,22 +67,14 @@ pub fn gen_delta_data(univ: bool) -> (f64, Vec<u64>) {
 /// Generates data to benchmark zeta3 code.
 pub fn gen_zeta3_data(univ: bool) -> (f64, Vec<u64>) {
     let data = gen_data(|x| len_zeta(x, 3), univ);
-    let ratio = data
-        .iter()
-        .filter(|&&v| len_zeta(v, 3) <= zeta_tables::READ_BITS)
-        .count() as f64
-        / data.len() as f64;
+    let ratio = read_hit_ratio(&data, |x| len_zeta(x, 3), zeta_tables::READ_BITS);
     (ratio, data)
 }
 
 /// Generates data to benchmark pi2 code.
 pub fn gen_pi2_data(univ: bool) -> (f64, Vec<u64>) {
     let data = gen_data(|x| len_pi(x, 2), univ);
-    let ratio = data
-        .iter()
-        .filter(|&&v| len_pi(v, 2) <= pi_tables::READ_BITS)
-        .count() as f64
-        / data.len() as f64;
+    let ratio = read_hit_ratio(&data, |x| len_pi(x, 2), pi_tables::READ_BITS);
     (ratio, data)
 }
 

@@ -12,7 +12,7 @@
 //!   BENCH_CODES=gamma,delta    (default: all)
 //!   BENCH_ENDIAN=BE            (default: both)
 //!   BENCH_DIST=implied         (default: both)
-//!   BENCH_OPS=read_b,write  (default: all)
+//!   BENCH_OPS=read,write     (default: all)
 
 use benchmarks::data::*;
 use benchmarks::N;
@@ -118,6 +118,8 @@ macro_rules! bench_comp {
                         let bench_id = format!("{}/BE/{}/read", $name, dist_name);
                         $group.bench_function(&bench_id, |b| {
                             b.iter(|| {
+                                // SAFETY: Vec<u64> is aligned to 8 bytes, which
+                                // satisfies alignment for ReadWord (u16/u32/u64).
                                 let slice: &[ReadWord] =
                                     unsafe { encoded.align_to::<ReadWord>().1 };
                                 let mut r = BufBitReader::<BE, _>::new(
@@ -146,6 +148,8 @@ macro_rules! bench_comp {
                         let bench_id = format!("{}/LE/{}/read", $name, dist_name);
                         $group.bench_function(&bench_id, |b| {
                             b.iter(|| {
+                                // SAFETY: Vec<u64> is aligned to 8 bytes, which
+                                // satisfies alignment for ReadWord (u16/u32/u64).
                                 let slice: &[ReadWord] =
                                     unsafe { encoded.align_to::<ReadWord>().1 };
                                 let mut r = BufBitReader::<LE, _>::new(

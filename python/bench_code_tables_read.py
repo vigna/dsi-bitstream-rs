@@ -11,7 +11,6 @@
 """Benchmarks codes with different number of bits for the read tables
 and writes results on standard output in TSV format.
 
-CHANGED: Now drives Criterion benchmarks instead of custom timing.
 Each table size triggers a recompilation and a Criterion benchmark run.
 Results are extracted from Criterion's JSON output.
 """
@@ -82,14 +81,12 @@ for bits in range(1, 17):
                 merged_table=merged_table,
             )
 
-        # CHANGED: Run Criterion benchmarks for the "tables" group,
-        # filtered to read operations only.
         features = "reads,%s" % read_word
         if dist == "univ":
             features = "univ," + features
 
         result = subprocess.run(
-            "cargo bench --bench tables --no-default-features --features %s -- tables" % features,
+            "cargo bench --bench tables --no-default-features --features %s" % features,
             shell=True,
             cwd="benchmarks",
             capture_output=True,
@@ -155,7 +152,7 @@ for bits in range(1, 17):
                 features = "univ," + features
 
             result = subprocess.run(
-                "cargo bench --bench tables --no-default-features --features %s -- tables"
+                "cargo bench --bench tables --no-default-features --features %s"
                 % features,
                 shell=True,
                 cwd="benchmarks",

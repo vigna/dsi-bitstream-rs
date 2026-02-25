@@ -7,10 +7,9 @@
 # SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
 #
 
-"""Plots data generated from `bench_code_tables_read.py`
+"""Plots data generated from `bench_code_tables_read.py`.
 
-CHANGED: Now reads Criterion-based TSV with mean + confidence interval
-columns instead of percentile-based statistics.
+Reads TSV with mean + confidence interval columns.
 """
 
 import sys
@@ -120,7 +119,6 @@ for code_name in ["gamma", "delta", "delta_gamma", "zeta3", "pi2", "omega"]:
         edgecolor="black",
     )
     for ratio, rect in zip(ratios.ratio, bars):
-        height = rect.get_height()
         ax.text(
             rect.get_x() + rect.get_width() / 2.0,
             1.2,
@@ -146,7 +144,6 @@ for code_name in ["gamma", "delta", "delta_gamma", "zeta3", "pi2", "omega"]:
     ax.set_ylim(bottom=0)  # ymin is your value
     ax.set_xlim([left, right])  # ymin is your value
     ax.set_xticks(ratios.index)
-    # CHANGED: updated subtitle to mention confidence intervals
     ax.set_title(
         (
             "Performance of reads (buff: %s) in %s code as a function of the table size %s\n"

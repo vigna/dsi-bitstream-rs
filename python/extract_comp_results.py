@@ -14,8 +14,8 @@ compatible with the plot_comp.py script.
 Usage:
     python3 extract_comp_results.py [--target-dir DIR]
 
-CHANGED: Output uses mean + confidence interval instead of median + percentiles.
-The columns are: code, op, dist, endian, mean, min, max
+Output columns: code, op, dist, endian, mean, min, max
+(mean and confidence interval bounds, in ns/op).
 """
 
 import argparse

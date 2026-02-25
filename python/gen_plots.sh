@@ -3,8 +3,6 @@
 # Run all benchmarks and generate plots (to be run from project root)
 # Usage: gen_plots.sh [implied|univ|both]
 # Default: both
-#
-# CHANGED: Now drives Criterion benchmarks instead of custom timing.
 
 DIST=${1:-both}
 

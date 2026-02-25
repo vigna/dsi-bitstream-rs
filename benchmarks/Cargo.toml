@@ -1,13 +1,13 @@
 [package]
 name = "benchmarks"
 version = "0.3.0"
-edition = "2021"
+edition = "2024"
+rust-version = "1.85"
 
 [dependencies]
 rand = "0.10.0"
-random = "0.14.0"
-dsi-bitstream = { path="../", features = ["implied"] }
 rand_distr = "0.6.0"
+dsi-bitstream = { path="../", features = ["implied"] }
 
 [dev-dependencies]
 criterion = "0.5"

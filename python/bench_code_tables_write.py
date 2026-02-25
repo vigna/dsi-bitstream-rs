@@ -11,7 +11,6 @@
 """Benchmarks codes with different number of bits for the write tables
 and writes results on standard output in TSV format.
 
-CHANGED: Now drives Criterion benchmarks instead of custom timing.
 Each table size triggers a recompilation and a Criterion benchmark run.
 Results are extracted from Criterion's JSON output.
 """
@@ -83,14 +82,12 @@ for bits in range(1, 17):
                 merged_table=merged_table,
             )
 
-        # CHANGED: Run Criterion benchmarks for the "tables" group,
-        # filtered to write operations.
         features = write_word
         if dist == "univ":
             features = "univ," + features
 
         result = subprocess.run(
-            "cargo bench --bench tables --no-default-features --features %s -- tables"
+            "cargo bench --bench tables --no-default-features --features %s"
             % features,
             shell=True,
             cwd="benchmarks",
@@ -158,7 +155,7 @@ for bits in range(1, 17):
                 features = "univ," + features
 
             result = subprocess.run(
-                "cargo bench --bench tables --no-default-features --features %s -- tables"
+                "cargo bench --bench tables --no-default-features --features %s"
                 % features,
                 shell=True,
                 cwd="benchmarks",

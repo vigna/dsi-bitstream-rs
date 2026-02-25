@@ -161,6 +161,12 @@ def get_comp_bench_results(target_dir="benchmarks/target/criterion"):
         parts = bench_id.split("/")
         if len(parts) == 4:
             code, endian, dist, op = parts
+            if (
+                op not in ("read", "write")
+                or dist not in ("implied", "univ")
+                or endian not in ("BE", "LE")
+            ):
+                continue
         else:
             # Flattened with "_": need to parse carefully
             # Known ops: "read", "write"
