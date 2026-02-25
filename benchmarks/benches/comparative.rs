@@ -47,16 +47,21 @@ fn env_filter(var: &str, value: &str) -> bool {
 }
 
 /// Macro to register a comparative benchmark for a code (both endiannesses,
-/// both distributions, read + write).
+/// both distributions, read + write).  Set `implied_only` to `true` for codes
+/// whose codeword length is proportional to the value (e.g., unary), making
+/// the universal distribution impractical.
 macro_rules! bench_comp {
     ($group:expr, $name:literal, $write_method:ident, $read_method:ident, $len_fn:expr) => {
+        bench_comp!($group, $name, $write_method, $read_method, $len_fn, false)
+    };
+    ($group:expr, $name:literal, $write_method:ident, $read_method:ident, $len_fn:expr, $implied_only:expr) => {
         if env_filter("BENCH_CODES", $name) {
             let dists: Vec<(&str, bool)> = {
                 let mut v = Vec::new();
                 if env_filter("BENCH_DIST", "implied") {
                     v.push(("implied", false));
                 }
-                if env_filter("BENCH_DIST", "univ") {
+                if !$implied_only && env_filter("BENCH_DIST", "univ") {
                     v.push(("univ", true));
                 }
                 v
@@ -296,7 +301,7 @@ fn bench_comparative(c: &mut Criterion) {
     group.throughput(Throughput::Elements(N as u64));
 
     // Fixed-parameter codes
-    bench_comp!(group, "unary", write_unary, read_unary, |x: u64| x as usize + 1);
+    bench_comp!(group, "unary", write_unary, read_unary, |x: u64| x as usize + 1, true);
     bench_comp!(group, "gamma", write_gamma, read_gamma, len_gamma);
     bench_comp!(group, "delta", write_delta, read_delta, len_delta);
     bench_comp!(group, "omega", write_omega, read_omega, len_omega);
