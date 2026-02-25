@@ -12,8 +12,8 @@ Provides functions to parse Criterion's JSON output directory structure
 and extract mean estimates with confidence intervals.
 
 Criterion flattens benchmark IDs with "/" separators into directory names
-with "_" separators. For example, "gamma::BE::Table/read_buff" becomes
-the directory "gamma::BE::Table_read_buff".
+with "_" separators. For example, "gamma::BE::Table/read_b" becomes
+the directory "gamma::BE::Table_read_b".
 """
 
 import json
@@ -58,8 +58,8 @@ def get_criterion_results(target_dir="benchmarks/target/criterion"):
 def get_table_bench_results(target_dir="benchmarks/target/criterion"):
     """Parse table-sweep benchmark results.
 
-    Criterion flattens "gamma::BE::Table/read_buff" to directory name
-    "gamma::BE::Table_read_buff". We split on the last "_" that matches
+    Criterion flattens "gamma::BE::Table/read_b" to directory name
+    "gamma::BE::Table_read_b". We split on the last "_" that matches
     a known operation type to recover the config and op, then further
     split the config on "::" into code, endian, and tables.
 
@@ -67,18 +67,24 @@ def get_table_bench_results(target_dir="benchmarks/target/criterion"):
         code: code name (e.g., "gamma")
         endian: "BE" or "LE"
         tables: "true" or "false"
-        op: operation type (e.g., "read_buff", "write", "read_unbuff")
+        op: operation type (e.g., "read_b", "write", "read_ub")
         mean_ns: mean estimate in nanoseconds (for the whole iteration)
         ci_lower: confidence interval lower bound
         ci_upper: confidence interval upper bound
     """
     results = []
     all_results = get_criterion_results(target_dir)
-    op_types = ["read_buff", "read_unbuff", "write"]
+    op_types = ["read_b", "read_ub", "write"]
 
     def _parse_config(config_str):
-        """Split 'gamma::BE::Table' into (code, endian, use_table)."""
-        parts = config_str.split("::")
+        """Split 'gamma::BE::Table' or 'gamma__BE__Table' into (code, endian, use_table).
+
+        Criterion flattens '::' to '__' in directory names, so we try both.
+        """
+        if "::" in config_str:
+            parts = config_str.split("::")
+        else:
+            parts = config_str.split("__")
         if len(parts) == 3:
             use_table = parts[2] == "Table"
             return parts[0], parts[1], use_table

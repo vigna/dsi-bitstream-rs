@@ -35,7 +35,7 @@ if dist not in {"implied", "univ"}:
     sys.exit("Distribution must be 'implied' or 'univ'")
 
 # TSV header: t_bits is 0 for no table, >0 for table (= log2 of table size)
-print("code\tendian\tt_bits\tmax_val\ttype\top\tratio\tmean\tmin\tmax")
+print("code\tendian\tt_bits\ttype\top\tratio\tmean\tmin\tmax")
 
 for bits in range(1, 17):
     value_max = 2**bits - 1
@@ -123,11 +123,10 @@ for bits in range(1, 17):
             # so we divide by N to get per-operation nanoseconds.
             n = 1_000_000  # matches benchmarks::N
             print(
-                "{}\t{}\t{}\t{}\t{}\t{}\t{:.6f}\t{:.6f}\t{:.6f}\t{:.6f}".format(
+                "{}\t{}\t{}\t{}\t{}\t{:.5f}\t{:.6f}\t{:.6f}\t{:.6f}".format(
                     code,
                     endian,
                     t_bits,
-                    value_max + 1,
                     type_name,
                     r["op"],
                     ratio,
@@ -185,11 +184,10 @@ for bits in range(1, 17):
                 t_bits = bits if use_table else 0
                 n = 1_000_000
                 print(
-                    "{}\t{}\t{}\t{}\t{}\t{}\t{:.6f}\t{:.6f}\t{:.6f}\t{:.6f}".format(
+                    "{}\t{}\t{}\t{}\t{}\t{:.5f}\t{:.6f}\t{:.6f}\t{:.6f}".format(
                         code,
                         endian,
                         t_bits,
-                        value_max + 1,
                         type_name,
                         r["op"],
                         ratio,
