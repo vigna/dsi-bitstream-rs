@@ -9,7 +9,7 @@
 
 """Plots data generated from `bench_code_tables_read.py`
 
-CHANGED: Now reads Criterion-based CSV with mean + confidence interval
+CHANGED: Now reads Criterion-based TSV with mean + confidence interval
 columns instead of percentile-based statistics.
 """
 
@@ -44,83 +44,74 @@ nice = {
     "omega": "ω",
 }
 
-df = pd.read_csv(sys.stdin, index_col=None, header=0)
+df = pd.read_csv(sys.stdin, index_col=None, header=0, sep="\t")
 
 plots = []
 
-for code in ["gamma", "delta", "delta_gamma", "zeta3", "pi2", "omega"]:
+for code_name in ["gamma", "delta", "delta_gamma", "zeta3", "pi2", "omega"]:
     fig, ax = plt.subplots(1, 1, figsize=(10, 8), dpi=200, facecolor="white")
-    for ty in ["read_buff", "read_unbuff"]:
+    for op_name in ["read_buff", "read_unbuff"]:
         color = 0
-        for tables_n in [1, 2]:
-            if tables_n == 1:
-                table_txt = "merged"
-                marker = "o"
-            else:
-                table_txt = "sep"
-                marker = "s"
+        for table_type in ["merged", "sep"]:
+            marker = "o" if table_type == "merged" else "s"
 
-            for pat in [
-                "%s::LE::Table" % code,
-                "%s::BE::Table" % code,
+            for code_val in [
+                "%s::LE::Table" % code_name,
+                "%s::BE::Table" % code_name,
             ]:
                 values = df[
-                    (df.pat == pat) & (df.type == ty) & (df.tables_num == tables_n)
+                    (df.code == code_val) & (df.op == op_name) & (df.type == table_type)
                 ]
-                # CHANGED: use mean_ns instead of ns_median
-                m = min(values.mean_ns)
-                i = np.argmin(values.mean_ns.values)
+                m = min(values["mean"])
+                i = np.argmin(values["mean"].values)
                 ax.errorbar(
                     values.n_bits,
-                    values.mean_ns,
+                    values["mean"],
                     label="{}::{}::{} (min: {:.3f}ns @ {} bits)".format(
-                        "::".join(pat.split("::")[1:]), table_txt, ty, m, i
+                        "::".join(code_val.split("::")[1:]), table_type, op_name, m, i
                     ),
                     marker=marker,
-                    linestyle="dotted" if ty == "read_unbuff" else "solid",
+                    linestyle="dotted" if op_name == "read_unbuff" else "solid",
                     color=colors[color],
                 )
                 color += 1
-                # CHANGED: use ci_lower/ci_upper instead of ns_perc25/ns_perc75
                 ax.fill_between(
                     values.n_bits,
-                    values.ci_lower,
-                    values.ci_upper,
+                    values["min"],
+                    values["max"],
                     alpha=0.3,
                 )
 
-        for pat in [
-            "%s::LE::NoTable" % code,
-            "%s::BE::NoTable" % code,
+        for code_val in [
+            "%s::LE::NoTable" % code_name,
+            "%s::BE::NoTable" % code_name,
         ]:
             values = (
-                df[(df.pat == pat) & (df.type == ty)]
+                df[(df.code == code_val) & (df.op == op_name)]
                 .groupby("n_bits")
                 .mean(numeric_only=True)
             )
-            # CHANGED: use mean_ns instead of ns_median
-            m = min(values.mean_ns)
+            m = min(values["mean"])
             ax.errorbar(
                 values.index,
-                values.mean_ns,
+                values["mean"],
                 label="{}::{} (min: {:.3f}ns)".format(
-                    "::".join(pat.split("::")[1:]), ty, m
+                    "::".join(code_val.split("::")[1:]), op_name, m
                 ),
                 marker="^",
-                linestyle="dotted" if ty == "read_unbuff" else "solid",
+                linestyle="dotted" if op_name == "read_unbuff" else "solid",
                 color=colors[color % 10],
             )
             color += 1
-            # CHANGED: use ci_lower/ci_upper instead of ns_perc25/ns_perc75
             ax.fill_between(
                 values.index,
-                values.ci_lower,
-                values.ci_upper,
+                values["min"],
+                values["max"],
                 alpha=0.3,
             )
 
     ratios = (
-        df[df.pat.str.contains(code) & (df.tables_num == tables_n)]
+        df[df.code.str.contains(code_name) & (df.type == table_type)]
         .groupby("n_bits")
         .mean(numeric_only=True)
     )
@@ -166,11 +157,11 @@ for code in ["gamma", "delta", "delta_gamma", "zeta3", "pi2", "omega"]:
             "Shaded areas are 95%% confidence intervals and the plots "
             "are means"
         )
-        % (read_word, nice[code], dist_label)
+        % (read_word, nice[code_name], dist_label)
     )
     ax.set_xlabel("table bits")
     ax.set_ylabel("ns")
-    plots.append((fig, ax, "%s_read_tables.svg" % code))
+    plots.append((fig, ax, "%s_read_tables.svg" % code_name))
 
 min_x, max_x = np.inf, -np.inf
 min_y, max_y = np.inf, -np.inf

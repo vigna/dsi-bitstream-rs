@@ -38,22 +38,23 @@ feature `delta_gamma` tests delta codes with gamma tables.
 A comprehensive set of tests across all table sizes can be obtained with:
 
 ```bash
-./python/gen_plots.sh [implied|univ]
+./python/gen_plots.sh [implied|univ|both]
 ```
 
-This iterates over word sizes (u16, u32, u64) and table sizes (2^1 to 2^16),
-running Criterion benchmarks for each configuration and generating SVG plots.
+The default is `both`, which runs tests for both distributions. This iterates
+over word sizes (`u16`, `u32`, `u64`) and table sizes (2¹ to 2¹⁶), running
+Criterion benchmarks for each configuration and generating SVG plots.
 
 For more fine-grained control, run the scripts individually:
 
 ```bash
 # Read benchmarks with u32 word, implied distribution
-python3 ./python/bench_code_tables_read.py u32 implied > read.csv
-cat read.csv | python3 ./python/plot_code_tables_read.py u32 implied
+python3 ./python/bench_code_tables_read.py u32 implied > read.tsv
+cat read.tsv | python3 ./python/plot_code_tables_read.py u32 implied
 
 # Write benchmarks with u64 word, universal distribution
-python3 ./python/bench_code_tables_write.py u64 univ > write.csv
-cat write.csv | python3 ./python/plot_code_tables_write.py u64 univ
+python3 ./python/bench_code_tables_write.py u64 univ > write.tsv
+cat write.tsv | python3 ./python/plot_code_tables_write.py u64 univ
 ```
 
 ## Comparative Benchmarks
@@ -95,22 +96,22 @@ cargo bench -- "gamma"
 
 ## Output Formats
 
-### Table-sweep CSV (reads)
+### Table-sweep TSV (reads)
 
 ```
-n_bits,tables_num,pat,type,ratio,mean_ns,ci_lower,ci_upper
+n_bits	type	code	op	ratio	mean	min	max
 ```
 
-### Table-sweep CSV (writes)
+### Table-sweep TSV (writes)
 
 ```
-max,tables_num,pat,type,ratio,mean_ns,ci_lower,ci_upper
+max_val	type	code	op	ratio	mean	min	max
 ```
 
 ### Comparative TSV
 
 ```
-code  rw  endianness  mean  ci_lower  ci_upper
+code	op	endian	mean	min	max
 ```
 
 ## Build Options

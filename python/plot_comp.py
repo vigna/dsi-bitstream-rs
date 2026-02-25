@@ -40,7 +40,6 @@ def create_plot(operations, title):
     code_performance = {}
     for code in codes:
         code_data = [d for d in operations if d["code"] == code]
-        # CHANGED: use "mean" instead of "median"
         best_mean = min(float(d["mean"]) for d in code_data)
         code_performance[code] = best_mean
 
@@ -55,39 +54,38 @@ def create_plot(operations, title):
     width = 0.35
 
     # Plot little endian data
-    # CHANGED: use "mean" and "ci_lower"/"ci_upper" instead of "median" and percentiles
     little_endian = [
-        (d["mean"], d["ci_lower"], d["ci_upper"])
+        (d["mean"], d["min"], d["max"])
         for code in codes
         for d in operations
-        if d["code"] == code and d["endianness"] == "little"
+        if d["code"] == code and d["endian"] == "LE"
     ]
-    means_le, ci_lower_le, ci_upper_le = zip(*little_endian)
+    means_le, min_le, max_le = zip(*little_endian)
     means_le = [float(x) for x in means_le]
-    ci_lower_le = [float(x) for x in ci_lower_le]
-    ci_upper_le = [float(x) for x in ci_upper_le]
+    min_le = [float(x) for x in min_le]
+    max_le = [float(x) for x in max_le]
     yerr_le = np.array(
         [
-            np.array(means_le) - np.array(ci_lower_le),
-            np.array(ci_upper_le) - np.array(means_le),
+            np.array(means_le) - np.array(min_le),
+            np.array(max_le) - np.array(means_le),
         ]
     )
 
     # Plot big endian data
     big_endian = [
-        (d["mean"], d["ci_lower"], d["ci_upper"])
+        (d["mean"], d["min"], d["max"])
         for code in codes
         for d in operations
-        if d["code"] == code and d["endianness"] == "big"
+        if d["code"] == code and d["endian"] == "BE"
     ]
-    means_be, ci_lower_be, ci_upper_be = zip(*big_endian)
+    means_be, min_be, max_be = zip(*big_endian)
     means_be = [float(x) for x in means_be]
-    ci_lower_be = [float(x) for x in ci_lower_be]
-    ci_upper_be = [float(x) for x in ci_upper_be]
+    min_be = [float(x) for x in min_be]
+    max_be = [float(x) for x in max_be]
     yerr_be = np.array(
         [
-            np.array(means_be) - np.array(ci_lower_be),
-            np.array(ci_upper_be) - np.array(means_be),
+            np.array(means_be) - np.array(min_be),
+            np.array(max_be) - np.array(means_be),
         ]
     )
 
@@ -118,7 +116,7 @@ def create_plot(operations, title):
         # Add label for little endian
         ax.text(
             i - width / 2,
-            mean_le + (ci_upper_le[i] - ci_lower_le[i]) / 2 + 0.1,
+            mean_le + (max_le[i] - min_le[i]) / 2 + 0.1,
             f"{mean_le:.3f}",
             rotation=90,
             ha="center",
@@ -127,7 +125,7 @@ def create_plot(operations, title):
         # Add label for big endian
         ax.text(
             i + width / 2,
-            mean_be + (ci_upper_be[i] - ci_lower_be[i]) / 2 + 0.1,
+            mean_be + (max_be[i] - min_be[i]) / 2 + 0.1,
             f"{mean_be:.3f}",
             rotation=90,
             ha="center",
@@ -154,7 +152,7 @@ def create_plot(operations, title):
     return fig
 
 
-for rw, title, filename in [
+for op_filter, title, filename in [
     (
         "read:implied",
         "Read (u32 read word) on implied distribution",
@@ -176,7 +174,7 @@ for rw, title, filename in [
         "write_univ_performance.svg",
     ),
 ]:
-    ops = [d for d in data if d["rw"].startswith(rw)]
+    ops = [d for d in data if d["op"].startswith(op_filter)]
     fig = create_plot(ops, title)
     fig.savefig(filename, dpi=300, bbox_inches="tight")
 

@@ -9,7 +9,7 @@
 #
 
 """Benchmarks codes with different number of bits for the write tables
-and writes results on standard output in CSV format.
+and writes results on standard output in TSV format.
 
 CHANGED: Now drives Criterion benchmarks instead of custom timing.
 Each table size triggers a recompilation and a Criterion benchmark run.
@@ -34,9 +34,9 @@ dist = sys.argv[2] if len(sys.argv) == 3 else "univ"
 if dist not in {"implied", "univ"}:
     sys.exit("Distribution must be 'implied' or 'univ'")
 
-# CHANGED: CSV header now uses mean + confidence interval instead of
+# CHANGED: TSV header now uses mean + confidence interval instead of
 # percentile-based statistics.
-print("max,tables_num,pat,type,ratio,mean_ns,ci_lower,ci_upper")
+print("max_val\ttype\tcode\top\tratio\tmean\tmin\tmax")
 
 for bits in range(1, 17):
     value_max = 2**bits - 1
@@ -44,7 +44,7 @@ for bits in range(1, 17):
         "\nBenchmarking with write word = %s, table bits = %d\n" % (write_word, bits),
         file=sys.stderr,
     )
-    for tables_num in [1, 2]:
+    for tables_num, type_name in [(1, "merged"), (2, "sep")]:
         # Clean the target to force the recreation of the tables
         subprocess.check_call(
             "cargo clean",
@@ -113,18 +113,18 @@ for bits in range(1, 17):
         )
 
         for r in bench_results:
-            pat = r["pat"]
-            if value_max < 62 and "omega" in pat:
+            code = r["pat"]
+            if value_max < 62 and "omega" in code:
                 continue
-            ratio = ratios.get(pat, 0.0)
+            ratio = ratios.get(code, 0.0)
             # CHANGED: Criterion measures the entire iteration (N operations),
             # so we divide by N to get per-operation nanoseconds.
             n = 1_000_000  # matches benchmarks::N
             print(
-                "{},{},{},{},{:.6f},{:.6f},{:.6f},{:.6f}".format(
+                "{}\t{}\t{}\t{}\t{:.6f}\t{:.6f}\t{:.6f}\t{:.6f}".format(
                     value_max + 1,
-                    tables_num,
-                    pat,
+                    type_name,
+                    code,
                     r["type"],
                     ratio,
                     r["mean_ns"] / n,
@@ -174,14 +174,14 @@ for bits in range(1, 17):
             )
 
             for r in bench_results_dg:
-                pat = r["pat"]
-                ratio = ratios_dg.get(pat, 0.0)
+                code = r["pat"]
+                ratio = ratios_dg.get(code, 0.0)
                 n = 1_000_000
                 print(
-                    "{},{},{},{},{:.6f},{:.6f},{:.6f},{:.6f}".format(
+                    "{}\t{}\t{}\t{}\t{:.6f}\t{:.6f}\t{:.6f}\t{:.6f}".format(
                         value_max + 1,
-                        tables_num,
-                        pat,
+                        type_name,
+                        code,
                         r["type"],
                         ratio,
                         r["mean_ns"] / n,

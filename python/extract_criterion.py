@@ -117,7 +117,7 @@ def get_comp_bench_results(target_dir="benchmarks/target/criterion"):
     {code}_{endianness}_{dist}_{op}.
 
     Returns a list of dicts with keys:
-        code, endianness, dist, op, mean_ns, ci_lower, ci_upper
+        code, op, endian, mean_ns, ci_lower, ci_upper
     """
     results = []
     all_results = get_criterion_results(target_dir)
@@ -151,14 +151,13 @@ def get_comp_bench_results(target_dir="benchmarks/target/criterion"):
             if endian not in ("BE", "LE"):
                 continue
 
-        endian_name = "little" if endian == "LE" else "big"
-        rw = f"{op}:{dist}"
+        op_dist = f"{op}:{dist}"
 
         results.append(
             {
                 "code": code,
-                "rw": rw,
-                "endianness": endian_name,
+                "op": op_dist,
+                "endian": endian,
                 "mean_ns": stats["mean_ns"],
                 "ci_lower": stats["ci_lower"],
                 "ci_upper": stats["ci_upper"],
