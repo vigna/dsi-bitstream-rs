@@ -7,7 +7,11 @@
 # SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
 #
 
-"""Plots data generated from `bench_code_tables_read.py`"""
+"""Plots data generated from `bench_code_tables_read.py`
+
+CHANGED: Now reads Criterion-based CSV with mean + confidence interval
+columns instead of percentile-based statistics.
+"""
 
 import sys
 import numpy as np
@@ -63,11 +67,12 @@ for code in ["gamma", "delta", "delta_gamma", "zeta3", "pi2", "omega"]:
                 values = df[
                     (df.pat == pat) & (df.type == ty) & (df.tables_num == tables_n)
                 ]
-                m = min(values.ns_median)
-                i = np.argmin(values.ns_median)
+                # CHANGED: use mean_ns instead of ns_median
+                m = min(values.mean_ns)
+                i = np.argmin(values.mean_ns.values)
                 ax.errorbar(
                     values.n_bits,
-                    values.ns_median,  # values.ns_std,
+                    values.mean_ns,
                     label="{}::{}::{} (min: {:.3f}ns @ {} bits)".format(
                         "::".join(pat.split("::")[1:]), table_txt, ty, m, i
                     ),
@@ -76,10 +81,11 @@ for code in ["gamma", "delta", "delta_gamma", "zeta3", "pi2", "omega"]:
                     color=colors[color],
                 )
                 color += 1
+                # CHANGED: use ci_lower/ci_upper instead of ns_perc25/ns_perc75
                 ax.fill_between(
                     values.n_bits,
-                    values.ns_perc25,
-                    values.ns_perc75,
+                    values.ci_lower,
+                    values.ci_upper,
                     alpha=0.3,
                 )
 
@@ -92,11 +98,11 @@ for code in ["gamma", "delta", "delta_gamma", "zeta3", "pi2", "omega"]:
                 .groupby("n_bits")
                 .mean(numeric_only=True)
             )
-            m = min(values.ns_median)
+            # CHANGED: use mean_ns instead of ns_median
+            m = min(values.mean_ns)
             ax.errorbar(
                 values.index,
-                values.ns_median,  
-                #yerr=values.ns_std,
+                values.mean_ns,
                 label="{}::{} (min: {:.3f}ns)".format(
                     "::".join(pat.split("::")[1:]), ty, m
                 ),
@@ -105,10 +111,11 @@ for code in ["gamma", "delta", "delta_gamma", "zeta3", "pi2", "omega"]:
                 color=colors[color % 10],
             )
             color += 1
+            # CHANGED: use ci_lower/ci_upper instead of ns_perc25/ns_perc75
             ax.fill_between(
                 values.index,
-                values.ns_perc25,
-                values.ns_perc75,
+                values.ci_lower,
+                values.ci_upper,
                 alpha=0.3,
             )
 
@@ -152,11 +159,12 @@ for code in ["gamma", "delta", "delta_gamma", "zeta3", "pi2", "omega"]:
     ax.set_ylim(bottom=0)  # ymin is your value
     ax.set_xlim([left, right])  # ymin is your value
     ax.set_xticks(ratios.index)
+    # CHANGED: updated subtitle to mention confidence intervals
     ax.set_title(
         (
             "Performance of reads (buff: %s) in %s code as a function of the table size %s\n"
-            "Shaded areas are the 25%% and 75%% percentiles and the plots "
-            "are medians"
+            "Shaded areas are 95%% confidence intervals and the plots "
+            "are means"
         )
         % (read_word, nice[code], dist_label)
     )

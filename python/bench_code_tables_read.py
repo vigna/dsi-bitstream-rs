@@ -8,14 +8,19 @@
 # SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
 #
 
-"""Benchmarks codes with different number of bits for the codes tables
+"""Benchmarks codes with different number of bits for the read tables
 and writes results on standard output in CSV format.
+
+CHANGED: Now drives Criterion benchmarks instead of custom timing.
+Each table size triggers a recompilation and a Criterion benchmark run.
+Results are extracted from Criterion's JSON output.
 """
 
 import os
 import sys
 import subprocess
 from gen_code_tables import *
+from extract_criterion import get_table_bench_results, parse_ratios_from_stderr
 
 if not os.path.exists("benchmarks") or not os.path.exists("python"):
     sys.exit("You must run this script in the main project directory.")
@@ -29,7 +34,9 @@ dist = sys.argv[2] if len(sys.argv) == 3 else "univ"
 if dist not in {"implied", "univ"}:
     sys.exit("Distribution must be 'implied' or 'univ'")
 
-first_time = True
+# CHANGED: CSV header now uses mean + confidence interval instead of
+# percentile-based statistics.
+print("n_bits,tables_num,pat,type,ratio,mean_ns,ci_lower,ci_upper")
 
 for bits in range(1, 17):
     print(
@@ -76,19 +83,55 @@ for bits in range(1, 17):
                 merged_table=merged_table,
             )
 
-        # Run the benchmark with native cpu optimizations
+        # CHANGED: Run Criterion benchmarks for the "tables" group,
+        # filtered to read operations only.
         features = "reads,%s" % read_word
         if dist == "univ":
             features = "univ," + features
-        stdout = subprocess.check_output(
-            "cargo run --release --no-default-features --features %s" % features,
-            shell=True,
-            env={
-                **os.environ,
-            },
-            cwd="benchmarks",
-        ).decode()
 
+        result = subprocess.run(
+            "cargo bench --bench bench --no-default-features --features %s -- tables" % features,
+            shell=True,
+            cwd="benchmarks",
+            capture_output=True,
+            text=True,
+        )
+
+        if result.returncode != 0:
+            print("cargo bench failed:", file=sys.stderr)
+            print(result.stderr, file=sys.stderr)
+            sys.exit(1)
+
+        # Parse hit ratios from stderr
+        ratios = parse_ratios_from_stderr(result.stderr)
+
+        # Extract Criterion results
+        bench_results = get_table_bench_results(
+            os.path.join("benchmarks", "target", "criterion")
+        )
+
+        for r in bench_results:
+            pat = r["pat"]
+            if bits < 2 and "omega" in pat:
+                continue
+            ratio = ratios.get(pat, 0.0)
+            # CHANGED: Criterion measures the entire iteration (N operations),
+            # so we divide by N to get per-operation nanoseconds.
+            n = 1_000_000  # matches benchmarks::N
+            print(
+                "{},{},{},{},{:.6f},{:.6f},{:.6f},{:.6f}".format(
+                    bits,
+                    tables_num,
+                    pat,
+                    r["type"],
+                    ratio,
+                    r["mean_ns"] / n,
+                    r["ci_lower"] / n,
+                    r["ci_upper"] / n,
+                )
+            )
+
+        # Now run delta_gamma variant
         for i in range(4, 5):
             gamma_bits = 2 * i + 1
             gen_gamma(
@@ -97,30 +140,52 @@ for bits in range(1, 17):
                 merged_table=merged_table,
             )
 
-            # Run the benchmark with native cpu optimizations
+            # Clean to force recompilation with new gamma tables
+            subprocess.check_call(
+                "cargo clean",
+                shell=True,
+                cwd="benchmarks",
+            )
+
             features = "reads,%s,delta_gamma" % read_word
             if dist == "univ":
                 features = "univ," + features
-            stdout += subprocess.check_output(
-                "cargo run --release --no-default-features --features %s" % features,
-                shell=True,
-                env={
-                    **os.environ,
-                },
-                cwd="benchmarks",
-            ).decode()
 
-        # Dump the header only the first time
-        if first_time:
-            print("n_bits,tables_num," + stdout.split("\n")[0])
-            first_time = False
-        # Dump all lines and add the `n_bits` column
-        for line in stdout.split("\n")[1:]:
-            if bits < 2 and "omega" in line:
-                # ω read tables must be at least 2 bits wide
-                continue
-            if len(line.strip()) != 0:
-                print("{},{},{}".format(bits, tables_num, line))
+            result = subprocess.run(
+                "cargo bench --bench bench --no-default-features --features %s -- tables"
+                % features,
+                shell=True,
+                cwd="benchmarks",
+                capture_output=True,
+                text=True,
+            )
+
+            if result.returncode != 0:
+                print("cargo bench (delta_gamma) failed:", file=sys.stderr)
+                print(result.stderr, file=sys.stderr)
+                sys.exit(1)
+
+            ratios_dg = parse_ratios_from_stderr(result.stderr)
+            bench_results_dg = get_table_bench_results(
+                os.path.join("benchmarks", "target", "criterion")
+            )
+
+            for r in bench_results_dg:
+                pat = r["pat"]
+                ratio = ratios_dg.get(pat, 0.0)
+                n = 1_000_000
+                print(
+                    "{},{},{},{},{:.6f},{:.6f},{:.6f},{:.6f}".format(
+                        bits,
+                        tables_num,
+                        pat,
+                        r["type"],
+                        ratio,
+                        r["mean_ns"] / n,
+                        r["ci_lower"] / n,
+                        r["ci_upper"] / n,
+                    )
+                )
 
         sys.stdout.flush()
 

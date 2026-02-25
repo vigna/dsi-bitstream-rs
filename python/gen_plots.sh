@@ -3,6 +3,8 @@
 # Run all benchmarks and generate plots (to be run from project root)
 # Usage: gen_plots.sh [implied|univ]
 # Default: univ
+#
+# CHANGED: Now drives Criterion benchmarks instead of custom timing.
 
 DIST=${1:-univ}
 
@@ -14,7 +16,7 @@ fi
 # Create the distribution directory--fail if existing
 mkdir "$DIST"
 
-for u in u16 u32 u64; do 
+for u in u16 u32 u64; do
 	# Run read benchmarks
 	python3 ./python/bench_code_tables_read.py $u $DIST > read.csv
 	# Generate plots

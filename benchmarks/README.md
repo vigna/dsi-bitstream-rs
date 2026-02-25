@@ -1,67 +1,125 @@
 # Benchmarks for `dsi-bitstream`
 
-This crate provides performance benchmarks for several variants of `BitRead` and
-`BitWrite` implementations. The benchmarks measure the speed of reading and
-writing instantaneous codes, and in particular γ, δ ζ₃, and ω.
+This crate provides Criterion-based performance benchmarks for reading and
+writing instantaneous codes (gamma, delta, zeta3, pi2, omega, unary).
 
-# Table Benchmarks
-
-Each code with tables (γ, δ ζ₃, and ω) is tested in all possible combinations of
-the following bitstream parameters:
-
-- Big endian / little endian
-- Buffered / unbuffered
-
-Every complete prefix-free code, such as γ, δ, ζ₃, ω, Rice, Golomb, etc., has an
-implied distribution where each symbol is assigned a probability proportional to
-the reciprocal of 2 raised to the length of the codeword. The benchmarks are run
-using the implied distribution of each code, unless you set the `univ` feature,
-in which case we use a universal distribution ≈1/x on the first billion
-integers.
-
-By conditional compilation you can change the word size used to access the
-stream (`u16`, `u32`, or `u64`); moreover, the feature `reads` to test reads
-instead of writes. Table sizes have to be set by modifying the sources of the
-`dsi-bitstream` crate in the directory above. A special feature `delta_gamma`
-generates data just for the case of δ codes that use tables for the initial γ
-code, without the preamble with column names.
-
-A comprehensive set of tests, with associated graphs, can be obtained with
-
-```shell
-./python/gen_plots.sh DIST
-```
-
-which starts a few Python scripts (you can run selectively the scripts for a
-more fine-grained control). `DIST` can be either `implied` or `univ`. Note that
-the script will modify the sources of the `dsi-bitstream` crate in the directory
-above, and you might have to restore them manually.
-
-The script will go through the following combinations (with the `delta_gamma`
-feature or not):
-
-- Word: `u16`, `u32`, `u64`
-- Table size: 2⁰, 2¹, 2², . . . , 2¹⁶, or no table.
-
-In the generated SVG plots, abscissas show table size and ordinates the timing
-in nanoseconds, so in the no-table case, you will see a straight horizontal
-line. The `svg` directory contains reference results of these benchmarks of a
-few architectures.
-
-The cargo options in `Cargo.html` and the `rustc` options in
-`.cargo/config.toml` select aggressive optimizations and `--target-cpu=native`.
-You can modify them to run the tests with different options.
-
-# Comparative Benchmarks
-
-To generate SVG comparative graphs that illustrate the speed of reading and
-writing for each code based using the implied or universal distribution run the
-following commands:
+## Quick Start
 
 ```bash
-cd benchmarks
-cargo run --bin comp --release | tee comp.tsv
-python3 ../python/plot_comp.py ./comp.tsv
+# Run all benchmarks (table-sweep + comparative)
+cargo bench
+
+# Run only comparative benchmarks
+cargo bench -- comparative
+
+# Run only table-sweep benchmarks
+cargo bench -- tables
 ```
 
-Also for these graphs you can find reference results in the `svg` directory.
+## Table Benchmarks
+
+Tests each code with different table sizes. Each code with tables (gamma, delta,
+zeta3, pi2, omega) is tested in all combinations of:
+
+- Big endian / little endian
+- Buffered / unbuffered (reads only)
+- Table enabled / disabled
+
+The distribution is controlled by the `univ` feature: without it, each code's
+implied distribution is used; with it, a universal distribution ~1/x on the
+first billion integers is used.
+
+Word size is controlled by features: `u16`, `u32`, or `u64` (default: `u32`).
+The feature `reads` (default) tests reads; without it, writes are tested. The
+feature `delta_gamma` tests delta codes with gamma tables.
+
+### Running Table-Sweep Benchmarks
+
+A comprehensive set of tests across all table sizes can be obtained with:
+
+```bash
+./python/gen_plots.sh [implied|univ]
+```
+
+This iterates over word sizes (u16, u32, u64) and table sizes (2^1 to 2^16),
+running Criterion benchmarks for each configuration and generating SVG plots.
+
+For more fine-grained control, run the scripts individually:
+
+```bash
+# Read benchmarks with u32 word, implied distribution
+python3 ./python/bench_code_tables_read.py u32 implied > read.csv
+cat read.csv | python3 ./python/plot_code_tables_read.py u32 implied
+
+# Write benchmarks with u64 word, universal distribution
+python3 ./python/bench_code_tables_write.py u64 univ > write.csv
+cat write.csv | python3 ./python/plot_code_tables_write.py u64 univ
+```
+
+## Comparative Benchmarks
+
+Compares all codes side by side using both implied and universal distributions.
+
+```bash
+# Run comparative benchmarks
+cargo bench -- comparative
+
+# Extract results and generate plots
+cd benchmarks
+python3 ../python/extract_comp_results.py | tee comp.tsv
+python3 ../python/plot_comp.py comp.tsv
+```
+
+## Environment Variables for Filtering
+
+The comparative benchmarks support environment variables for filtering:
+
+- `BENCH_CODES=gamma,delta` — which codes to benchmark (default: all)
+- `BENCH_ENDIAN=BE` — which endianness (default: both BE and LE)
+- `BENCH_DIST=implied` — which distribution (default: both implied and univ)
+- `BENCH_OPS=read,write` — which operations (default: all)
+
+Example:
+
+```bash
+# Only benchmark gamma and delta, big endian, reads
+BENCH_CODES=gamma,delta BENCH_ENDIAN=BE BENCH_OPS=read cargo bench -- comparative
+```
+
+Criterion's built-in `--bench` regex filter also works for ad-hoc selection:
+
+```bash
+# Only gamma benchmarks
+cargo bench -- "gamma"
+```
+
+## Output Formats
+
+### Table-sweep CSV (reads)
+
+```
+n_bits,tables_num,pat,type,ratio,mean_ns,ci_lower,ci_upper
+```
+
+### Table-sweep CSV (writes)
+
+```
+max,tables_num,pat,type,ratio,mean_ns,ci_lower,ci_upper
+```
+
+### Comparative TSV
+
+```
+code  rw  endianness  mean  ci_lower  ci_upper
+```
+
+## Build Options
+
+The cargo options in `Cargo.toml` and the `rustc` options in
+`.cargo/config.toml` select aggressive optimizations and `--target-cpu=native`.
+You can modify them to run the benchmarks with different options.
+
+## Reference Results
+
+The `svg` directory in the project root contains reference results from
+different architectures (ARM, Xeon, i7).
