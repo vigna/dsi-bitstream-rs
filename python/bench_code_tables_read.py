@@ -34,9 +34,8 @@ dist = sys.argv[2] if len(sys.argv) == 3 else "univ"
 if dist not in {"implied", "univ"}:
     sys.exit("Distribution must be 'implied' or 'univ'")
 
-# CHANGED: TSV header now uses mean + confidence interval instead of
-# percentile-based statistics.
-print("n_bits\ttype\tcode\top\tratio\tmean\tmin\tmax")
+# TSV header: t_bits is 0 for no table, >0 for table (= number of lookup bits)
+print("code\tendian\tt_bits\tn_bits\ttype\top\tratio\tmean\tmin\tmax")
 
 for bits in range(1, 17):
     print(
@@ -111,19 +110,24 @@ for bits in range(1, 17):
         )
 
         for r in bench_results:
-            code = r["pat"]
+            code = r["code"]
+            endian = r["endian"]
+            use_table = r["use_table"]
             if bits < 2 and "omega" in code:
                 continue
-            ratio = ratios.get(code, 0.0)
-            # CHANGED: Criterion measures the entire iteration (N operations),
+            ratio = ratios.get((code, endian, use_table), 0.0)
+            t_bits = bits if use_table else 0
+            # Criterion measures the entire iteration (N operations),
             # so we divide by N to get per-operation nanoseconds.
             n = 1_000_000  # matches benchmarks::N
             print(
-                "{}\t{}\t{}\t{}\t{:.6f}\t{:.6f}\t{:.6f}\t{:.6f}".format(
+                "{}\t{}\t{}\t{}\t{}\t{}\t{:.6f}\t{:.6f}\t{:.6f}\t{:.6f}".format(
+                    code,
+                    endian,
+                    t_bits,
                     bits,
                     type_name,
-                    code,
-                    r["type"],
+                    r["op"],
                     ratio,
                     r["mean_ns"] / n,
                     r["ci_lower"] / n,
@@ -171,15 +175,20 @@ for bits in range(1, 17):
             )
 
             for r in bench_results_dg:
-                code = r["pat"]
-                ratio = ratios_dg.get(code, 0.0)
+                code = r["code"]
+                endian = r["endian"]
+                use_table = r["use_table"]
+                ratio = ratios_dg.get((code, endian, use_table), 0.0)
+                t_bits = bits if use_table else 0
                 n = 1_000_000
                 print(
-                    "{}\t{}\t{}\t{}\t{:.6f}\t{:.6f}\t{:.6f}\t{:.6f}".format(
+                    "{}\t{}\t{}\t{}\t{}\t{}\t{:.6f}\t{:.6f}\t{:.6f}\t{:.6f}".format(
+                        code,
+                        endian,
+                        t_bits,
                         bits,
                         type_name,
-                        code,
-                        r["type"],
+                        r["op"],
                         ratio,
                         r["mean_ns"] / n,
                         r["ci_lower"] / n,
