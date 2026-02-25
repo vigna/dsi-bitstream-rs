@@ -6,23 +6,9 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
-use super::*;
+//! Utility functions for benchmarks.
 
-/// Routine for measuring the measurement overhead.
-pub fn calibrate_overhead() -> u128 {
-    let mut nanos = MetricsStream::with_capacity(CALIBRATION_ITERS);
-    // For many times, measure an empty block
-    for _ in 0..CALIBRATION_ITERS {
-        let start = Instant::now();
-        let delta = start.elapsed().as_nanos();
-        nanos.update(delta as f64);
-    }
-    let measures = nanos.finalize();
-    // eprintln!("Timesource calibration is: {:#4?}", measures);
-    measures.avg as u128
-}
-
-/// Pins the process to one core to avoid context switching and caches flushes
+/// Pins the process to one core to avoid context switching and cache flushes
 /// which would result in noise in the measurement.
 #[cfg(target_os = "linux")]
 pub fn pin_to_core(core_id: usize) {
