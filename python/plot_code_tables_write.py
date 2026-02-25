@@ -41,8 +41,7 @@ nice = {
 }
 
 df = pd.read_csv(sys.stdin, index_col=None, header=0, sep="\t")
-x_label = "max_log2"
-df[x_label] = np.log2(df["max_val"])
+x_label = "t_bits"
 
 plots = []
 for code_name in ["gamma", "delta", "delta_gamma", "zeta3", "pi2", "omega"]:
@@ -51,16 +50,10 @@ for code_name in ["gamma", "delta", "delta_gamma", "zeta3", "pi2", "omega"]:
         marker = "o" if table_type == "merged" else "s"
 
         for endian in ["LE", "BE"]:
-            if code_name == "unary":
-                values = df[
-                    (df.code == code_name) & (df.endian == endian)
-                    & (df.t_bits > 0) & (df.type == table_type) & (df["max_val"] <= 64)
-                ]
-            else:
-                values = df[
-                    (df.code == code_name) & (df.endian == endian)
-                    & (df.t_bits > 0) & (df.type == table_type)
-                ]
+            values = df[
+                (df.code == code_name) & (df.endian == endian)
+                & (df.t_bits > 0) & (df.type == table_type)
+            ]
             m = min(values["mean"])
             i = np.argmin(values["mean"].values)
             ax.errorbar(
@@ -83,19 +76,11 @@ for code_name in ["gamma", "delta", "delta_gamma", "zeta3", "pi2", "omega"]:
             )
 
     for endian in ["LE", "BE"]:
-        if code_name == "unary":
-            values = (
-                df[(df.code == code_name) & (df.endian == endian)
-                   & (df.t_bits == 0) & (df["max_val"] <= 64)]
-                .groupby(x_label)
-                .mean(numeric_only=True)
-            )
-        else:
-            values = (
-                df[(df.code == code_name) & (df.endian == endian) & (df.t_bits == 0)]
-                .groupby(x_label)
-                .mean(numeric_only=True)
-            )
+        values = (
+            df[(df.code == code_name) & (df.endian == endian) & (df.t_bits == 0)]
+            .groupby(x_label)
+            .mean(numeric_only=True)
+        )
         m = min(values["mean"])
         ax.errorbar(
             values.index,
@@ -159,7 +144,7 @@ for code_name in ["gamma", "delta", "delta_gamma", "zeta3", "pi2", "omega"]:
         )
         % (write_word, nice[code_name], dist_label)
     )
-    ax.set_xlabel("log₂(table size)")
+    ax.set_xlabel("table bits")
     ax.set_ylabel("ns")
     plots.append((fig, ax, "%s_write_tables.svg" % code_name))
 

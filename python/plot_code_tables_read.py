@@ -50,7 +50,7 @@ plots = []
 
 for code_name in ["gamma", "delta", "delta_gamma", "zeta3", "pi2", "omega"]:
     fig, ax = plt.subplots(1, 1, figsize=(10, 8), dpi=200, facecolor="white")
-    for op_name in ["read_buff", "read_unbuff"]:
+    for op_name in ["read_b", "read_ub"]:
         color = 0
         for table_type in ["merged", "sep"]:
             marker = "o" if table_type == "merged" else "s"
@@ -63,18 +63,18 @@ for code_name in ["gamma", "delta", "delta_gamma", "zeta3", "pi2", "omega"]:
                 m = min(values["mean"])
                 i = np.argmin(values["mean"].values)
                 ax.errorbar(
-                    values.n_bits,
+                    values.t_bits,
                     values["mean"],
                     label="{}::{}::{} (min: {:.3f}ns @ {} bits)".format(
                         endian, table_type, op_name, m, i
                     ),
                     marker=marker,
-                    linestyle="dotted" if op_name == "read_unbuff" else "solid",
+                    linestyle="dotted" if op_name == "read_ub" else "solid",
                     color=colors[color],
                 )
                 color += 1
                 ax.fill_between(
-                    values.n_bits,
+                    values.t_bits,
                     values["min"],
                     values["max"],
                     alpha=0.3,
@@ -84,7 +84,7 @@ for code_name in ["gamma", "delta", "delta_gamma", "zeta3", "pi2", "omega"]:
             values = (
                 df[(df.code == code_name) & (df.endian == endian)
                    & (df.t_bits == 0) & (df.op == op_name)]
-                .groupby("n_bits")
+                .groupby("t_bits")
                 .mean(numeric_only=True)
             )
             m = min(values["mean"])
@@ -95,7 +95,7 @@ for code_name in ["gamma", "delta", "delta_gamma", "zeta3", "pi2", "omega"]:
                     endian, op_name, m
                 ),
                 marker="^",
-                linestyle="dotted" if op_name == "read_unbuff" else "solid",
+                linestyle="dotted" if op_name == "read_ub" else "solid",
                 color=colors[color % 10],
             )
             color += 1
@@ -108,7 +108,7 @@ for code_name in ["gamma", "delta", "delta_gamma", "zeta3", "pi2", "omega"]:
 
     ratios = (
         df[(df.code == code_name) & (df.t_bits > 0)]
-        .groupby("n_bits")
+        .groupby("t_bits")
         .mean(numeric_only=True)
     )
     bars = ax.bar(

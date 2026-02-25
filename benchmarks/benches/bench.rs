@@ -13,7 +13,7 @@
 //!   BENCH_CODES=gamma,delta    (default: all)
 //!   BENCH_ENDIAN=BE            (default: both)
 //!   BENCH_DIST=implied         (default: both)
-//!   BENCH_OPS=read_buff,write  (default: all)
+//!   BENCH_OPS=read_b,write  (default: all)
 
 use benchmarks::data::*;
 use benchmarks::N;
@@ -139,7 +139,7 @@ macro_rules! bench_code_tables {
 
             // Buffered read — BE
             {
-                let bench_id = format!("{}::BE::{}/read_buff", $code_name, table_str);
+                let bench_id = format!("{}::BE::{}/read_b", $code_name, table_str);
                 $c.bench_function(&bench_id, |b| {
                     b.iter(|| {
                         let slice: &[ReadWord] = unsafe { encoded_be.align_to::<ReadWord>().1 };
@@ -154,7 +154,7 @@ macro_rules! bench_code_tables {
             }
             // Buffered read — LE
             {
-                let bench_id = format!("{}::LE::{}/read_buff", $code_name, table_str);
+                let bench_id = format!("{}::LE::{}/read_b", $code_name, table_str);
                 $c.bench_function(&bench_id, |b| {
                     b.iter(|| {
                         let slice: &[ReadWord] = unsafe { encoded_le.align_to::<ReadWord>().1 };
@@ -169,7 +169,7 @@ macro_rules! bench_code_tables {
             }
             // Unbuffered read — BE
             {
-                let bench_id = format!("{}::BE::{}/read_unbuff", $code_name, table_str);
+                let bench_id = format!("{}::BE::{}/read_ub", $code_name, table_str);
                 $c.bench_function(&bench_id, |b| {
                     b.iter(|| {
                         let mut r = BitReader::<BE, _>::new(
@@ -183,7 +183,7 @@ macro_rules! bench_code_tables {
             }
             // Unbuffered read — LE
             {
-                let bench_id = format!("{}::LE::{}/read_unbuff", $code_name, table_str);
+                let bench_id = format!("{}::LE::{}/read_ub", $code_name, table_str);
                 $c.bench_function(&bench_id, |b| {
                     b.iter(|| {
                         let mut r = BitReader::<LE, _>::new(
