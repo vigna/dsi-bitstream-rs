@@ -23,10 +23,10 @@ zeta3, pi2, omega) is tested in all combinations of:
 
 - Big endian / little endian
 - Buffered / unbuffered (reads only)
-- Table enabled / disabled
+- Tables enabled / disabled
 
 The distribution is controlled by the `univ` feature: without it, each code's
-implied distribution is used; with it, a universal distribution ~1/x on the
+implied distribution is used; with it, a universal distribution ~1/_x_ on the
 first billion integers is used.
 
 Word size is controlled by features: `u16`, `u32`, or `u64` (default: `u32`).
@@ -41,7 +41,7 @@ A comprehensive set of tests across all table sizes can be obtained with:
 ./python/gen_plots.sh [implied|univ]
 ```
 
-This iterates over word sizes (u16, u32, u64) and table sizes (2^1 to 2^16),
+This iterates over word sizes (`u16`, `u32`, `u64`) and table sizes (2¹ to 2¹⁶),
 running Criterion benchmarks for each configuration and generating SVG plots.
 
 For more fine-grained control, run the scripts individually:
