@@ -89,7 +89,7 @@ for bits in range(1, 17):
             features = "univ," + features
 
         result = subprocess.run(
-            "cargo bench --bench bench --no-default-features --features %s -- tables" % features,
+            "cargo bench --bench tables --no-default-features --features %s -- tables" % features,
             shell=True,
             cwd="benchmarks",
             capture_output=True,
@@ -155,7 +155,7 @@ for bits in range(1, 17):
                 features = "univ," + features
 
             result = subprocess.run(
-                "cargo bench --bench bench --no-default-features --features %s -- tables"
+                "cargo bench --bench tables --no-default-features --features %s -- tables"
                 % features,
                 shell=True,
                 cwd="benchmarks",
