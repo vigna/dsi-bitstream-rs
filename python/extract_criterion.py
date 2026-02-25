@@ -60,11 +60,14 @@ def get_table_bench_results(target_dir="benchmarks/target/criterion"):
 
     Criterion flattens "gamma::BE::Table/read_buff" to directory name
     "gamma::BE::Table_read_buff". We split on the last "_" that matches
-    a known operation type to recover pat and type.
+    a known operation type to recover the config and op, then further
+    split the config on "::" into code, endian, and tables.
 
     Returns a list of dicts, each with keys:
-        pat: pattern name (e.g., "gamma::BE::Table")
-        type: operation type (e.g., "read_buff", "write", "read_unbuff")
+        code: code name (e.g., "gamma")
+        endian: "BE" or "LE"
+        tables: "true" or "false"
+        op: operation type (e.g., "read_buff", "write", "read_unbuff")
         mean_ns: mean estimate in nanoseconds (for the whole iteration)
         ci_lower: confidence interval lower bound
         ci_upper: confidence interval upper bound
@@ -73,38 +76,50 @@ def get_table_bench_results(target_dir="benchmarks/target/criterion"):
     all_results = get_criterion_results(target_dir)
     op_types = ["read_buff", "read_unbuff", "write"]
 
+    def _parse_config(config_str):
+        """Split 'gamma::BE::Table' into (code, endian, use_table)."""
+        parts = config_str.split("::")
+        if len(parts) == 3:
+            use_table = parts[2] == "Table"
+            return parts[0], parts[1], use_table
+        return None
+
     for bench_id, stats in all_results.items():
-        # Try to split the flattened benchmark ID back into pat and op
-        found = False
-        for op in op_types:
-            suffix = "_" + op
+        # Try to split the flattened benchmark ID back into config and op
+        config_str = None
+        op = None
+        for op_type in op_types:
+            suffix = "_" + op_type
             if bench_id.endswith(suffix):
-                pat = bench_id[: -len(suffix)]
-                results.append(
-                    {
-                        "pat": pat,
-                        "type": op,
-                        "mean_ns": stats["mean_ns"],
-                        "ci_lower": stats["ci_lower"],
-                        "ci_upper": stats["ci_upper"],
-                    }
-                )
-                found = True
+                config_str = bench_id[: -len(suffix)]
+                op = op_type
                 break
 
-        if not found:
+        if config_str is None:
             # Try splitting on "/" in case Criterion preserves it
             parts = bench_id.rsplit("/", 1)
             if len(parts) == 2:
-                results.append(
-                    {
-                        "pat": parts[0],
-                        "type": parts[1],
-                        "mean_ns": stats["mean_ns"],
-                        "ci_lower": stats["ci_lower"],
-                        "ci_upper": stats["ci_upper"],
-                    }
-                )
+                config_str, op = parts[0], parts[1]
+
+        if config_str is None:
+            continue
+
+        parsed = _parse_config(config_str)
+        if parsed is None:
+            continue
+        code, endian, use_table = parsed
+
+        results.append(
+            {
+                "code": code,
+                "endian": endian,
+                "use_table": use_table,
+                "op": op,
+                "mean_ns": stats["mean_ns"],
+                "ci_lower": stats["ci_lower"],
+                "ci_upper": stats["ci_upper"],
+            }
+        )
 
     return results
 
@@ -169,12 +184,16 @@ def get_comp_bench_results(target_dir="benchmarks/target/criterion"):
 def parse_ratios_from_stderr(stderr_text):
     """Parse hit ratios from the RATIO: lines printed to stderr.
 
-    Returns a dict mapping "code::endian::table" to ratio (float).
+    Returns a dict mapping (code, endian, use_table) to ratio (float),
+    where use_table is True or False.
     """
     ratios = {}
     for line in stderr_text.splitlines():
         if line.startswith("RATIO:"):
             parts = line[6:].split(",")
             if len(parts) == 2:
-                ratios[parts[0]] = float(parts[1])
+                key_parts = parts[0].split("::")
+                if len(key_parts) == 3:
+                    use_table = key_parts[2] == "Table"
+                    ratios[(key_parts[0], key_parts[1], use_table)] = float(parts[1])
     return ratios

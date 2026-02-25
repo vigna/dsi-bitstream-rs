@@ -55,12 +55,10 @@ for code_name in ["gamma", "delta", "delta_gamma", "zeta3", "pi2", "omega"]:
         for table_type in ["merged", "sep"]:
             marker = "o" if table_type == "merged" else "s"
 
-            for code_val in [
-                "%s::LE::Table" % code_name,
-                "%s::BE::Table" % code_name,
-            ]:
+            for endian in ["LE", "BE"]:
                 values = df[
-                    (df.code == code_val) & (df.op == op_name) & (df.type == table_type)
+                    (df.code == code_name) & (df.endian == endian)
+                    & (df.t_bits > 0) & (df.op == op_name) & (df.type == table_type)
                 ]
                 m = min(values["mean"])
                 i = np.argmin(values["mean"].values)
@@ -68,7 +66,7 @@ for code_name in ["gamma", "delta", "delta_gamma", "zeta3", "pi2", "omega"]:
                     values.n_bits,
                     values["mean"],
                     label="{}::{}::{} (min: {:.3f}ns @ {} bits)".format(
-                        "::".join(code_val.split("::")[1:]), table_type, op_name, m, i
+                        endian, table_type, op_name, m, i
                     ),
                     marker=marker,
                     linestyle="dotted" if op_name == "read_unbuff" else "solid",
@@ -82,12 +80,10 @@ for code_name in ["gamma", "delta", "delta_gamma", "zeta3", "pi2", "omega"]:
                     alpha=0.3,
                 )
 
-        for code_val in [
-            "%s::LE::NoTable" % code_name,
-            "%s::BE::NoTable" % code_name,
-        ]:
+        for endian in ["LE", "BE"]:
             values = (
-                df[(df.code == code_val) & (df.op == op_name)]
+                df[(df.code == code_name) & (df.endian == endian)
+                   & (df.t_bits == 0) & (df.op == op_name)]
                 .groupby("n_bits")
                 .mean(numeric_only=True)
             )
@@ -95,8 +91,8 @@ for code_name in ["gamma", "delta", "delta_gamma", "zeta3", "pi2", "omega"]:
             ax.errorbar(
                 values.index,
                 values["mean"],
-                label="{}::{} (min: {:.3f}ns)".format(
-                    "::".join(code_val.split("::")[1:]), op_name, m
+                label="{}::no_table::{} (min: {:.3f}ns)".format(
+                    endian, op_name, m
                 ),
                 marker="^",
                 linestyle="dotted" if op_name == "read_unbuff" else "solid",
@@ -111,7 +107,7 @@ for code_name in ["gamma", "delta", "delta_gamma", "zeta3", "pi2", "omega"]:
             )
 
     ratios = (
-        df[df.code.str.contains(code_name) & (df.type == table_type)]
+        df[(df.code == code_name) & (df.t_bits > 0)]
         .groupby("n_bits")
         .mean(numeric_only=True)
     )

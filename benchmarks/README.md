@@ -99,13 +99,15 @@ cargo bench -- "gamma"
 ### Table-sweep TSV (reads)
 
 ```
-n_bits	type	code	op	ratio	mean	min	max
+code	endian	t_bits	n_bits	type	op	ratio	mean	min	max
 ```
+
+`t_bits` is 0 when tables are not used, otherwise the number of lookup bits.
 
 ### Table-sweep TSV (writes)
 
 ```
-max_val	type	code	op	ratio	mean	min	max
+code	endian	t_bits	max_val	type	op	ratio	mean	min	max
 ```
 
 ### Comparative TSV

@@ -50,23 +50,24 @@ for code_name in ["gamma", "delta", "delta_gamma", "zeta3", "pi2", "omega"]:
     for table_type in ["merged", "sep"]:
         marker = "o" if table_type == "merged" else "s"
 
-        for code_val in [
-            "%s::LE::Table" % code_name,
-            "%s::BE::Table" % code_name,
-        ]:
+        for endian in ["LE", "BE"]:
             if code_name == "unary":
                 values = df[
-                    (df.code == code_val) & (df.type == table_type) & (df["max_val"] <= 64)
+                    (df.code == code_name) & (df.endian == endian)
+                    & (df.t_bits > 0) & (df.type == table_type) & (df["max_val"] <= 64)
                 ]
             else:
-                values = df[(df.code == code_val) & (df.type == table_type)]
+                values = df[
+                    (df.code == code_name) & (df.endian == endian)
+                    & (df.t_bits > 0) & (df.type == table_type)
+                ]
             m = min(values["mean"])
             i = np.argmin(values["mean"].values)
             ax.errorbar(
                 values[x_label],
                 values["mean"],
                 label="{}::{} (min: {:.3f}ns @ {} {})".format(
-                    "::".join(code_val.split("::")[1:]),
+                    endian,
                     table_type,
                     m,
                     i,
@@ -81,23 +82,25 @@ for code_name in ["gamma", "delta", "delta_gamma", "zeta3", "pi2", "omega"]:
                 alpha=0.3,
             )
 
-    for code_val in [
-        "%s::LE::NoTable" % code_name,
-        "%s::BE::NoTable" % code_name,
-    ]:
+    for endian in ["LE", "BE"]:
         if code_name == "unary":
             values = (
-                df[(df.code == code_val) & (df["max_val"] <= 64)]
+                df[(df.code == code_name) & (df.endian == endian)
+                   & (df.t_bits == 0) & (df["max_val"] <= 64)]
                 .groupby(x_label)
                 .mean(numeric_only=True)
             )
         else:
-            values = df[df.code == code_val].groupby(x_label).mean(numeric_only=True)
+            values = (
+                df[(df.code == code_name) & (df.endian == endian) & (df.t_bits == 0)]
+                .groupby(x_label)
+                .mean(numeric_only=True)
+            )
         m = min(values["mean"])
         ax.errorbar(
             values.index,
             values["mean"],
-            label="{} (min: {:.3f}ns)".format("::".join(code_val.split("::")[1:]), m),
+            label="{}::no_table (min: {:.3f}ns)".format(endian, m),
             marker="^",
         )
         ax.fill_between(
@@ -108,7 +111,7 @@ for code_name in ["gamma", "delta", "delta_gamma", "zeta3", "pi2", "omega"]:
         )
 
     ratios = (
-        df[df.code.str.contains(code_name) & (df.type == table_type)]
+        df[(df.code == code_name) & (df.t_bits > 0)]
         .groupby(x_label)
         .mean(numeric_only=True)
     )
