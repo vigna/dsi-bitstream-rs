@@ -7,10 +7,7 @@
 #
 
 """
-Plots comparative benchmark data.
-
-CHANGED: Now reads TSV with mean + confidence interval columns instead of
-median + percentile-based statistics.
+Plots comparative benchmark data (mean + confidence interval).
 
 Usage:
     python3 plot_comp.py <file.tsv>

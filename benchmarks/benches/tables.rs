@@ -121,6 +121,8 @@ macro_rules! bench_code_tables {
                 let bench_id = format!("{}::BE::{}/read_b", $code_name, table_str);
                 $group.bench_function(&bench_id, |b| {
                     b.iter(|| {
+                        // SAFETY: Vec<u64> is aligned to 8 bytes, which satisfies
+                        // alignment for ReadWord (u16/u32/u64).
                         let slice: &[ReadWord] = unsafe { encoded_be.align_to::<ReadWord>().1 };
                         let mut r = BufBitReader::<BE, _>::new(
                             MemWordReader::<ReadWord, _>::new(slice),
@@ -136,6 +138,8 @@ macro_rules! bench_code_tables {
                 let bench_id = format!("{}::LE::{}/read_b", $code_name, table_str);
                 $group.bench_function(&bench_id, |b| {
                     b.iter(|| {
+                        // SAFETY: Vec<u64> is aligned to 8 bytes, which satisfies
+                        // alignment for ReadWord (u16/u32/u64).
                         let slice: &[ReadWord] = unsafe { encoded_le.align_to::<ReadWord>().1 };
                         let mut r = BufBitReader::<LE, _>::new(
                             MemWordReader::<ReadWord, _>::new(slice),
