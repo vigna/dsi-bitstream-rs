@@ -174,8 +174,14 @@ macro_rules! bench_comp {
 
 /// Macro variant for parametric codes that take a `k` parameter.
 /// Uses method name + k directly in the closures to avoid lifetime issues.
+/// Set `implied_only` to `true` for codes whose codeword length is proportional
+/// to the value (e.g., rice, golomb), making the universal distribution
+/// impractical.
 macro_rules! bench_comp_k {
     ($group:expr, $name:expr, $write_method:ident($k:expr), $read_method:ident($rk:expr), $len_fn:expr) => {
+        bench_comp_k!($group, $name, $write_method($k), $read_method($rk), $len_fn, false)
+    };
+    ($group:expr, $name:expr, $write_method:ident($k:expr), $read_method:ident($rk:expr), $len_fn:expr, $implied_only:expr) => {
         {
             let name_str: String = $name;
             let k = $k;
@@ -186,7 +192,7 @@ macro_rules! bench_comp_k {
                     if env_filter("BENCH_DIST", "implied") {
                         v.push(("implied", false));
                     }
-                    if env_filter("BENCH_DIST", "univ") {
+                    if !$implied_only && env_filter("BENCH_DIST", "univ") {
                         v.push(("univ", true));
                     }
                     v
@@ -321,11 +327,11 @@ fn bench_comparative(c: &mut Criterion) {
         bench_comp_k!(group, format!("pi_{}", k),
             write_pi(k), read_pi(k), |x| len_pi(x, k));
         bench_comp_k!(group, format!("rice_{}", k),
-            write_rice(k), read_rice(k), |x| len_rice(x, k));
+            write_rice(k), read_rice(k), |x| len_rice(x, k), true);
         bench_comp_k!(group, format!("exp_golomb_{}", k),
             write_exp_golomb(k), read_exp_golomb(k), |x| len_exp_golomb(x, k));
         bench_comp_k!(group, format!("golomb_{}", k),
-            write_golomb(k as u64), read_golomb(k as u64), |x| len_golomb(x, k as u64));
+            write_golomb(k as u64), read_golomb(k as u64), |x| len_golomb(x, k as u64), true);
     }
 
     group.finish();
