@@ -52,137 +52,18 @@ type WriteWord = u64;
 type WriteWord = u32;
 
 /// Macro to register a comparative benchmark for a code (both endiannesses,
-/// both distributions, read + write).  Set `implied_only` to `true` for codes
-/// whose codeword length is proportional to the value (e.g., unary), making
-/// the universal Zipf distribution impractical.
-macro_rules! bench_comp {
-    ($group:expr, $name:literal, $write_method:ident, $read_method:ident, $len_fn:expr) => {
-        bench_comp!($group, $name, $write_method, $read_method, $len_fn, false)
-    };
-    ($group:expr, $name:literal, $write_method:ident, $read_method:ident, $len_fn:expr, $implied_only:expr) => {{
-        let dists: &[(&str, bool)] = if $implied_only {
-            &[("implied", false)]
-        } else {
-            &[("implied", false), ("univ", true)]
-        };
-
-        for &(dist_name, univ) in dists {
-            let data = gen_data($len_fn, univ);
-
-            // Write benchmarks
-            {
-                let bench_id = format!("{}/BE/{}/write", $name, dist_name);
-                let data_ref = &data;
-                $group.bench_function(&bench_id, |b| {
-                    b.iter(|| {
-                        let mut buffer: Vec<WriteWord> = Vec::with_capacity(N);
-                        let mut w = BufBitWriter::<BE, _>::new(
-                            MemWordWriterVec::<WriteWord, _>::new(&mut buffer),
-                        );
-                        for &value in data_ref {
-                            black_box(w.$write_method(value).unwrap());
-                        }
-                    });
-                });
-            }
-            {
-                let bench_id = format!("{}/LE/{}/write", $name, dist_name);
-                let data_ref = &data;
-                $group.bench_function(&bench_id, |b| {
-                    b.iter(|| {
-                        let mut buffer: Vec<WriteWord> = Vec::with_capacity(N);
-                        let mut w = BufBitWriter::<LE, _>::new(
-                            MemWordWriterVec::<WriteWord, _>::new(&mut buffer),
-                        );
-                        for &value in data_ref {
-                            black_box(w.$write_method(value).unwrap());
-                        }
-                    });
-                });
-            }
-
-            // Read benchmarks — encode into Vec<u64> to guarantee alignment
-            // for reinterpretation as &[ReadWord] via align_to.
-            {
-                let encoded = {
-                    let mut buffer: Vec<u64> = Vec::with_capacity(N);
-                    {
-                        let mut w = BufBitWriter::<BE, _>::new(MemWordWriterVec::<u64, _>::new(
-                            &mut buffer,
-                        ));
-                        for &value in &data {
-                            w.$write_method(value).unwrap();
-                        }
-                    }
-                    buffer
-                };
-                let n = data.len();
-                let bench_id = format!("{}/BE/{}/read", $name, dist_name);
-                $group.bench_function(&bench_id, |b| {
-                    b.iter(|| {
-                        // SAFETY: Vec<u64> is aligned to 8 bytes, which
-                        // satisfies alignment for ReadWord (u16/u32/u64).
-                        let slice: &[ReadWord] = unsafe { encoded.align_to::<ReadWord>().1 };
-                        let mut r =
-                            BufBitReader::<BE, _>::new(MemWordReader::<ReadWord, _>::new(slice));
-                        for _ in 0..n {
-                            black_box(r.$read_method().unwrap());
-                        }
-                    });
-                });
-            }
-            {
-                let encoded = {
-                    let mut buffer: Vec<u64> = Vec::with_capacity(N);
-                    {
-                        let mut w = BufBitWriter::<LE, _>::new(MemWordWriterVec::<u64, _>::new(
-                            &mut buffer,
-                        ));
-                        for &value in &data {
-                            w.$write_method(value).unwrap();
-                        }
-                    }
-                    buffer
-                };
-                let n = data.len();
-                let bench_id = format!("{}/LE/{}/read", $name, dist_name);
-                $group.bench_function(&bench_id, |b| {
-                    b.iter(|| {
-                        // SAFETY: Vec<u64> is aligned to 8 bytes, which
-                        // satisfies alignment for ReadWord (u16/u32/u64).
-                        let slice: &[ReadWord] = unsafe { encoded.align_to::<ReadWord>().1 };
-                        let mut r =
-                            BufBitReader::<LE, _>::new(MemWordReader::<ReadWord, _>::new(slice));
-                        for _ in 0..n {
-                            black_box(r.$read_method().unwrap());
-                        }
-                    });
-                });
-            }
-        }
-    }};
-}
-
-/// Macro variant for parametric codes that take a `k` parameter.
-/// Uses method name + k directly in the closures to avoid lifetime issues. Set
-/// `implied_only` to `true` for codes whose codeword length is proportional to
-/// the value (e.g., rice, golomb), making the universal Zipf distribution
+/// both distributions, read + write). Write methods receive `(value, args...)`
+/// and read methods receive `(args...)`, where `args` comes from the
+/// parenthesized list after the method name (empty for non-parametric codes).
+/// Set `implied_only` to `true` for codes whose codeword length is proportional
+/// to the value (e.g., unary), making the universal Zipf distribution
 /// impractical.
-macro_rules! bench_comp_k {
-    ($group:expr, $name:expr, $write_method:ident($k:expr), $read_method:ident($rk:expr), $len_fn:expr) => {
-        bench_comp_k!(
-            $group,
-            $name,
-            $write_method($k),
-            $read_method($rk),
-            $len_fn,
-            false
-        )
+macro_rules! bench_comp {
+    ($group:expr, $name:expr, $write_method:ident($($wargs:expr),*), $read_method:ident($($rargs:expr),*), $len_fn:expr) => {
+        bench_comp!($group, $name, $write_method($($wargs),*), $read_method($($rargs),*), $len_fn, false)
     };
-    ($group:expr, $name:expr, $write_method:ident($k:expr), $read_method:ident($rk:expr), $len_fn:expr, $implied_only:expr) => {{
-        let name_str: String = $name;
-        let k = $k;
-        let rk = $rk;
+    ($group:expr, $name:expr, $write_method:ident($($wargs:expr),*), $read_method:ident($($rargs:expr),*), $len_fn:expr, $implied_only:expr) => {{
+        let name_str = $name;
 
         let dists: &[(&str, bool)] = if $implied_only {
             &[("implied", false)]
@@ -204,7 +85,7 @@ macro_rules! bench_comp_k {
                             MemWordWriterVec::<WriteWord, _>::new(&mut buffer),
                         );
                         for &value in data_ref {
-                            black_box(w.$write_method(value, k).unwrap());
+                            black_box(w.$write_method(value, $($wargs),*).unwrap());
                         }
                     });
                 });
@@ -219,7 +100,7 @@ macro_rules! bench_comp_k {
                             MemWordWriterVec::<WriteWord, _>::new(&mut buffer),
                         );
                         for &value in data_ref {
-                            black_box(w.$write_method(value, k).unwrap());
+                            black_box(w.$write_method(value, $($wargs),*).unwrap());
                         }
                     });
                 });
@@ -235,7 +116,7 @@ macro_rules! bench_comp_k {
                             &mut buffer,
                         ));
                         for &value in &data {
-                            w.$write_method(value, k).unwrap();
+                            w.$write_method(value, $($wargs),*).unwrap();
                         }
                     }
                     buffer
@@ -250,7 +131,7 @@ macro_rules! bench_comp_k {
                         let mut r =
                             BufBitReader::<BE, _>::new(MemWordReader::<ReadWord, _>::new(slice));
                         for _ in 0..n {
-                            black_box(r.$read_method(rk).unwrap());
+                            black_box(r.$read_method($($rargs),*).unwrap());
                         }
                     });
                 });
@@ -263,7 +144,7 @@ macro_rules! bench_comp_k {
                             &mut buffer,
                         ));
                         for &value in &data {
-                            w.$write_method(value, k).unwrap();
+                            w.$write_method(value, $($wargs),*).unwrap();
                         }
                     }
                     buffer
@@ -278,7 +159,7 @@ macro_rules! bench_comp_k {
                         let mut r =
                             BufBitReader::<LE, _>::new(MemWordReader::<ReadWord, _>::new(slice));
                         for _ in 0..n {
-                            black_box(r.$read_method(rk).unwrap());
+                            black_box(r.$read_method($($rargs),*).unwrap());
                         }
                     });
                 });
@@ -299,36 +180,36 @@ fn bench_comparative(c: &mut Criterion) {
     bench_comp!(
         group,
         "unary",
-        write_unary,
-        read_unary,
+        write_unary(),
+        read_unary(),
         |x: u64| x as usize + 1,
         true
     );
-    bench_comp!(group, "gamma", write_gamma, read_gamma, len_gamma);
-    bench_comp!(group, "delta", write_delta, read_delta, len_delta);
-    bench_comp!(group, "omega", write_omega, read_omega, len_omega);
+    bench_comp!(group, "gamma", write_gamma(), read_gamma(), len_gamma);
+    bench_comp!(group, "delta", write_delta(), read_delta(), len_delta);
+    bench_comp!(group, "omega", write_omega(), read_omega(), len_omega);
     bench_comp!(
         group,
         "vbytebe",
-        write_vbyte_be,
-        read_vbyte_be,
+        write_vbyte_be(),
+        read_vbyte_be(),
         bit_len_vbyte
     );
     bench_comp!(
         group,
         "vbytele",
-        write_vbyte_le,
-        read_vbyte_le,
+        write_vbyte_le(),
+        read_vbyte_le(),
         bit_len_vbyte
     );
 
     // Specialized (table-using) variants
-    bench_comp!(group, "zeta3", write_zeta3, read_zeta3, |x| len_zeta(x, 3));
-    bench_comp!(group, "pi2", write_pi2, read_pi2, |x| len_pi(x, 2));
+    bench_comp!(group, "zeta3", write_zeta3(), read_zeta3(), |x| len_zeta(x, 3));
+    bench_comp!(group, "pi2", write_pi2(), read_pi2(), |x| len_pi(x, 2));
 
     // Parametric codes with k = 2..4 or 2..5
     for k in 2..4usize {
-        bench_comp_k!(
+        bench_comp!(
             group,
             format!("zeta_{}", k),
             write_zeta(k),
@@ -337,10 +218,10 @@ fn bench_comparative(c: &mut Criterion) {
         );
     }
     for k in 2..5usize {
-        bench_comp_k!(group, format!("pi_{}", k), write_pi(k), read_pi(k), |x| {
+        bench_comp!(group, format!("pi_{}", k), write_pi(k), read_pi(k), |x| {
             len_pi(x, k)
         });
-        bench_comp_k!(
+        bench_comp!(
             group,
             format!("rice_{}", k),
             write_rice(k),
@@ -348,14 +229,14 @@ fn bench_comparative(c: &mut Criterion) {
             |x| len_rice(x, k),
             true
         );
-        bench_comp_k!(
+        bench_comp!(
             group,
             format!("exgol_{}", k),
             write_exp_golomb(k),
             read_exp_golomb(k),
             |x| len_exp_golomb(x, k)
         );
-        bench_comp_k!(
+        bench_comp!(
             group,
             format!("gol_{}", k),
             write_golomb(k as u64),
