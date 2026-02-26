@@ -113,7 +113,7 @@ for bits in range(1, 17):
             # so we divide by N to get per-operation nanoseconds.
             n = 1_000_000  # matches benchmarks::N
             print(
-                "{}\t{}\t{}\t{}\t{}\t{:.5f}\t{:7.3f}\t{:7.3f}\t{:7.3f}".format(
+                "{}\t{}\t{}\t{}\t{}\t{:.5f}\t{:7.4f}\t{:7.4f}\t{:7.4f}".format(
                     code,
                     endian,
                     t_bits,
@@ -167,7 +167,7 @@ for bits in range(1, 17):
                 t_bits = bits if use_table else 0
                 n = 1_000_000
                 print(
-                    "{}\t{}\t{}\t{}\t{}\t{:.5f}\t{:7.3f}\t{:7.3f}\t{:7.3f}".format(
+                    "{}\t{}\t{}\t{}\t{}\t{:.5f}\t{:7.4f}\t{:7.4f}\t{:7.4f}".format(
                         code,
                         endian,
                         t_bits,
