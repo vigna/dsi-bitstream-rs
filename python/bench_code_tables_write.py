@@ -16,6 +16,7 @@ Results are extracted from Criterion's JSON output.
 """
 
 import os
+import shutil
 import sys
 import subprocess
 from gen_code_tables import *
@@ -24,14 +25,31 @@ from extract_criterion import get_table_bench_results, parse_ratios_from_stderr
 if not os.path.exists("benchmarks") or not os.path.exists("python"):
     sys.exit("You must run this script in the main project directory.")
 
-if len(sys.argv) < 2 or len(sys.argv) > 3 or sys.argv[1] not in {"u16", "u32", "u64"}:
-    sys.exit("Usage: %s [u16 | u32 | u64] [implied | univ]" % sys.argv[0])
+# Separate positional args from Criterion options (--warm-up-time, --measurement-time, etc.)
+positional = []
+criterion_opts = []
+i = 1
+while i < len(sys.argv):
+    if sys.argv[i].startswith("--"):
+        criterion_opts.append(sys.argv[i])
+        if i + 1 < len(sys.argv) and not sys.argv[i + 1].startswith("--"):
+            criterion_opts.append(sys.argv[i + 1])
+            i += 1
+    else:
+        positional.append(sys.argv[i])
+    i += 1
 
-write_word = sys.argv[1]
-dist = sys.argv[2] if len(sys.argv) == 3 else "univ"
+if len(positional) < 1 or len(positional) > 2 or positional[0] not in {"u16", "u32", "u64"}:
+    sys.exit("Usage: %s [u16 | u32 | u64] [implied | univ] [--warm-up-time S] [--measurement-time S]" % sys.argv[0])
+
+write_word = positional[0]
+dist = positional[1] if len(positional) == 2 else "univ"
 
 if dist not in {"implied", "univ"}:
     sys.exit("Distribution must be 'implied' or 'univ'")
+
+# Build Criterion CLI suffix (passed after --)
+criterion_suffix = " -- " + " ".join(criterion_opts) if criterion_opts else ""
 
 # TSV header: t_bits is 0 for no table, >0 for table (= log2 of table size)
 print("code\tendian\tt_bits\ttype\top\tratio\tmean\tmin\tmax")
@@ -75,6 +93,11 @@ for bits in range(1, 17):
                 merged_table=merged_table,
             )
 
+        # Remove stale Criterion results to avoid picking up old entries
+        criterion_dir = os.path.join("benchmarks", "target", "criterion", "tables")
+        if os.path.isdir(criterion_dir):
+            shutil.rmtree(criterion_dir)
+
         features = write_word
         if dist == "univ":
             features = "univ," + features
@@ -113,7 +136,7 @@ for bits in range(1, 17):
             # so we divide by N to get per-operation nanoseconds.
             n = 1_000_000  # matches benchmarks::N
             print(
-                "{}\t{}\t{}\t{}\t{}\t{:.5f}\t{:7.4f}\t{:7.4f}\t{:7.4f}".format(
+                "{}\t{}\t{}\t{}\t{}\t{:.4f}\t{:7.4f}\t{:7.4f}\t{:7.4f}".format(
                     code,
                     endian,
                     t_bits,
@@ -136,13 +159,17 @@ for bits in range(1, 17):
                 merged_table=merged_table,
             )
 
+            # Remove stale Criterion results before delta_g run
+            if os.path.isdir(criterion_dir):
+                shutil.rmtree(criterion_dir)
+
             features = "delta_gamma,%s" % write_word
             if dist == "univ":
                 features = "univ," + features
 
             result = subprocess.run(
-                "cargo bench --bench tables --no-default-features --features %s"
-                % features,
+                "cargo bench --bench tables --no-default-features --features %s%s"
+                % (features, criterion_suffix),
                 shell=True,
                 cwd="benchmarks",
                 capture_output=True,
@@ -167,7 +194,7 @@ for bits in range(1, 17):
                 t_bits = bits if use_table else 0
                 n = 1_000_000
                 print(
-                    "{}\t{}\t{}\t{}\t{}\t{:.5f}\t{:7.4f}\t{:7.4f}\t{:7.4f}".format(
+                    "{}\t{}\t{}\t{}\t{}\t{:.4f}\t{:7.4f}\t{:7.4f}\t{:7.4f}".format(
                         code,
                         endian,
                         t_bits,
