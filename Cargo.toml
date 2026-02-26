@@ -45,7 +45,7 @@ checks = []
 # Disable copy_from/copy_to implementations so to test the default methods
 no_copy_impls = []
 # This is necessary to avoid warnings from MemDbg and to use the
-# offset_of_enum MemDbg feature gate if needed
+# offset_of_enum MemDbg feature if needed
 offset_of_enum = []
 serde = ["dep:serde", "alloc"]
 # Benchmark-only feature flags
@@ -58,7 +58,7 @@ bench-delta-gamma = []
 
 [profile.bench]
 opt-level = 3
-lto = "thin"
+lto = "fat" # Irrelevant with codegen-units = 1
 overflow-checks = false
 debug = true
 debug-assertions = false

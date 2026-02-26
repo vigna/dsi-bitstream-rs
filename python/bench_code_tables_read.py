@@ -255,7 +255,7 @@ for bits in range(1, 17):
             )
 
         # Now run delta_g variant (delta with gamma tables)
-        for i in range(4, 5):
+        for i in range(4, 5):  # This is just 4, but one can customize
             gamma_bits = 2 * i + 1
             gen_gamma(
                 read_bits=gamma_bits,
