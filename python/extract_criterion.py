@@ -64,10 +64,11 @@ def get_criterion_results(target_dir="benchmarks/target/criterion"):
     return results
 
 
-def get_table_bench_results(target_dir="benchmarks/target/criterion"):
+def get_table_bench_results(target_dir="benchmarks/target/criterion", group="table"):
     """Parse table-sweep benchmark results.
 
-    Looks inside the "tables" group subdirectory.  Criterion flattens
+    Looks inside the given group subdirectory (default "table"; use
+    "no_table" for baselines).  Criterion flattens
     "gamma::BE::Table/read_b" to directory name "gamma::BE::Table_read_b"
     (or nested directories joined with "_").  We split on the last "_"
     that matches a known operation type to recover the config and op,
@@ -83,7 +84,7 @@ def get_table_bench_results(target_dir="benchmarks/target/criterion"):
         ci_upper: confidence interval upper bound
     """
     results = []
-    group_dir = os.path.join(target_dir, "tables")
+    group_dir = os.path.join(target_dir, group)
     all_results = get_criterion_results(group_dir)
     op_types = ["read_b", "read_ub", "write"]
 
