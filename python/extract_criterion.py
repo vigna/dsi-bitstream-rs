@@ -177,7 +177,7 @@ def get_comp_bench_results(target_dir="benchmarks/target/criterion"):
                 continue
 
             # The structure is {code}_{endian}_{dist}_{op}
-            # Code can contain underscores (e.g., "delta_gamma")
+            # Code can contain underscores (e.g., "delta_g")
             # but endian, dist, op are single tokens.
             op = parts[-1]
             dist = parts[-2]

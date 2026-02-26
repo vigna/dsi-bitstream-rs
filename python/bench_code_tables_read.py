@@ -99,7 +99,7 @@ for bits in range(1, 17):
             os.path.join("benchmarks", "target", "criterion")
         )
 
-        for r in bench_results:
+        for r in sorted(bench_results, key=lambda r: (r["code"], r["endian"], r["use_table"], r["op"])):
             code = r["code"]
             endian = r["endian"]
             use_table = r["use_table"]
@@ -111,7 +111,7 @@ for bits in range(1, 17):
             # so we divide by N to get per-operation nanoseconds.
             n = 1_000_000  # matches benchmarks::N
             print(
-                "{}\t{}\t{}\t{}\t{}\t{:.5f}\t{:.6f}\t{:.6f}\t{:.6f}".format(
+                "{}\t{}\t{}\t{}\t{}\t{:.5f}\t{:7.3f}\t{:7.3f}\t{:7.3f}".format(
                     code,
                     endian,
                     t_bits,
@@ -124,7 +124,7 @@ for bits in range(1, 17):
                 )
             )
 
-        # Now run delta_gamma variant
+        # Now run delta_g variant (delta with gamma tables)
         for i in range(4, 5):
             gamma_bits = 2 * i + 1
             gen_gamma(
@@ -147,7 +147,7 @@ for bits in range(1, 17):
             )
 
             if result.returncode != 0:
-                print("cargo bench (delta_gamma) failed:", file=sys.stderr)
+                print("cargo bench (delta_g) failed:", file=sys.stderr)
                 print(result.stderr, file=sys.stderr)
                 sys.exit(1)
 
@@ -156,7 +156,7 @@ for bits in range(1, 17):
                 os.path.join("benchmarks", "target", "criterion")
             )
 
-            for r in bench_results_dg:
+            for r in sorted(bench_results_dg, key=lambda r: (r["code"], r["endian"], r["use_table"], r["op"])):
                 code = r["code"]
                 endian = r["endian"]
                 use_table = r["use_table"]
@@ -164,7 +164,7 @@ for bits in range(1, 17):
                 t_bits = bits if use_table else 0
                 n = 1_000_000
                 print(
-                    "{}\t{}\t{}\t{}\t{}\t{:.5f}\t{:.6f}\t{:.6f}\t{:.6f}".format(
+                    "{}\t{}\t{}\t{}\t{}\t{:.5f}\t{:7.3f}\t{:7.3f}\t{:7.3f}".format(
                         code,
                         endian,
                         t_bits,
