@@ -45,34 +45,47 @@ nice = {
     "omega": "ω",
 }
 
+# No-table colors: must be clearly distinct from each other and from tab10[0..3]
+NO_TABLE_COLORS = {"LE": "black", "BE": "#cc00cc"}
+
 df = pd.read_csv(sys.stdin, index_col=None, header=0, sep="\t")
 
 plots = []
 
 for code_name in ["gamma", "delta", "delta_g", "zeta3", "pi2", "omega"]:
     fig, ax = plt.subplots(1, 1, figsize=(10, 8), dpi=200, facecolor="white")
-    for op_name in ["read_b", "read_ub"]:
+    handles = []
+    labels = []
+
+    for op_name, op_label, ls_table, ls_notab in [
+        ("read_b", "read_buff", "solid", "solid"),
+        ("read_ub", "read_unbuff", "dotted", "dotted"),
+    ]:
         color = 0
+        # Table data: merged (circle) then sep (square)
         for table_type in ["merged", "sep"]:
             marker = "o" if table_type == "merged" else "s"
-
             for endian in ["LE", "BE"]:
                 values = df[
                     (df.code == code_name) & (df.endian == endian)
                     & (df.t_bits > 0) & (df.op == op_name) & (df.type == table_type)
                 ]
+                if values.empty:
+                    color += 1
+                    continue
                 m = min(values["mean"])
-                i = np.argmin(values["mean"].values)
-                ax.errorbar(
+                i = values.t_bits.iloc[np.argmin(values["mean"].values)]
+                h = ax.errorbar(
                     values.t_bits,
                     values["mean"],
-                    label="{}::{}::{} (min: {:.3f}ns @ {} bits)".format(
-                        endian, table_type, op_name, m, i
-                    ),
                     marker=marker,
-                    linestyle="dotted" if op_name == "read_ub" else "solid",
+                    linestyle=ls_table,
                     color=colors[color],
                 )
+                handles.append(h)
+                labels.append("{}::Table::{}::{} (min: {:.3f}ns @ {} bits)".format(
+                    endian, table_type, op_label, m, i
+                ))
                 color += 1
                 ax.fill_between(
                     values.t_bits,
@@ -81,46 +94,47 @@ for code_name in ["gamma", "delta", "delta_g", "zeta3", "pi2", "omega"]:
                     alpha=0.3,
                 )
 
+        # No-table baselines as horizontal lines
         for endian in ["LE", "BE"]:
-            values = (
-                df[(df.code == code_name) & (df.endian == endian)
-                   & (df.t_bits == 0) & (df.op == op_name)]
-                .groupby("t_bits")
-                .mean(numeric_only=True)
-            )
-            m = min(values["mean"])
-            ax.errorbar(
-                values.index,
-                values["mean"],
-                label="{}::no_table::{} (min: {:.3f}ns)".format(
-                    endian, op_name, m
-                ),
-                marker="^",
-                linestyle="dotted" if op_name == "read_ub" else "solid",
-                color=colors[color % 10],
-            )
-            color += 1
-            ax.fill_between(
-                values.index,
-                values["min"],
-                values["max"],
-                alpha=0.3,
-            )
+            no_table = df[
+                (df.code == code_name) & (df.endian == endian)
+                & (df.t_bits == 0) & (df.op == op_name)
+            ]
+            if not no_table.empty:
+                m = no_table["mean"].mean()
+                lo = no_table["min"].mean()
+                hi = no_table["max"].mean()
+                c = NO_TABLE_COLORS[endian]
+                h = ax.axhline(
+                    y=m,
+                    linestyle=ls_notab,
+                    color=c,
+                    linewidth=1.5,
+                )
+                handles.append(h)
+                labels.append("{}::NoTable::{} ({:.3f}ns)".format(
+                    endian, op_label, m
+                ))
+                ax.axhspan(lo, hi, alpha=0.08, color=c)
 
     ratios = (
         df[(df.code == code_name) & (df.t_bits > 0)]
         .groupby("t_bits")
         .mean(numeric_only=True)
     )
-    bars = ax.bar(
+    if ratios.empty:
+        plt.close(fig)
+        continue
+    bar_container = ax.bar(
         ratios.index,
         ratios.ratio,
-        label="table hit ratio",
         fc=(0, 0, 1, 0.3),
         linewidth=1,
         edgecolor="black",
     )
-    for ratio, rect in zip(ratios.ratio, bars):
+    handles.append(bar_container)
+    labels.append("table hit ratio")
+    for ratio, rect in zip(ratios.ratio, bar_container):
         ax.text(
             rect.get_x() + rect.get_width() / 2.0,
             1.2,
@@ -133,18 +147,19 @@ for code_name in ["gamma", "delta", "delta_g", "zeta3", "pi2", "omega"]:
     left = min(ratios.index) - 1
     right = max(ratios.index) + 1
 
-    ax.plot(
+    (h,) = ax.plot(
         [left - 1, right + 1],
         [1, 1],
         "--",
         alpha=0.3,
         color="gray",
-        label="table hit ratio 100% line",
     )
+    handles.append(h)
+    labels.append("table hit ratio 100% line")
 
-    ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
-    ax.set_ylim(bottom=0)  # ymin is your value
-    ax.set_xlim([left, right])  # ymin is your value
+    ax.legend(handles, labels, loc="center left", bbox_to_anchor=(1, 0.5))
+    ax.set_ylim(bottom=0)
+    ax.set_xlim([left, right])
     ax.set_xticks(ratios.index)
     ax.set_title(
         (

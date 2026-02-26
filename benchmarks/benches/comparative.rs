@@ -342,7 +342,8 @@ criterion_group! {
     config = Criterion::default()
         .sample_size(10)
         .warm_up_time(std::time::Duration::from_secs(1))
-        .measurement_time(std::time::Duration::from_secs(2));
+        .measurement_time(std::time::Duration::from_secs(2))
+        .without_plots();
     targets = bench_comparative
 }
 
