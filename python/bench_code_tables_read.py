@@ -55,8 +55,8 @@ out_path = positional[2] if len(positional) >= 3 else None
 if dist not in {"implied", "univ"}:
     sys.exit("Distribution must be 'implied' or 'univ'")
 
-# Build Criterion CLI suffix (passed after --)
-criterion_suffix = " -- " + " ".join(criterion_opts) if criterion_opts else ""
+# Build Criterion CLI options (without leading --, combined with regex after single --)
+criterion_opts_str = " ".join(criterion_opts)
 
 # Open output: file or stdout
 out = open(out_path, "w") if out_path else sys.stdout
@@ -103,7 +103,7 @@ if os.path.isdir(no_table_dir):
     shutil.rmtree(no_table_dir)
 
 ratio_text = run_cargo_bench(
-    "cargo bench --bench tables --no-default-features --features %s%s -- '^no_table/'" % (features, criterion_suffix)
+    "cargo bench --bench tables --no-default-features --features %s -- %s '^no_table/'" % (features, criterion_opts_str)
 )
 
 bench_results = get_table_bench_results(criterion_base, group="no_table")
@@ -129,7 +129,7 @@ if os.path.isdir(no_table_dir):
     shutil.rmtree(no_table_dir)
 
 ratio_text_dg = run_cargo_bench(
-    "cargo bench --bench tables --no-default-features --features %s%s -- '^no_table/'" % (features_dg, criterion_suffix)
+    "cargo bench --bench tables --no-default-features --features %s -- %s '^no_table/'" % (features_dg, criterion_opts_str)
 )
 
 bench_results_dg = get_table_bench_results(criterion_base, group="no_table")
@@ -194,7 +194,7 @@ for bits in range(1, 17):
             features = "univ," + features
 
         ratio_text = run_cargo_bench(
-            "cargo bench --bench tables --no-default-features --features %s%s -- '^table/'" % (features, criterion_suffix)
+            "cargo bench --bench tables --no-default-features --features %s -- %s '^table/'" % (features, criterion_opts_str)
         )
 
         # Parse hit ratios
@@ -235,7 +235,7 @@ for bits in range(1, 17):
                 features = "univ," + features
 
             ratio_text_dg = run_cargo_bench(
-                "cargo bench --bench tables --no-default-features --features %s%s -- '^table/'" % (features, criterion_suffix)
+                "cargo bench --bench tables --no-default-features --features %s -- %s '^table/'" % (features, criterion_opts_str)
             )
 
             ratios_dg = parse_ratios_from_stderr(ratio_text_dg)
