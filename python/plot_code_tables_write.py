@@ -154,7 +154,7 @@ for code_name in ["gamma", "delta", "delta_g", "zeta3", "pi2", "omega"]:
     ax.set_xticks(ratios.index)
     ax.set_title(
         (
-            "Performance of writes (%s) in %s code in function of the table size %s\n"
+            "Performance of writes (word = %s) in %s code as a function of the table size %s\n"
             "Shaded areas are 95%% confidence intervals and the plots "
             "are means"
         )
