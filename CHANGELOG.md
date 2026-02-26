@@ -1,6 +1,6 @@
 # Change Log
 
-## [0.8.0] - unreleased
+## [0.8.0] - 2026-10-26
 
 ### New
 
@@ -35,7 +35,7 @@
 
 ### Changed
 
-- Upgraded to `rand` 0.10.0, `rand_distr` 0.6.0 and `mem_dbg` 0.4.0.
+- Upgraded to `rand` 0.10.0, `rand_distr` 0.6.0, and `mem_dbg` 0.4.0.
 
 - Removed spurious const parameter from `write_pi_param` and
   `write_zeta_param`.
