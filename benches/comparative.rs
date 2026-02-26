@@ -105,9 +105,9 @@ macro_rules! bench_comp {
                 let encoded = {
                     let mut buffer: Vec<u64> = Vec::with_capacity(N);
                     {
-                        let mut w = BufBitWriter::<BE, _>::new(
-                            MemWordWriterVec::<u64, _>::new(&mut buffer),
-                        );
+                        let mut w = BufBitWriter::<BE, _>::new(MemWordWriterVec::<u64, _>::new(
+                            &mut buffer,
+                        ));
                         for &value in &data {
                             w.$write_method(value).unwrap();
                         }
@@ -133,9 +133,9 @@ macro_rules! bench_comp {
                 let encoded = {
                     let mut buffer: Vec<u64> = Vec::with_capacity(N);
                     {
-                        let mut w = BufBitWriter::<LE, _>::new(
-                            MemWordWriterVec::<u64, _>::new(&mut buffer),
-                        );
+                        let mut w = BufBitWriter::<LE, _>::new(MemWordWriterVec::<u64, _>::new(
+                            &mut buffer,
+                        ));
                         for &value in &data {
                             w.$write_method(value).unwrap();
                         }
@@ -229,9 +229,9 @@ macro_rules! bench_comp_k {
                 let encoded = {
                     let mut buffer: Vec<u64> = Vec::with_capacity(N);
                     {
-                        let mut w = BufBitWriter::<BE, _>::new(
-                            MemWordWriterVec::<u64, _>::new(&mut buffer),
-                        );
+                        let mut w = BufBitWriter::<BE, _>::new(MemWordWriterVec::<u64, _>::new(
+                            &mut buffer,
+                        ));
                         for &value in &data {
                             w.$write_method(value, k).unwrap();
                         }
@@ -257,9 +257,9 @@ macro_rules! bench_comp_k {
                 let encoded = {
                     let mut buffer: Vec<u64> = Vec::with_capacity(N);
                     {
-                        let mut w = BufBitWriter::<LE, _>::new(
-                            MemWordWriterVec::<u64, _>::new(&mut buffer),
-                        );
+                        let mut w = BufBitWriter::<LE, _>::new(MemWordWriterVec::<u64, _>::new(
+                            &mut buffer,
+                        ));
                         for &value in &data {
                             w.$write_method(value, k).unwrap();
                         }
@@ -370,8 +370,8 @@ criterion_group! {
     name = comparative;
     config = Criterion::default()
         .sample_size(10)
-        .warm_up_time(std::time::Duration::from_secs(1))
-        .measurement_time(std::time::Duration::from_secs(2));
+        .warm_up_time(std::time::Duration::from_millis(500))
+        .measurement_time(std::time::Duration::from_secs(1));
     targets = bench_comparative
 }
 

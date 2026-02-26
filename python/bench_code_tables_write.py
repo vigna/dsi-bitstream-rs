@@ -96,7 +96,7 @@ def run_cargo_bench(cmd):
 criterion_base = os.path.join("target", "criterion")
 
 # TSV header: t_bits is 0 for no table, >0 for table (= log2 of table size)
-print("code\tendian\tt_bits\ttype\top\tratio\tmean\tmin\tmax", file=out)
+print("code\tendian\tt_bits\ttype\top\tratio\tcilower\tmean\tciupper", file=out)
 
 # ── Step 1: No-table baselines (run once) ──────────────────────────────
 
@@ -131,9 +131,9 @@ for r in sorted(bench_results, key=lambda r: (r["code"], r["endian"], r["op"])):
             "-",
             r["op"],
             0.0,
+            r["cilower"] / n,
             r["mean_ns"] / n,
-            r["min"] / n,
-            r["max"] / n,
+            r["ciupper"] / n,
         ),
         file=out,
     )
@@ -161,9 +161,9 @@ for r in sorted(bench_results_dg, key=lambda r: (r["code"], r["endian"], r["op"]
             "-",
             r["op"],
             0.0,
+            r["cilower"] / n,
             r["mean_ns"] / n,
-            r["min"] / n,
-            r["max"] / n,
+            r["ciupper"] / n,
         ),
         file=out,
     )
@@ -246,9 +246,9 @@ for bits in range(1, 17):
                     type_name,
                     r["op"],
                     ratio,
+                    r["cilower"] / n,
                     r["mean_ns"] / n,
-                    r["min"] / n,
-                    r["max"] / n,
+                    r["ciupper"] / n,
                 ),
                 file=out,
             )
@@ -293,9 +293,9 @@ for bits in range(1, 17):
                         type_name,
                         r["op"],
                         ratio,
+                        r["cilower"] / n,
                         r["mean_ns"] / n,
-                        r["min"] / n,
-                        r["max"] / n,
+                        r["ciupper"] / n,
                     ),
                     file=out,
                 )

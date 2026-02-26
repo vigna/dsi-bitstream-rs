@@ -14,8 +14,8 @@ compatible with the plot_comp.py script.
 Usage:
     python3 extract_comp_results.py [--target-dir DIR]
 
-Output columns: code, op, dist, endian, mean, min, max
-(mean and confidence interval bounds, in ns/op).
+Output columns: code, op, dist, endian, cilower, mean, ciupper
+(mean and 95%% confidence interval bounds, in ns/op).
 """
 
 import argparse
@@ -38,7 +38,7 @@ def main():
     if not results:
         sys.exit(f"No comparative benchmark results found in: {args.target_dir}")
 
-    print("code\top\tdist\tendian\tmean\tmin\tmax")
+    print("code\top\tdist\tendian\tcilower\tmean\tciupper")
 
     # Divide by N to get per-operation nanoseconds
     n = 1_000_000  # matches common::N
@@ -50,9 +50,9 @@ def main():
                 r["op"],
                 r["dist"],
                 r["endian"],
+                r["cilower"] / n,
                 r["mean_ns"] / n,
-                r["min"] / n,
-                r["max"] / n,
+                r["ciupper"] / n,
             )
         )
 

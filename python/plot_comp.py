@@ -93,7 +93,7 @@ def create_plot(operations, title):
 
     # Plot little endian data
     little_endian = [
-        (d["mean"], d["min"], d["max"])
+        (d["mean"], d["cilower"], d["ciupper"])
         for code in codes
         for d in operations
         if d["code"] == code and d["endian"] == "LE"
@@ -111,7 +111,7 @@ def create_plot(operations, title):
 
     # Plot big endian data
     big_endian = [
-        (d["mean"], d["min"], d["max"])
+        (d["mean"], d["cilower"], d["ciupper"])
         for code in codes
         for d in operations
         if d["code"] == code and d["endian"] == "BE"

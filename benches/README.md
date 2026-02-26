@@ -107,7 +107,7 @@ cargo bench --bench comparative --features implied -- '(gamma|delta).*/write'
 ### Table-sweep TSV (reads and writes)
 
 ```
-code	endian	t_bits	type	op	ratio	mean	min	max
+code	endian	t_bits	type	op	ratio	cilower	mean	ciupper
 ```
 
 `t_bits` is 0 when tables are not used, otherwise the number of lookup bits.
@@ -115,7 +115,7 @@ code	endian	t_bits	type	op	ratio	mean	min	max
 ### Comparative TSV
 
 ```
-code	op	dist	endian	mean	min	max
+code	op	dist	endian	cilower	mean	ciupper
 ```
 
 ## Build Options

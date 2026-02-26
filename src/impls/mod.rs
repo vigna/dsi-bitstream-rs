@@ -38,7 +38,7 @@
 //! usually significantly slower than [`BufBitReader`].
 //!
 //! If you want to optimize these choices for your architecture, we suggest to
-//! run the benchmarks in the `benchmarks` directory.
+//! run the benchmarks in the `benches` directory.
 //!
 //! ## Examples
 //!

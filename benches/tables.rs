@@ -23,11 +23,18 @@ use dsi_bitstream::codes::{delta::*, gamma::*, omega::*, pi::*, zeta::*};
 use dsi_bitstream::prelude::*;
 use std::hint::black_box;
 
-#[cfg(feature = "bench-u16")]
+#[cfg(all(feature = "bench-reads", feature = "bench-u16"))]
 type ReadWord = u16;
-#[cfg(all(feature = "bench-u64", not(feature = "bench-u16")))]
+#[cfg(all(
+    feature = "bench-reads",
+    feature = "bench-u64",
+    not(feature = "bench-u16")
+))]
 type ReadWord = u64;
-#[cfg(not(any(feature = "bench-u16", feature = "bench-u64")))]
+#[cfg(all(
+    feature = "bench-reads",
+    not(any(feature = "bench-u16", feature = "bench-u64"))
+))]
 type ReadWord = u32;
 
 #[cfg(feature = "bench-reads")]
@@ -383,8 +390,8 @@ criterion_group! {
     name = no_table;
     config = Criterion::default()
         .sample_size(10)
-        .warm_up_time(std::time::Duration::from_millis(500))
-        .measurement_time(std::time::Duration::from_secs(1));
+        .warm_up_time(std::time::Duration::from_millis(100))
+        .measurement_time(std::time::Duration::from_millis(500));
     targets = bench_no_table
 }
 
@@ -392,8 +399,8 @@ criterion_group! {
     name = table;
     config = Criterion::default()
         .sample_size(10)
-        .warm_up_time(std::time::Duration::from_millis(500))
-        .measurement_time(std::time::Duration::from_secs(1));
+        .warm_up_time(std::time::Duration::from_millis(100))
+        .measurement_time(std::time::Duration::from_millis(500));
     targets = bench_table
 }
 

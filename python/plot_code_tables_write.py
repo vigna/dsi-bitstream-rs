@@ -83,8 +83,8 @@ for code_name in ["gamma", "delta", "delta_g", "zeta3", "pi2", "omega"]:
             color += 1
             ax.fill_between(
                 values[x_label],
-                values["min"],
-                values["max"],
+                values["cilower"],
+                values["ciupper"],
                 alpha=0.3,
             )
 
@@ -95,8 +95,8 @@ for code_name in ["gamma", "delta", "delta_g", "zeta3", "pi2", "omega"]:
         ]
         if not no_table.empty:
             m = no_table["mean"].mean()
-            lo = no_table["min"].mean()
-            hi = no_table["max"].mean()
+            lo = no_table["cilower"].mean()
+            hi = no_table["ciupper"].mean()
             c = NO_TABLE_COLORS[endian]
             h = ax.axhline(
                 y=m,
