@@ -6,8 +6,11 @@ writing instantaneous codes (gamma, delta, zeta3, pi2, omega, unary).
 ## Quick Start
 
 ```bash
-# Run all benchmarks (table-sweep + comparative)
-cargo bench
+# Run all benchmarks (table-sweep + comparative), from the project root
+./benchmarks/run_all.sh
+
+# Run with faster Criterion settings for a quick check
+./benchmarks/run_all.sh -- --warm-up-time 0.01 --measurement-time 0.01
 
 # Run only table-sweep benchmarks
 cargo bench --bench tables
@@ -38,23 +41,25 @@ feature `delta_gamma` tests delta codes with gamma tables.
 A comprehensive set of tests across all table sizes can be obtained with:
 
 ```bash
-./python/gen_plots.sh [implied|univ|both]
+./python/gen_plots.sh [implied|univ|both] [-- Criterion options]
 ```
 
-The default is `both`, which runs tests for both distributions. This iterates
-over word sizes (`u16`, `u32`, `u64`) and table sizes (2¹ to 2¹⁶), running
-Criterion benchmarks for each configuration and generating SVG plots.
+The default distribution is `both`, which runs tests for both distributions.
+This iterates over word sizes (`u16`, `u32`, `u64`) and table sizes (2¹ to 2¹⁶),
+running Criterion benchmarks for each configuration and generating SVG plots.
+
+Results are saved directly into `DIST/WORD/` directories (e.g., `implied/u32/read.tsv`).
 
 For more fine-grained control, run the scripts individually:
 
 ```bash
 # Read benchmarks with u32 word, implied distribution
-python3 ./python/bench_code_tables_read.py u32 implied > read.tsv
-cat read.tsv | python3 ./python/plot_code_tables_read.py u32 implied
+python3 ./python/bench_code_tables_read.py u32 implied > implied/u32/read.tsv
+python3 ./python/plot_code_tables_read.py u32 implied implied/u32 < implied/u32/read.tsv
 
 # Write benchmarks with u64 word, universal distribution
-python3 ./python/bench_code_tables_write.py u64 univ > write.tsv
-cat write.tsv | python3 ./python/plot_code_tables_write.py u64 univ
+python3 ./python/bench_code_tables_write.py u64 univ > univ/u64/write.tsv
+python3 ./python/plot_code_tables_write.py u64 univ univ/u64 < univ/u64/write.tsv
 ```
 
 ## Comparative Benchmarks
@@ -62,13 +67,33 @@ cat write.tsv | python3 ./python/plot_code_tables_write.py u64 univ
 Compares all codes side by side using both implied and universal distributions.
 
 ```bash
-# Run comparative benchmarks
-cargo bench --bench comparative
+# Run comparative benchmarks and generate plots
+./python/gen_comp.sh [implied|univ|both] [-- Criterion options]
+```
+
+Results are saved directly into `DIST/` directories (e.g., `implied/comp.tsv`).
+
+For more fine-grained control:
+
+```bash
+# Run benchmarks with filtering
+BENCH_CODES=gamma,delta BENCH_OPS=read cargo bench --bench comparative
 
 # Extract results and generate plots
-cd benchmarks
-python3 ../python/extract_comp_results.py | tee comp.tsv
-python3 ../python/plot_comp.py comp.tsv
+python3 ./python/extract_comp_results.py > comp.tsv
+python3 ./python/plot_comp.py comp.tsv --output-dir .
+```
+
+## Criterion Options
+
+Criterion timing can be controlled via CLI options passed after `--`:
+
+```bash
+# Quick dry run
+./benchmarks/run_all.sh -- --warm-up-time 0.01 --measurement-time 0.01
+
+# Fine-grained table benchmarks
+./python/gen_plots.sh implied -- --warm-up-time 0.5 --measurement-time 1
 ```
 
 ## Environment Variables for Filtering

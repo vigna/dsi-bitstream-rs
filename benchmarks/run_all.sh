@@ -6,6 +6,5 @@
 # Run as ./benchmarks/run_all.sh from root dir
 
 # Pass all arguments through to subscripts
-./python/gen_plots.sh implied "$@"
-./python/gen_plots.sh univ "$@"
-./python/gen_comp.sh "$@"
+./python/gen_plots.sh both "$@"
+./python/gen_comp.sh both "$@"

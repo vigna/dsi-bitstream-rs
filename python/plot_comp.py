@@ -15,11 +15,13 @@ Usage:
 """
 
 import argparse
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 
 parser = argparse.ArgumentParser()
 parser.add_argument("file")
+parser.add_argument("--output-dir", default=".", help="Directory for output SVG files")
 args = parser.parse_args()
 
 with open(args.file) as f:
@@ -172,8 +174,10 @@ for op_val, dist_val, title, filename in [
     ),
 ]:
     ops = [d for d in data if d["op"] == op_val and d["dist"] == dist_val]
+    if not ops:
+        continue
     fig = create_plot(ops, title)
-    fig.savefig(filename, dpi=300, bbox_inches="tight")
+    fig.savefig(os.path.join(args.output_dir, filename), dpi=300, bbox_inches="tight")
 
 
 plt.close("all")

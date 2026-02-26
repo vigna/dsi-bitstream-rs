@@ -103,8 +103,8 @@ for bits in range(1, 17):
             features = "univ," + features
 
         result = subprocess.run(
-            "cargo bench --bench tables --no-default-features --features %s"
-            % features,
+            "cargo bench --bench tables --no-default-features --features %s%s"
+            % (features, criterion_suffix),
             shell=True,
             cwd="benchmarks",
             capture_output=True,

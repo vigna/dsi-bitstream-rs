@@ -2,10 +2,19 @@
 
 # Run comparative benchmarks, extract results, and generate plots
 # (to be run from project root)
-# Usage: gen_comp.sh [-- Criterion options]
-# Example: gen_comp.sh -- --warm-up-time 0.01 --measurement-time 0.01
+# Usage: gen_comp.sh [implied|univ|both] [-- Criterion options]
+# Default: both
+# Example: gen_comp.sh implied -- --warm-up-time 0.01 --measurement-time 0.01
+
+DIST=${1:-both}
+
+if [ "$DIST" != "implied" ] && [ "$DIST" != "univ" ] && [ "$DIST" != "both" ]; then
+	echo "Usage: $0 [implied|univ|both] [-- Criterion options]" 1>&2
+	exit 1
+fi
 
 # Collect Criterion options (everything after --)
+shift
 CRITERION_OPTS=""
 if [ "$1" = "--" ]; then
 	shift
@@ -18,14 +27,22 @@ else
 	DASH_OPTS=""
 fi
 
-pushd benchmarks
+if [ "$DIST" = "both" ]; then
+	DISTS="implied univ"
+else
+	DISTS="$DIST"
+fi
 
-# Remove stale Criterion results
-rm -rf target/criterion/comparative
+for d in $DISTS; do
+	mkdir -p "$d"
 
-cargo bench --bench comparative $DASH_OPTS
+	# Remove stale Criterion results
+	rm -rf benchmarks/target/criterion/comparative
 
-python3 ../python/extract_comp_results.py | tee comp.tsv
-python3 ../python/plot_comp.py ./comp.tsv
+	# Run benchmarks for this distribution only
+	(cd benchmarks && BENCH_DIST=$d cargo bench --bench comparative $DASH_OPTS)
 
-popd
+	# Extract results and generate plots directly into the dist directory
+	python3 ./python/extract_comp_results.py > "$d/comp.tsv"
+	python3 ./python/plot_comp.py "$d/comp.tsv" --output-dir "$d"
+done
