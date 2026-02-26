@@ -191,7 +191,7 @@ fn bench_tables(c: &mut Criterion) {
     let mut group = c.benchmark_group("tables");
     group.throughput(Throughput::Elements(N as u64));
 
-    #[cfg(not(feature = "delta_gamma"))]
+    #[cfg(not(feature = "delta_g"))]
     {
         bench_code_tables!(group, "gamma", read_gamma_param, write_gamma_param, gen_gamma_data, true);
         bench_code_tables!(group, "gamma", read_gamma_param, write_gamma_param, gen_gamma_data, false);
@@ -206,11 +206,11 @@ fn bench_tables(c: &mut Criterion) {
         bench_code_tables!(group, "delta", read_delta_param, write_delta_param, gen_delta_data, false, false);
     }
 
-    #[cfg(feature = "delta_gamma")]
+    #[cfg(feature = "delta_g")]
     {
         // delta with gamma tables
-        bench_code_tables!(group, "delta_gamma", read_delta_param, write_delta_param, gen_delta_data, true, true);
-        bench_code_tables!(group, "delta_gamma", read_delta_param, write_delta_param, gen_delta_data, false, true);
+        bench_code_tables!(group, "delta_g", read_delta_param, write_delta_param, gen_delta_data, true, true);
+        bench_code_tables!(group, "delta_g", read_delta_param, write_delta_param, gen_delta_data, false, true);
     }
 
     group.finish();
