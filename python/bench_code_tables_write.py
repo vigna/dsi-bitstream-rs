@@ -91,7 +91,7 @@ print("code\tendian\tt_bits\ttype\top\tratio\tmean\tmin\tmax", file=out)
 
 # ── Step 1: No-table baselines (run once) ──────────────────────────────
 
-print("Benchmarking no-table baselines (write word = %s)" % write_word, file=sys.stderr)
+print("Benchmarking with write word = %s, table bits = 0" % write_word, file=sys.stderr)
 
 features = write_word
 if dist == "univ":
