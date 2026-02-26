@@ -6,9 +6,12 @@
 
 //! Table-sweep Criterion benchmarks for dsi-bitstream codes.
 //!
-//! Tests each code with current table configuration, varying table sizes.
+//! Contains two benchmark groups:
+//! - `no_table`: baselines without tables (run once)
+//! - `table`: benchmarks with current table configuration (run per table size)
+//!
 //! The Python scripts (`bench_code_tables_read.py`, `bench_code_tables_write.py`)
-//! call this binary repeatedly with different table sizes.
+//! run `no_table` once, then call `table` repeatedly with different table sizes.
 
 use benchmarks::data::*;
 use benchmarks::N;
@@ -33,7 +36,7 @@ type WriteWord = u32;
 #[cfg(all(not(feature = "reads"), feature = "u64"))]
 type WriteWord = u64;
 
-/// Macro to register table-sweep benchmarks for a single code.
+/// Macro to register benchmarks for a single code.
 /// Generates separate closures for BufBitReader and BitReader (unbuffered)
 /// since they are different types.
 /// Data (`$data`) and hit ratio (`$ratio`) are passed in to avoid
@@ -184,13 +187,52 @@ macro_rules! bench_code_tables {
     }};
 }
 
-/// Table-sweep benchmarks: tests codes with current table configuration.
-/// The Python scripts call this repeatedly with different table sizes.
-fn bench_tables(c: &mut Criterion) {
+/// No-table baselines: run once, results independent of table size.
+fn bench_no_table(c: &mut Criterion) {
     #[cfg(target_os = "linux")]
     benchmarks::utils::pin_to_core(5);
 
-    let mut group = c.benchmark_group("tables");
+    let mut group = c.benchmark_group("no_table");
+    group.throughput(Throughput::Elements(N as u64));
+
+    let univ = cfg!(feature = "univ");
+
+    #[cfg(not(feature = "delta_gamma"))]
+    {
+        let (ratio, data) = gen_gamma_data(univ);
+        bench_code_tables!(group, "gamma", read_gamma_param, write_gamma_param, ratio, &data, false);
+
+        let (ratio, data) = gen_zeta3_data(univ);
+        bench_code_tables!(group, "zeta3", read_zeta3_param, write_zeta3_param, ratio, &data, false);
+
+        let (ratio, data) = gen_pi2_data(univ);
+        bench_code_tables!(group, "pi2", read_pi2_param, write_pi2_param, ratio, &data, false);
+
+        let (ratio, data) = gen_omega_data(univ);
+        bench_code_tables!(group, "omega", read_omega_param, write_omega_param, ratio, &data, false);
+
+        // delta without gamma tables (no-table baseline)
+        let (ratio, data) = gen_delta_data(univ);
+        bench_code_tables!(group, "delta", read_delta_param, write_delta_param, ratio, &data, false, false);
+    }
+
+    #[cfg(feature = "delta_gamma")]
+    {
+        // delta_g no-table baseline (same perf as delta no-table, but kept separate)
+        let (ratio, data) = gen_delta_data(univ);
+        bench_code_tables!(group, "delta_g", read_delta_param, write_delta_param, ratio, &data, false, true);
+    }
+
+    group.finish();
+}
+
+/// Table-sweep benchmarks: only table variants, run per table size.
+/// The Python scripts call this repeatedly with different table sizes.
+fn bench_table(c: &mut Criterion) {
+    #[cfg(target_os = "linux")]
+    benchmarks::utils::pin_to_core(5);
+
+    let mut group = c.benchmark_group("table");
     group.throughput(Throughput::Elements(N as u64));
 
     let univ = cfg!(feature = "univ");
@@ -199,24 +241,19 @@ fn bench_tables(c: &mut Criterion) {
     {
         let (ratio, data) = gen_gamma_data(univ);
         bench_code_tables!(group, "gamma", read_gamma_param, write_gamma_param, ratio, &data, true);
-        bench_code_tables!(group, "gamma", read_gamma_param, write_gamma_param, ratio, &data, false);
 
         let (ratio, data) = gen_zeta3_data(univ);
         bench_code_tables!(group, "zeta3", read_zeta3_param, write_zeta3_param, ratio, &data, true);
-        bench_code_tables!(group, "zeta3", read_zeta3_param, write_zeta3_param, ratio, &data, false);
 
         let (ratio, data) = gen_pi2_data(univ);
         bench_code_tables!(group, "pi2", read_pi2_param, write_pi2_param, ratio, &data, true);
-        bench_code_tables!(group, "pi2", read_pi2_param, write_pi2_param, ratio, &data, false);
 
         let (ratio, data) = gen_omega_data(univ);
         bench_code_tables!(group, "omega", read_omega_param, write_omega_param, ratio, &data, true);
-        bench_code_tables!(group, "omega", read_omega_param, write_omega_param, ratio, &data, false);
 
         // delta without gamma tables
         let (ratio, data) = gen_delta_data(univ);
         bench_code_tables!(group, "delta", read_delta_param, write_delta_param, ratio, &data, true, false);
-        bench_code_tables!(group, "delta", read_delta_param, write_delta_param, ratio, &data, false, false);
     }
 
     #[cfg(feature = "delta_gamma")]
@@ -224,20 +261,29 @@ fn bench_tables(c: &mut Criterion) {
         // delta with gamma tables
         let (ratio, data) = gen_delta_data(univ);
         bench_code_tables!(group, "delta_g", read_delta_param, write_delta_param, ratio, &data, true, true);
-        bench_code_tables!(group, "delta_g", read_delta_param, write_delta_param, ratio, &data, false, true);
     }
 
     group.finish();
 }
 
 criterion_group! {
-    name = tables;
+    name = no_table;
     config = Criterion::default()
         .sample_size(10)
         .warm_up_time(std::time::Duration::from_secs(1))
         .measurement_time(std::time::Duration::from_secs(2))
         .without_plots();
-    targets = bench_tables
+    targets = bench_no_table
 }
 
-criterion_main!(tables);
+criterion_group! {
+    name = table;
+    config = Criterion::default()
+        .sample_size(10)
+        .warm_up_time(std::time::Duration::from_secs(1))
+        .measurement_time(std::time::Duration::from_secs(2))
+        .without_plots();
+    targets = bench_table
+}
+
+criterion_main!(no_table, table);
