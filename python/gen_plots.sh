@@ -35,13 +35,13 @@ done
 
 for d in $DISTS; do
 	for u in u16 u32 u64; do
-		# Run read benchmarks (output directly to final location)
-		python3 ./python/bench_code_tables_read.py $u $d $CRITERION_OPTS > "$d/$u/read.tsv"
+		# Run read benchmarks (TSV to file, Criterion output on stdout)
+		python3 ./python/bench_code_tables_read.py $u $d "$d/$u/read.tsv" $CRITERION_OPTS
 		# Generate plots (SVGs saved directly to final location)
 		python3 ./python/plot_code_tables_read.py $u $d "$d/$u" < "$d/$u/read.tsv"
 
-		# Run write benchmarks (output directly to final location)
-		python3 ./python/bench_code_tables_write.py $u $d $CRITERION_OPTS > "$d/$u/write.tsv"
+		# Run write benchmarks (TSV to file, Criterion output on stdout)
+		python3 ./python/bench_code_tables_write.py $u $d "$d/$u/write.tsv" $CRITERION_OPTS
 		# Generate plots (SVGs saved directly to final location)
 		python3 ./python/plot_code_tables_write.py $u $d "$d/$u" < "$d/$u/write.tsv"
 	done

@@ -9,10 +9,13 @@
 #
 
 """Benchmarks codes with different number of bits for the read tables
-and writes results on standard output in TSV format.
+and writes results in TSV format.
 
 Each table size triggers a recompilation and a Criterion benchmark run.
 Results are extracted from Criterion's JSON output.
+
+Criterion output goes to stdout (visible); compiler output goes to stderr.
+TSV is written to the output file (3rd argument, or stdout if omitted).
 """
 
 import os
@@ -39,11 +42,12 @@ while i < len(sys.argv):
         positional.append(sys.argv[i])
     i += 1
 
-if len(positional) < 1 or len(positional) > 2 or positional[0] not in {"u16", "u32", "u64"}:
-    sys.exit("Usage: %s [u16 | u32 | u64] [implied | univ] [--warm-up-time S] [--measurement-time S]" % sys.argv[0])
+if len(positional) < 1 or len(positional) > 3 or positional[0] not in {"u16", "u32", "u64"}:
+    sys.exit("Usage: %s [u16|u32|u64] [implied|univ] [output.tsv] [--warm-up-time S] [--measurement-time S]" % sys.argv[0])
 
 read_word = positional[0]
-dist = positional[1] if len(positional) == 2 else "univ"
+dist = positional[1] if len(positional) >= 2 else "univ"
+out_path = positional[2] if len(positional) >= 3 else None
 
 if dist not in {"implied", "univ"}:
     sys.exit("Distribution must be 'implied' or 'univ'")
@@ -51,12 +55,38 @@ if dist not in {"implied", "univ"}:
 # Build Criterion CLI suffix (passed after --)
 criterion_suffix = " -- " + " ".join(criterion_opts) if criterion_opts else ""
 
+# Open output: file or stdout
+out = open(out_path, "w") if out_path else sys.stdout
+
+
+def run_cargo_bench(cmd):
+    """Run cargo bench, letting Criterion output go to stdout and forwarding
+    compiler output to stderr.  Returns captured RATIO lines as a string."""
+    process = subprocess.Popen(
+        cmd, shell=True, cwd="benchmarks",
+        stdout=None,           # Criterion output → script's stdout
+        stderr=subprocess.PIPE,  # capture for RATIO parsing + forwarding
+        text=True,
+    )
+    ratio_lines = []
+    for line in process.stderr:
+        if line.startswith("RATIO:"):
+            ratio_lines.append(line)
+        else:
+            sys.stderr.write(line)
+    process.wait()
+    if process.returncode != 0:
+        print("cargo bench failed (exit %d)" % process.returncode, file=sys.stderr)
+        sys.exit(1)
+    return "\n".join(ratio_lines)
+
+
 # TSV header: t_bits is 0 for no table, >0 for table (= number of lookup bits)
-print("code\tendian\tt_bits\ttype\top\tratio\tmean\tmin\tmax")
+print("code\tendian\tt_bits\ttype\top\tratio\tmean\tmin\tmax", file=out)
 
 for bits in range(1, 17):
     print(
-        "\nBenchmarking with read word = %s, table bits = %d\n" % (read_word, bits),
+        "Benchmarking with read word = %s, table bits = %d" % (read_word, bits),
         file=sys.stderr,
     )
     for tables_num, type_name in [(1, "merged"), (2, "sep")]:
@@ -101,21 +131,12 @@ for bits in range(1, 17):
         if dist == "univ":
             features = "univ," + features
 
-        result = subprocess.run(
-            "cargo bench --bench tables --no-default-features --features %s%s" % (features, criterion_suffix),
-            shell=True,
-            cwd="benchmarks",
-            capture_output=True,
-            text=True,
+        ratio_text = run_cargo_bench(
+            "cargo bench --bench tables --no-default-features --features %s%s" % (features, criterion_suffix)
         )
 
-        if result.returncode != 0:
-            print("cargo bench failed:", file=sys.stderr)
-            print(result.stderr, file=sys.stderr)
-            sys.exit(1)
-
-        # Parse hit ratios from stderr
-        ratios = parse_ratios_from_stderr(result.stderr)
+        # Parse hit ratios
+        ratios = parse_ratios_from_stderr(ratio_text)
 
         # Extract Criterion results
         bench_results = get_table_bench_results(
@@ -144,7 +165,8 @@ for bits in range(1, 17):
                     r["mean_ns"] / n,
                     r["ci_lower"] / n,
                     r["ci_upper"] / n,
-                )
+                ),
+                file=out,
             )
 
         # Now run delta_g variant (delta with gamma tables)
@@ -164,21 +186,12 @@ for bits in range(1, 17):
             if dist == "univ":
                 features = "univ," + features
 
-            result = subprocess.run(
+            ratio_text_dg = run_cargo_bench(
                 "cargo bench --bench tables --no-default-features --features %s%s"
-                % (features, criterion_suffix),
-                shell=True,
-                cwd="benchmarks",
-                capture_output=True,
-                text=True,
+                % (features, criterion_suffix)
             )
 
-            if result.returncode != 0:
-                print("cargo bench (delta_g) failed:", file=sys.stderr)
-                print(result.stderr, file=sys.stderr)
-                sys.exit(1)
-
-            ratios_dg = parse_ratios_from_stderr(result.stderr)
+            ratios_dg = parse_ratios_from_stderr(ratio_text_dg)
             bench_results_dg = get_table_bench_results(
                 os.path.join("benchmarks", "target", "criterion")
             )
@@ -201,10 +214,14 @@ for bits in range(1, 17):
                         r["mean_ns"] / n,
                         r["ci_lower"] / n,
                         r["ci_upper"] / n,
-                    )
+                    ),
+                    file=out,
                 )
 
-        sys.stdout.flush()
+        out.flush()
+
+if out is not sys.stdout:
+    out.close()
 
 # Reset the tables to the original state
 generate_default_tables()
