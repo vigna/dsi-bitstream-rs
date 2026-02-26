@@ -1,4 +1,5 @@
 /*
+ * SPDX-FileCopyrightText: 2025 Tommaso Fontana
  * SPDX-FileCopyrightText: 2025 Sebastiano Vigna
  *
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
@@ -6,7 +7,8 @@
 
 //! Comparative Criterion benchmarks for dsi-bitstream codes.
 //!
-//! Compares all codes side by side using both implied and universal distributions.
+//! Compares a selection of codes side by side using both implied and universal
+//! Zipf distributions.
 //!
 //! Use Criterion's built-in regex filter for ad-hoc selection:
 //!
@@ -52,7 +54,7 @@ type WriteWord = u32;
 /// Macro to register a comparative benchmark for a code (both endiannesses,
 /// both distributions, read + write).  Set `implied_only` to `true` for codes
 /// whose codeword length is proportional to the value (e.g., unary), making
-/// the universal distribution impractical.
+/// the universal Zipf distribution impractical.
 macro_rules! bench_comp {
     ($group:expr, $name:literal, $write_method:ident, $read_method:ident, $len_fn:expr) => {
         bench_comp!($group, $name, $write_method, $read_method, $len_fn, false)
@@ -162,9 +164,9 @@ macro_rules! bench_comp {
 }
 
 /// Macro variant for parametric codes that take a `k` parameter.
-/// Uses method name + k directly in the closures to avoid lifetime issues.
-/// Set `implied_only` to `true` for codes whose codeword length is proportional
-/// to the value (e.g., rice, golomb), making the universal distribution
+/// Uses method name + k directly in the closures to avoid lifetime issues. Set
+/// `implied_only` to `true` for codes whose codeword length is proportional to
+/// the value (e.g., rice, golomb), making the universal Zipf distribution
 /// impractical.
 macro_rules! bench_comp_k {
     ($group:expr, $name:expr, $write_method:ident($k:expr), $read_method:ident($rk:expr), $len_fn:expr) => {

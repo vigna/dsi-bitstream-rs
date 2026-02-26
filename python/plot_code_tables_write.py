@@ -14,10 +14,11 @@ Reads TSV with mean + confidence interval columns.
 
 import os
 import sys
-import numpy as np
-import pandas as pd
+
 import matplotlib
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 
 # plt.rcParams['text.usetex'] = True
 
@@ -33,7 +34,11 @@ outdir = sys.argv[3] if len(sys.argv) == 4 else "."
 if dist not in {"implied", "univ"}:
     sys.exit("Distribution must be 'implied' or 'univ'")
 
-dist_label = "(implied distribution)" if dist == "implied" else "(distribution ≈1/x, first billion integers)"
+dist_label = (
+    "(implied distribution)"
+    if dist == "implied"
+    else "(universal Zip distribution ≈1/x, first billion integers)"
+)
 
 nice = {
     "gamma": "γ",
@@ -48,6 +53,7 @@ nice = {
 NO_TABLE_COLORS = {"LE": "black", "BE": "#cc00cc"}
 
 df = pd.read_csv(sys.stdin, index_col=None, header=0, sep="\t")
+df["ratio"] = pd.to_numeric(df["ratio"], errors="coerce")
 x_label = "t_bits"
 
 plots = []
@@ -62,8 +68,10 @@ for code_name in ["gamma", "delta", "delta_g", "zeta3", "pi2", "omega"]:
         marker = "o" if table_type == "merged" else "s"
         for endian in ["LE", "BE"]:
             values = df[
-                (df.code == code_name) & (df.endian == endian)
-                & (df.t_bits > 0) & (df.type == table_type)
+                (df.code == code_name)
+                & (df.endian == endian)
+                & (df.t_bits > 0)
+                & (df.type == table_type)
             ]
             if values.empty:
                 color += 1
@@ -77,9 +85,11 @@ for code_name in ["gamma", "delta", "delta_g", "zeta3", "pi2", "omega"]:
                 color=colors[color],
             )
             handles.append(h)
-            labels.append("{}::Table::{} (min: {:.3f}ns @ {} bits)".format(
-                endian, table_type, m, i
-            ))
+            labels.append(
+                "{}::Table::{} (min: {:.3f}ns @ {} bits)".format(
+                    endian, table_type, m, i
+                )
+            )
             color += 1
             ax.fill_between(
                 values[x_label],
@@ -90,9 +100,7 @@ for code_name in ["gamma", "delta", "delta_g", "zeta3", "pi2", "omega"]:
 
     # No-table baselines as horizontal lines
     for endian in ["LE", "BE"]:
-        no_table = df[
-            (df.code == code_name) & (df.endian == endian) & (df.t_bits == 0)
-        ]
+        no_table = df[(df.code == code_name) & (df.endian == endian) & (df.t_bits == 0)]
         if not no_table.empty:
             m = no_table["mean"].mean()
             lo = no_table["cilower"].mean()

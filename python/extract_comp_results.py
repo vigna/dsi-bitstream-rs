@@ -15,7 +15,7 @@ Usage:
     python3 extract_comp_results.py [--target-dir DIR]
 
 Output columns: code, op, dist, endian, cilower, mean, ciupper
-(mean and 95%% confidence interval bounds, in ns/op).
+(mean and 95% confidence interval bounds, in ns/op).
 """
 
 import argparse

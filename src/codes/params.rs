@@ -70,7 +70,7 @@ pub trait ReadParams {}
 /// A selector type for read parameters providing reasonable defaults.
 ///
 /// If you want to optimize these choices for your architecture, we suggest to
-/// run the benchmarks in the `benchmarks` directory and write your
+/// run the benchmarks in the `benches` directory and write your
 /// own implementation.
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
@@ -208,7 +208,7 @@ pub trait WriteParams {}
 /// A selector type for write parameters providing reasonable defaults.
 ///
 /// If you want to optimize these choices for your architecture, we suggest to
-/// run the benchmarks in the `benchmarks` directory and write your
+/// run the benchmarks in the `benches` directory and write your
 /// own implementation.
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]

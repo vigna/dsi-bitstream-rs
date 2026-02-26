@@ -16,19 +16,22 @@ Usage:
 
 import argparse
 import os
-import numpy as np
+
 import matplotlib.pyplot as plt
+import numpy as np
 
 parser = argparse.ArgumentParser()
 parser.add_argument("file")
 parser.add_argument("--output-dir", default=".", help="Directory for output SVG files")
 parser.add_argument(
-    "--read-word", default="u32",
+    "--read-word",
+    default="u32",
     choices=["u16", "u32", "u64"],
     help="Read word size for plot titles (default: u32)",
 )
 parser.add_argument(
-    "--write-word", default="u64",
+    "--write-word",
+    default="u64",
     choices=["u16", "u32", "u64"],
     help="Write word size for plot titles (default: u64)",
 )
@@ -56,10 +59,14 @@ def nice_label(code):
     # Parametric codes: zeta_3 → ζ₃, pi_2 → π₂, rice_3 → Rice(3), etc.
     for prefix, symbol in [("zeta_", "ζ"), ("pi_", "π")]:
         if code.startswith(prefix):
-            return symbol + code[len(prefix):].translate(SUBSCRIPTS)
-    for prefix, name in [("rice_", "Rice"), ("exgol_", "ExpGolomb"), ("gol_", "Golomb")]:
+            return symbol + code[len(prefix) :].translate(SUBSCRIPTS)
+    for prefix, name in [
+        ("rice_", "Rice"),
+        ("exgol_", "ExpGolomb"),
+        ("gol_", "Golomb"),
+    ]:
         if code.startswith(prefix):
-            return "%s(%s)" % (name, code[len(prefix):])
+            return "%s(%s)" % (name, code[len(prefix) :])
     return code
 
 
@@ -192,23 +199,31 @@ def create_plot(operations, title):
 
 for op_val, dist_val, word, dist_label, filename in [
     (
-        "read", "implied", args.read_word,
+        "read",
+        "implied",
+        args.read_word,
         "implied distribution",
         "read_implied_performance.svg",
     ),
     (
-        "write", "implied", args.write_word,
+        "write",
+        "implied",
+        args.write_word,
         "implied distribution",
         "write_implied_performance.svg",
     ),
     (
-        "read", "univ", args.read_word,
-        "distribution ≈1/x (first billion integers)",
+        "read",
+        "univ",
+        args.read_word,
+        "universal Zipf distribution ≈1/x (first billion integers)",
         "read_univ_performance.svg",
     ),
     (
-        "write", "univ", args.write_word,
-        "distribution ≈1/x (first billion integers)",
+        "write",
+        "univ",
+        args.write_word,
+        "universal Zipf distribution ≈1/x (first billion integers)",
         "write_univ_performance.svg",
     ),
 ]:

@@ -11,9 +11,9 @@
 //! Generation functions for data used in benchmarks.
 //!
 //! For each code, we generate samples either using its implied distribution
-//! p(w) = 2<sup>-|w|</sup> or a universal distribution (a Zipf distribution of
-//! exponent one). Moreover, the functions return the hit ratio, that is,
-//! the ratio of values that is decodable using tables.
+//! p(w) = 2<sup>-|w|</sup> or a universal Zipf distribution ≈1/_x_
+//! Moreover, the functions return the hit ratio, that is, the ratio of values
+//! that is decodable using tables.
 
 use super::N;
 use dsi_bitstream::prelude::*;
@@ -22,8 +22,8 @@ use rand::rngs::SmallRng;
 use rand::{RngExt, SeedableRng};
 
 /// Generates N samples from the implied distribution of a code using the given
-/// length function or from a universal distribution ~1/x on the first billion
-/// integers (if `univ` is true).
+/// length function or from a universal Zipf distribution ≈1/_x_ on the first
+/// billion integers (if `univ` is true).
 pub fn gen_data(len: impl Fn(u64) -> usize, univ: bool) -> Vec<u64> {
     let mut rng = SmallRng::seed_from_u64(42);
 
@@ -55,39 +55,49 @@ pub fn write_hit_ratio(data: &[u64], write_max: u64) -> f64 {
 /// Generates data to benchmark gamma code.
 pub fn gen_gamma_data(univ: bool) -> (f64, Vec<u64>) {
     let data = gen_data(len_gamma, univ);
+    #[cfg(feature = "bench-reads")]
     let ratio = read_hit_ratio(&data, len_gamma, gamma_tables::READ_BITS);
+    #[cfg(not(feature = "bench-reads"))]
+    let ratio = write_hit_ratio(&data, gamma_tables::WRITE_MAX);
     (ratio, data)
 }
 
 /// Generates data to benchmark delta code.
 pub fn gen_delta_data(univ: bool) -> (f64, Vec<u64>) {
     let data = gen_data(len_delta, univ);
+    #[cfg(feature = "bench-reads")]
     let ratio = read_hit_ratio(&data, len_delta, delta_tables::READ_BITS);
+    #[cfg(not(feature = "bench-reads"))]
+    let ratio = write_hit_ratio(&data, delta_tables::WRITE_MAX);
     (ratio, data)
 }
 
 /// Generates data to benchmark zeta3 code.
 pub fn gen_zeta3_data(univ: bool) -> (f64, Vec<u64>) {
     let data = gen_data(|x| len_zeta(x, 3), univ);
+    #[cfg(feature = "bench-reads")]
     let ratio = read_hit_ratio(&data, |x| len_zeta(x, 3), zeta_tables::READ_BITS);
+    #[cfg(not(feature = "bench-reads"))]
+    let ratio = write_hit_ratio(&data, zeta_tables::WRITE_MAX);
     (ratio, data)
 }
 
 /// Generates data to benchmark pi2 code.
 pub fn gen_pi2_data(univ: bool) -> (f64, Vec<u64>) {
     let data = gen_data(|x| len_pi(x, 2), univ);
+    #[cfg(feature = "bench-reads")]
     let ratio = read_hit_ratio(&data, |x| len_pi(x, 2), pi_tables::READ_BITS);
+    #[cfg(not(feature = "bench-reads"))]
+    let ratio = write_hit_ratio(&data, pi_tables::WRITE_MAX);
     (ratio, data)
 }
 
 /// Generates data to benchmark omega code.
 pub fn gen_omega_data(univ: bool) -> (f64, Vec<u64>) {
     let data = gen_data(len_omega, univ);
+    #[cfg(feature = "bench-reads")]
     let ratio = read_hit_ratio(&data, len_omega, omega_tables::READ_BITS);
+    #[cfg(not(feature = "bench-reads"))]
+    let ratio = write_hit_ratio(&data, omega_tables::WRITE_MAX);
     (ratio, data)
-}
-
-/// Generates data to benchmark unary code.
-pub fn gen_unary_data(univ: bool) -> Vec<u64> {
-    gen_data(|x| x as usize + 1, univ)
 }

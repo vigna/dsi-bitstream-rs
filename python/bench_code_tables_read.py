@@ -126,13 +126,13 @@ for r in sorted(bench_results, key=lambda r: (r["code"], r["endian"], r["op"])):
     code = r["code"]
     endian = r["endian"]
     print(
-        "{}\t{}\t{}\t{}\t{}\t{:.4f}\t{:7.4f}\t{:7.4f}\t{:7.4f}".format(
+        "{}\t{}\t{}\t{}\t{}\t{}\t{:7.4f}\t{:7.4f}\t{:7.4f}".format(
             code,
             endian,
             0,
             "-",
             r["op"],
-            0.0,
+            "-",
             r["cilower"] / n,
             r["mean_ns"] / n,
             r["ciupper"] / n,
@@ -156,13 +156,13 @@ ratio_text_dg = run_cargo_bench(
 bench_results_dg = get_table_bench_results(criterion_base, group="no_table")
 for r in sorted(bench_results_dg, key=lambda r: (r["code"], r["endian"], r["op"])):
     print(
-        "{}\t{}\t{}\t{}\t{}\t{:.4f}\t{:7.4f}\t{:7.4f}\t{:7.4f}".format(
+        "{}\t{}\t{}\t{}\t{}\t{}\t{:7.4f}\t{:7.4f}\t{:7.4f}".format(
             r["code"],
             r["endian"],
             0,
             "-",
             r["op"],
-            0.0,
+            "-",
             r["cilower"] / n,
             r["mean_ns"] / n,
             r["ciupper"] / n,

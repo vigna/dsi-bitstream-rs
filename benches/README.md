@@ -13,9 +13,9 @@ Tests each code with different table sizes. Each code with tables (ɣ, δ, ζ₃
 - Buffered / unbuffered (reads only)
 - Table enabled / disabled
 
-The distribution is controlled by the `bench-univ` feature: without it, each code's
-implied distribution is used; with it, a universal distribution ≈1/x on the
-first billion integers is used.
+The distribution is controlled by the `bench-univ` feature: without it, each
+code's implied distribution is used; with it, a universal Zipf distribution
+≈1/_x_ on the first billion integers is used.
 
 Word size is controlled by features: `bench-u16`, `bench-u32`, or `bench-u64`.
 The feature `bench-reads` tests reads; without it, writes are tested. The
@@ -52,7 +52,7 @@ python3 ./python/plot_code_tables_write.py u64 univ univ/u64 < univ/u64/write.ts
 ## Comparative Benchmarks
 
 Compares several codes (including variants with and without tables) side by side
-using both implied and universal distributions.
+using both implied and universal Zipf distributions.
 
 ```bash
 # Run comparative benchmarks and generate plots
