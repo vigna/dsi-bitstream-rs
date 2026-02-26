@@ -43,13 +43,6 @@ for bits in range(1, 17):
         file=sys.stderr,
     )
     for tables_num, type_name in [(1, "merged"), (2, "sep")]:
-        # Clean the target to force the recreation of the tables
-        subprocess.check_call(
-            "cargo clean",
-            shell=True,
-            cwd="benchmarks",
-        )
-
         merged_table = tables_num == 1
         gen_gamma(
             read_bits=11,  # unused
@@ -141,13 +134,6 @@ for bits in range(1, 17):
                 read_bits=gamma_bits,  # unused
                 write_max_val=gamma_value_max,
                 merged_table=merged_table,
-            )
-
-            # Clean to force recompilation with new gamma tables
-            subprocess.check_call(
-                "cargo clean",
-                shell=True,
-                cwd="benchmarks",
             )
 
             features = "delta_gamma,%s" % write_word
