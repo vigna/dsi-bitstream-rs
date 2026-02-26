@@ -76,8 +76,8 @@ Results are saved directly into `DIST/` directories (e.g., `implied/comp.tsv`).
 For more fine-grained control:
 
 ```bash
-# Run benchmarks with filtering
-BENCH_CODES=gamma,delta BENCH_OPS=read cargo bench --bench comparative
+# Run only gamma and delta reads, big-endian, implied distribution
+cargo bench --bench comparative -- 'gamma|delta.*/BE/implied/read'
 
 # Extract results and generate plots
 python3 ./python/extract_comp_results.py > comp.tsv
@@ -96,27 +96,20 @@ Criterion timing can be controlled via CLI options passed after `--`:
 ./python/gen_plots.sh implied -- --warm-up-time 0.5 --measurement-time 1
 ```
 
-## Environment Variables for Filtering
+## Filtering with Criterion Regex
 
-The comparative benchmarks support environment variables for filtering:
-
-- `BENCH_CODES=gamma,delta` — which codes to benchmark (default: all)
-- `BENCH_ENDIAN=BE` — which endianness (default: both BE and LE)
-- `BENCH_DIST=implied` — which distribution (default: both implied and univ)
-- `BENCH_OPS=read,write` — which operations (default: all)
-
-Example:
-
-```bash
-# Only benchmark gamma and delta, big endian, reads
-BENCH_CODES=gamma,delta BENCH_ENDIAN=BE BENCH_OPS=read cargo bench --bench comparative
-```
-
-Criterion's built-in `--bench` regex filter also works for ad-hoc selection:
+Criterion's built-in regex filter selects benchmarks by ID. Benchmark IDs
+have the form `comparative/{code}/{endian}/{dist}/{op}`:
 
 ```bash
 # Only gamma benchmarks
-cargo bench -- "gamma"
+cargo bench --bench comparative -- 'gamma'
+
+# Only big-endian reads with implied distribution
+cargo bench --bench comparative -- '/BE/implied/read'
+
+# Gamma and delta writes only
+cargo bench --bench comparative -- '(gamma|delta).*/write'
 ```
 
 ## Output Formats

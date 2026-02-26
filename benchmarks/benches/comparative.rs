@@ -8,11 +8,14 @@
 //!
 //! Compares all codes side by side using both implied and universal distributions.
 //!
-//! Environment variables for filtering:
-//!   BENCH_CODES=gamma,delta    (default: all)
-//!   BENCH_ENDIAN=BE            (default: both)
-//!   BENCH_DIST=implied         (default: both)
-//!   BENCH_OPS=read,write     (default: all)
+//! Use Criterion's built-in regex filter for ad-hoc selection:
+//!
+//! ```bash
+//! # Only gamma benchmarks
+//! cargo bench --bench comparative -- 'gamma'
+//! # Only big-endian reads
+//! cargo bench --bench comparative -- '/BE/.*read'
+//! ```
 
 use benchmarks::data::*;
 use benchmarks::N;
@@ -37,15 +40,6 @@ type WriteWord = u32;
 #[cfg(all(not(feature = "reads"), feature = "u64"))]
 type WriteWord = u64;
 
-/// Checks if a given value is in the comma-separated env var, or returns true
-/// if the env var is not set (meaning "all").
-fn env_filter(var: &str, value: &str) -> bool {
-    match std::env::var(var) {
-        Ok(v) => v.split(',').any(|s| s.trim() == value),
-        Err(_) => true,
-    }
-}
-
 /// Macro to register a comparative benchmark for a code (both endiannesses,
 /// both distributions, read + write).  Set `implied_only` to `true` for codes
 /// whose codeword length is proportional to the value (e.g., unary), making
@@ -55,117 +49,108 @@ macro_rules! bench_comp {
         bench_comp!($group, $name, $write_method, $read_method, $len_fn, false)
     };
     ($group:expr, $name:literal, $write_method:ident, $read_method:ident, $len_fn:expr, $implied_only:expr) => {
-        if env_filter("BENCH_CODES", $name) {
-            let dists: Vec<(&str, bool)> = {
-                let mut v = Vec::new();
-                if env_filter("BENCH_DIST", "implied") {
-                    v.push(("implied", false));
-                }
-                if !$implied_only && env_filter("BENCH_DIST", "univ") {
-                    v.push(("univ", true));
-                }
-                v
+        {
+            let dists: &[(&str, bool)] = if $implied_only {
+                &[("implied", false)]
+            } else {
+                &[("implied", false), ("univ", true)]
             };
 
-            for &(dist_name, univ) in &dists {
+            for &(dist_name, univ) in dists {
                 let data = gen_data($len_fn, univ);
 
                 // Write benchmarks
-                if env_filter("BENCH_OPS", "write") {
-                    if env_filter("BENCH_ENDIAN", "BE") {
-                        let bench_id = format!("{}/BE/{}/write", $name, dist_name);
-                        let data_ref = &data;
-                        $group.bench_function(&bench_id, |b| {
-                            b.iter(|| {
-                                let mut buffer: Vec<WriteWord> = Vec::with_capacity(N);
-                                let mut w = BufBitWriter::<BE, _>::new(
-                                    MemWordWriterVec::<WriteWord, _>::new(&mut buffer),
-                                );
-                                for &value in data_ref {
-                                    black_box(w.$write_method(value).unwrap());
-                                }
-                            });
+                {
+                    let bench_id = format!("{}/BE/{}/write", $name, dist_name);
+                    let data_ref = &data;
+                    $group.bench_function(&bench_id, |b| {
+                        b.iter(|| {
+                            let mut buffer: Vec<WriteWord> = Vec::with_capacity(N);
+                            let mut w = BufBitWriter::<BE, _>::new(
+                                MemWordWriterVec::<WriteWord, _>::new(&mut buffer),
+                            );
+                            for &value in data_ref {
+                                black_box(w.$write_method(value).unwrap());
+                            }
                         });
-                    }
-                    if env_filter("BENCH_ENDIAN", "LE") {
-                        let bench_id = format!("{}/LE/{}/write", $name, dist_name);
-                        let data_ref = &data;
-                        $group.bench_function(&bench_id, |b| {
-                            b.iter(|| {
-                                let mut buffer: Vec<WriteWord> = Vec::with_capacity(N);
-                                let mut w = BufBitWriter::<LE, _>::new(
-                                    MemWordWriterVec::<WriteWord, _>::new(&mut buffer),
-                                );
-                                for &value in data_ref {
-                                    black_box(w.$write_method(value).unwrap());
-                                }
-                            });
+                    });
+                }
+                {
+                    let bench_id = format!("{}/LE/{}/write", $name, dist_name);
+                    let data_ref = &data;
+                    $group.bench_function(&bench_id, |b| {
+                        b.iter(|| {
+                            let mut buffer: Vec<WriteWord> = Vec::with_capacity(N);
+                            let mut w = BufBitWriter::<LE, _>::new(
+                                MemWordWriterVec::<WriteWord, _>::new(&mut buffer),
+                            );
+                            for &value in data_ref {
+                                black_box(w.$write_method(value).unwrap());
+                            }
                         });
-                    }
+                    });
                 }
 
                 // Read benchmarks
-                if env_filter("BENCH_OPS", "read") {
-                    if env_filter("BENCH_ENDIAN", "BE") {
-                        let encoded = {
-                            let mut buffer: Vec<WriteWord> = Vec::with_capacity(N);
-                            {
-                                let mut w = BufBitWriter::<BE, _>::new(
-                                    MemWordWriterVec::<WriteWord, _>::new(&mut buffer),
-                                );
-                                for &value in &data {
-                                    w.$write_method(value).unwrap();
-                                }
+                {
+                    let encoded = {
+                        let mut buffer: Vec<WriteWord> = Vec::with_capacity(N);
+                        {
+                            let mut w = BufBitWriter::<BE, _>::new(
+                                MemWordWriterVec::<WriteWord, _>::new(&mut buffer),
+                            );
+                            for &value in &data {
+                                w.$write_method(value).unwrap();
                             }
-                            buffer
-                        };
-                        let n = data.len();
-                        let bench_id = format!("{}/BE/{}/read", $name, dist_name);
-                        $group.bench_function(&bench_id, |b| {
-                            b.iter(|| {
-                                // SAFETY: Vec<u64> is aligned to 8 bytes, which
-                                // satisfies alignment for ReadWord (u16/u32/u64).
-                                let slice: &[ReadWord] =
-                                    unsafe { encoded.align_to::<ReadWord>().1 };
-                                let mut r = BufBitReader::<BE, _>::new(
-                                    MemWordReader::<ReadWord, _>::new(slice),
-                                );
-                                for _ in 0..n {
-                                    black_box(r.$read_method().unwrap());
-                                }
-                            });
-                        });
-                    }
-                    if env_filter("BENCH_ENDIAN", "LE") {
-                        let encoded = {
-                            let mut buffer: Vec<WriteWord> = Vec::with_capacity(N);
-                            {
-                                let mut w = BufBitWriter::<LE, _>::new(
-                                    MemWordWriterVec::<WriteWord, _>::new(&mut buffer),
-                                );
-                                for &value in &data {
-                                    w.$write_method(value).unwrap();
-                                }
+                        }
+                        buffer
+                    };
+                    let n = data.len();
+                    let bench_id = format!("{}/BE/{}/read", $name, dist_name);
+                    $group.bench_function(&bench_id, |b| {
+                        b.iter(|| {
+                            // SAFETY: Vec<u64> is aligned to 8 bytes, which
+                            // satisfies alignment for ReadWord (u16/u32/u64).
+                            let slice: &[ReadWord] =
+                                unsafe { encoded.align_to::<ReadWord>().1 };
+                            let mut r = BufBitReader::<BE, _>::new(
+                                MemWordReader::<ReadWord, _>::new(slice),
+                            );
+                            for _ in 0..n {
+                                black_box(r.$read_method().unwrap());
                             }
-                            buffer
-                        };
-                        let n = data.len();
-                        let bench_id = format!("{}/LE/{}/read", $name, dist_name);
-                        $group.bench_function(&bench_id, |b| {
-                            b.iter(|| {
-                                // SAFETY: Vec<u64> is aligned to 8 bytes, which
-                                // satisfies alignment for ReadWord (u16/u32/u64).
-                                let slice: &[ReadWord] =
-                                    unsafe { encoded.align_to::<ReadWord>().1 };
-                                let mut r = BufBitReader::<LE, _>::new(
-                                    MemWordReader::<ReadWord, _>::new(slice),
-                                );
-                                for _ in 0..n {
-                                    black_box(r.$read_method().unwrap());
-                                }
-                            });
                         });
-                    }
+                    });
+                }
+                {
+                    let encoded = {
+                        let mut buffer: Vec<WriteWord> = Vec::with_capacity(N);
+                        {
+                            let mut w = BufBitWriter::<LE, _>::new(
+                                MemWordWriterVec::<WriteWord, _>::new(&mut buffer),
+                            );
+                            for &value in &data {
+                                w.$write_method(value).unwrap();
+                            }
+                        }
+                        buffer
+                    };
+                    let n = data.len();
+                    let bench_id = format!("{}/LE/{}/read", $name, dist_name);
+                    $group.bench_function(&bench_id, |b| {
+                        b.iter(|| {
+                            // SAFETY: Vec<u64> is aligned to 8 bytes, which
+                            // satisfies alignment for ReadWord (u16/u32/u64).
+                            let slice: &[ReadWord] =
+                                unsafe { encoded.align_to::<ReadWord>().1 };
+                            let mut r = BufBitReader::<LE, _>::new(
+                                MemWordReader::<ReadWord, _>::new(slice),
+                            );
+                            for _ in 0..n {
+                                black_box(r.$read_method().unwrap());
+                            }
+                        });
+                    });
                 }
             }
         }
@@ -186,112 +171,104 @@ macro_rules! bench_comp_k {
             let name_str: String = $name;
             let k = $k;
             let rk = $rk;
-            if env_filter("BENCH_CODES", &name_str) {
-                let dists: Vec<(&str, bool)> = {
-                    let mut v = Vec::new();
-                    if env_filter("BENCH_DIST", "implied") {
-                        v.push(("implied", false));
-                    }
-                    if !$implied_only && env_filter("BENCH_DIST", "univ") {
-                        v.push(("univ", true));
-                    }
-                    v
-                };
 
-                for &(dist_name, univ) in &dists {
-                    let data = gen_data($len_fn, univ);
+            let dists: &[(&str, bool)] = if $implied_only {
+                &[("implied", false)]
+            } else {
+                &[("implied", false), ("univ", true)]
+            };
 
-                    if env_filter("BENCH_OPS", "write") {
-                        if env_filter("BENCH_ENDIAN", "BE") {
-                            let bench_id = format!("{}/BE/{}/write", name_str, dist_name);
-                            let data_ref = &data;
-                            $group.bench_function(&bench_id, |b| {
-                                b.iter(|| {
-                                    let mut buffer: Vec<WriteWord> = Vec::with_capacity(N);
-                                    let mut w = BufBitWriter::<BE, _>::new(
-                                        MemWordWriterVec::<WriteWord, _>::new(&mut buffer),
-                                    );
-                                    for &value in data_ref {
-                                        black_box(w.$write_method(value, k).unwrap());
-                                    }
-                                });
-                            });
-                        }
-                        if env_filter("BENCH_ENDIAN", "LE") {
-                            let bench_id = format!("{}/LE/{}/write", name_str, dist_name);
-                            let data_ref = &data;
-                            $group.bench_function(&bench_id, |b| {
-                                b.iter(|| {
-                                    let mut buffer: Vec<WriteWord> = Vec::with_capacity(N);
-                                    let mut w = BufBitWriter::<LE, _>::new(
-                                        MemWordWriterVec::<WriteWord, _>::new(&mut buffer),
-                                    );
-                                    for &value in data_ref {
-                                        black_box(w.$write_method(value, k).unwrap());
-                                    }
-                                });
-                            });
-                        }
-                    }
+            for &(dist_name, univ) in dists {
+                let data = gen_data($len_fn, univ);
 
-                    if env_filter("BENCH_OPS", "read") {
-                        if env_filter("BENCH_ENDIAN", "BE") {
-                            let encoded = {
-                                let mut buffer: Vec<WriteWord> = Vec::with_capacity(N);
-                                {
-                                    let mut w = BufBitWriter::<BE, _>::new(
-                                        MemWordWriterVec::<WriteWord, _>::new(&mut buffer),
-                                    );
-                                    for &value in &data {
-                                        w.$write_method(value, k).unwrap();
-                                    }
-                                }
-                                buffer
-                            };
-                            let n = data.len();
-                            let bench_id = format!("{}/BE/{}/read", name_str, dist_name);
-                            $group.bench_function(&bench_id, |b| {
-                                b.iter(|| {
-                                    let slice: &[ReadWord] =
-                                        unsafe { encoded.align_to::<ReadWord>().1 };
-                                    let mut r = BufBitReader::<BE, _>::new(
-                                        MemWordReader::<ReadWord, _>::new(slice),
-                                    );
-                                    for _ in 0..n {
-                                        black_box(r.$read_method(rk).unwrap());
-                                    }
-                                });
-                            });
+                // Write benchmarks
+                {
+                    let bench_id = format!("{}/BE/{}/write", name_str, dist_name);
+                    let data_ref = &data;
+                    $group.bench_function(&bench_id, |b| {
+                        b.iter(|| {
+                            let mut buffer: Vec<WriteWord> = Vec::with_capacity(N);
+                            let mut w = BufBitWriter::<BE, _>::new(
+                                MemWordWriterVec::<WriteWord, _>::new(&mut buffer),
+                            );
+                            for &value in data_ref {
+                                black_box(w.$write_method(value, k).unwrap());
+                            }
+                        });
+                    });
+                }
+                {
+                    let bench_id = format!("{}/LE/{}/write", name_str, dist_name);
+                    let data_ref = &data;
+                    $group.bench_function(&bench_id, |b| {
+                        b.iter(|| {
+                            let mut buffer: Vec<WriteWord> = Vec::with_capacity(N);
+                            let mut w = BufBitWriter::<LE, _>::new(
+                                MemWordWriterVec::<WriteWord, _>::new(&mut buffer),
+                            );
+                            for &value in data_ref {
+                                black_box(w.$write_method(value, k).unwrap());
+                            }
+                        });
+                    });
+                }
+
+                // Read benchmarks
+                {
+                    let encoded = {
+                        let mut buffer: Vec<WriteWord> = Vec::with_capacity(N);
+                        {
+                            let mut w = BufBitWriter::<BE, _>::new(
+                                MemWordWriterVec::<WriteWord, _>::new(&mut buffer),
+                            );
+                            for &value in &data {
+                                w.$write_method(value, k).unwrap();
+                            }
                         }
-                        if env_filter("BENCH_ENDIAN", "LE") {
-                            let encoded = {
-                                let mut buffer: Vec<WriteWord> = Vec::with_capacity(N);
-                                {
-                                    let mut w = BufBitWriter::<LE, _>::new(
-                                        MemWordWriterVec::<WriteWord, _>::new(&mut buffer),
-                                    );
-                                    for &value in &data {
-                                        w.$write_method(value, k).unwrap();
-                                    }
-                                }
-                                buffer
-                            };
-                            let n = data.len();
-                            let bench_id = format!("{}/LE/{}/read", name_str, dist_name);
-                            $group.bench_function(&bench_id, |b| {
-                                b.iter(|| {
-                                    let slice: &[ReadWord] =
-                                        unsafe { encoded.align_to::<ReadWord>().1 };
-                                    let mut r = BufBitReader::<LE, _>::new(
-                                        MemWordReader::<ReadWord, _>::new(slice),
-                                    );
-                                    for _ in 0..n {
-                                        black_box(r.$read_method(rk).unwrap());
-                                    }
-                                });
-                            });
+                        buffer
+                    };
+                    let n = data.len();
+                    let bench_id = format!("{}/BE/{}/read", name_str, dist_name);
+                    $group.bench_function(&bench_id, |b| {
+                        b.iter(|| {
+                            let slice: &[ReadWord] =
+                                unsafe { encoded.align_to::<ReadWord>().1 };
+                            let mut r = BufBitReader::<BE, _>::new(
+                                MemWordReader::<ReadWord, _>::new(slice),
+                            );
+                            for _ in 0..n {
+                                black_box(r.$read_method(rk).unwrap());
+                            }
+                        });
+                    });
+                }
+                {
+                    let encoded = {
+                        let mut buffer: Vec<WriteWord> = Vec::with_capacity(N);
+                        {
+                            let mut w = BufBitWriter::<LE, _>::new(
+                                MemWordWriterVec::<WriteWord, _>::new(&mut buffer),
+                            );
+                            for &value in &data {
+                                w.$write_method(value, k).unwrap();
+                            }
                         }
-                    }
+                        buffer
+                    };
+                    let n = data.len();
+                    let bench_id = format!("{}/LE/{}/read", name_str, dist_name);
+                    $group.bench_function(&bench_id, |b| {
+                        b.iter(|| {
+                            let slice: &[ReadWord] =
+                                unsafe { encoded.align_to::<ReadWord>().1 };
+                            let mut r = BufBitReader::<LE, _>::new(
+                                MemWordReader::<ReadWord, _>::new(slice),
+                            );
+                            for _ in 0..n {
+                                black_box(r.$read_method(rk).unwrap());
+                            }
+                        });
+                    });
                 }
             }
         }
