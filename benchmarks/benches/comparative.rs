@@ -340,9 +340,9 @@ fn bench_comparative(c: &mut Criterion) {
 criterion_group! {
     name = comparative;
     config = Criterion::default()
-        .sample_size(50)
-        .warm_up_time(std::time::Duration::from_secs(5))
-        .measurement_time(std::time::Duration::from_secs(10));
+        .sample_size(10)
+        .warm_up_time(std::time::Duration::from_secs(1))
+        .measurement_time(std::time::Duration::from_secs(2));
     targets = bench_comparative
 }
 

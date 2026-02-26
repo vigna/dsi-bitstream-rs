@@ -219,9 +219,9 @@ fn bench_tables(c: &mut Criterion) {
 criterion_group! {
     name = tables;
     config = Criterion::default()
-        .sample_size(30)
-        .warm_up_time(std::time::Duration::from_secs(3))
-        .measurement_time(std::time::Duration::from_secs(5));
+        .sample_size(10)
+        .warm_up_time(std::time::Duration::from_secs(1))
+        .measurement_time(std::time::Duration::from_secs(2));
     targets = bench_tables
 }
 
