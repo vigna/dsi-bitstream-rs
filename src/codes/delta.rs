@@ -67,7 +67,7 @@ pub fn len_delta(n: u64) -> usize {
 
 /// Trait for reading δ codes.
 ///
-/// This is the trait you should usually pull in scope to read δ codes.
+/// This is the trait you should usually pull into scope to read δ codes.
 pub trait DeltaRead<E: Endianness>: BitRead<E> {
     fn read_delta(&mut self) -> Result<u64, Self::Error>;
 }
@@ -155,7 +155,7 @@ impl<B: GammaReadParam<LE>> DeltaReadParam<LE> for B {
 
 /// Trait for writing δ codes.
 ///
-/// This is the trait you should usually pull in scope to write δ codes.
+/// This is the trait you should usually pull into scope to write δ codes.
 pub trait DeltaWrite<E: Endianness>: BitWrite<E> {
     fn write_delta(&mut self, n: u64) -> Result<usize, Self::Error>;
 }

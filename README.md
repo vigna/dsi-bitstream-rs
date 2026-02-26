@@ -203,8 +203,8 @@ Union nor the Italian MUR can be held responsible for them.
 [`LE`]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/traits/type.LE.html
 [`DefaultReadParams`]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/codes/params/struct.DefaultReadParams.html
 [`DefaultWriteParams`]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/codes/params/struct.DefaultWriteParams.html
-[`BitRead::read_unary`]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/traits/trait.BitRead.html#method.read_unary
-[`BitWrite::write_unary`]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/traits/trait.BitWrite.html#method.write_unary
+[`BitRead::read_unary`]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/traits/trait.BitRead.html#tymethod.read_unary
+[`BitWrite::write_unary`]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/traits/trait.BitWrite.html#tymethod.write_unary
 [DSI Utilities]: https://dsiutils.di.unimi.it/
 [exponential Golomb codes]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/codes/exp_golomb/index.html
 [H.264 (MPEG-4)]: https://en.wikipedia.org/wiki/Advanced_Video_Coding

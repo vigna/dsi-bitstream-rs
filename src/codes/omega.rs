@@ -96,7 +96,7 @@ fn recursive_len(n: u64) -> usize {
 
 /// Trait for reading ω codes.
 ///
-/// This is the trait you should usually pull in scope to read ω codes.
+/// This is the trait you should usually pull into scope to read ω codes.
 pub trait OmegaRead<E: Endianness>: BitRead<E> {
     fn read_omega(&mut self) -> Result<u64, Self::Error>;
 }
@@ -196,7 +196,7 @@ impl<B: BitRead<LE>> OmegaReadParam<LE> for B {
 
 /// Trait for writing ω codes.
 ///
-/// This is the trait you should usually pull in scope to write ω codes.
+/// This is the trait you should usually pull into scope to write ω codes.
 pub trait OmegaWrite<E: Endianness>: BitWrite<E> {
     fn write_omega(&mut self, n: u64) -> Result<usize, Self::Error>;
 }

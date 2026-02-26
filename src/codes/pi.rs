@@ -80,7 +80,7 @@ pub fn len_pi(n: u64, k: usize) -> usize {
 
 /// Trait for reading π codes.
 ///
-/// This is the trait you should usually pull in scope to read π codes.
+/// This is the trait you should usually pull into scope to read π codes.
 pub trait PiRead<E: Endianness>: BitRead<E> {
     fn read_pi(&mut self, k: usize) -> Result<u64, Self::Error>;
     fn read_pi2(&mut self) -> Result<u64, Self::Error>;
@@ -176,7 +176,7 @@ fn default_read_pi<E: Endianness, B: BitRead<E>>(
 
 /// Trait for writing π codes.
 ///
-/// This is the trait you should usually pull in scope to write π codes.
+/// This is the trait you should usually pull into scope to write π codes.
 pub trait PiWrite<E: Endianness>: BitWrite<E> {
     fn write_pi(&mut self, n: u64, k: usize) -> Result<usize, Self::Error>;
     fn write_pi2(&mut self, n: u64) -> Result<usize, Self::Error>;

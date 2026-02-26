@@ -56,7 +56,7 @@ pub fn len_gamma(n: u64) -> usize {
 
 /// Trait for reading γ codes.
 ///
-/// This is the trait you should usually pull in scope to read γ codes.
+/// This is the trait you should usually pull into scope to read γ codes.
 pub trait GammaRead<E: Endianness>: BitRead<E> {
     fn read_gamma(&mut self) -> Result<u64, Self::Error>;
 }
@@ -118,7 +118,7 @@ impl<B: BitRead<LE>> GammaReadParam<LE> for B {
 
 /// Trait for writing γ codes.
 ///
-/// This is the trait you should usually pull in scope to write γ codes.
+/// This is the trait you should usually pull into scope to write γ codes.
 pub trait GammaWrite<E: Endianness>: BitWrite<E> {
     fn write_gamma(&mut self, n: u64) -> Result<usize, Self::Error>;
 }

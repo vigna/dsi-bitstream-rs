@@ -74,10 +74,10 @@ impl private::Endianness for BigEndian {
     const _IS_BIG: bool = true;
 }
 
-/// Alias for [`BigEndian`]
+/// Alias for [`BigEndian`].
 pub type BE = BigEndian;
 
-/// Alias for [`LittleEndian`]
+/// Alias for [`LittleEndian`].
 pub type LE = LittleEndian;
 
 #[cfg(target_endian = "little")]
@@ -87,5 +87,5 @@ pub type NativeEndian = LittleEndian;
 /// A type alias for the native endianness of the target platform.
 pub type NativeEndian = BigEndian;
 
-/// Alias for [`NativeEndian`]
+/// Alias for [`NativeEndian`].
 pub type NE = NativeEndian;

@@ -65,7 +65,7 @@ pub fn len_zeta(n: u64, k: usize) -> usize {
 
 /// Trait for reading ζ codes.
 ///
-/// This is the trait you should usually pull in scope to read ζ codes.
+/// This is the trait you should usually pull into scope to read ζ codes.
 pub trait ZetaRead<E: Endianness>: BitRead<E> {
     fn read_zeta(&mut self, k: usize) -> Result<u64, Self::Error>;
     fn read_zeta3(&mut self) -> Result<u64, Self::Error>;
@@ -145,7 +145,7 @@ fn default_read_zeta<BO: Endianness, B: BitRead<BO>>(
 
 /// Trait for writing ζ codes.
 ///
-/// This is the trait you should usually pull in scope to write ζ codes.
+/// This is the trait you should usually pull into scope to write ζ codes.
 pub trait ZetaWrite<E: Endianness>: BitWrite<E> {
     fn write_zeta(&mut self, n: u64, k: usize) -> Result<usize, Self::Error>;
     fn write_zeta3(&mut self, n: u64) -> Result<usize, Self::Error>;
