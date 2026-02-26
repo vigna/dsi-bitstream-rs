@@ -24,10 +24,10 @@ use crate::prelude::{DynamicCodeRead, DynamicCodeWrite, StaticCodeRead, StaticCo
 #[cfg(feature = "std")]
 use std::sync::Mutex;
 
+#[cfg(feature = "serde")]
+use alloc::string::ToString;
 #[cfg(feature = "alloc")]
-use alloc::vec;
-#[cfg(feature = "alloc")]
-use alloc::vec::Vec;
+use alloc::{vec, vec::Vec};
 
 /// Keeps track of the space needed to store a stream of integers using
 /// different codes.
@@ -51,7 +51,7 @@ pub struct CodesStats<
     const EXP_GOLOMB: usize = 10,
     // How many Rice codes to consider.
     const RICE: usize = 10,
-    // How many Pi and Pi web codes to consider.
+    // How many streamlined π codes to consider.
     const PI: usize = 10,
 > {
     /// The total number of elements observed.
@@ -127,6 +127,7 @@ impl<
         self.update_many(n, 1)
     }
 
+    /// Update the stats with `count` occurrences of `n` and return `n` for convenience.
     #[inline]
     pub fn update_many(&mut self, n: u64, count: u64) -> u64 {
         self.total += count;
@@ -148,7 +149,7 @@ impl<
         for (log2_b, val) in self.rice.iter_mut().enumerate() {
             *val += (len_rice(n, log2_b as _) as u64) * count;
         }
-        // +2 because π0 = gamma and π1 = zeta_2
+        // π₀ = γ and π₁ = ζ₂ in terms of codeword lengths
         for (k, val) in self.pi.iter_mut().enumerate() {
             *val += (len_pi(n, (k + 2) as _) as u64) * count;
         }
@@ -181,6 +182,10 @@ impl<
     }
 
     /// Returns the best code for the stream and its space usage.
+    ///
+    /// When VByte is the best code, [`Codes::VByteBe`] is returned as the
+    /// canonical representative (both variants have the same bit length).
+    #[must_use]
     pub fn best_code(&self) -> (Codes, u64) {
         let mut best = (Codes::Unary, self.unary);
         if self.gamma < best.1 {
@@ -225,6 +230,7 @@ impl<
 
     /// Returns a vector of all codes and their space usage, in ascending order by space usage.
     #[cfg(feature = "alloc")]
+    #[must_use]
     pub fn get_codes(&self) -> Vec<(Codes, u64)> {
         let mut codes = vec![
             (Codes::Unary, self.unary),
@@ -254,6 +260,7 @@ impl<
     }
 
     /// Returns the number of bits used by the given code.
+    #[must_use]
     pub fn bits_for(&self, code: Codes) -> Option<u64> {
         match code {
             Codes::Unary => Some(self.unary),
@@ -467,12 +474,12 @@ pub struct CodesStatsWrapper<
     // How many ζ codes to consider.
     const ZETA: usize = 10,
     // How many Golomb codes to consider.
-    const GOLOMB: usize = 20,
+    const GOLOMB: usize = 10,
     // How many Exponential Golomb codes to consider.
     const EXP_GOLOMB: usize = 10,
     // How many Rice codes to consider.
     const RICE: usize = 10,
-    // How many Pi and Pi web codes to consider.
+    // How many streamlined π codes to consider.
     const PI: usize = 10,
 > {
     // TODO: figure out how we can do this without a lock.
@@ -493,6 +500,7 @@ impl<
 > CodesStatsWrapper<W, ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
 {
     /// Creates a new `CodesStatsWrapper` with the given wrapped value.
+    #[must_use]
     pub fn new(wrapped: W) -> Self {
         Self {
             stats: Mutex::new(CodesStats::default()),
@@ -570,10 +578,10 @@ impl<
     fn write<E: Endianness, CW: CodesWrite<E> + ?Sized>(
         &self,
         writer: &mut CW,
-        value: u64,
+        n: u64,
     ) -> Result<usize, CW::Error> {
-        let res = self.wrapped.write(writer, value)?;
-        self.stats.lock().unwrap().update(value);
+        let res = self.wrapped.write(writer, n)?;
+        self.stats.lock().unwrap().update(n);
         Ok(res)
     }
 }
@@ -591,9 +599,9 @@ impl<
 > StaticCodeWrite<E, CW> for CodesStatsWrapper<W, ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
 {
     #[inline]
-    fn write(&self, writer: &mut CW, value: u64) -> Result<usize, CW::Error> {
-        let res = self.wrapped.write(writer, value)?;
-        self.stats.lock().unwrap().update(value);
+    fn write(&self, writer: &mut CW, n: u64) -> Result<usize, CW::Error> {
+        let res = self.wrapped.write(writer, n)?;
+        self.stats.lock().unwrap().update(n);
         Ok(res)
     }
 }

@@ -11,7 +11,7 @@
 //! # Motivation
 //!
 //! [`FuncCodeReader`] already provides dynamic dispatching of read functions,
-//! but in some uses cases the reader has to reference some data (e.g., readers
+//! but in some use cases the reader has to reference some data (e.g., readers
 //! based on the same memory buffer). In this case, one would need to create a
 //! dispatching function pointer for each code and each reader because the
 //! lifetime of different readers make the function pointers incompatible.
@@ -20,7 +20,7 @@
 //! create a [`CodesRead`] with a lifetime that can reference data owned by the
 //! factory. This trait must be implemented by client applications.
 //!
-//! At the point, one can create a [`FactoryFuncCodeReader`] depending on a
+//! At that point, one can create a [`FactoryFuncCodeReader`] depending on a
 //! specific [`CodesReaderFactory`]. The [`FactoryFuncCodeReader`] will store a
 //! function pointer with a generic lifetime that can be downcast to a specific
 //! lifetime. Thus, the function pointer is created just once at the creation of
@@ -74,7 +74,6 @@
 //! ```
 
 use super::*;
-use core::fmt::Debug;
 /// A trait that models a type that can return a [`CodesRead`] that can reference
 /// data owned by the factory. The typical case is a factory that owns the
 /// bit stream, and returns a [`CodesRead`] that can read from it.
@@ -126,7 +125,7 @@ pub struct FactoryFuncCodeReader<E: Endianness, CRF: CodesReaderFactoryHelper<E>
     FactoryReadFn<E, CRF>,
 );
 
-/// Manually implement [`Clone`] to avoid the [`Clone`] bound on `CR` and `E`.
+/// Manually implement [`Clone`] to avoid the [`Clone`] bound on `CRF` and `E`.
 impl<E: Endianness, CRF: CodesReaderFactoryHelper<E> + ?Sized> Clone
     for FactoryFuncCodeReader<E, CRF>
 {
@@ -199,7 +198,7 @@ impl<E: Endianness, CRF: CodesReaderFactoryHelper<E> + ?Sized> FactoryFuncCodeRe
     ///
     /// The method will return an error if there is no constant
     /// for the given code in [`FactoryFuncCodeReader`].
-    pub fn new(code: Codes) -> Result<Self, DispatchError> {
+    pub const fn new(code: Codes) -> Result<Self, DispatchError> {
         let code = code.canonicalize();
         let read_func = match code {
             Codes::Unary => Self::UNARY,
@@ -265,13 +264,15 @@ impl<E: Endianness, CRF: CodesReaderFactoryHelper<E> + ?Sized> FactoryFuncCodeRe
     }
 
     /// Returns the function pointer for the code.
+    #[must_use]
     #[inline(always)]
-    pub fn inner(&self) -> FactoryReadFn<E, CRF> {
+    pub fn get_func(&self) -> FactoryReadFn<E, CRF> {
         self.0
     }
 
     /// Returns a [`FuncCodeReader`] compatible with `CRF`'s
     /// [`CodesReaderFactory::CodesReader`] for a given lifetime `'a`.
+    #[must_use]
     #[inline(always)]
     pub fn get<'a>(
         &self,

@@ -3,7 +3,7 @@
 // ~~~~~~~~~~~~~~~~~~~ DO NOT MODIFY ~~~~~~~~~~~~~~~~~~~~~~
 // Methods for reading and writing values using precomputed tables for zeta codes
 use crate::traits::{BE, BitRead, BitWrite, LE};
-use common_traits::*;
+use num_traits::AsPrimitive;
 /// How many bits are needed to read the tables in this
 pub const READ_BITS: usize = 12;
 /// Maximum value writable using the table(s)
@@ -16,7 +16,7 @@ pub const WRITE_MAX: u64 = 1023;
 #[inline(always)]
 pub fn read_table_le<B: BitRead<LE>>(backend: &mut B) -> Option<(u64, usize)> {
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
-        let idx = idx.cast() as usize;
+        let idx: usize = idx.as_() as usize;
         let len = READ_LEN_LE[idx];
         if len != MISSING_VALUE_LEN_LE {
             backend.skip_bits_after_peek(len as usize);
@@ -31,12 +31,9 @@ pub fn read_table_le<B: BitRead<LE>>(backend: &mut B) -> Option<(u64, usize)> {
 /// If the result is `Some` the encoding was successful, and
 /// length of the code is returned.
 #[inline(always)]
-pub fn write_table_le<B: BitWrite<LE>>(
-    backend: &mut B,
-    value: u64,
-) -> Result<Option<usize>, B::Error> {
-    Ok(if let Some(bits) = WRITE_LE.get(value as usize) {
-        let len = WRITE_LEN_LE[value as usize] as usize;
+pub fn write_table_le<B: BitWrite<LE>>(backend: &mut B, n: u64) -> Result<Option<usize>, B::Error> {
+    Ok(if let Some(bits) = WRITE_LE.get(n as usize) {
+        let len = WRITE_LEN_LE[n as usize] as usize;
         backend.write_bits(*bits as u64, len)?;
         Some(len)
     } else {
@@ -51,7 +48,7 @@ pub fn write_table_le<B: BitWrite<LE>>(
 #[inline(always)]
 pub fn read_table_be<B: BitRead<BE>>(backend: &mut B) -> Option<(u64, usize)> {
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
-        let idx = idx.cast() as usize;
+        let idx: usize = idx.as_() as usize;
         let len = READ_LEN_BE[idx];
         if len != MISSING_VALUE_LEN_BE {
             backend.skip_bits_after_peek(len as usize);
@@ -66,12 +63,9 @@ pub fn read_table_be<B: BitRead<BE>>(backend: &mut B) -> Option<(u64, usize)> {
 /// If the result is `Some` the encoding was successful, and
 /// length of the code is returned.
 #[inline(always)]
-pub fn write_table_be<B: BitWrite<BE>>(
-    backend: &mut B,
-    value: u64,
-) -> Result<Option<usize>, B::Error> {
-    Ok(if let Some(bits) = WRITE_BE.get(value as usize) {
-        let len = WRITE_LEN_BE[value as usize] as usize;
+pub fn write_table_be<B: BitWrite<BE>>(backend: &mut B, n: u64) -> Result<Option<usize>, B::Error> {
+    Ok(if let Some(bits) = WRITE_BE.get(n as usize) {
+        let len = WRITE_LEN_BE[n as usize] as usize;
         backend.write_bits(*bits as u64, len)?;
         Some(len)
     } else {

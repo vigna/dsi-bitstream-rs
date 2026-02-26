@@ -7,7 +7,6 @@
  */
 
 use crate::traits::*;
-use common_traits::*;
 #[cfg(feature = "mem_dbg")]
 use mem_dbg::{MemDbg, MemSize};
 use std::io::{Read, Seek, SeekFrom, Write};
@@ -26,20 +25,20 @@ use std::io::{Read, Seek, SeekFrom, Write};
 ///
 /// To provide a sensible value after such a read,
 /// [`word_pos`](WordAdapter::word_pos) will always return the position
-/// of the underlying [`Seek`] rounded up to the next multiple of `W::Bytes`.
+/// of the underlying [`Seek`] rounded up to the next multiple of the byte size of `W`.
 /// This approach, however, requires that if you adapt a [`Seek`],
-/// its current position must be a multiple of `W::Bytes`, or the
+/// its current position must be a multiple of the byte size of `W`, or the
 /// results of [`word_pos`](WordAdapter::word_pos)
 /// will be shifted by the rounding.
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
-pub struct WordAdapter<W: UnsignedInt + FromBytes + ToBytes, B> {
+pub struct WordAdapter<W: Word, B> {
     backend: B,
     _marker: core::marker::PhantomData<W>,
 }
 
-impl<W: UnsignedInt + FromBytes + ToBytes, B> WordAdapter<W, B> {
-    /// Creates a new WordAdapter
+impl<W: Word, B> WordAdapter<W, B> {
+    /// Creates a new [`WordAdapter`].
     #[must_use]
     pub fn new(backend: B) -> Self {
         Self {
@@ -48,14 +47,16 @@ impl<W: UnsignedInt + FromBytes + ToBytes, B> WordAdapter<W, B> {
         }
     }
 
+    /// Consumes this adapter and returns the underlying backend.
     #[must_use]
     pub fn into_inner(self) -> B {
         self.backend
     }
 }
 
-impl<W: UnsignedInt + ToBytes + FromBytes + FiniteRangeNumber, B: Read> WordRead
-    for WordAdapter<W, B>
+impl<W: Word, B: Read> WordRead for WordAdapter<W, B>
+where
+    W::Bytes: Default + AsMut<[u8]>,
 {
     type Error = std::io::Error;
     type Word = W;
@@ -74,7 +75,7 @@ impl<W: UnsignedInt + ToBytes + FromBytes + FiniteRangeNumber, B: Read> WordRead
                             "Unexpected end of file. ",
                             "This might happen because the file length is not a multiple of the word size used for reading ({} bytes). ",
                             "In this case, please pad with zeros at the end of the file so that the file length is a multiple of {0}. ",
-                            "The inner std::io::Error was {:?}"), W::BYTES, e),
+                            "The inner std::io::Error was {:?}"), (W::BITS as usize / 8), e),
                     )
                 }
                 _ => e,
@@ -83,8 +84,9 @@ impl<W: UnsignedInt + ToBytes + FromBytes + FiniteRangeNumber, B: Read> WordRead
     }
 }
 
-impl<W: UnsignedInt + ToBytes + FromBytes + FiniteRangeNumber, B: Write> WordWrite
-    for WordAdapter<W, B>
+impl<W: Word, B: Write> WordWrite for WordAdapter<W, B>
+where
+    W::Bytes: AsRef<[u8]>,
 {
     type Error = std::io::Error;
     type Word = W;
@@ -100,20 +102,21 @@ impl<W: UnsignedInt + ToBytes + FromBytes + FiniteRangeNumber, B: Write> WordWri
     }
 }
 
-impl<W: UnsignedInt + ToBytes + FromBytes + FiniteRangeNumber, B: Seek> WordSeek
-    for WordAdapter<W, B>
-{
+impl<W: Word, B: Seek> WordSeek for WordAdapter<W, B> {
     type Error = std::io::Error;
 
     #[inline(always)]
     fn word_pos(&mut self) -> Result<u64, std::io::Error> {
-        Ok(self.backend.stream_position()?.div_ceil(W::BYTES as u64))
+        Ok(self
+            .backend
+            .stream_position()?
+            .div_ceil((W::BITS as usize / 8) as u64))
     }
 
     #[inline(always)]
     fn set_word_pos(&mut self, word_index: u64) -> Result<(), std::io::Error> {
         self.backend
-            .seek(SeekFrom::Start(word_index * W::BYTES as u64))?;
+            .seek(SeekFrom::Start(word_index * (W::BITS as usize / 8) as u64))?;
         Ok(())
     }
 }

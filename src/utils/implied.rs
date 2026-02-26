@@ -4,29 +4,38 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
+use core::iter::FusedIterator;
+
 use crate::utils::FindChangePoints;
 use alloc::vec::Vec;
 use rand::distr::weighted::WeightedIndex;
 use rand::prelude::*;
 
-/// Given the len function of a code, generates data that allows to sample
-/// its implied distribution, i.e. a code-word with length l has
-/// probability 2^(-l).
+/// Given the length function of a code, generates data that allows to sample
+/// its implied distribution, in which a codeword with length *n* has
+/// probability 2⁻*ⁿ*.
 ///
-/// This code works only with monotonic non-decreasing len functions.
-///
-/// Returns two vectors, the first one contains the input values where the
-/// function changes value and the code length at that point. The second
-/// vector contains the probability of each code length.
-///
-/// Since we cannot write more than 64 bits at once, the codes are limited to
-/// 128 bits.
+/// This function works only with monotonic non-decreasing length functions. It
+/// returns two vectors: the first vector contains one entry per distinct code
+/// length up to 128, plus one sentinel entry (the first change point with
+/// length > 128) that serves as the upper bound for the last valid group; the
+/// second vector contains the probability of each valid length group; its
+/// length is always one less than that of the first vector.
 pub fn get_implied_distribution(f: impl Fn(u64) -> usize) -> (Vec<(u64, usize)>, Vec<f64>) {
-    let change_points = FindChangePoints::new(f)
-        .take_while(|(_input, len)| *len <= 128)
-        .collect::<Vec<_>>();
+    // Collect change points with code length up to 128, plus the first
+    // change point with length > 128 as a sentinel upper bound for the
+    // last valid length group.
+    let mut change_points = Vec::new();
+    for item in FindChangePoints::new(f) {
+        let len = item.1;
+        change_points.push(item);
+        if len > 128 {
+            break;
+        }
+    }
 
-    // convert to len probabilities
+    // Convert to length probabilities. The sentinel serves as the upper
+    // bound (next_input) of the last valid group.
     let probabilities = change_points
         .windows(2)
         .map(|window| {
@@ -36,14 +45,13 @@ pub fn get_implied_distribution(f: impl Fn(u64) -> usize) -> (Vec<(u64, usize)>,
             prob * (next_input - input) as f64
         })
         .collect::<Vec<_>>();
-    // TODO: this ignores the last change point
 
     (change_points, probabilities)
 }
 
 /// An infinite iterator that always returns ().
 #[derive(Clone, Copy, Debug)]
-pub struct InfiniteIterator;
+struct InfiniteIterator;
 
 impl Iterator for InfiniteIterator {
     type Item = ();
@@ -54,14 +62,16 @@ impl Iterator for InfiniteIterator {
     }
 }
 
-/// Returns an **infinite iterator** of samples from the implied distribution of
+impl FusedIterator for InfiniteIterator {}
+
+/// Returns an infinite iterator of samples from the implied distribution of
 /// the given code length function.
-/// The function f should be the len function of the code.
 ///
-/// This code works only with monotonic non-decreasing len functions and
-/// the codes are limited to 128 bits as we cannot write more than 64 bits at once.
+/// The function `len` must be the length function of the code.
 ///
-/// # Example
+/// This function works only with monotonic non-decreasing length functions.
+///
+/// # Examples
 ///
 /// ```rust
 /// use dsi_bitstream::utils::sample_implied_distribution;
@@ -76,10 +86,10 @@ impl Iterator for InfiniteIterator {
 /// assert_eq!(vals.len(), 1000);
 /// ```
 pub fn sample_implied_distribution(
-    f: impl Fn(u64) -> usize,
+    len: impl Fn(u64) -> usize,
     rng: &mut impl Rng,
 ) -> impl Iterator<Item = u64> + '_ {
-    let (change_points, probabilities) = get_implied_distribution(f);
+    let (change_points, probabilities) = get_implied_distribution(len);
     let dist = WeightedIndex::new(probabilities)
         .expect("get_implied_distribution returns non-empty, positive weights");
 

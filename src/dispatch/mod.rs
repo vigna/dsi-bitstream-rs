@@ -8,10 +8,10 @@
 
 //! Programmable static and dynamic dispatch for codes.
 //!
-//! The code traits in [codes](super::codes), such as
-//! [`Omega`](crate::codes::omega), extend [`BitRead`] and [`BitWrite`] to
-//! provide a way to read and write codes from a bitstream. The user can thus
-//! select at compile time the desired trait and use the associated codes.
+//! The modules in [codes](super::codes), such as [`omega`], extend [`BitRead`]
+//! and [`BitWrite`] to provide a way to read and write codes from a bitstream.
+//! The user can thus select at compile time the desired trait and use the
+//! associated codes.
 //!
 //! In many contexts, however, one does not want to commit to a specific set of
 //! codes, but rather would like to write generic methods that accept some code
@@ -84,7 +84,7 @@
 //! [`MinimalBinary`] structure with the same functionality, as they cannot
 //! represent all integers.
 //!
-//! If Rust would support const enums in traits, one could create structures
+//! If Rust supported const enums in traits, one could create structures
 //! with const enum type parameters of type [`Codes`], and then the compiler
 //! would be able to optimize away the code selection at compile time. However,
 //! this is not currently possible, so we provide a workaround using a
@@ -162,7 +162,7 @@
 //! Both [`ConstCode`] and [`FuncCodeReader`] / [`FuncCodeWriter`] are limited
 //! to a fixed set of codes. If you need to work with a code that is not
 //! supported by them, you can implement your own version. For example, here we
-//! define a zero-sized struct that represent a Rice code with a fixed parameter
+//! define a zero-sized struct that represents a Rice code with a fixed parameter
 //! `LOG2_B`:
 //! ```rust
 //! use dsi_bitstream::prelude::*;
@@ -186,16 +186,16 @@
 //!     fn write<E: Endianness, CW: CodesWrite<E> + ?Sized>(
 //!         &self,
 //!         writer: &mut CW,
-//!         value: u64,
+//!         n: u64,
 //!     ) -> Result<usize, CW::Error> {
-//!         writer.write_rice(value, LOG2_B)
+//!         writer.write_rice(n, LOG2_B)
 //!     }
 //! }
 //!
 //! impl<const LOG2_B: usize> CodeLen for Rice<LOG2_B> {
 //!     #[inline]
-//!     fn len(&self, value: u64) -> usize {
-//!         len_rice(value, LOG2_B)
+//!     fn len(&self, n: u64) -> usize {
+//!         len_rice(n, LOG2_B)
 //!     }
 //! }
 //! ```
@@ -235,7 +235,7 @@ pub mod codes;
 pub use codes::*;
 
 /// Error returned when a code is not supported for dispatch.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum DispatchError {
     /// The code is not supported for dynamic dispatch.
     UnsupportedCode(Codes),
@@ -265,7 +265,7 @@ pub mod dynamic;
 pub use dynamic::{FuncCodeLen, FuncCodeReader, FuncCodeWriter};
 
 pub mod factory;
-pub use factory::{CodesReaderFactory, FactoryFuncCodeReader};
+pub use factory::{CodesReaderFactory, CodesReaderFactoryHelper, FactoryFuncCodeReader};
 
 /// Convenience extension trait for reading all the codes supported by the
 /// library.
@@ -275,19 +275,16 @@ pub use factory::{CodesReaderFactory, FactoryFuncCodeReader};
 ///
 /// This trait is mainly useful internally to implement the dispatch
 /// traits [`DynamicCodeRead`], [`StaticCodeRead`], [`DynamicCodeWrite`], and
-/// [`StaticCodeWrite`]. The user might find more useful to define its own
+/// [`StaticCodeWrite`]. The user might find it more useful to define their own
 /// convenience trait that includes only the codes they need.
 pub trait CodesRead<E: Endianness>:
     BitRead<E>
     + GammaRead<E>
-    + GammaReadParam<E>
     + DeltaRead<E>
-    + DeltaReadParam<E>
     + ZetaRead<E>
-    + ZetaReadParam<E>
     + OmegaRead<E>
-    + MinimalBinaryRead<E>
     + PiRead<E>
+    + MinimalBinaryRead<E>
     + GolombRead<E>
     + RiceRead<E>
     + ExpGolombRead<E>
@@ -299,14 +296,11 @@ pub trait CodesRead<E: Endianness>:
 impl<E: Endianness, B> CodesRead<E> for B where
     B: BitRead<E>
         + GammaRead<E>
-        + GammaReadParam<E>
         + DeltaRead<E>
-        + DeltaReadParam<E>
         + ZetaRead<E>
-        + ZetaReadParam<E>
         + OmegaRead<E>
-        + MinimalBinaryRead<E>
         + PiRead<E>
+        + MinimalBinaryRead<E>
         + GolombRead<E>
         + RiceRead<E>
         + ExpGolombRead<E>
@@ -322,9 +316,9 @@ impl<E: Endianness, B> CodesRead<E> for B where
 /// necessary traits.
 ///
 /// This trait is mainly useful internally to implement the dispatch
-/// traits [`DynamicCodeRead`], [`StaticCodeRead`], [`DynamicCodeWrite`], and
-/// [`StaticCodeWrite`]. The user might find more useful to define its own
-/// convenience trait that includes only the codes they need.
+/// traits [`DynamicCodeWrite`] and [`StaticCodeWrite`]. The user might find it
+/// more useful to define their own convenience trait that includes only the
+/// codes they need.
 pub trait CodesWrite<E: Endianness>:
     BitWrite<E>
     + GammaWrite<E>
@@ -376,7 +370,7 @@ pub trait DynamicCodeWrite {
     fn write<E: Endianness, CW: CodesWrite<E> + ?Sized>(
         &self,
         writer: &mut CW,
-        value: u64,
+        n: u64,
     ) -> Result<usize, CW::Error>;
 }
 
@@ -403,11 +397,12 @@ pub trait StaticCodeRead<E: Endianness, CR: CodesRead<E> + ?Sized> {
 /// For a fixed code this trait may be implemented by storing a function
 /// pointer.
 pub trait StaticCodeWrite<E: Endianness, CW: CodesWrite<E> + ?Sized> {
-    fn write(&self, writer: &mut CW, value: u64) -> Result<usize, CW::Error>;
+    fn write(&self, writer: &mut CW, n: u64) -> Result<usize, CW::Error>;
 }
 
 /// A trait providing a generic method to compute the length of a codeword.
 pub trait CodeLen {
-    /// Returns the length of the codeword for `value`.
-    fn len(&self, value: u64) -> usize;
+    /// Returns the length of the codeword for `n`.
+    #[must_use]
+    fn len(&self, n: u64) -> usize;
 }

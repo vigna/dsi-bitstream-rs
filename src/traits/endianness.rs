@@ -55,11 +55,11 @@ impl core::fmt::Display for BE {
 }
 
 /// Selector type for little-endian streams.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct LittleEndian;
 
 /// Selector type for big-endian streams.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct BigEndian;
 
 impl private::Endianness for LittleEndian {
@@ -87,5 +87,5 @@ pub type NativeEndian = LittleEndian;
 /// A type alias for the native endianness of the target platform.
 pub type NativeEndian = BigEndian;
 
-/// An Alias for [`NativeEndian`]
+/// Alias for [`NativeEndian`]
 pub type NE = NativeEndian;

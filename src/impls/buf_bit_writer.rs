@@ -11,40 +11,49 @@ use core::{mem, ptr};
 
 use crate::codes::params::{DefaultWriteParams, WriteParams};
 use crate::traits::*;
-use common_traits::{AsBytes, CastableInto, FiniteRangeNumber, Integer, Number};
 #[cfg(feature = "mem_dbg")]
 use mem_dbg::{MemDbg, MemSize};
+use num_primitive::PrimitiveInteger;
+use num_traits::{AsPrimitive, ConstOne, ConstZero};
 
 /// An implementation of [`BitWrite`] for a [`WordWrite`].
 ///
 /// This implementation uses a bit buffer to store bits that are not yet
 /// written. The size of the bit buffer is the size of the word used by the
-/// [`WordWrite`], which on most platform should be `usize`.
+/// [`WordWrite`], which on most platforms should be `usize`.
 ///
 /// The additional type parameter `WP` is used to select the parameters for the
 /// instantaneous codes, but the casual user should be happy with the default
 /// value. See [`WriteParams`] for more details.
 ///
-/// The convenience methods [`from_path`] and [`from_file`] create a
-/// [`BufBitWriter`] around a buffered file writer.
+/// The convenience functions [`from_path`] and [`from_file`] (requiring the
+/// `std` feature) create a [`BufBitWriter`] around a buffered file writer.
 ///
-/// For additional flexibility, this structures implements [`std::io::Write`].
-/// Note that because of coherence rules it is not possible to implement
-/// [`std::io::Write`] for a generic [`BitWrite`].
+/// For additional flexibility, when the `std` feature is enabled, this
+/// structure implements [`std::io::Write`]. Note that because of coherence
+/// rules it is not possible to implement [`std::io::Write`] for a generic
+/// [`BitWrite`].
+///
+/// # Panics on drop
+///
+/// The [`Drop`] implementation flushes the buffer, which requires writing to
+/// the backend. If the backend write fails, the drop will panic. To handle
+/// errors gracefully, call [`flush`](BitWrite::flush) or [`into_inner`](Self::into_inner)
+/// explicitly before dropping.
 
 #[derive(Debug)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
 pub struct BufBitWriter<E: Endianness, WW: WordWrite, WP: WriteParams = DefaultWriteParams> {
     /// The [`WordWrite`] to which we will write words.
     backend: WW,
-    /// The buffer where we store bits until we have a word worth of them.
-    /// It might be empty, but it is never full.
-    /// Only the lower (BE) or upper (LE) `WW::Word::BITS - space_left_in_buffer`
+    /// The buffer where we store bits until we have a word's worth of them. It
+    /// might be empty, but it is never full. Only the lower (BE) or upper (LE)
+    /// `WW::Word::BITS - space_left_in_buffer`
     /// bits are valid: the rest have undefined value.
     buffer: WW::Word,
     /// Number of upper (BE) or lower (LE) free bits in the buffer. It is always greater than zero.
     space_left_in_buffer: usize,
-    _marker_endianness: core::marker::PhantomData<(E, WP)>,
+    _marker: core::marker::PhantomData<(E, WP)>,
 }
 
 /// Creates a new [`BufBitWriter`] with [default write
@@ -59,14 +68,17 @@ pub struct BufBitWriter<E: Endianness, WW: WordWrite, WP: WriteParams = DefaultW
 /// ```no_run
 /// use dsi_bitstream::prelude::*;
 /// let mut writer = buf_bit_writer::from_path::<LE, u64>("data.bin")?;
-/// # Ok::<(), Box<dyn std::error::Error>>(())
+/// # Ok::<(), Box<dyn core::error::Error>>(())
 /// ```
 #[cfg(feature = "std")]
 pub fn from_path<E: Endianness, W: Word>(
     path: impl AsRef<std::path::Path>,
 ) -> std::io::Result<
     BufBitWriter<E, super::WordAdapter<W, std::io::BufWriter<std::fs::File>>, DefaultWriteParams>,
-> {
+>
+where
+    W::Bytes: AsRef<[u8]>,
+{
     Ok(from_file::<E, W>(std::fs::File::create(path)?))
 }
 
@@ -78,16 +90,21 @@ pub fn from_path<E: Endianness, W: Word>(
 #[cfg(feature = "std")]
 pub fn from_file<E: Endianness, W: Word>(
     file: std::fs::File,
-) -> BufBitWriter<E, super::WordAdapter<W, std::io::BufWriter<std::fs::File>>, DefaultWriteParams> {
+) -> BufBitWriter<E, super::WordAdapter<W, std::io::BufWriter<std::fs::File>>, DefaultWriteParams>
+where
+    W::Bytes: AsRef<[u8]>,
+{
     BufBitWriter::<E, super::WordAdapter<W, std::io::BufWriter<std::fs::File>>>::new(
         super::WordAdapter::new(std::io::BufWriter::new(file)),
     )
 }
 
 impl<E: Endianness, WW: WordWrite, WP: WriteParams> BufBitWriter<E, WW, WP> {
+    const WORD_BITS: usize = WW::Word::BITS as usize;
+
     /// Creates a new [`BufBitWriter`] around a [`WordWrite`].
     ///
-    /// ### Example
+    /// # Examples
     /// ```
     /// #[cfg(not(feature = "std"))]
     /// # fn main() {}
@@ -104,8 +121,8 @@ impl<E: Endianness, WW: WordWrite, WP: WriteParams> BufBitWriter<E, WW, WP> {
         Self {
             backend,
             buffer: WW::Word::ZERO,
-            space_left_in_buffer: WW::Word::BITS,
-            _marker_endianness: core::marker::PhantomData,
+            space_left_in_buffer: Self::WORD_BITS,
+            _marker: core::marker::PhantomData,
         }
     }
 }
@@ -130,7 +147,7 @@ impl<E: Endianness, WW: WordWrite, WP: WriteParams> core::ops::Drop for BufBitWr
         if TypeId::of::<E>() == TypeId::of::<LE>() {
             flush_le(self).unwrap();
         } else {
-            // TypeId::of::<E>() = TypeId::of::<BE>()
+            // TypeId::of::<E>() == TypeId::of::<BE>()
             flush_be(self).unwrap();
         }
     }
@@ -144,13 +161,13 @@ impl<E: Endianness, WW: WordWrite, WP: WriteParams> core::ops::Drop for BufBitWr
 fn flush_be<E: Endianness, WW: WordWrite, WP: WriteParams>(
     buf_bit_writer: &mut BufBitWriter<E, WW, WP>,
 ) -> Result<usize, WW::Error> {
-    let to_flush = WW::Word::BITS - buf_bit_writer.space_left_in_buffer;
+    let to_flush = WW::Word::BITS as usize - buf_bit_writer.space_left_in_buffer;
     if to_flush != 0 {
         buf_bit_writer.buffer <<= buf_bit_writer.space_left_in_buffer;
         buf_bit_writer
             .backend
             .write_word(buf_bit_writer.buffer.to_be())?;
-        buf_bit_writer.space_left_in_buffer = WW::Word::BITS;
+        buf_bit_writer.space_left_in_buffer = WW::Word::BITS as usize;
     }
     buf_bit_writer.backend.flush()?;
     Ok(to_flush)
@@ -158,7 +175,7 @@ fn flush_be<E: Endianness, WW: WordWrite, WP: WriteParams>(
 
 impl<WW: WordWrite, WP: WriteParams> BitWrite<BE> for BufBitWriter<BE, WW, WP>
 where
-    u64: CastableInto<WW::Word>,
+    u64: AsPrimitive<WW::Word>,
 {
     type Error = <WW as WordWrite>::Error;
 
@@ -168,67 +185,66 @@ where
 
     #[allow(unused_mut)]
     #[inline(always)]
-    fn write_bits(&mut self, mut value: u64, n_bits: usize) -> Result<usize, Self::Error> {
-        debug_assert!(n_bits <= 64);
+    fn write_bits(&mut self, mut value: u64, num_bits: usize) -> Result<usize, Self::Error> {
+        debug_assert!(num_bits <= 64);
         #[cfg(feature = "checks")]
         assert!(
-            value & (1_u128 << n_bits).wrapping_sub(1) as u64 == value,
+            value & (1_u128 << num_bits).wrapping_sub(1) as u64 == value,
             "Error: value {} does not fit in {} bits",
             value,
-            n_bits
+            num_bits
         );
         debug_assert!(self.space_left_in_buffer > 0);
 
         #[cfg(test)]
-        if n_bits < 64 {
+        if num_bits < 64 {
             // We put garbage in the higher bits for testing
-            value |= u64::MAX << n_bits;
+            value |= u64::MAX << num_bits;
         }
 
         // Easy way out: we fit the buffer
-        if n_bits < self.space_left_in_buffer {
-            self.buffer <<= n_bits;
-            // Clean up bits higher than n_bits
-            self.buffer |= value.cast() & !(WW::Word::MAX << n_bits as u32);
-            self.space_left_in_buffer -= n_bits;
-            return Ok(n_bits);
+        if num_bits < self.space_left_in_buffer {
+            self.buffer <<= num_bits;
+            // Clean up bits higher than num_bits
+            self.buffer |= value.as_() & !(WW::Word::MAX << num_bits as u32);
+            self.space_left_in_buffer -= num_bits;
+            return Ok(num_bits);
         }
 
         // Load the bottom of the buffer, if necessary, and dump the whole buffer
         self.buffer = self.buffer << (self.space_left_in_buffer - 1) << 1;
-        // The first shift discards bits higher than n_bits
-        self.buffer |= (value << (64 - n_bits) >> (64 - self.space_left_in_buffer)).cast();
+        // The first shift discards bits higher than num_bits
+        self.buffer |= (value << (64 - num_bits) >> (64 - self.space_left_in_buffer)).as_();
         self.backend.write_word(self.buffer.to_be())?;
 
-        let mut to_write = n_bits - self.space_left_in_buffer;
+        let mut to_write = num_bits - self.space_left_in_buffer;
 
-        for _ in 0..to_write / WW::Word::BITS {
-            to_write -= WW::Word::BITS;
-            self.backend
-                .write_word((value >> to_write).cast().to_be())?;
+        for _ in 0..to_write / (Self::WORD_BITS) {
+            to_write -= Self::WORD_BITS;
+            self.backend.write_word((value >> to_write).as_().to_be())?;
         }
 
-        self.space_left_in_buffer = WW::Word::BITS - to_write;
-        self.buffer = value.cast();
-        Ok(n_bits)
+        self.space_left_in_buffer = Self::WORD_BITS - to_write;
+        self.buffer = value.as_();
+        Ok(num_bits)
     }
 
     #[inline(always)]
     #[allow(clippy::collapsible_if)]
-    fn write_unary(&mut self, mut value: u64) -> Result<usize, Self::Error> {
-        debug_assert!(value < u64::MAX);
+    fn write_unary(&mut self, mut n: u64) -> Result<usize, Self::Error> {
+        debug_assert!(n < u64::MAX);
         debug_assert!(self.space_left_in_buffer > 0);
 
-        let code_length = value + 1;
+        let code_length = n + 1;
 
         // Easy way out: we fit the buffer
         if code_length <= self.space_left_in_buffer as u64 {
             self.space_left_in_buffer -= code_length as usize;
-            self.buffer = self.buffer << value << 1;
+            self.buffer = self.buffer << n << 1;
             self.buffer |= WW::Word::ONE;
             if self.space_left_in_buffer == 0 {
                 self.backend.write_word(self.buffer.to_be())?;
-                self.space_left_in_buffer = WW::Word::BITS;
+                self.space_left_in_buffer = Self::WORD_BITS;
             }
             return Ok(code_length as usize);
         }
@@ -236,20 +252,20 @@ where
         self.buffer = self.buffer << (self.space_left_in_buffer - 1) << 1;
         self.backend.write_word(self.buffer.to_be())?;
 
-        value -= self.space_left_in_buffer as u64;
+        n -= self.space_left_in_buffer as u64;
 
-        for _ in 0..value / WW::Word::BITS as u64 {
+        for _ in 0..n / WW::Word::BITS as u64 {
             self.backend.write_word(WW::Word::ZERO)?;
         }
 
-        value %= WW::Word::BITS as u64;
+        n %= WW::Word::BITS as u64;
 
-        if value == WW::Word::BITS as u64 - 1 {
+        if n == WW::Word::BITS as u64 - 1 {
             self.backend.write_word(WW::Word::ONE.to_be())?;
-            self.space_left_in_buffer = WW::Word::BITS;
+            self.space_left_in_buffer = Self::WORD_BITS;
         } else {
             self.buffer = WW::Word::ONE;
-            self.space_left_in_buffer = WW::Word::BITS - (value as usize + 1);
+            self.space_left_in_buffer = Self::WORD_BITS - (n as usize + 1);
         }
 
         Ok(code_length as usize)
@@ -266,7 +282,7 @@ where
                 | bit_read
                     .read_bits(n as usize)
                     .map_err(CopyError::ReadError)?
-                    .cast();
+                    .as_();
             self.space_left_in_buffer -= n as usize;
             return Ok(());
         }
@@ -275,7 +291,7 @@ where
             | bit_read
                 .read_bits(self.space_left_in_buffer)
                 .map_err(CopyError::ReadError)?
-                .cast();
+                .as_();
         n -= self.space_left_in_buffer as u64;
 
         self.backend
@@ -286,9 +302,9 @@ where
             self.backend
                 .write_word(
                     bit_read
-                        .read_bits(WW::Word::BITS)
+                        .read_bits(Self::WORD_BITS)
                         .map_err(CopyError::ReadError)?
-                        .cast()
+                        .as_()
                         .to_be(),
                 )
                 .map_err(CopyError::WriteError)?;
@@ -298,8 +314,8 @@ where
         self.buffer = bit_read
             .read_bits(n as usize)
             .map_err(CopyError::ReadError)?
-            .cast();
-        self.space_left_in_buffer = WW::Word::BITS - n as usize;
+            .as_();
+        self.space_left_in_buffer = Self::WORD_BITS - n as usize;
 
         Ok(())
     }
@@ -313,13 +329,13 @@ where
 fn flush_le<E: Endianness, WW: WordWrite, WP: WriteParams>(
     buf_bit_writer: &mut BufBitWriter<E, WW, WP>,
 ) -> Result<usize, WW::Error> {
-    let to_flush = WW::Word::BITS - buf_bit_writer.space_left_in_buffer;
+    let to_flush = WW::Word::BITS as usize - buf_bit_writer.space_left_in_buffer;
     if to_flush != 0 {
         buf_bit_writer.buffer >>= buf_bit_writer.space_left_in_buffer;
         buf_bit_writer
             .backend
             .write_word(buf_bit_writer.buffer.to_le())?;
-        buf_bit_writer.space_left_in_buffer = WW::Word::BITS;
+        buf_bit_writer.space_left_in_buffer = WW::Word::BITS as usize;
     }
     buf_bit_writer.backend.flush()?;
     Ok(to_flush)
@@ -327,7 +343,7 @@ fn flush_le<E: Endianness, WW: WordWrite, WP: WriteParams>(
 
 impl<WW: WordWrite, WP: WriteParams> BitWrite<LE> for BufBitWriter<LE, WW, WP>
 where
-    u64: CastableInto<WW::Word>,
+    u64: AsPrimitive<WW::Word>,
 {
     type Error = <WW as WordWrite>::Error;
 
@@ -336,68 +352,68 @@ where
     }
 
     #[inline(always)]
-    fn write_bits(&mut self, mut value: u64, n_bits: usize) -> Result<usize, Self::Error> {
-        debug_assert!(n_bits <= 64);
+    fn write_bits(&mut self, mut value: u64, num_bits: usize) -> Result<usize, Self::Error> {
+        debug_assert!(num_bits <= 64);
         #[cfg(feature = "checks")]
         assert!(
-            value & (1_u128 << n_bits).wrapping_sub(1) as u64 == value,
+            value & (1_u128 << num_bits).wrapping_sub(1) as u64 == value,
             "Error: value {} does not fit in {} bits",
             value,
-            n_bits
+            num_bits
         );
         debug_assert!(self.space_left_in_buffer > 0);
 
         #[cfg(test)]
-        if n_bits < 64 {
+        if num_bits < 64 {
             // We put garbage in the higher bits for testing
-            value |= u64::MAX << n_bits;
+            value |= u64::MAX << num_bits;
         }
 
         // Easy way out: we fit the buffer
-        if n_bits < self.space_left_in_buffer {
-            self.buffer >>= n_bits;
-            // Clean up bits higher than n_bits
+        if num_bits < self.space_left_in_buffer {
+            self.buffer >>= num_bits;
+            // Clean up bits higher than num_bits
             self.buffer |=
-                (value.cast() & !(WW::Word::MAX << n_bits as u32)).rotate_right(n_bits as u32);
-            self.space_left_in_buffer -= n_bits;
-            return Ok(n_bits);
+                (value.as_() & !(WW::Word::MAX << num_bits as u32)).rotate_right(num_bits as u32);
+            self.space_left_in_buffer -= num_bits;
+            return Ok(num_bits);
         }
 
         // Load the top of the buffer, if necessary, and dump the whole buffer
         self.buffer = self.buffer >> (self.space_left_in_buffer - 1) >> 1;
-        self.buffer |= value.cast() << (WW::Word::BITS - self.space_left_in_buffer);
+        self.buffer |= value.as_() << (Self::WORD_BITS - self.space_left_in_buffer);
         self.backend.write_word(self.buffer.to_le())?;
 
-        let to_write = n_bits - self.space_left_in_buffer;
+        let to_write = num_bits - self.space_left_in_buffer;
         value = value >> (self.space_left_in_buffer - 1) >> 1;
 
-        for _ in 0..to_write / WW::Word::BITS {
-            self.backend.write_word(value.cast().to_le())?;
+        for _ in 0..to_write / (Self::WORD_BITS) {
+            self.backend.write_word(value.as_().to_le())?;
             // This cannot be executed with WW::Word::BITS >= 64
             value >>= WW::Word::BITS;
         }
 
-        self.space_left_in_buffer = WW::Word::BITS - to_write % WW::Word::BITS;
-        self.buffer = value.cast().rotate_right(to_write as u32);
-        Ok(n_bits)
+        self.space_left_in_buffer = Self::WORD_BITS - to_write % (Self::WORD_BITS);
+        self.buffer = value.as_().rotate_right(to_write as u32);
+        Ok(num_bits)
     }
 
     #[inline(always)]
     #[allow(clippy::collapsible_if)]
-    fn write_unary(&mut self, mut value: u64) -> Result<usize, Self::Error> {
-        debug_assert!(value < u64::MAX);
+    fn write_unary(&mut self, mut n: u64) -> Result<usize, Self::Error> {
+        debug_assert!(n < u64::MAX);
         debug_assert!(self.space_left_in_buffer > 0);
 
-        let code_length = value + 1;
+        let code_length = n + 1;
 
         // Easy way out: we fit the buffer
         if code_length <= self.space_left_in_buffer as u64 {
             self.space_left_in_buffer -= code_length as usize;
-            self.buffer = self.buffer >> value >> 1;
-            self.buffer |= WW::Word::ONE << (WW::Word::BITS - 1);
+            self.buffer = self.buffer >> n >> 1;
+            self.buffer |= WW::Word::ONE << (Self::WORD_BITS - 1);
             if self.space_left_in_buffer == 0 {
                 self.backend.write_word(self.buffer.to_le())?;
-                self.space_left_in_buffer = WW::Word::BITS;
+                self.space_left_in_buffer = Self::WORD_BITS;
             }
             return Ok(code_length as usize);
         }
@@ -405,21 +421,21 @@ where
         self.buffer = self.buffer >> (self.space_left_in_buffer - 1) >> 1;
         self.backend.write_word(self.buffer.to_le())?;
 
-        value -= self.space_left_in_buffer as u64;
+        n -= self.space_left_in_buffer as u64;
 
-        for _ in 0..value / WW::Word::BITS as u64 {
+        for _ in 0..n / WW::Word::BITS as u64 {
             self.backend.write_word(WW::Word::ZERO)?;
         }
 
-        value %= WW::Word::BITS as u64;
+        n %= WW::Word::BITS as u64;
 
-        if value == WW::Word::BITS as u64 - 1 {
+        if n == WW::Word::BITS as u64 - 1 {
             self.backend
-                .write_word((WW::Word::ONE << (WW::Word::BITS - 1)).to_le())?;
-            self.space_left_in_buffer = WW::Word::BITS;
+                .write_word((WW::Word::ONE << (Self::WORD_BITS - 1)).to_le())?;
+            self.space_left_in_buffer = Self::WORD_BITS;
         } else {
-            self.buffer = WW::Word::ONE << (WW::Word::BITS - 1);
-            self.space_left_in_buffer = WW::Word::BITS - (value as usize + 1);
+            self.buffer = WW::Word::ONE << (Self::WORD_BITS - 1);
+            self.space_left_in_buffer = Self::WORD_BITS - (n as usize + 1);
         }
 
         Ok(code_length as usize)
@@ -436,7 +452,7 @@ where
                 | (bit_read
                     .read_bits(n as usize)
                     .map_err(CopyError::ReadError)?)
-                .cast()
+                .as_()
                 .rotate_right(n as u32);
             self.space_left_in_buffer -= n as usize;
             return Ok(());
@@ -446,7 +462,7 @@ where
             | (bit_read
                 .read_bits(self.space_left_in_buffer)
                 .map_err(CopyError::ReadError)?
-                .cast())
+                .as_())
             .rotate_right(self.space_left_in_buffer as u32);
         n -= self.space_left_in_buffer as u64;
 
@@ -458,9 +474,9 @@ where
             self.backend
                 .write_word(
                     bit_read
-                        .read_bits(WW::Word::BITS)
+                        .read_bits(Self::WORD_BITS)
                         .map_err(CopyError::ReadError)?
-                        .cast()
+                        .as_()
                         .to_le(),
                 )
                 .map_err(CopyError::WriteError)?;
@@ -470,9 +486,9 @@ where
         self.buffer = bit_read
             .read_bits(n as usize)
             .map_err(CopyError::ReadError)?
-            .cast()
+            .as_()
             .rotate_right(n as u32);
-        self.space_left_in_buffer = WW::Word::BITS - n as usize;
+        self.space_left_in_buffer = Self::WORD_BITS - n as usize;
 
         Ok(())
     }
@@ -481,11 +497,11 @@ where
 #[cfg(feature = "std")]
 impl<WW: WordWrite, WP: WriteParams> std::io::Write for BufBitWriter<BE, WW, WP>
 where
-    u64: CastableInto<WW::Word>,
+    u64: AsPrimitive<WW::Word>,
 {
     #[inline(always)]
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-        let mut iter = buf.chunks_exact(WW::Word::BYTES);
+        let mut iter = buf.chunks_exact(8);
 
         for word in &mut iter {
             self.write_bits(u64::from_be_bytes(word.try_into().unwrap()), 64)
@@ -516,11 +532,11 @@ where
 #[cfg(feature = "std")]
 impl<WW: WordWrite, WP: WriteParams> std::io::Write for BufBitWriter<LE, WW, WP>
 where
-    u64: CastableInto<WW::Word>,
+    u64: AsPrimitive<WW::Word>,
 {
     #[inline(always)]
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-        let mut iter = buf.chunks_exact(WW::Word::BYTES);
+        let mut iter = buf.chunks_exact(8);
 
         for word in &mut iter {
             self.write_bits(u64::from_le_bytes(word.try_into().unwrap()), 64)
@@ -556,7 +572,7 @@ mod tests {
     use std::io::Write;
 
     #[test]
-    fn test_write() -> Result<(), Box<dyn std::error::Error>> {
+    fn test_write() -> Result<(), Box<dyn core::error::Error>> {
         let data = [
             0x90, 0x2d, 0xd0, 0x26, 0xdf, 0x89, 0xbb, 0x7e, 0x3a, 0xd6, 0xc6, 0x96, 0x73, 0xe9,
             0x9d, 0xc9, 0x2a, 0x77, 0x82, 0xa9, 0xe6, 0x4b, 0x53, 0xcc, 0x83, 0x80, 0x4a, 0xf3,
@@ -597,7 +613,7 @@ mod tests {
     macro_rules! test_buf_bit_writer {
         ($f: ident, $word:ty) => {
             #[test]
-            fn $f() -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
+            fn $f() -> Result<(), Box<dyn core::error::Error + Send + Sync + 'static>> {
                 #[allow(unused_imports)]
                 use crate::{
                     codes::{GammaRead, GammaWrite},

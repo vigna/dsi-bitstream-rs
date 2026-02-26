@@ -1,6 +1,12 @@
 # Change Log
 
-## [0.8.0] - 2026-02-20
+## [0.8.0] - unreleased
+
+### New
+
+- A new method `Codes::canonicalize`
+  returns equivalent, canonical, more efficient implementations of a code
+  (e.g., π₀ = ɣ).
 
 ### Improved
 
@@ -12,8 +18,15 @@
 
 - We are no longer dependent on `anyhow`.
 
+- We are no longer dependent on `common_traits`, which has been replaced by
+  `num-primitive` and `num-traits`. The trait `DoubleType` now replaces
+  `common_traits::DoubleType`.
+
 - `rand` is optional and only necessary for the `implied` module, which
   is now gated by the `implied` feature.
+
+- `BufBitReader::into_inner` does not return a `Result` anymore, as it cannot
+  fail.
 
 ### Changed
 
@@ -32,16 +45,22 @@
   / `Codes::from_code_const` now return `Result<_, DispatchError>`
   instead of `anyhow::Result`.
 
-- A new method `Codes::canonicalize`
-  returns equivalent, canonical, more efficient implementations of a code
-  (e.g, π₀ = ɣ).
-
-- Removed `PartialEq` implementation for `Codes`. It was equating codes
+- Removed manual `PartialEq` implementation for `Codes`. It was equating codes
   with the same canonical form, which was confusing.
+
+- We use `core::error::Error` everywhere.
+
+- Parametric-codes traits and function are no longer exported at the top
+  level.
 
 ### Fixed
 
 - `[Count|Dbg]Bit[Reader|Writer]` were missing recent code implementations.
+
+- Fixed bug in `Write` implementations for `BufBitWriter`, which would
+  work only with word `u64`.
+
+- `get_implied_distribution` now uses also the last data point.
 
 ## [0.7.0] - 2026-01-27
 

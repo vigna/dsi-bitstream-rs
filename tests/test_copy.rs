@@ -5,14 +5,14 @@
  */
 
 #![cfg(feature = "alloc")]
-use common_traits::{DoubleType, UnsignedInt};
+use core::error::Error;
 use dsi_bitstream::prelude::{
     BitRead, BitWrite, BufBitReader, BufBitWriter, MemWordReader, MemWordWriterVec,
 };
-use dsi_bitstream::traits::{BE, Endianness, LE};
+use dsi_bitstream::traits::{BE, DoubleType, Endianness, LE, Word};
+use num_primitive::PrimitiveInteger;
 use rand::rngs::SmallRng;
 use rand::{RngExt, SeedableRng};
-use std::error::Error;
 
 #[test]
 fn test() -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
@@ -44,7 +44,7 @@ fn verify_read<E: Endianness>(
     Ok(())
 }
 
-fn verify_write<E: Endianness, W: UnsignedInt + DoubleType, A: AsRef<[W]>>(
+fn verify_write<E: Endianness, W: Word + DoubleType, A: AsRef<[W]>>(
     buffer: A,
     mut len: u64,
     skip: usize,
@@ -78,7 +78,7 @@ where
 
 const MAX_LEN: u64 = 500;
 
-fn test_endianness<E: Endianness, W: UnsignedInt + DoubleType + 'static>()
+fn test_endianness<E: Endianness, W: Word + PrimitiveInteger + DoubleType + 'static>()
 -> Result<(), Box<dyn Error + Send + Sync + 'static>>
 where
     BufBitReader<E, MemWordReader<W, Vec<W>>>: BitRead<E>,
@@ -94,7 +94,7 @@ where
     for len in 0..MAX_LEN {
         // copy_to, BufBitReader implementation
 
-        for skip in 0..=W::BITS.min(len as usize) {
+        for skip in 0..=(W::BITS as usize).min(len as usize) {
             let mut read = BufBitReader::<E, _>::new(MemWordReader::new(buffer.clone()));
             let mut copy_write = BufBitWriter::<E, _>::new(MemWordWriterVec::new(Vec::<W>::new()));
             read.skip_bits(skip)?;
@@ -111,7 +111,7 @@ where
 
         // copy_from, BufBitWriter implementation
 
-        for skip in 0..=W::BITS.min(len as usize) {
+        for skip in 0..=(W::BITS as usize).min(len as usize) {
             let mut read = BufBitReader::<E, _>::new(MemWordReader::new(buffer.clone()));
             let mut copy_write = BufBitWriter::<E, _>::new(MemWordWriterVec::new(Vec::<W>::new()));
             for _ in 0..skip {

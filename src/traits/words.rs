@@ -8,13 +8,58 @@
 
 use core::error::Error;
 
-use common_traits::*;
+use num_primitive::PrimitiveUnsigned;
+use num_traits::{AsPrimitive, ConstOne, ConstZero};
 
 /// This is a trait alias for all the properties that we need for words of
 /// memory read and written by either a [`WordRead`] or [`WordWrite`],
 /// respectively.
-pub trait Word: UnsignedInt + ToBytes + FromBytes + FiniteRangeNumber {}
-impl<W: UnsignedInt + ToBytes + FromBytes + FiniteRangeNumber> Word for W {}
+pub trait Word: PrimitiveUnsigned + ConstZero + ConstOne {}
+impl<W: PrimitiveUnsigned + ConstZero + ConstOne> Word for W {}
+
+/// Trait providing the double-width type for a given unsigned integer type.
+///
+/// This is used by [`crate::impls::BufBitReader`] to provide a bit buffer
+/// that is twice the width of the word read from the backend.
+///
+/// The methods
+/// [`as_double`](Self::as_double)/[`as_u64`](Self::as_u64) can be
+/// used to convert a word into its double-width type or to a `u64`,
+/// respectively, without loss of precision.
+pub trait DoubleType {
+    type DoubleType: Word + AsPrimitive<u64>;
+
+    /// Converts a word into its double-width type without loss of precision.
+    fn as_double(&self) -> Self::DoubleType;
+
+    /// Converts a word into a `u64` without loss of precision.
+    fn as_u64(&self) -> u64;
+}
+
+macro_rules! impl_double_type {
+    ($($t:ty => $d:ty),*) => {
+        $(
+            impl DoubleType for $t {
+                type DoubleType = $d;
+
+                fn as_double(&self) -> Self::DoubleType {
+                    *self as Self::DoubleType
+                }
+
+                fn as_u64(&self) -> u64 {
+                    *self as u64
+                }
+            }
+        )*
+    };
+}
+
+impl_double_type!(
+    u8 => u16,
+    u16 => u32,
+    u32 => u64,
+    u64 => u128
+);
 
 /// Sequential, streaming word-by-word reads.
 pub trait WordRead {
@@ -44,15 +89,19 @@ pub trait WordWrite {
 /// Seekability for [`WordRead`] and [`WordWrite`] streams.
 pub trait WordSeek {
     type Error: Error + Send + Sync + 'static;
-    /// Gets the current position in words from the start of the file.
+    /// Gets the current position in words from the start of the stream.
+    ///
+    /// Note that, consistently with
+    /// [`Seek::stream_position`](https://doc.rust-lang.org/beta/std/io/trait.Seek.html#method.stream_position),
+    /// this method takes a mutable reference to `self`.
     fn word_pos(&mut self) -> Result<u64, Self::Error>;
 
-    /// Sets the current position in words from the start of the file to `word_pos`.
+    /// Sets the current position in words from the start of the stream to `word_pos`.
     fn set_word_pos(&mut self, word_pos: u64) -> Result<(), Self::Error>;
 }
 
 /// Replacement of [`std::io::Error`] for `no_std` environments
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum WordError {
     UnexpectedEof { word_pos: usize },
 }

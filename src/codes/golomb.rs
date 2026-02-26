@@ -6,12 +6,12 @@
 
 //! Golomb codes.
 //!
-//! Given a modulo *b* ≥ 1, the Golomb code of a natural number *x* is given by ⌊*x*
+//! Given a modulus *b* ≥ 1, the Golomb code of a natural number *x* is given by ⌊*x*
 //! / *b*⌋ in [unary code](BitRead::read_unary) followed by the [minimal binary
 //! code](super::minimal_binary) of *x* mod *b*.
 //!
 //! Let *r* be the root of order *b* of 2: then, the implied distribution of the
-//! Golomb code of modulo *b* is ≈ 1/*rˣ*.
+//! Golomb code with modulus *b* is ≈ 1/*rˣ*.
 //!
 //! Note that the Golomb code for *b* = 1 is exactly the unary code.
 //!
@@ -21,7 +21,7 @@
 //!
 //! For a faster, less precise alternative, see [Rice codes](super::rice).
 //!
-//! The supported range is [0 . . 2⁶⁴) for *b* in [0 . . 2⁶⁴), but writing
+//! The supported range is [0 . . 2⁶⁴) for *b* in [1 . . 2⁶⁴), but writing
 //! 2⁶⁴ – 1 when *b* = 1 requires writing the unary code for 2⁶⁴ – 1, which
 //! might not be possible depending on the [`BitWrite`](crate::traits::BitWrite)
 //! implementation (and would require writing 2⁶⁴ bits anyway).
@@ -40,7 +40,7 @@
 use super::minimal_binary::{MinimalBinaryRead, MinimalBinaryWrite, len_minimal_binary};
 use crate::traits::*;
 
-/// Returns the length of the Golomb code for `n` with modulo `b`.
+/// Returns the length of the Golomb code for `n` with modulus `b`.
 #[must_use]
 #[inline(always)]
 pub fn len_golomb(n: u64, b: u64) -> usize {
@@ -49,6 +49,7 @@ pub fn len_golomb(n: u64, b: u64) -> usize {
 
 /// Returns the optimal value of *b* for a geometric distribution of base *p*,
 /// that is, ⌈−log(2 − *p*) / log(1 − *p*)⌉.
+#[cfg(feature = "std")]
 pub fn b(p: f64) -> u64 {
     (-(2.0 - p).ln() / (1.0 - p).ln()).ceil() as u64
 }

@@ -29,7 +29,8 @@
 //! natural numbers.
 //!
 //! Each code is implemented as a pair of traits for reading and writing (e.g.,
-//! [`GammaReadParam`] and [`GammaWriteParam`]). The traits for reading depend
+//! [`GammaReadParam`](gamma::GammaReadParam) and
+//! [`GammaWriteParam`](gamma::GammaWriteParam)). The traits for reading depend
 //! on [`BitRead`](crate::traits::BitRead), whereas the traits for writing
 //! depend on [`BitWrite`](crate::traits::BitWrite). Note that most codes cannot
 //! write the number [`u64::MAX`] because of overflow issues, which could be
@@ -84,7 +85,9 @@
 //! source. To pass a choice of code dynamically, please have a look at the
 //! [`dispatch`](crate::dispatch) module.
 
-use common_traits::{AsBytes, SignedInt, UnsignedInt};
+use num_primitive::{PrimitiveSigned, PrimitiveUnsigned};
+use num_traits::{AsPrimitive, ConstOne};
+
 pub mod params;
 
 pub mod gamma;
@@ -144,32 +147,34 @@ pub mod zeta_tables;
 ///
 /// This bijection is best known as the “ZigZag” transformation in Google's
 /// [Protocol Buffers](https://protobuf.dev/), albeit it has been used by
-/// [WebGraph](http://webgraph.di.unimi.it/) since 2003, and much likely in
+/// [WebGraph](http://webgraph.di.unimi.it/) since 2003, and most likely in
 /// other software, for the same purpose. Note that the compression standards
 /// H.264/H.265 use a different transformation for exponential Golomb codes,
 /// mapping a positive integer `x` to `2x − 1` and a zero or negative integer
 /// `x` to `−2x`.
 ///
-/// The implementation is just based on the traits [`UnsignedInt`] and
-/// [`AsBytes`]. We provide blanket implementations for all primitive unsigned
-/// integer types, but it can be used with any type implementing those traits.
-pub trait ToInt: UnsignedInt + AsBytes {
+/// The implementation uses a blanket implementation for all primitive
+/// unsigned integer types.
+pub trait ToInt {
+    type Signed;
+    #[must_use]
+    fn to_int(self) -> Self::Signed;
+}
+
+impl<U: PrimitiveUnsigned + ConstOne + AsPrimitive<U::Signed>> ToInt for U
+where
+    U::Signed: PrimitiveSigned + Copy + 'static,
+{
+    type Signed = U::Signed;
     #[inline]
-    fn to_int(self) -> Self::SignedInt {
-        (self >> Self::ONE).to_signed() ^ (-(self & Self::ONE).to_signed())
+    fn to_int(self) -> U::Signed {
+        (self >> 1u32).as_() ^ -((self & U::ONE).as_())
     }
 }
 
-impl ToInt for u128 {}
-impl ToInt for u64 {}
-impl ToInt for u32 {}
-impl ToInt for u16 {}
-impl ToInt for u8 {}
-impl ToInt for usize {}
-
 /// Extension trait mapping signed integers bijectively to natural numbers.
 ///
-/// The method [`to_nat`](#method.to_nat) will map an nonnegative integer `x`
+/// The method [`to_nat`](#method.to_nat) will map a nonnegative integer `x`
 /// to `2x` and a negative integer `x` to `−2x − 1`. The inverse transformation
 /// is provided by the [`ToInt`] trait.
 ///
@@ -178,25 +183,27 @@ impl ToInt for usize {}
 ///
 /// This bijection is best known as the “ZigZag” transformation in Google's
 /// [Protocol Buffers](https://protobuf.dev/), albeit it has been used by
-/// [WebGraph](http://webgraph.di.unimi.it/) since 2003, and much likely in
+/// [WebGraph](http://webgraph.di.unimi.it/) since 2003, and most likely in
 /// other software, for the same purpose. Note that the compression standards
 /// H.264/H.265 use a different transformation for exponential Golomb codes,
 /// mapping a positive integer `x` to `2x − 1` and a zero or negative integer
 /// `x` to `−2x`.
 ///
-/// The implementation is just based on the traits [`SignedInt`] and
-/// [`AsBytes`]. We provide blanket implementations for all primitive signed
-/// integer types, but it can be used with any type implementing those traits.
-pub trait ToNat: SignedInt + AsBytes {
-    #[inline]
-    fn to_nat(self) -> Self::UnsignedInt {
-        (self << Self::ONE).to_unsigned() ^ (self >> (Self::BITS - 1)).to_unsigned()
-    }
+/// The implementation uses a blanket implementation for all primitive
+/// signed integer types.
+pub trait ToNat {
+    type Unsigned;
+    #[must_use]
+    fn to_nat(self) -> Self::Unsigned;
 }
 
-impl ToNat for i128 {}
-impl ToNat for i64 {}
-impl ToNat for i32 {}
-impl ToNat for i16 {}
-impl ToNat for i8 {}
-impl ToNat for isize {}
+impl<S: PrimitiveSigned + AsPrimitive<S::Unsigned>> ToNat for S
+where
+    S::Unsigned: PrimitiveUnsigned + Copy + 'static,
+{
+    type Unsigned = S::Unsigned;
+    #[inline]
+    fn to_nat(self) -> S::Unsigned {
+        (self << 1u32).as_() ^ (self >> (S::BITS - 1)).as_()
+    }
+}

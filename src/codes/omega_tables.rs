@@ -3,7 +3,7 @@
 // ~~~~~~~~~~~~~~~~~~~ DO NOT MODIFY ~~~~~~~~~~~~~~~~~~~~~~
 // Methods for reading and writing values using precomputed tables for omega codes
 use crate::traits::{BE, BitRead, BitWrite, LE};
-use common_traits::*;
+use num_traits::AsPrimitive;
 /// How many bits are needed to read the tables in this
 pub const READ_BITS: usize = 10;
 const _: () = assert!(
@@ -29,7 +29,7 @@ pub const WRITE_MAX: u64 = 63;
 #[inline(always)]
 pub fn read_table_le<B: BitRead<LE>>(backend: &mut B) -> (i8, u64) {
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
-        let idx = idx.cast() as usize;
+        let idx: usize = idx.as_() as usize;
         let len_with_flag = READ_LEN_LE[idx];
         let value = READ_LE[idx] as u64;
         backend.skip_bits_after_peek((len_with_flag & 0x7F) as usize);
@@ -53,7 +53,7 @@ pub fn read_table_le<B: BitRead<LE>>(backend: &mut B) -> (i8, u64) {
 #[inline(always)]
 pub fn read_table_be<B: BitRead<BE>>(backend: &mut B) -> (i8, u64) {
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
-        let idx = idx.cast() as usize;
+        let idx: usize = idx.as_() as usize;
         let len_with_flag = READ_LEN_BE[idx];
         let value = READ_BE[idx] as u64;
         backend.skip_bits_after_peek((len_with_flag & 0x7F) as usize);
@@ -72,27 +72,27 @@ pub fn read_table_be<B: BitRead<BE>>(backend: &mut B) -> (i8, u64) {
 #[inline(always)]
 pub fn write_table_le<B: BitWrite<LE>>(
     backend: &mut B,
-    mut value: u64,
+    mut n: u64,
 ) -> Result<Option<usize>, B::Error> {
-    Ok(if let Some(bits) = WRITE_LE.get(value as usize) {
-        let len = WRITE_LEN_LE[value as usize] as usize;
+    Ok(if let Some(bits) = WRITE_LE.get(n as usize) {
+        let len = WRITE_LEN_LE[n as usize] as usize;
         backend.write_bits(*bits as u64, len)?;
         Some(len)
     } else {
-        value += 1;
-        let λ = value.ilog2() as usize;
+        n += 1;
+        let λ = n.ilog2() as usize;
         let bits = WRITE_LE[λ - 1];
         let len = WRITE_LEN_LE[λ - 1] as usize;
         backend.write_bits(bits as u64, len - 1)?;
         #[cfg(feature = "checks")]
         {
             // Clean up after the lowest λ bits in case checks are enabled
-            value &= u64::MAX >> (u64::BITS - (λ as u32));
+            n &= u64::MAX >> (u64::BITS - (λ as u32));
         }
         // Little-endian case: rotate left the lower λ + 1 bits (the bit in
         // position λ is a one) so that the lowest bit can be peeked to find the
         // block.
-        backend.write_bits(value << 1 | 1, λ + 1)?;
+        backend.write_bits(n << 1 | 1, λ + 1)?;
         backend.write_bits(0, 1)?;
         Some(λ + len + 1)
     })
@@ -105,19 +105,19 @@ pub fn write_table_le<B: BitWrite<LE>>(
 #[inline(always)]
 pub fn write_table_be<B: BitWrite<BE>>(
     backend: &mut B,
-    mut value: u64,
+    mut n: u64,
 ) -> Result<Option<usize>, B::Error> {
-    Ok(if let Some(bits) = WRITE_BE.get(value as usize) {
-        let len = WRITE_LEN_BE[value as usize] as usize;
+    Ok(if let Some(bits) = WRITE_BE.get(n as usize) {
+        let len = WRITE_LEN_BE[n as usize] as usize;
         backend.write_bits(*bits as u64, len)?;
         Some(len)
     } else {
-        value += 1;
-        let λ = value.ilog2() as usize;
+        n += 1;
+        let λ = n.ilog2() as usize;
         let bits = WRITE_BE[λ - 1];
         let len = WRITE_LEN_BE[λ - 1] as usize;
         backend.write_bits(bits as u64 >> 1, len - 1)?;
-        backend.write_bits(value, λ + 1)?;
+        backend.write_bits(n, λ + 1)?;
         backend.write_bits(0, 1)?;
         Some(λ + len + 1)
     })

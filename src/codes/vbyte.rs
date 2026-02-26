@@ -9,7 +9,7 @@
 //!
 //! These codes represent a natural number as a sequence of bytes, the length of
 //! the sequence depends on the magnitude of the number. They are used in many
-//! contexts, and they are known under a plethora of different names such
+//! contexts, and they are known under a plethora of different names such as
 //! “vbyte”, “varint”, “[variable-length
 //! quantity](https://en.wikipedia.org/wiki/Variable-length_quantity)”, “LEB”,
 //! and so on.
@@ -36,7 +36,7 @@
 //!
 //! The first property is the endianness of the bytes: in big-endian codes, the
 //! first byte contains the highest (most significant) bits, whereas in
-//! little-endian codes, the first byte contains the lowest (less significant)
+//! little-endian codes, the first byte contains the lowest (least significant)
 //! bits.
 //!
 //! The advantage of the big-endian variant is that is lexicographical, that is,
@@ -62,7 +62,7 @@
 //! bit of each byte. However, one can gather all continuation bits in the first
 //! byte ([as UTF-8 does](https://en.wikipedia.org/wiki/UTF-8)). This approach
 //! makes it possible to compute the length of the code using a call to
-//! [`usize::leading_ones`] on the first negated byte, which usually maps to a
+//! [`u8::leading_ones`] on the first negated byte, which usually maps to a
 //! negation and a call to a fast instruction for the detection of the most
 //! significant bit, improving branch prediction.
 //!
@@ -82,7 +82,7 @@
 //!
 //! We provide two unsigned, ungrouped, complete representations, one
 //! [big-endian](VByteBeRead) and one [little-endian](VByteLeRead). We recommend
-//! in general big-endian version as it is lexicographical. However, the
+//! in general the big-endian version as it is lexicographical. However, the
 //! big-endian version needs a small buffer when writing, so on some hardware
 //! the little-endian version might be faster.
 //!
@@ -100,7 +100,7 @@
 //!
 //! - The [LEB128](https://en.wikipedia.org/wiki/LEB128) code used by LLVM is a
 //!   little-endian incomplete ungrouped representation. There is both a signed
-//!   and an unsigned version; the signed version represent negative numbers
+//!   and an unsigned version; the signed version represents negative numbers
 //!   using two's complement.
 //!
 //! - The [code used by
@@ -113,26 +113,26 @@
 
 use crate::traits::*;
 
-/// Returns the length of the variable-length byte code for `value` in bytes.
+/// Returns the length of the variable-length byte code for `n` in bytes.
 #[must_use]
 #[inline(always)]
-pub fn byte_len_vbyte(mut value: u64) -> usize {
+pub fn byte_len_vbyte(mut n: u64) -> usize {
     let mut len = 1;
     loop {
-        value >>= 7;
-        if value == 0 {
+        n >>= 7;
+        if n == 0 {
             return len;
         }
-        value -= 1;
+        n -= 1;
         len += 1;
     }
 }
 
-/// Returns the length of the variable-length byte code for `value` in bits.
+/// Returns the length of the variable-length byte code for `n` in bits.
 #[must_use]
 #[inline(always)]
-pub fn bit_len_vbyte(value: u64) -> usize {
-    8 * byte_len_vbyte(value)
+pub fn bit_len_vbyte(n: u64) -> usize {
+    8 * byte_len_vbyte(n)
 }
 
 /// Trait for reading big-endian variable-length byte codes.
@@ -188,28 +188,28 @@ impl<E: Endianness, B: BitRead<E>> VByteLeRead<E> for B {
 /// Note that the endianness of the code is independent
 /// from the endianness of the underlying bit stream.
 pub trait VByteBeWrite<E: Endianness>: BitWrite<E> {
-    fn write_vbyte_be(&mut self, value: u64) -> Result<usize, Self::Error>;
+    fn write_vbyte_be(&mut self, n: u64) -> Result<usize, Self::Error>;
 }
 /// Trait for writing little-endian variable-length byte codes.
 ///
 /// Note that the endianness of the code is independent
 /// from the endianness of the underlying bit stream.
 pub trait VByteLeWrite<E: Endianness>: BitWrite<E> {
-    fn write_vbyte_le(&mut self, value: u64) -> Result<usize, Self::Error>;
+    fn write_vbyte_le(&mut self, n: u64) -> Result<usize, Self::Error>;
 }
 
 impl<E: Endianness, B: BitWrite<E>> VByteBeWrite<E> for B {
     #[inline(always)]
-    fn write_vbyte_be(&mut self, mut value: u64) -> Result<usize, Self::Error> {
+    fn write_vbyte_be(&mut self, mut n: u64) -> Result<usize, Self::Error> {
         let mut buf = [0u8; 10];
         let mut pos = buf.len() - 1;
-        buf[pos] = (value & 0x7F) as u8;
-        value >>= 7;
-        while value != 0 {
-            value -= 1;
+        buf[pos] = (n & 0x7F) as u8;
+        n >>= 7;
+        while n != 0 {
+            n -= 1;
             pos -= 1;
-            buf[pos] = 0x80 | (value & 0x7F) as u8;
-            value >>= 7;
+            buf[pos] = 0x80 | (n & 0x7F) as u8;
+            n >>= 7;
         }
         let bytes_to_write = buf.len() - pos;
         for &byte in &buf[pos..] {
@@ -221,18 +221,18 @@ impl<E: Endianness, B: BitWrite<E>> VByteBeWrite<E> for B {
 
 impl<E: Endianness, B: BitWrite<E>> VByteLeWrite<E> for B {
     #[inline(always)]
-    fn write_vbyte_le(&mut self, mut value: u64) -> Result<usize, Self::Error> {
+    fn write_vbyte_le(&mut self, mut n: u64) -> Result<usize, Self::Error> {
         let mut len = 1;
         loop {
-            let byte = (value & 0x7F) as u8;
-            value >>= 7;
-            if value != 0 {
+            let byte = (n & 0x7F) as u8;
+            n >>= 7;
+            if n != 0 {
                 self.write_bits((byte | 0x80) as u64, 8)?;
             } else {
                 self.write_bits(byte as u64, 8)?;
                 break;
             }
-            value -= 1;
+            n -= 1;
             len += 1;
         }
         Ok(len * 8)
@@ -246,13 +246,13 @@ impl<E: Endianness, B: BitWrite<E>> VByteLeWrite<E> for B {
 #[inline(always)]
 #[cfg(feature = "std")]
 pub fn vbyte_write<E: Endianness, W: std::io::Write>(
-    value: u64,
+    n: u64,
     writer: &mut W,
 ) -> std::io::Result<usize> {
     if core::any::TypeId::of::<E>() == core::any::TypeId::of::<BigEndian>() {
-        vbyte_write_be(value, writer)
+        vbyte_write_be(n, writer)
     } else {
-        vbyte_write_le(value, writer)
+        vbyte_write_le(n, writer)
     }
 }
 
@@ -260,16 +260,16 @@ pub fn vbyte_write<E: Endianness, W: std::io::Write>(
 /// byte codes and return the number of bytes written.
 #[inline(always)]
 #[cfg(feature = "std")]
-pub fn vbyte_write_be<W: std::io::Write>(mut value: u64, w: &mut W) -> std::io::Result<usize> {
+pub fn vbyte_write_be<W: std::io::Write>(mut n: u64, w: &mut W) -> std::io::Result<usize> {
     let mut buf = [0u8; 10];
     let mut pos = buf.len() - 1;
-    buf[pos] = (value & 0x7F) as u8;
-    value >>= 7;
-    while value != 0 {
-        value -= 1;
+    buf[pos] = (n & 0x7F) as u8;
+    n >>= 7;
+    while n != 0 {
+        n -= 1;
         pos -= 1;
-        buf[pos] = 0x80 | (value & 0x7F) as u8;
-        value >>= 7;
+        buf[pos] = 0x80 | (n & 0x7F) as u8;
+        n >>= 7;
     }
     let bytes_to_write = buf.len() - pos;
     w.write_all(&buf[pos..])?;
@@ -280,28 +280,28 @@ pub fn vbyte_write_be<W: std::io::Write>(mut value: u64, w: &mut W) -> std::io::
 /// byte codes and return the number of bytes written.
 #[inline(always)]
 #[cfg(feature = "std")]
-pub fn vbyte_write_le<W: std::io::Write>(mut value: u64, writer: &mut W) -> std::io::Result<usize> {
+pub fn vbyte_write_le<W: std::io::Write>(mut n: u64, writer: &mut W) -> std::io::Result<usize> {
     let mut len = 1;
     loop {
-        let byte = (value & 0x7F) as u8;
-        value >>= 7;
-        if value != 0 {
+        let byte = (n & 0x7F) as u8;
+        n >>= 7;
+        if n != 0 {
             writer.write_all(&[byte | 0x80])?;
         } else {
             writer.write_all(&[byte])?;
             break;
         }
-        value -= 1;
+        n -= 1;
         len += 1;
     }
     Ok(len)
 }
 
-#[inline(always)]
-#[cfg(feature = "std")]
 /// Decode a natural number from a byte stream using variable-length byte codes.
 ///
 /// This method just delegates to the correct endianness-specific method.
+#[inline(always)]
+#[cfg(feature = "std")]
 pub fn vbyte_read<E: Endianness, R: std::io::Read>(reader: &mut R) -> std::io::Result<u64> {
     if core::any::TypeId::of::<E>() == core::any::TypeId::of::<BigEndian>() {
         vbyte_read_be(reader)

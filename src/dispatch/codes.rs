@@ -13,6 +13,8 @@
 //! [dynamic] or [static] dispatch.
 
 use super::*;
+#[cfg(feature = "serde")]
+use alloc::string::{String, ToString};
 #[cfg(feature = "mem_dbg")]
 use mem_dbg::{MemDbg, MemSize};
 
@@ -21,9 +23,9 @@ use mem_dbg::{MemDbg, MemSize};
 /// This enum is kept in sync with implementations in the
 /// [`codes`](crate::codes) module.
 ///
-/// Both [`Display`](std::fmt::Display) and [`FromStr`](std::str::FromStr) are
-/// implemented for this enum in a dual way, which makes it possible to store a
-/// code as a string in a configuration file, and then parse it back.
+/// Both [`Display`](core::fmt::Display) and [`FromStr`](core::str::FromStr) are
+/// implemented for this enum in a compatible way, making it possible to store a
+/// code as a string in a configuration file and then parse it back.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
 #[cfg_attr(feature = "mem_dbg", mem_size_flat)]
@@ -63,6 +65,7 @@ impl Codes {
     ///   [`Gamma`](Codes::Gamma)
     ///
     /// - [`Golomb(2ⁿ)`](Codes::Golomb) → [`Rice(n)`](Codes::Rice)
+    #[must_use]
     pub const fn canonicalize(self) -> Self {
         match self {
             Self::Zeta(1) | Self::ExpGolomb(0) | Self::Pi(0) => Self::Gamma,
@@ -92,9 +95,9 @@ impl Codes {
     pub fn write<E: Endianness, CW: CodesWrite<E> + ?Sized>(
         &self,
         writer: &mut CW,
-        value: u64,
+        n: u64,
     ) -> Result<usize, CW::Error> {
-        DynamicCodeWrite::write(self, writer, value)
+        DynamicCodeWrite::write(self, writer, n)
     }
 
     /// Converts a code to the constant enum [`code_consts`]
@@ -104,6 +107,11 @@ impl Codes {
     /// The code is [canonicalized](Codes::canonicalize) before
     /// the conversion, so equivalent codes map to the same
     /// constant.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`DispatchError::UnsupportedCode`] if the (canonicalized)
+    /// code has no corresponding constant in [`code_consts`].
     pub const fn to_code_const(&self) -> Result<usize, DispatchError> {
         Ok(match self.canonicalize() {
             Self::Unary => code_consts::UNARY,
@@ -164,6 +172,11 @@ impl Codes {
     }
 
     /// Converts a value from [`code_consts`] to a code.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`DispatchError::UnsupportedCodeConst`] if the value
+    /// does not correspond to any known code constant.
     pub const fn from_code_const(const_code: usize) -> Result<Self, DispatchError> {
         Ok(match const_code {
             code_consts::UNARY => Self::Unary,
@@ -251,22 +264,22 @@ impl DynamicCodeWrite for Codes {
     fn write<E: Endianness, CW: CodesWrite<E> + ?Sized>(
         &self,
         writer: &mut CW,
-        value: u64,
+        n: u64,
     ) -> Result<usize, CW::Error> {
         Ok(match self.canonicalize() {
-            Codes::Unary => writer.write_unary(value)?,
-            Codes::Gamma => writer.write_gamma(value)?,
-            Codes::Delta => writer.write_delta(value)?,
-            Codes::Omega => writer.write_omega(value)?,
-            Codes::VByteBe => writer.write_vbyte_be(value)?,
-            Codes::VByteLe => writer.write_vbyte_le(value)?,
-            Codes::Zeta(3) => writer.write_zeta3(value)?,
-            Codes::Zeta(k) => writer.write_zeta(value, k)?,
-            Codes::Pi(2) => writer.write_pi2(value)?,
-            Codes::Pi(k) => writer.write_pi(value, k)?,
-            Codes::Golomb(b) => writer.write_golomb(value, b)?,
-            Codes::ExpGolomb(k) => writer.write_exp_golomb(value, k)?,
-            Codes::Rice(log2_b) => writer.write_rice(value, log2_b)?,
+            Codes::Unary => writer.write_unary(n)?,
+            Codes::Gamma => writer.write_gamma(n)?,
+            Codes::Delta => writer.write_delta(n)?,
+            Codes::Omega => writer.write_omega(n)?,
+            Codes::VByteBe => writer.write_vbyte_be(n)?,
+            Codes::VByteLe => writer.write_vbyte_le(n)?,
+            Codes::Zeta(3) => writer.write_zeta3(n)?,
+            Codes::Zeta(k) => writer.write_zeta(n, k)?,
+            Codes::Pi(2) => writer.write_pi2(n)?,
+            Codes::Pi(k) => writer.write_pi(n, k)?,
+            Codes::Golomb(b) => writer.write_golomb(n, b)?,
+            Codes::ExpGolomb(k) => writer.write_exp_golomb(n, k)?,
+            Codes::Rice(log2_b) => writer.write_rice(n, log2_b)?,
         })
     }
 }
@@ -280,25 +293,25 @@ impl<E: Endianness, CR: CodesRead<E> + ?Sized> StaticCodeRead<E, CR> for Codes {
 
 impl<E: Endianness, CW: CodesWrite<E> + ?Sized> StaticCodeWrite<E, CW> for Codes {
     #[inline(always)]
-    fn write(&self, writer: &mut CW, value: u64) -> Result<usize, CW::Error> {
-        <Self as DynamicCodeWrite>::write(self, writer, value)
+    fn write(&self, writer: &mut CW, n: u64) -> Result<usize, CW::Error> {
+        <Self as DynamicCodeWrite>::write(self, writer, n)
     }
 }
 
 impl CodeLen for Codes {
     #[inline]
-    fn len(&self, value: u64) -> usize {
+    fn len(&self, n: u64) -> usize {
         match self.canonicalize() {
-            Codes::Unary => value as usize + 1,
-            Codes::Gamma => len_gamma(value),
-            Codes::Delta => len_delta(value),
-            Codes::Omega => len_omega(value),
-            Codes::VByteLe | Codes::VByteBe => bit_len_vbyte(value),
-            Codes::Zeta(k) => len_zeta(value, k),
-            Codes::Pi(k) => len_pi(value, k),
-            Codes::Golomb(b) => len_golomb(value, b),
-            Codes::ExpGolomb(k) => len_exp_golomb(value, k),
-            Codes::Rice(log2_b) => len_rice(value, log2_b),
+            Codes::Unary => n as usize + 1,
+            Codes::Gamma => len_gamma(n),
+            Codes::Delta => len_delta(n),
+            Codes::Omega => len_omega(n),
+            Codes::VByteLe | Codes::VByteBe => bit_len_vbyte(n),
+            Codes::Zeta(k) => len_zeta(n, k),
+            Codes::Pi(k) => len_pi(n, k),
+            Codes::Golomb(b) => len_golomb(n, b),
+            Codes::ExpGolomb(k) => len_exp_golomb(n, k),
+            Codes::Rice(log2_b) => len_rice(n, log2_b),
         }
     }
 }
@@ -356,10 +369,8 @@ impl core::fmt::Display for Codes {
 
 fn array_format_error(s: &str) -> [u8; 32] {
     let mut error_buffer = [0u8; 32];
-    const ERROR_PREFIX: &[u8] = b"could not parse ";
-    error_buffer[..ERROR_PREFIX.len()].copy_from_slice(ERROR_PREFIX);
-    error_buffer[ERROR_PREFIX.len()..ERROR_PREFIX.len() + s.len().min(32 - ERROR_PREFIX.len())]
-        .copy_from_slice(&s.as_bytes()[..s.len().min(32 - ERROR_PREFIX.len())]);
+    let len = s.len().min(32);
+    error_buffer[..len].copy_from_slice(&s.as_bytes()[..len]);
     error_buffer
 }
 
@@ -430,7 +441,10 @@ impl<'de> serde::Deserialize<'de> for Codes {
 /// [`StaticCodeWrite`] or [`CodeLen`] implementing minimal binary coding
 /// is necessary.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct MinimalBinary(pub u64);
+pub struct MinimalBinary(
+    /// The upper bound of the minimal binary code.
+    pub u64,
+);
 
 impl DynamicCodeRead for MinimalBinary {
     fn read<E: Endianness, R: CodesRead<E> + ?Sized>(

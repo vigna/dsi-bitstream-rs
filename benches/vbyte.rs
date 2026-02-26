@@ -16,7 +16,7 @@ use std::io::{Read, Write};
 use std::marker::PhantomData;
 use std::time::Duration;
 
-type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+type Result<T> = std::result::Result<T, Box<dyn core::error::Error>>;
 
 pub const GAMMA_DATA: usize = 1_000_000;
 pub const CAPACITY: usize = 4 * GAMMA_DATA;
@@ -195,10 +195,10 @@ impl<E: Endianness, F: Format, B: IsComplete, C: ContinuationBit> WithName
 
 impl<E: Endianness> ByteCode for ByteStreamVByte<E, GroupedIfs, Complete, OneCont> {
     fn read(r: &mut impl Read) -> Result<u64> {
-        Ok(dsi_bitstream::codes::vbyte::vbyte_read::<E, _>(r)?)
+        Ok(dsi_bitstream::codes::vbyte::vbyte_read_be(r)?)
     }
     fn write(value: u64, w: &mut impl Write) -> Result<usize> {
-        Ok(dsi_bitstream::codes::vbyte::vbyte_write::<E, _>(value, w)?)
+        Ok(dsi_bitstream::codes::vbyte::vbyte_write::<BE, _>(value, w)?)
     }
 }
 
@@ -451,8 +451,13 @@ pub fn benchmark(c: &mut Criterion) {
     bench_byte_stream::<ByteStreamVByte<LE, GroupedIfs, Complete, OneCont>>(c);
     bench_byte_stream::<ByteStreamVByte<BE, GroupedIfs, Complete, OneCont>>(c);
 
-    bench_bitstream::<BitStreamVByteBE<GroupedIfs, Complete, OneCont>>(c);
-    bench_bitstream::<BitStreamVByteLE<GroupedIfs, Complete, OneCont>>(c);
+    // VByte byte order (BE vs LE) is orthogonal to stream bit-endianness; benchmark with LE only.
+    bench_bitstream_with_endianness::<BitStreamVByteBE<GroupedIfs, Complete, OneCont>, LittleEndian>(
+        c,
+    );
+    bench_bitstream_with_endianness::<BitStreamVByteLE<GroupedIfs, Complete, OneCont>, LittleEndian>(
+        c,
+    );
 
     //bench_bytestream::<ByteStreamVByte<BE, GroupedIfs, Complete, Zero>>(c);
     //bench_bytestream::<ByteStreamVByte<BE, GroupedIfs, NonComplete, One>>(c);

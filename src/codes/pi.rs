@@ -12,7 +12,7 @@
 //! ⌊log₂(*n* + 1)⌋ and of the binary representation of *n* + 1 with the most
 //! significant bit removed.
 //!
-//! The implied distribution of a π code with parameter *k* code is ≈
+//! The implied distribution of a π code with parameter *k* is ≈
 //! 1/*x*<sup>1 + 1/2*ᵏ*</sup>.
 //!
 //! Note that π₀ = [ζ₁](super::zeta) = [γ](super::gamma) and π₁ =
@@ -94,12 +94,12 @@ pub trait PiRead<E: Endianness>: BitRead<E> {
 /// We provide an implementation of this trait for [`BitRead`]. An implementation
 /// of [`PiRead`] using default values is usually provided exploiting the
 /// [`crate::codes::params::ReadParams`] mechanism.
-pub trait PiReadParam<E: Endianness>: BitRead<E> + RiceRead<E> {
+pub trait PiReadParam<E: Endianness>: BitRead<E> {
     fn read_pi_param(&mut self, k: usize) -> Result<u64, Self::Error>;
     fn read_pi2_param<const USE_TABLE: bool>(&mut self) -> Result<u64, Self::Error>;
 }
 
-impl<B: BitRead<BE> + RiceRead<BE>> PiReadParam<BE> for B {
+impl<B: BitRead<BE>> PiReadParam<BE> for B {
     #[inline(always)]
     fn read_pi_param(&mut self, k: usize) -> Result<u64, B::Error> {
         default_read_pi(self, k)
@@ -130,7 +130,7 @@ impl<B: BitRead<BE> + RiceRead<BE>> PiReadParam<BE> for B {
     }
 }
 
-impl<B: BitRead<LE> + RiceRead<LE>> PiReadParam<LE> for B {
+impl<B: BitRead<LE>> PiReadParam<LE> for B {
     #[inline(always)]
     fn read_pi_param(&mut self, k: usize) -> Result<u64, B::Error> {
         default_read_pi(self, k)
@@ -164,7 +164,7 @@ impl<B: BitRead<LE> + RiceRead<LE>> PiReadParam<LE> for B {
 /// Default, internal non-table based implementation that works
 /// for any endianness.
 #[inline(always)]
-fn default_read_pi<E: Endianness, B: BitRead<E> + RiceRead<E>>(
+fn default_read_pi<E: Endianness, B: BitRead<E>>(
     backend: &mut B,
     k: usize,
 ) -> Result<u64, B::Error> {
@@ -190,12 +190,12 @@ pub trait PiWrite<E: Endianness>: BitWrite<E> {
 /// We provide an implementation of this trait for [`BitWrite`]. An implementation
 /// of [`PiWrite`] using default values is usually provided exploiting the
 /// [`crate::codes::params::WriteParams`] mechanism.
-pub trait PiWriteParam<E: Endianness>: BitWrite<E> + RiceWrite<E> {
+pub trait PiWriteParam<E: Endianness>: BitWrite<E> {
     fn write_pi_param(&mut self, n: u64, k: usize) -> Result<usize, Self::Error>;
     fn write_pi2_param<const USE_TABLE: bool>(&mut self, n: u64) -> Result<usize, Self::Error>;
 }
 
-impl<B: BitWrite<BE> + RiceWrite<BE>> PiWriteParam<BE> for B {
+impl<B: BitWrite<BE>> PiWriteParam<BE> for B {
     #[inline(always)]
     fn write_pi_param(&mut self, n: u64, k: usize) -> Result<usize, Self::Error> {
         default_write_pi(self, n, k)
@@ -213,7 +213,7 @@ impl<B: BitWrite<BE> + RiceWrite<BE>> PiWriteParam<BE> for B {
     }
 }
 
-impl<B: BitWrite<LE> + RiceWrite<LE>> PiWriteParam<LE> for B {
+impl<B: BitWrite<LE>> PiWriteParam<LE> for B {
     #[inline(always)]
     fn write_pi_param(&mut self, n: u64, k: usize) -> Result<usize, Self::Error> {
         default_write_pi(self, n, k)
@@ -234,7 +234,7 @@ impl<B: BitWrite<LE> + RiceWrite<LE>> PiWriteParam<LE> for B {
 /// Default, internal non-table based implementation that works
 /// for any endianness.
 #[inline(always)]
-fn default_write_pi<E: Endianness, B: BitWrite<E> + RiceWrite<E>>(
+fn default_write_pi<E: Endianness, B: BitWrite<E>>(
     backend: &mut B,
     mut n: u64,
     k: usize,
@@ -256,67 +256,68 @@ fn default_write_pi<E: Endianness, B: BitWrite<E> + RiceWrite<E>>(
 
 #[cfg(test)]
 mod tests {
-    use crate::prelude::*;
+    use crate::{
+        codes::pi::{PiReadParam, PiWriteParam},
+        prelude::*,
+    };
 
     #[test]
-    fn test_roundtrip() -> Result<(), Box<dyn core::error::Error>> {
+    fn test_roundtrip() {
         let k = 3;
         for value in (0..64).map(|i| 1 << i).chain(0..1024).chain([u64::MAX - 1]) {
             let mut data = [0_u64; 10];
             let mut writer = <BufBitWriter<BE, _>>::new(MemWordWriterSlice::new(&mut data));
-            let code_len = writer.write_pi(value, k)?;
+            let code_len = writer.write_pi(value, k).unwrap();
             assert_eq!(code_len, len_pi(value, k));
             drop(writer);
             let mut reader = <BufBitReader<BE, _>>::new(MemWordReader::new(&data));
             assert_eq!(
-                reader.read_pi(k)?,
+                reader.read_pi(k).unwrap(),
                 value,
                 "for value: {} with k {}",
                 value,
                 k
             );
         }
-        Ok(())
     }
 
     #[test]
-    fn test_roundtrip_pi2() -> Result<(), Box<dyn core::error::Error>> {
+    fn test_roundtrip_pi2() {
         // Test the specialized pi2 methods
         for value in (0..64).map(|i| 1 << i).chain(0..1024).chain([u64::MAX - 1]) {
             // Test BE
             let mut data = [0_u64; 10];
             let mut writer = <BufBitWriter<BE, _>>::new(MemWordWriterSlice::new(&mut data));
-            let code_len = writer.write_pi2(value)?;
+            let code_len = writer.write_pi2(value).unwrap();
             assert_eq!(code_len, len_pi(value, 2));
             drop(writer);
             let mut reader = <BufBitReader<BE, _>>::new(MemWordReader::new(&data));
-            assert_eq!(reader.read_pi2()?, value, "BE for value: {}", value,);
+            assert_eq!(reader.read_pi2().unwrap(), value, "BE for value: {}", value,);
 
             // Test LE
             let mut data = [0_u64; 10];
             let mut writer = <BufBitWriter<LE, _>>::new(MemWordWriterSlice::new(&mut data));
-            let code_len = writer.write_pi2(value)?;
+            let code_len = writer.write_pi2(value).unwrap();
             assert_eq!(code_len, len_pi(value, 2));
             drop(writer);
             let mut reader = <BufBitReader<LE, _>>::new(MemWordReader::new(&data));
-            assert_eq!(reader.read_pi2()?, value, "LE for value: {}", value,);
+            assert_eq!(reader.read_pi2().unwrap(), value, "LE for value: {}", value,);
         }
-        Ok(())
     }
 
     #[test]
-    fn test_roundtrip_pi2_param() -> Result<(), Box<dyn core::error::Error>> {
+    fn test_roundtrip_pi2_param() {
         // Test the parametric pi2 methods with tables
         for value in (0..64).map(|i| 1 << i).chain(0..1024).chain([u64::MAX - 1]) {
             // Test BE with tables
             let mut data = [0_u64; 10];
             let mut writer = <BufBitWriter<BE, _>>::new(MemWordWriterSlice::new(&mut data));
-            let code_len = writer.write_pi2_param::<true>(value)?;
+            let code_len = writer.write_pi2_param::<true>(value).unwrap();
             assert_eq!(code_len, len_pi(value, 2));
             drop(writer);
             let mut reader = <BufBitReader<BE, _>>::new(MemWordReader::new(&data));
             assert_eq!(
-                reader.read_pi2_param::<true>()?,
+                reader.read_pi2_param::<true>().unwrap(),
                 value,
                 "BE table for value: {}",
                 value,
@@ -325,12 +326,12 @@ mod tests {
             // Test BE without tables
             let mut data = [0_u64; 10];
             let mut writer = <BufBitWriter<BE, _>>::new(MemWordWriterSlice::new(&mut data));
-            let code_len = writer.write_pi2_param::<false>(value)?;
+            let code_len = writer.write_pi2_param::<false>(value).unwrap();
             assert_eq!(code_len, len_pi(value, 2));
             drop(writer);
             let mut reader = <BufBitReader<BE, _>>::new(MemWordReader::new(&data));
             assert_eq!(
-                reader.read_pi2_param::<false>()?,
+                reader.read_pi2_param::<false>().unwrap(),
                 value,
                 "BE no table for value: {}",
                 value,
@@ -339,12 +340,12 @@ mod tests {
             // Test LE with tables
             let mut data = [0_u64; 10];
             let mut writer = <BufBitWriter<LE, _>>::new(MemWordWriterSlice::new(&mut data));
-            let code_len = writer.write_pi2_param::<true>(value)?;
+            let code_len = writer.write_pi2_param::<true>(value).unwrap();
             assert_eq!(code_len, len_pi(value, 2));
             drop(writer);
             let mut reader = <BufBitReader<LE, _>>::new(MemWordReader::new(&data));
             assert_eq!(
-                reader.read_pi2_param::<true>()?,
+                reader.read_pi2_param::<true>().unwrap(),
                 value,
                 "LE table for value: {}",
                 value,
@@ -353,23 +354,22 @@ mod tests {
             // Test LE without tables
             let mut data = [0_u64; 10];
             let mut writer = <BufBitWriter<LE, _>>::new(MemWordWriterSlice::new(&mut data));
-            let code_len = writer.write_pi2_param::<false>(value)?;
+            let code_len = writer.write_pi2_param::<false>(value).unwrap();
             assert_eq!(code_len, len_pi(value, 2));
             drop(writer);
             let mut reader = <BufBitReader<LE, _>>::new(MemWordReader::new(&data));
             assert_eq!(
-                reader.read_pi2_param::<false>()?,
+                reader.read_pi2_param::<false>().unwrap(),
                 value,
                 "LE no table for value: {}",
                 value,
             );
         }
-        Ok(())
     }
 
     #[test]
     #[allow(clippy::unusual_byte_groupings)]
-    fn test_bits() -> Result<(), Box<dyn core::error::Error>> {
+    fn test_bits() {
         for (k, value, expected) in [
             (2, 20, 0b01_00_0101 << (64 - 8)),
             (2, 0, 0b100 << (64 - 3)),
@@ -391,7 +391,7 @@ mod tests {
         ] {
             let mut data = [0_u64; 10];
             let mut writer = <BufBitWriter<BE, _>>::new(MemWordWriterSlice::new(&mut data));
-            let code_len = writer.write_pi(value, k)?;
+            let code_len = writer.write_pi(value, k).unwrap();
             assert_eq!(code_len, len_pi(value, k));
             drop(writer);
             assert_eq!(
@@ -406,11 +406,10 @@ mod tests {
                 len_pi(value, k),
             );
         }
-        Ok(())
     }
 
     #[test]
-    fn test_against_zeta() -> Result<(), Box<dyn core::error::Error>> {
+    fn test_against_zeta() {
         // BE: π₀ = ζ₁ and π₁ = ζ₂
         for k in 0..2 {
             for value in 0..100 {
@@ -418,13 +417,13 @@ mod tests {
                 let mut data_zeta = [0_u64; 10];
 
                 let mut writer = <BufBitWriter<BE, _>>::new(MemWordWriterSlice::new(&mut data_pi));
-                let code_len = writer.write_pi(value, k)?;
+                let code_len = writer.write_pi(value, k).unwrap();
                 assert_eq!(code_len, len_pi(value, k));
                 drop(writer);
 
                 let mut writer =
                     <BufBitWriter<BE, _>>::new(MemWordWriterSlice::new(&mut data_zeta));
-                let code_len = writer.write_zeta(value, 1 << k)?;
+                let code_len = writer.write_zeta(value, 1 << k).unwrap();
                 assert_eq!(code_len, len_zeta(value, 1 << k));
                 drop(writer);
 
@@ -438,12 +437,12 @@ mod tests {
             let mut data_zeta = [0_u64; 10];
 
             let mut writer = <BufBitWriter<LE, _>>::new(MemWordWriterSlice::new(&mut data_pi));
-            let code_len = writer.write_pi(value, 0)?;
+            let code_len = writer.write_pi(value, 0).unwrap();
             assert_eq!(code_len, len_pi(value, 0));
             drop(writer);
 
             let mut writer = <BufBitWriter<LE, _>>::new(MemWordWriterSlice::new(&mut data_zeta));
-            let code_len = writer.write_zeta(value, 1)?;
+            let code_len = writer.write_zeta(value, 1).unwrap();
             assert_eq!(code_len, len_zeta(value, 1));
             drop(writer);
 
@@ -453,6 +452,5 @@ mod tests {
         for value in 0..100 {
             assert_eq!(len_pi(value, 1), len_zeta(value, 2));
         }
-        Ok(())
     }
 }

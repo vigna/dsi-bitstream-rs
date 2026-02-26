@@ -7,7 +7,6 @@
  */
 
 use core::convert::Infallible;
-use core::error::Error;
 #[cfg(feature = "mem_dbg")]
 use mem_dbg::{MemDbg, MemSize};
 
@@ -17,7 +16,7 @@ use crate::traits::*;
 /// An implementation of [`BitRead`] for a [`WordRead`] with word `u64` and of
 /// [`BitSeek`] for a [`WordSeek`].
 ///
-/// This implementation accesses randomly the underlying [`WordRead`] without
+/// This implementation randomly accesses the underlying [`WordRead`] without
 /// any buffering. It is usually slower than
 /// [`BufBitReader`](crate::impls::BufBitReader).
 ///
@@ -29,9 +28,10 @@ use crate::traits::*;
 /// instantaneous codes, but the casual user should be happy with the default
 /// value. See [`ReadParams`] for more details.
 ///
-/// For additional flexibility, this structures implements [`std::io::Read`].
-/// Note that because of coherence rules it is not possible to implement
-/// [`std::io::Read`] for a generic [`BitRead`].
+/// For additional flexibility, when the `std` feature is enabled, this
+/// structure implements [`std::io::Read`]. Note that because of coherence
+/// rules it is not possible to implement [`std::io::Read`] for a generic
+/// [`BitRead`].
 
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
@@ -54,11 +54,8 @@ impl<E: Endianness, WR, RP: ReadParams> BitReader<E, WR, RP> {
     }
 }
 
-impl<
-    E: Error + Send + Sync + 'static,
-    WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>,
-    RP: ReadParams,
-> BitRead<BE> for BitReader<BE, WR, RP>
+impl<WR: WordRead<Word = u64> + WordSeek<Error = <WR as WordRead>::Error>, RP: ReadParams>
+    BitRead<BE> for BitReader<BE, WR, RP>
 {
     type Error = <WR as WordRead>::Error;
     type PeekWord = u32;
@@ -71,29 +68,30 @@ impl<
     }
 
     #[inline]
-    fn read_bits(&mut self, n_bits: usize) -> Result<u64, Self::Error> {
-        if n_bits == 0 {
+    fn read_bits(&mut self, num_bits: usize) -> Result<u64, Self::Error> {
+        if num_bits == 0 {
             return Ok(0);
         }
 
-        assert!(n_bits <= 64);
+        #[cfg(feature = "checks")]
+        assert!(num_bits <= 64);
 
         self.data.set_word_pos(self.bit_index / 64)?;
         let in_word_offset = (self.bit_index % 64) as usize;
 
-        let res = if (in_word_offset + n_bits) <= 64 {
+        let res = if (in_word_offset + num_bits) <= 64 {
             // single word access
             let word = self.data.read_word()?.to_be();
-            (word << in_word_offset) >> (64 - n_bits)
+            (word << in_word_offset) >> (64 - num_bits)
         } else {
             // double word access
             let high_word = self.data.read_word()?.to_be();
             let low_word = self.data.read_word()?.to_be();
-            let shamt1 = 64 - n_bits;
-            let shamt2 = 128 - in_word_offset - n_bits;
+            let shamt1 = 64 - num_bits;
+            let shamt2 = 128 - in_word_offset - num_bits;
             ((high_word << in_word_offset) >> shamt1) | (low_word >> shamt2)
         };
-        self.bit_index += n_bits as u64;
+        self.bit_index += num_bits as u64;
         Ok(res)
     }
 
@@ -103,6 +101,7 @@ impl<
             return Ok(0);
         }
 
+        #[cfg(feature = "checks")]
         assert!(n_bits <= 32);
 
         self.data.set_word_pos(self.bit_index / 64)?;
@@ -151,7 +150,7 @@ impl<
     }
 }
 
-impl<WR: WordSeek, RP: ReadParams> BitSeek for BitReader<LE, WR, RP> {
+impl<E: Endianness, WR: WordSeek, RP: ReadParams> BitSeek for BitReader<E, WR, RP> {
     type Error = Infallible;
 
     fn bit_pos(&mut self) -> Result<u64, Self::Error> {
@@ -164,24 +163,8 @@ impl<WR: WordSeek, RP: ReadParams> BitSeek for BitReader<LE, WR, RP> {
     }
 }
 
-impl<WR: WordSeek, RP: ReadParams> BitSeek for BitReader<BE, WR, RP> {
-    type Error = Infallible;
-
-    fn bit_pos(&mut self) -> Result<u64, Self::Error> {
-        Ok(self.bit_index)
-    }
-
-    fn set_bit_pos(&mut self, bit_index: u64) -> Result<(), Self::Error> {
-        self.bit_index = bit_index;
-        Ok(())
-    }
-}
-
-impl<
-    E: Error + Send + Sync + 'static,
-    WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>,
-    RP: ReadParams,
-> BitRead<LE> for BitReader<LE, WR, RP>
+impl<WR: WordRead<Word = u64> + WordSeek<Error = <WR as WordRead>::Error>, RP: ReadParams>
+    BitRead<LE> for BitReader<LE, WR, RP>
 {
     type Error = <WR as WordRead>::Error;
     type PeekWord = u32;
@@ -194,31 +177,31 @@ impl<
     }
 
     #[inline]
-    fn read_bits(&mut self, n_bits: usize) -> Result<u64, Self::Error> {
+    fn read_bits(&mut self, num_bits: usize) -> Result<u64, Self::Error> {
         #[cfg(feature = "checks")]
-        assert!(n_bits <= 64);
+        assert!(num_bits <= 64);
 
-        if n_bits == 0 {
+        if num_bits == 0 {
             return Ok(0);
         }
 
         self.data.set_word_pos(self.bit_index / 64)?;
         let in_word_offset = (self.bit_index % 64) as usize;
 
-        let res = if (in_word_offset + n_bits) <= 64 {
+        let res = if (in_word_offset + num_bits) <= 64 {
             // single word access
             let word = self.data.read_word()?.to_le();
-            let shamt = 64 - n_bits;
+            let shamt = 64 - num_bits;
             (word << (shamt - in_word_offset)) >> shamt
         } else {
             // double word access
             let low_word = self.data.read_word()?.to_le();
             let high_word = self.data.read_word()?.to_le();
-            let shamt1 = 128 - in_word_offset - n_bits;
-            let shamt2 = 64 - n_bits;
+            let shamt1 = 128 - in_word_offset - num_bits;
+            let shamt2 = 64 - num_bits;
             ((high_word << shamt1) >> shamt2) | (low_word >> in_word_offset)
         };
-        self.bit_index += n_bits as u64;
+        self.bit_index += num_bits as u64;
         Ok(res)
     }
 
@@ -228,6 +211,7 @@ impl<
             return Ok(0);
         }
 
+        #[cfg(feature = "checks")]
         assert!(n_bits <= 32);
 
         self.data.set_word_pos(self.bit_index / 64)?;
@@ -278,11 +262,8 @@ impl<
 }
 
 #[cfg(feature = "std")]
-impl<
-    E: Error + Send + Sync + 'static,
-    WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>,
-    RP: ReadParams,
-> std::io::Read for BitReader<LE, WR, RP>
+impl<WR: WordRead<Word = u64> + WordSeek<Error = <WR as WordRead>::Error>, RP: ReadParams>
+    std::io::Read for BitReader<LE, WR, RP>
 {
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
         let mut iter = buf.chunks_exact_mut(8);
@@ -307,11 +288,8 @@ impl<
 }
 
 #[cfg(feature = "std")]
-impl<
-    E: Error + Send + Sync + 'static,
-    WR: WordRead<Error = E, Word = u64> + WordSeek<Error = E>,
-    RP: ReadParams,
-> std::io::Read for BitReader<BE, WR, RP>
+impl<WR: WordRead<Word = u64> + WordSeek<Error = <WR as WordRead>::Error>, RP: ReadParams>
+    std::io::Read for BitReader<BE, WR, RP>
 {
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
         let mut iter = buf.chunks_exact_mut(8);

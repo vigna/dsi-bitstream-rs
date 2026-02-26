@@ -6,7 +6,7 @@
 
 //! Rice codes.
 //!
-//! Rice codes (AKA Golomb−Rice codes) are a form of approximated [Golomb
+//! Rice codes (AKA Golomb–Rice codes) are a form of approximated [Golomb
 //! codes](crate::codes::golomb) in which the parameter *b* is a power of
 //! two. This restriction makes the code less precise in modeling data with a
 //! geometric distribution, but encoding and decoding can be performed without
@@ -48,6 +48,7 @@ pub fn len_rice(n: u64, log2_b: usize) -> usize {
 
 /// Returns the optimal value of log₂*b* for a geometric distribution of base
 /// *p*, that is, ⌈log₂(ln((√5 + 1)/2) / ln(1 - *p*))⌉
+#[cfg(feature = "std")]
 pub fn log2_b(p: f64) -> usize {
     ((-((5f64.sqrt() + 1.0) / 2.0).ln() / (-p).ln_1p()).log2()).ceil() as usize
 }
@@ -86,6 +87,7 @@ impl<E: Endianness, B: BitRead<E>> RiceRead<E> for B {}
 impl<E: Endianness, B: BitWrite<E>> RiceWrite<E> for B {}
 
 #[cfg(test)]
+#[cfg(feature = "std")]
 mod tests {
     use super::*;
 

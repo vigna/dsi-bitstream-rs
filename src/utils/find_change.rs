@@ -18,6 +18,7 @@ pub struct FindChangePoints<F: Fn(u64) -> usize> {
 }
 
 impl<F: Fn(u64) -> usize> FindChangePoints<F> {
+    #[must_use]
     pub fn new(func: F) -> Self {
         Self {
             func,

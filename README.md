@@ -33,11 +33,11 @@ let mut word_write = MemWordWriterSlice::new([0_u64; 10]);
 let mut writer = BufBitWriter::<LE, _>::new(word_write);
 // Write 0 using 10 bits
 writer.write_bits(0, 10)?;
-// Write 1 in unary code
+// Write 0 in unary code
 writer.write_unary(0)?;
-// Write 2 in γ code
+// Write 1 in γ code
 writer.write_gamma(1)?;
-// Write 3 in δ code
+// Write 2 in δ code
 writer.write_delta(2)?;
 writer.flush()?;
 
@@ -46,14 +46,14 @@ let data = writer.into_inner()?.into_inner();
 
 // Reading back the data is similar, but since a reader has a bit buffer
 // twice as large as the read word size, it is more efficient to use a
-// u32 as read word, so we need to transmute the data.
+// u32 as read word, so we need to reinterpret the data.
 let data = unsafe{data.align_to::<u32>().1};
 let mut reader = BufBitReader::<LE, _>::new(MemWordReader::new(data));
 assert_eq!(reader.read_bits(10)?, 0);
 assert_eq!(reader.read_unary()?, 0);
 assert_eq!(reader.read_gamma()?, 1);
 assert_eq!(reader.read_delta()?, 2);
-# Ok::<(), Box<dyn std::error::Error>>(())
+# Ok::<(), Box<dyn core::error::Error>>(())
 ```
 
 In this case, the backend is already word-based, but if you have a byte-based
@@ -86,7 +86,7 @@ assert_eq!(reader.read_bits(10)?, 0);
 assert_eq!(reader.read_unary()?, 0);
 assert_eq!(reader.read_gamma()?, 1);
 assert_eq!(reader.read_delta()?, 2);
-# Ok::<(), Box<dyn std::error::Error>>(())
+# Ok::<(), Box<dyn core::error::Error>>(())
 ```
 
 Please read the documentation of the [`traits`] module and the [`impls`] module
@@ -142,6 +142,9 @@ contains reference results of these benchmarks on a few architectures.
 
 ## Features
 
+- `checks`: enables additional runtime checks on some
+  parameters (in particular, written value must fit within
+  the provided bit width).
 - `std` (default): enables standard library support, including
   [`WordAdapter`] and convenience functions such as [`from_path`].
   Implies `alloc`.

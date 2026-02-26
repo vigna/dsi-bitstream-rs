@@ -26,7 +26,7 @@ use mem_dbg::{MemDbg, MemSize};
 /// # Examples
 ///
 /// ```rust
-/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// # fn main() -> Result<(), Box<dyn core::error::Error>> {
 /// use dsi_bitstream::prelude::*;
 ///
 /// let words: [u32; 2] = [1, 2];
@@ -46,14 +46,14 @@ use mem_dbg::{MemDbg, MemSize};
 /// ```
 #[derive(Debug, Clone, PartialEq)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
-pub struct MemWordReader<W: Word, B: AsRef<[W]>, const INF: bool = true> {
+pub struct MemWordReader<W: Word, B, const INF: bool = true> {
     data: B,
     word_index: usize,
     _marker: core::marker::PhantomData<W>,
 }
 
 impl<W: Word, B: AsRef<[W]>> MemWordReader<W, B> {
-    /// Creates a new [`MemWordReader`] from a slice of data
+    /// Creates a new [`MemWordReader`] from a slice of data.
     #[must_use]
     pub fn new(data: B) -> Self {
         Self {
@@ -63,6 +63,7 @@ impl<W: Word, B: AsRef<[W]>> MemWordReader<W, B> {
         }
     }
 
+    /// Consumes this reader and returns the underlying data.
     #[must_use]
     pub fn into_inner(self) -> B {
         self.data
@@ -70,7 +71,7 @@ impl<W: Word, B: AsRef<[W]>> MemWordReader<W, B> {
 }
 
 impl<W: Word, B: AsRef<[W]>> MemWordReader<W, B, false> {
-    /// Creates a new [`MemWordReader`] from a slice of data
+    /// Creates a new [`MemWordReader`] from a slice of data.
     #[must_use]
     pub fn new_strict(data: B) -> Self {
         Self {
@@ -154,24 +155,28 @@ impl<W: Word, B: AsRef<[W]>> WordSeek for MemWordReader<W, B, false> {
     }
 }
 
-#[test]
-fn test_eof_table_read() -> Result<(), Box<dyn core::error::Error>> {
-    use crate::codes::{DeltaReadParam, DeltaWrite};
-    let mut words: [u64; 1] = [0];
-    let mut writer = crate::prelude::BufBitWriter::<crate::prelude::LE, _>::new(
-        MemWordWriterSlice::new(&mut words),
-    );
-    for _ in 0..16 {
-        writer.write_delta(1)?;
-    }
-    writer.flush()?;
-    drop(writer);
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::codes::{DeltaWrite, delta::DeltaReadParam};
 
-    let mut reader =
-        crate::prelude::BufBitReader::<crate::prelude::LE, _>::new(MemWordReader::new(&words));
-    for _ in 0..16 {
-        // Here the last table read returns zero-extended data
-        assert_eq!(1, reader.read_delta_param::<true, true>()?);
+    #[test]
+    fn test_eof_table_read() {
+        let mut words: [u64; 1] = [0];
+        let mut writer = crate::prelude::BufBitWriter::<crate::prelude::LE, _>::new(
+            MemWordWriterSlice::new(&mut words),
+        );
+        for _ in 0..16 {
+            writer.write_delta(1).unwrap();
+        }
+        writer.flush().unwrap();
+        drop(writer);
+
+        let mut reader =
+            crate::prelude::BufBitReader::<crate::prelude::LE, _>::new(MemWordReader::new(&words));
+        for _ in 0..16 {
+            // Here the last table read returns zero-extended data
+            assert_eq!(1, reader.read_delta_param::<true, true>().unwrap());
+        }
     }
-    Ok(())
 }

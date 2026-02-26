@@ -21,8 +21,8 @@
 //!
 //! The supported range is [0 . . 2⁶⁴ – 1).
 //!
-//! The ω code is easier to describe the format of a code, rather than the
-//! encoding algorithm.
+//! For the ω code it is easier to describe the format of a codeword, rather
+//! than the encoding algorithm.
 //!
 //! A codeword is given by the concatenation of blocks *b*₀ *b*₁ …  *b*ₙ `0`,
 //! where each block *b*ᵢ is a binary string starting with `1` and *b*₀ = `10`
@@ -64,7 +64,7 @@
 //! Information Theory, 21(2):194−203, March 1975.
 
 use crate::{codes::omega_tables, prelude::*};
-use common_traits::CastableInto;
+use num_traits::AsPrimitive;
 
 /// Returns the length of the ω code for `n`.
 #[must_use]
@@ -131,7 +131,7 @@ fn read_omega_from_state<E: Endianness, B: BitRead<E>>(
     mut n: u64,
 ) -> Result<u64, B::Error> {
     loop {
-        let bit = backend.peek_bits(1)?.cast();
+        let bit = backend.peek_bits(1)?.as_();
         if bit == 0 {
             backend.skip_bits_after_peek(1);
             return Ok(n - 1);
@@ -198,7 +198,7 @@ impl<B: BitRead<LE>> OmegaReadParam<LE> for B {
 ///
 /// This is the trait you should usually pull in scope to write ω codes.
 pub trait OmegaWrite<E: Endianness>: BitWrite<E> {
-    fn write_omega(&mut self, value: u64) -> Result<usize, Self::Error>;
+    fn write_omega(&mut self, n: u64) -> Result<usize, Self::Error>;
 }
 
 /// Parametric trait for writing ω codes.
@@ -268,7 +268,7 @@ mod tests {
 
     #[test]
     #[allow(clippy::unusual_byte_groupings)]
-    fn test_omega() -> Result<(), Box<dyn core::error::Error>> {
+    fn test_omega() {
         for (value, expected_be, expected_le) in [
             (0, 0, 0),
             (1, 0b10_0 << (64 - 3), 0b0_01),
@@ -293,7 +293,7 @@ mod tests {
         ] {
             let mut data = [0_u64];
             let mut writer = <BufBitWriter<BE, _>>::new(MemWordWriterSlice::new(&mut data));
-            writer.write_omega(value)?;
+            writer.write_omega(value).unwrap();
             drop(writer);
             assert_eq!(
                 data[0].to_be(),
@@ -306,7 +306,7 @@ mod tests {
 
             let mut data = [0_u64];
             let mut writer = <BufBitWriter<LE, _>>::new(MemWordWriterSlice::new(&mut data));
-            writer.write_omega(value)?;
+            writer.write_omega(value).unwrap();
             drop(writer);
             assert_eq!(
                 data[0].to_le(),
@@ -317,6 +317,5 @@ mod tests {
                 expected_le,
             );
         }
-        Ok(())
     }
 }

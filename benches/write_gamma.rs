@@ -1,4 +1,5 @@
 use criterion::{Criterion, criterion_group, criterion_main};
+use dsi_bitstream::codes::gamma::GammaWriteParam;
 use dsi_bitstream::prelude::*;
 use rand::{RngExt, SeedableRng, rngs::SmallRng};
 use std::hint::black_box;

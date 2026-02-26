@@ -9,9 +9,9 @@
 //! Exponential Golomb codes are a variant of Golomb codes with power-of-two
 //! modulus (i.e., [Rice codes](super::rice)) in which the prefix is written
 //! using [Elias γ code](super::gamma) instead of unary code. More precisely,
-//! the exponential Golomb code with parameter *k* ≥ 0 of a natural number *n*
-//! is given ⌊*x* / 2*ᵏ*⌋ in [γ code](super::gamma) followed by *x* mod 2*ᵏ* in
-//! binary *k*-bit representations.
+//! the exponential Golomb code with parameter *k* ≥ 0 of a natural number *x*
+//! is given by ⌊*x* / 2*ᵏ*⌋ in [γ code](super::gamma) followed by *x* mod 2*ᵏ*
+//! in binary *k*-bit representation.
 //!
 //! The implied distribution of an exponential Golomb code with parameter *k* is
 //! ≈ 2²*ᵏ*/2*x*².
@@ -39,7 +39,7 @@ pub fn len_exp_golomb(n: u64, k: usize) -> usize {
 }
 
 /// Trait for reading exponential Golomb codes.
-pub trait ExpGolombRead<E: Endianness>: BitRead<E> + GammaRead<E> {
+pub trait ExpGolombRead<E: Endianness>: GammaRead<E> {
     #[inline(always)]
     fn read_exp_golomb(&mut self, k: usize) -> Result<u64, Self::Error> {
         debug_assert!(k < 64);
@@ -48,7 +48,7 @@ pub trait ExpGolombRead<E: Endianness>: BitRead<E> + GammaRead<E> {
 }
 
 /// Trait for writing exponential Golomb codes.
-pub trait ExpGolombWrite<E: Endianness>: BitWrite<E> + GammaWrite<E> {
+pub trait ExpGolombWrite<E: Endianness>: GammaWrite<E> {
     #[inline(always)]
     fn write_exp_golomb(&mut self, n: u64, k: usize) -> Result<usize, Self::Error> {
         debug_assert!(k < 64);
@@ -67,5 +67,5 @@ pub trait ExpGolombWrite<E: Endianness>: BitWrite<E> + GammaWrite<E> {
     }
 }
 
-impl<E: Endianness, B: BitRead<E> + GammaRead<E>> ExpGolombRead<E> for B {}
-impl<E: Endianness, B: BitWrite<E> + GammaWrite<E>> ExpGolombWrite<E> for B {}
+impl<E: Endianness, B: GammaRead<E>> ExpGolombRead<E> for B {}
+impl<E: Endianness, B: GammaWrite<E>> ExpGolombWrite<E> for B {}
