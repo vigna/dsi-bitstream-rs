@@ -307,14 +307,14 @@ fn bench_comparative(c: &mut Criterion) {
     bench_comp!(group, "omega", write_omega, read_omega, len_omega);
     bench_comp!(
         group,
-        "vbyte_be",
+        "vbytebe",
         write_vbyte_be,
         read_vbyte_be,
         bit_len_vbyte
     );
     bench_comp!(
         group,
-        "vbyte_le",
+        "vbytele",
         write_vbyte_le,
         read_vbyte_le,
         bit_len_vbyte

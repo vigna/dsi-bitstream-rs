@@ -34,6 +34,35 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
+SUBSCRIPTS = str.maketrans("0123456789", "₀₁₂₃₄₅₆₇₈₉")
+
+# Map bench code names to nice display labels
+NICE_LABELS = {
+    "unary": "Unary",
+    "gamma": "γ",
+    "delta": "δ",
+    "omega": "ω",
+    "vbytebe": "VByte(BE)",
+    "vbytele": "VByte(LE)",
+    "zeta3": "ζ₃ (tables)",
+    "pi2": "π₂ (tables)",
+}
+
+
+def nice_label(code):
+    """Return a display label for a code name."""
+    if code in NICE_LABELS:
+        return NICE_LABELS[code]
+    # Parametric codes: zeta_3 → ζ₃, pi_2 → π₂, rice_3 → Rice(3), etc.
+    for prefix, symbol in [("zeta_", "ζ"), ("pi_", "π")]:
+        if code.startswith(prefix):
+            return symbol + code[len(prefix):].translate(SUBSCRIPTS)
+    for prefix, name in [("rice_", "Rice"), ("exgol_", "ExpGolomb"), ("gol_", "Golomb")]:
+        if code.startswith(prefix):
+            return "%s(%s)" % (name, code[len(prefix):])
+    return code
+
+
 with open(args.file) as f:
     data = f.read().splitlines()
 header = [x.strip() for x in data[0].split("\t")]
@@ -145,7 +174,7 @@ def create_plot(operations, title):
     ax.set_ylabel("Time (ns)")
     ax.set_title(f"{title}")
     ax.set_xticks(x)
-    ax.set_xticklabels(codes, rotation=45, ha="right")
+    ax.set_xticklabels([nice_label(c) for c in codes], rotation=45, ha="right")
     ax.legend()
 
     # Add a light gray background grid

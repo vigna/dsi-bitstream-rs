@@ -1,9 +1,9 @@
 #!/bin/bash -e
 
 # Run all benchmarks and generate plots (to be run from project root)
-# Usage: gen_plots.sh [implied|univ|both] [-- Criterion options]
+# Usage: gen_table_plots.sh [implied|univ|both] [-- Criterion options]
 # Default: both
-# Example: gen_plots.sh implied -- --warm-up-time 0.01 --measurement-time 0.01
+# Example: gen_table_plots.sh implied -- --warm-up-time 0.01 --measurement-time 0.01
 
 DIST="both"
 CRITERION_OPTS=""

@@ -26,14 +26,16 @@ feature `bench-delta-gamma` tests δ codes with 9-bit tables for ɣ codes.
 A comprehensive set of tests across all table sizes can be obtained with:
 
 ```bash
-./python/gen_plots.sh [implied|univ|both] [-- Criterion options]
+./python/gen_table_plots.sh [implied|univ|both] [-- Criterion options]
 ```
 
 The default distribution is `both`, which runs tests for both distributions.
 This iterates over word sizes (`u16`, `u32`, `u64`) and table sizes (2¹ to 2¹⁶),
 running Criterion benchmarks for each configuration and generating SVG plots.
 
-Results are saved directly into `DIST/WORD/` directories (e.g., `implied/u32/read.tsv`).
+Results are saved directly into `DIST/WORD/` directories (e.g.,
+`implied/u32/read.tsv`). The script overrides previous results, so be careful to
+move them if you want to keep them.
 
 For more fine-grained control, run the scripts individually:
 
@@ -54,10 +56,12 @@ using both implied and universal distributions.
 
 ```bash
 # Run comparative benchmarks and generate plots
-./python/gen_comp.sh [implied|univ|both] [-- Criterion options]
+./python/gen_comp_plots.sh [implied|univ|both] [-- Criterion options]
 ```
 
 Results are saved directly into `DIST/` directories (e.g., `implied/comp.tsv`).
+The script overrides previous results, so be careful to move them if you want to
+keep them.
 
 For more fine-grained control:
 
@@ -79,7 +83,7 @@ Criterion timing can be controlled via CLI options passed after `--`:
 cargo bench --bench tables --features implied,bench-reads,bench-u32 -- --warm-up-time 0.01 --measurement-time 0.01
 
 # Fine-grained table benchmarks
-    ./python/gen_plots.sh implied -- --warm-up-time 0.5 --measurement-time 1
+    ./python/gen_table_plots.sh implied -- --warm-up-time 0.5 --measurement-time 1
 ```
 
 ## Filtering with Criterion Regex

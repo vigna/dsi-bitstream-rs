@@ -2,9 +2,9 @@
 
 # Run comparative benchmarks, extract results, and generate plots
 # (to be run from project root)
-# Usage: gen_comp.sh [implied|univ|both] [-- Criterion options]
+# Usage: gen_comp_plots.sh [implied|univ|both] [-- Criterion options]
 # Default: both
-# Example: gen_comp.sh implied -- --warm-up-time 0.01 --measurement-time 0.01
+# Example: gen_comp_plots.sh implied -- --warm-up-time 0.01 --measurement-time 0.01
 
 DIST="both"
 CRITERION_OPTS=""

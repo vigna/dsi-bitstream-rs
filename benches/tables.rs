@@ -383,8 +383,8 @@ criterion_group! {
     name = no_table;
     config = Criterion::default()
         .sample_size(10)
-        .warm_up_time(std::time::Duration::from_secs(1))
-        .measurement_time(std::time::Duration::from_secs(2));
+        .warm_up_time(std::time::Duration::from_millis(500))
+        .measurement_time(std::time::Duration::from_secs(1));
     targets = bench_no_table
 }
 
@@ -392,8 +392,8 @@ criterion_group! {
     name = table;
     config = Criterion::default()
         .sample_size(10)
-        .warm_up_time(std::time::Duration::from_secs(1))
-        .measurement_time(std::time::Duration::from_secs(2));
+        .warm_up_time(std::time::Duration::from_millis(500))
+        .measurement_time(std::time::Duration::from_secs(1));
     targets = bench_table
 }
 
