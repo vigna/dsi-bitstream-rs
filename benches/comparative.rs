@@ -99,13 +99,14 @@ macro_rules! bench_comp {
                 });
             }
 
-            // Read benchmarks
+            // Read benchmarks — encode into Vec<u64> to guarantee alignment
+            // for reinterpretation as &[ReadWord] via align_to.
             {
                 let encoded = {
-                    let mut buffer: Vec<WriteWord> = Vec::with_capacity(N);
+                    let mut buffer: Vec<u64> = Vec::with_capacity(N);
                     {
                         let mut w = BufBitWriter::<BE, _>::new(
-                            MemWordWriterVec::<WriteWord, _>::new(&mut buffer),
+                            MemWordWriterVec::<u64, _>::new(&mut buffer),
                         );
                         for &value in &data {
                             w.$write_method(value).unwrap();
@@ -130,10 +131,10 @@ macro_rules! bench_comp {
             }
             {
                 let encoded = {
-                    let mut buffer: Vec<WriteWord> = Vec::with_capacity(N);
+                    let mut buffer: Vec<u64> = Vec::with_capacity(N);
                     {
                         let mut w = BufBitWriter::<LE, _>::new(
-                            MemWordWriterVec::<WriteWord, _>::new(&mut buffer),
+                            MemWordWriterVec::<u64, _>::new(&mut buffer),
                         );
                         for &value in &data {
                             w.$write_method(value).unwrap();
@@ -222,13 +223,14 @@ macro_rules! bench_comp_k {
                 });
             }
 
-            // Read benchmarks
+            // Read benchmarks — encode into Vec<u64> to guarantee alignment
+            // for reinterpretation as &[ReadWord] via align_to.
             {
                 let encoded = {
-                    let mut buffer: Vec<WriteWord> = Vec::with_capacity(N);
+                    let mut buffer: Vec<u64> = Vec::with_capacity(N);
                     {
                         let mut w = BufBitWriter::<BE, _>::new(
-                            MemWordWriterVec::<WriteWord, _>::new(&mut buffer),
+                            MemWordWriterVec::<u64, _>::new(&mut buffer),
                         );
                         for &value in &data {
                             w.$write_method(value, k).unwrap();
@@ -240,6 +242,8 @@ macro_rules! bench_comp_k {
                 let bench_id = format!("{}/BE/{}/read", name_str, dist_name);
                 $group.bench_function(&bench_id, |b| {
                     b.iter(|| {
+                        // SAFETY: Vec<u64> is aligned to 8 bytes, which
+                        // satisfies alignment for ReadWord (u16/u32/u64).
                         let slice: &[ReadWord] = unsafe { encoded.align_to::<ReadWord>().1 };
                         let mut r =
                             BufBitReader::<BE, _>::new(MemWordReader::<ReadWord, _>::new(slice));
@@ -251,10 +255,10 @@ macro_rules! bench_comp_k {
             }
             {
                 let encoded = {
-                    let mut buffer: Vec<WriteWord> = Vec::with_capacity(N);
+                    let mut buffer: Vec<u64> = Vec::with_capacity(N);
                     {
                         let mut w = BufBitWriter::<LE, _>::new(
-                            MemWordWriterVec::<WriteWord, _>::new(&mut buffer),
+                            MemWordWriterVec::<u64, _>::new(&mut buffer),
                         );
                         for &value in &data {
                             w.$write_method(value, k).unwrap();
@@ -266,6 +270,8 @@ macro_rules! bench_comp_k {
                 let bench_id = format!("{}/LE/{}/read", name_str, dist_name);
                 $group.bench_function(&bench_id, |b| {
                     b.iter(|| {
+                        // SAFETY: Vec<u64> is aligned to 8 bytes, which
+                        // satisfies alignment for ReadWord (u16/u32/u64).
                         let slice: &[ReadWord] = unsafe { encoded.align_to::<ReadWord>().1 };
                         let mut r =
                             BufBitReader::<LE, _>::new(MemWordReader::<ReadWord, _>::new(slice));

@@ -23,10 +23,11 @@ TSV is written to the output file (3rd argument, or stdout if omitted).
 
 import os
 import shutil
-import sys
 import subprocess
-from gen_code_tables import *
+import sys
+
 from extract_criterion import get_table_bench_results, parse_ratios_from_stderr
+from gen_code_tables import *
 
 if not os.path.exists("benches") or not os.path.exists("python"):
     sys.exit("You must run this script in the main project directory.")
@@ -45,8 +46,15 @@ while i < len(sys.argv):
         positional.append(sys.argv[i])
     i += 1
 
-if len(positional) < 1 or len(positional) > 3 or positional[0] not in {"u16", "u32", "u64"}:
-    sys.exit("Usage: %s [u16|u32|u64] [implied|univ] [output.tsv] [--warm-up-time S] [--measurement-time S]" % sys.argv[0])
+if (
+    len(positional) < 1
+    or len(positional) > 3
+    or positional[0] not in {"u16", "u32", "u64"}
+):
+    sys.exit(
+        "Usage: %s [u16|u32|u64] [implied|univ] [output.tsv] [--warm-up-time S] [--measurement-time S]"
+        % sys.argv[0]
+    )
 
 read_word = positional[0]
 dist = positional[1] if len(positional) >= 2 else "univ"
@@ -66,8 +74,9 @@ def run_cargo_bench(cmd):
     """Run cargo bench, letting Criterion output go to stdout and forwarding
     compiler output to stderr.  Returns captured RATIO lines as a string."""
     process = subprocess.Popen(
-        cmd, shell=True,
-        stdout=None,           # Criterion output → script's stdout
+        cmd,
+        shell=True,
+        stdout=None,  # Criterion output → script's stdout
         stderr=subprocess.PIPE,  # capture for RATIO parsing + forwarding
         text=True,
     )
@@ -91,7 +100,10 @@ print("code\tendian\tt_bits\ttype\top\tratio\tmean\tmin\tmax", file=out)
 
 # ── Step 1: No-table baselines (run once) ──────────────────────────────
 
-print("Benchmarking with read word = %s, table bits = 0" % read_word, file=sys.stderr)
+print(
+    "\n===== Benchmarking with read word = %s, table bits = 0\n" % read_word,
+    file=sys.stderr,
+)
 
 features = "implied,bench-reads,bench-%s" % read_word
 if dist == "univ":
@@ -103,7 +115,8 @@ if os.path.isdir(no_table_dir):
     shutil.rmtree(no_table_dir)
 
 ratio_text = run_cargo_bench(
-    "cargo bench --bench tables --features %s -- %s '^no_table/'" % (features, criterion_opts_str)
+    "cargo bench --bench tables --features %s -- %s '^no_table/'"
+    % (features, criterion_opts_str)
 )
 
 bench_results = get_table_bench_results(criterion_base, group="no_table")
@@ -114,8 +127,15 @@ for r in sorted(bench_results, key=lambda r: (r["code"], r["endian"], r["op"])):
     endian = r["endian"]
     print(
         "{}\t{}\t{}\t{}\t{}\t{:.4f}\t{:7.4f}\t{:7.4f}\t{:7.4f}".format(
-            code, endian, 0, "-", r["op"], 0.0,
-            r["mean_ns"] / n, r["ci_lower"] / n, r["ci_upper"] / n,
+            code,
+            endian,
+            0,
+            "-",
+            r["op"],
+            0.0,
+            r["mean_ns"] / n,
+            r["min"] / n,
+            r["max"] / n,
         ),
         file=out,
     )
@@ -129,15 +149,23 @@ if os.path.isdir(no_table_dir):
     shutil.rmtree(no_table_dir)
 
 ratio_text_dg = run_cargo_bench(
-    "cargo bench --bench tables --features %s -- %s '^no_table/'" % (features_dg, criterion_opts_str)
+    "cargo bench --bench tables --features %s -- %s '^no_table/'"
+    % (features_dg, criterion_opts_str)
 )
 
 bench_results_dg = get_table_bench_results(criterion_base, group="no_table")
 for r in sorted(bench_results_dg, key=lambda r: (r["code"], r["endian"], r["op"])):
     print(
         "{}\t{}\t{}\t{}\t{}\t{:.4f}\t{:7.4f}\t{:7.4f}\t{:7.4f}".format(
-            r["code"], r["endian"], 0, "-", r["op"], 0.0,
-            r["mean_ns"] / n, r["ci_lower"] / n, r["ci_upper"] / n,
+            r["code"],
+            r["endian"],
+            0,
+            "-",
+            r["op"],
+            0.0,
+            r["mean_ns"] / n,
+            r["min"] / n,
+            r["max"] / n,
         ),
         file=out,
     )
@@ -148,7 +176,8 @@ out.flush()
 
 for bits in range(1, 17):
     print(
-        "Benchmarking with read word = %s, table bits = %d" % (read_word, bits),
+        "\n===== Benchmarking with read word = %s, table bits = %d\n"
+        % (read_word, bits),
         file=sys.stderr,
     )
     for tables_num, type_name in [(1, "merged"), (2, "sep")]:
@@ -194,7 +223,8 @@ for bits in range(1, 17):
             features += ",bench-univ"
 
         ratio_text = run_cargo_bench(
-            "cargo bench --bench tables --features %s -- %s '^table/'" % (features, criterion_opts_str)
+            "cargo bench --bench tables --features %s -- %s '^table/'"
+            % (features, criterion_opts_str)
         )
 
         # Parse hit ratios
@@ -211,8 +241,15 @@ for bits in range(1, 17):
             ratio = ratios.get((code, endian, True), 0.0)
             print(
                 "{}\t{}\t{}\t{}\t{}\t{:.4f}\t{:7.4f}\t{:7.4f}\t{:7.4f}".format(
-                    code, endian, bits, type_name, r["op"], ratio,
-                    r["mean_ns"] / n, r["ci_lower"] / n, r["ci_upper"] / n,
+                    code,
+                    endian,
+                    bits,
+                    type_name,
+                    r["op"],
+                    ratio,
+                    r["mean_ns"] / n,
+                    r["min"] / n,
+                    r["max"] / n,
                 ),
                 file=out,
             )
@@ -235,20 +272,30 @@ for bits in range(1, 17):
                 features += ",bench-univ"
 
             ratio_text_dg = run_cargo_bench(
-                "cargo bench --bench tables --features %s -- %s '^table/'" % (features, criterion_opts_str)
+                "cargo bench --bench tables --features %s -- %s '^table/'"
+                % (features, criterion_opts_str)
             )
 
             ratios_dg = parse_ratios_from_stderr(ratio_text_dg)
             bench_results_dg = get_table_bench_results(criterion_base, group="table")
 
-            for r in sorted(bench_results_dg, key=lambda r: (r["code"], r["endian"], r["op"])):
+            for r in sorted(
+                bench_results_dg, key=lambda r: (r["code"], r["endian"], r["op"])
+            ):
                 code = r["code"]
                 endian = r["endian"]
                 ratio = ratios_dg.get((code, endian, True), 0.0)
                 print(
                     "{}\t{}\t{}\t{}\t{}\t{:.4f}\t{:7.4f}\t{:7.4f}\t{:7.4f}".format(
-                        code, endian, bits, type_name, r["op"], ratio,
-                        r["mean_ns"] / n, r["ci_lower"] / n, r["ci_upper"] / n,
+                        code,
+                        endian,
+                        bits,
+                        type_name,
+                        r["op"],
+                        ratio,
+                        r["mean_ns"] / n,
+                        r["min"] / n,
+                        r["max"] / n,
                     ),
                     file=out,
                 )

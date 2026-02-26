@@ -5,16 +5,20 @@
 # Default: both
 # Example: gen_plots.sh implied -- --warm-up-time 0.01 --measurement-time 0.01
 
-DIST=${1:-both}
+DIST="both"
+CRITERION_OPTS=""
+
+# Parse arguments: optional dist, then optional -- criterion-opts
+if [ $# -gt 0 ] && [ "$1" != "--" ]; then
+	DIST="$1"
+	shift
+fi
 
 if [ "$DIST" != "implied" ] && [ "$DIST" != "univ" ] && [ "$DIST" != "both" ]; then
 	echo "Usage: $0 [implied|univ|both] [-- Criterion options]" 1>&2
 	exit 1
 fi
 
-# Collect Criterion options (everything after --)
-shift
-CRITERION_OPTS=""
 if [ "$1" = "--" ]; then
 	shift
 	CRITERION_OPTS="$*"
@@ -47,4 +51,4 @@ for d in $DISTS; do
 	done
 done
 
-echo "Please restore the source code for decoding tables in ../src/codes" 1>&2
+echo "Please restore the source code for decoding tables in src/codes" 1>&2

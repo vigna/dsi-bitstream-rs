@@ -33,8 +33,8 @@ def get_criterion_results(target_dir="target/criterion"):
 
     Returns a dict mapping benchmark ID to a dict with keys:
         mean_ns: mean estimate in nanoseconds
-        ci_lower: confidence interval lower bound in ns
-        ci_upper: confidence interval upper bound in ns
+        min: confidence interval lower bound in ns
+        max: confidence interval upper bound in ns
     """
     results = {}
     if not os.path.isdir(target_dir):
@@ -57,8 +57,8 @@ def get_criterion_results(target_dir="target/criterion"):
             mean = estimates["mean"]
             results[bench_id] = {
                 "mean_ns": mean["point_estimate"],
-                "ci_lower": mean["confidence_interval"]["lower_bound"],
-                "ci_upper": mean["confidence_interval"]["upper_bound"],
+                "min": mean["confidence_interval"]["lower_bound"],
+                "max": mean["confidence_interval"]["upper_bound"],
             }
 
     return results
@@ -80,8 +80,8 @@ def get_table_bench_results(target_dir="target/criterion", group="table"):
         use_table: True or False
         op: operation type (e.g., "read_b", "write", "read_ub")
         mean_ns: mean estimate in nanoseconds (for the whole iteration)
-        ci_lower: confidence interval lower bound
-        ci_upper: confidence interval upper bound
+        min: confidence interval lower bound
+        max: confidence interval upper bound
     """
     results = []
     group_dir = os.path.join(target_dir, group)
@@ -134,8 +134,8 @@ def get_table_bench_results(target_dir="target/criterion", group="table"):
                 "use_table": use_table,
                 "op": op,
                 "mean_ns": stats["mean_ns"],
-                "ci_lower": stats["ci_lower"],
-                "ci_upper": stats["ci_upper"],
+                "min": stats["min"],
+                "max": stats["max"],
             }
         )
 
@@ -151,7 +151,7 @@ def get_comp_bench_results(target_dir="target/criterion"):
     structure: {code}_{endianness}_{dist}_{op}.
 
     Returns a list of dicts with keys:
-        code, op, dist, endian, mean_ns, ci_lower, ci_upper
+        code, op, dist, endian, mean_ns, min, max
     """
     results = []
     group_dir = os.path.join(target_dir, "comparative")
@@ -199,8 +199,8 @@ def get_comp_bench_results(target_dir="target/criterion"):
                 "dist": dist,
                 "endian": endian,
                 "mean_ns": stats["mean_ns"],
-                "ci_lower": stats["ci_lower"],
-                "ci_upper": stats["ci_upper"],
+                "min": stats["min"],
+                "max": stats["max"],
             }
         )
 

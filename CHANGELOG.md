@@ -28,6 +28,11 @@
 - `BufBitReader::into_inner` does not return a `Result` anymore, as it cannot
   fail.
 
+- The output of all benchmarks is a file of aligned TAB-separated values, with a
+  header line.
+
+- Benchmark-running scripts can pass options to Criterion.
+
 ### Changed
 
 - Upgraded to `rand` 0.10.0, `rand_distr` 0.6.0 and `mem_dbg` 0.4.0.
@@ -52,6 +57,9 @@
 
 - Parametric-codes traits and function are no longer exported at the top
   level.
+
+- All benchmarks are now in the `benches` directory, and they are all based on
+  Criterion.
 
 ### Fixed
 

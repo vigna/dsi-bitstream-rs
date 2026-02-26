@@ -22,6 +22,16 @@ import matplotlib.pyplot as plt
 parser = argparse.ArgumentParser()
 parser.add_argument("file")
 parser.add_argument("--output-dir", default=".", help="Directory for output SVG files")
+parser.add_argument(
+    "--read-word", default="u32",
+    choices=["u16", "u32", "u64"],
+    help="Read word size for plot titles (default: u32)",
+)
+parser.add_argument(
+    "--write-word", default="u64",
+    choices=["u16", "u32", "u64"],
+    help="Write word size for plot titles (default: u64)",
+)
 args = parser.parse_args()
 
 with open(args.file) as f:
@@ -151,28 +161,29 @@ def create_plot(operations, title):
     return fig
 
 
-for op_val, dist_val, title, filename in [
+for op_val, dist_val, word, dist_label, filename in [
     (
-        "read", "implied",
-        "Read (u32 read word) on implied distribution",
+        "read", "implied", args.read_word,
+        "implied distribution",
         "read_implied_performance.svg",
     ),
     (
-        "write", "implied",
-        "Write (u64 write word) on implied distribution",
+        "write", "implied", args.write_word,
+        "implied distribution",
         "write_implied_performance.svg",
     ),
     (
-        "read", "univ",
-        "Read (u32 read word) on distribution ≈1/x (first billion integers)",
+        "read", "univ", args.read_word,
+        "distribution ≈1/x (first billion integers)",
         "read_univ_performance.svg",
     ),
     (
-        "write", "univ",
-        "Write (u64 write word) on distribution ≈1/x (first billion integers)",
+        "write", "univ", args.write_word,
+        "distribution ≈1/x (first billion integers)",
         "write_univ_performance.svg",
     ),
 ]:
+    title = "%s (%s %s word) on %s" % (op_val.capitalize(), word, op_val, dist_label)
     ops = [d for d in data if d["op"] == op_val and d["dist"] == dist_val]
     if not ops:
         continue

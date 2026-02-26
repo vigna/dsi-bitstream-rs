@@ -1,13 +1,13 @@
 # Benchmarks for `dsi-bitstream`
 
 This directory contains Criterion-based performance benchmarks for reading and
-writing instantaneous codes. In particular, there are table benchmarks a global
-comparative performance test.
+writing instantaneous codes. In particular, there are table benchmarks and a
+global comparative performance test.
 
 ## Table Benchmarks
 
 Tests each code with different table sizes. Each code with tables (ɣ, δ, ζ₃, π₂,
-⍵) is tested in all combinations of:
+ω) is tested in all combinations of:
 
 - Big endian / little endian
 - Buffered / unbuffered (reads only)
@@ -79,7 +79,7 @@ Criterion timing can be controlled via CLI options passed after `--`:
 cargo bench --bench tables --features implied,bench-reads,bench-u32 -- --warm-up-time 0.01 --measurement-time 0.01
 
 # Fine-grained table benchmarks
-./python/gen_plots.sh implied -- --warm-up-time 0.5 --measurement-time 1
+    ./python/gen_plots.sh implied -- --warm-up-time 0.5 --measurement-time 1
 ```
 
 ## Filtering with Criterion Regex

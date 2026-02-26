@@ -8,7 +8,7 @@
 
 """Extracts comparative benchmark results from Criterion's JSON output.
 
-Reads the benchmarks/target/criterion/ directory and produces TSV output
+Reads the target/criterion/ directory and produces TSV output
 compatible with the plot_comp.py script.
 
 Usage:
@@ -41,7 +41,7 @@ def main():
     print("code\top\tdist\tendian\tmean\tmin\tmax")
 
     # Divide by N to get per-operation nanoseconds
-    n = 1_000_000  # matches benchmarks::N
+    n = 1_000_000  # matches common::N
 
     for r in sorted(results, key=lambda x: (x["code"], x["op"], x["dist"], x["endian"])):
         print(
@@ -51,8 +51,8 @@ def main():
                 r["dist"],
                 r["endian"],
                 r["mean_ns"] / n,
-                r["ci_lower"] / n,
-                r["ci_upper"] / n,
+                r["min"] / n,
+                r["max"] / n,
             )
         )
 
