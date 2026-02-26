@@ -136,9 +136,14 @@ We provide several options to [dispatch] codes dynamically.
 ## Benchmarks
 
 To evaluate the performance on your hardware you can run the
-benchmarks in the `benchmarks` directory, which test the speed of read/write
-operations under several combinations of parameters. The `svg` directory
-contains reference results of these benchmarks on a few architectures.
+benchmarks in the `benches` directory, which test the speed of read/write
+operations under several combinations of parameters.
+
+Full table-size sweeps with plot generation are available via the Python scripts
+in the `python` directory (see `benches/README.md` for details). They can be
+used to choose whether to use tables on a specific hardware, or to generate
+tables of different length. `svg` directory contains reference results of these
+benchmarks on a few architectures.
 
 ## Features
 

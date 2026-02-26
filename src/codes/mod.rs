@@ -91,26 +91,22 @@ use num_traits::{AsPrimitive, ConstOne};
 pub mod params;
 
 pub mod gamma;
-pub use gamma::{
-    GammaRead, GammaReadParam, GammaWrite, GammaWriteParam, len_gamma, len_gamma_param,
-};
+pub use gamma::{GammaRead, GammaWrite, len_gamma};
 
 pub mod delta;
-pub use delta::{
-    DeltaRead, DeltaReadParam, DeltaWrite, DeltaWriteParam, len_delta, len_delta_param,
-};
+pub use delta::{DeltaRead, DeltaWrite, len_delta};
 
 pub mod omega;
-pub use omega::{OmegaRead, OmegaReadParam, OmegaWrite, OmegaWriteParam, len_omega};
+pub use omega::{OmegaRead, OmegaWrite, len_omega};
 
 pub mod minimal_binary;
 pub use minimal_binary::{MinimalBinaryRead, MinimalBinaryWrite, len_minimal_binary};
 
 pub mod zeta;
-pub use zeta::{ZetaRead, ZetaReadParam, ZetaWrite, ZetaWriteParam, len_zeta, len_zeta_param};
+pub use zeta::{ZetaRead, ZetaWrite, len_zeta};
 
 pub mod pi;
-pub use pi::{PiRead, PiReadParam, PiWrite, PiWriteParam, len_pi, len_pi_param};
+pub use pi::{PiRead, PiWrite, len_pi};
 
 pub mod golomb;
 pub use golomb::{GolombRead, GolombWrite, len_golomb};
