@@ -12,6 +12,7 @@
 Reads TSV with mean + confidence interval columns.
 """
 
+import os
 import sys
 import numpy as np
 import pandas as pd
@@ -21,13 +22,14 @@ import matplotlib.pyplot as plt
 
 # plt.rcParams['text.usetex'] = True
 
-if len(sys.argv) < 2 or len(sys.argv) > 3 or sys.argv[1] not in {"u16", "u32", "u64"}:
-    sys.exit("Usage: %s [u16 | u32 | u64] [implied | univ]" % sys.argv[0])
+if len(sys.argv) < 2 or len(sys.argv) > 4 or sys.argv[1] not in {"u16", "u32", "u64"}:
+    sys.exit("Usage: %s [u16 | u32 | u64] [implied | univ] [output_dir]" % sys.argv[0])
 
 colors = matplotlib.cm.tab10.colors
 
 read_word = sys.argv[1]
-dist = sys.argv[2] if len(sys.argv) == 3 else "univ"
+dist = sys.argv[2] if len(sys.argv) >= 3 else "univ"
+outdir = sys.argv[3] if len(sys.argv) == 4 else "."
 
 if dist not in {"implied", "univ"}:
     sys.exit("Distribution must be 'implied' or 'univ'")
@@ -154,7 +156,7 @@ for code_name in ["gamma", "delta", "delta_g", "zeta3", "pi2", "omega"]:
     )
     ax.set_xlabel("table bits")
     ax.set_ylabel("ns")
-    plots.append((fig, ax, "%s_read_tables.svg" % code_name))
+    plots.append((fig, ax, os.path.join(outdir, "%s_read_tables.svg" % code_name)))
 
 min_x, max_x = np.inf, -np.inf
 min_y, max_y = np.inf, -np.inf

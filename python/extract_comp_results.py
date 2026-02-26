@@ -45,7 +45,7 @@ def main():
 
     for r in sorted(results, key=lambda x: (x["code"], x["op"], x["dist"], x["endian"])):
         print(
-            "{}\t{}\t{}\t{}\t{:.3f}\t{:.3f}\t{:.3f}".format(
+            "{}\t{}\t{}\t{}\t{:7.4f}\t{:7.4f}\t{:7.4f}".format(
                 r["code"],
                 r["op"],
                 r["dist"],
