@@ -28,7 +28,7 @@ import subprocess
 from gen_code_tables import *
 from extract_criterion import get_table_bench_results, parse_ratios_from_stderr
 
-if not os.path.exists("benchmarks") or not os.path.exists("python"):
+if not os.path.exists("benches") or not os.path.exists("python"):
     sys.exit("You must run this script in the main project directory.")
 
 # Separate positional args from Criterion options (--warm-up-time, --measurement-time, etc.)
@@ -66,7 +66,7 @@ def run_cargo_bench(cmd):
     """Run cargo bench, letting Criterion output go to stdout and forwarding
     compiler output to stderr.  Returns captured RATIO lines as a string."""
     process = subprocess.Popen(
-        cmd, shell=True, cwd="benchmarks",
+        cmd, shell=True,
         stdout=None,           # Criterion output → script's stdout
         stderr=subprocess.PIPE,  # capture for RATIO parsing + forwarding
         text=True,
@@ -84,7 +84,7 @@ def run_cargo_bench(cmd):
     return "\n".join(ratio_lines)
 
 
-criterion_base = os.path.join("benchmarks", "target", "criterion")
+criterion_base = os.path.join("target", "criterion")
 
 # TSV header: t_bits is 0 for no table, >0 for table (= log2 of table size)
 print("code\tendian\tt_bits\ttype\top\tratio\tmean\tmin\tmax", file=out)
@@ -93,9 +93,9 @@ print("code\tendian\tt_bits\ttype\top\tratio\tmean\tmin\tmax", file=out)
 
 print("Benchmarking with write word = %s, table bits = 0" % write_word, file=sys.stderr)
 
-features = write_word
+features = "implied,bench-%s" % write_word
 if dist == "univ":
-    features = "univ," + features
+    features += ",bench-univ"
 
 # Remove stale results
 no_table_dir = os.path.join(criterion_base, "no_table")
@@ -103,12 +103,12 @@ if os.path.isdir(no_table_dir):
     shutil.rmtree(no_table_dir)
 
 ratio_text = run_cargo_bench(
-    "cargo bench --bench tables --no-default-features --features %s -- %s '^no_table/'" % (features, criterion_opts_str)
+    "cargo bench --bench tables --features %s -- %s '^no_table/'" % (features, criterion_opts_str)
 )
 
 bench_results = get_table_bench_results(criterion_base, group="no_table")
 
-n = 1_000_000  # matches benchmarks::N
+n = 1_000_000  # matches common::N
 for r in sorted(bench_results, key=lambda r: (r["code"], r["endian"], r["op"])):
     print(
         "{}\t{}\t{}\t{}\t{}\t{:.4f}\t{:7.4f}\t{:7.4f}\t{:7.4f}".format(
@@ -119,15 +119,15 @@ for r in sorted(bench_results, key=lambda r: (r["code"], r["endian"], r["op"])):
     )
 
 # Also run delta_g no-table baseline
-features_dg = "delta_gamma,%s" % write_word
+features_dg = "implied,bench-delta-gamma,bench-%s" % write_word
 if dist == "univ":
-    features_dg = "univ," + features_dg
+    features_dg += ",bench-univ"
 
 if os.path.isdir(no_table_dir):
     shutil.rmtree(no_table_dir)
 
 ratio_text_dg = run_cargo_bench(
-    "cargo bench --bench tables --no-default-features --features %s -- %s '^no_table/'" % (features_dg, criterion_opts_str)
+    "cargo bench --bench tables --features %s -- %s '^no_table/'" % (features_dg, criterion_opts_str)
 )
 
 bench_results_dg = get_table_bench_results(criterion_base, group="no_table")
@@ -188,12 +188,12 @@ for bits in range(1, 17):
         if os.path.isdir(table_dir):
             shutil.rmtree(table_dir)
 
-        features = write_word
+        features = "implied,bench-%s" % write_word
         if dist == "univ":
-            features = "univ," + features
+            features += ",bench-univ"
 
         ratio_text = run_cargo_bench(
-            "cargo bench --bench tables --no-default-features --features %s -- %s '^table/'" % (features, criterion_opts_str)
+            "cargo bench --bench tables --features %s -- %s '^table/'" % (features, criterion_opts_str)
         )
 
         # Parse hit ratios
@@ -230,12 +230,12 @@ for bits in range(1, 17):
             if os.path.isdir(table_dir):
                 shutil.rmtree(table_dir)
 
-            features = "delta_gamma,%s" % write_word
+            features = "implied,bench-delta-gamma,bench-%s" % write_word
             if dist == "univ":
-                features = "univ," + features
+                features += ",bench-univ"
 
             ratio_text_dg = run_cargo_bench(
-                "cargo bench --bench tables --no-default-features --features %s -- %s '^table/'" % (features, criterion_opts_str)
+                "cargo bench --bench tables --features %s -- %s '^table/'" % (features, criterion_opts_str)
             )
 
             ratios_dg = parse_ratios_from_stderr(ratio_text_dg)

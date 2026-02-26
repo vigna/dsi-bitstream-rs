@@ -29,6 +29,9 @@ zip = "7.0.0"
 rand_distr = "0.6.0"
 serde_json = "1.0"
 
+[target.'cfg(unix)'.dev-dependencies]
+libc = "0.2"
+
 [features]
 default = ["std", "mem_dbg", "serde"]
 std = ["alloc", "num-primitive/std", "num-traits/std"]
@@ -44,24 +47,26 @@ no_copy_impls = []
 # offset_of_enum MemDbg feature gate if needed
 offset_of_enum = []
 serde = ["dep:serde", "alloc"]
+# Benchmark-only feature flags
+bench-reads = []
+bench-u16 = []
+bench-u32 = []
+bench-u64 = []
+bench-univ = []
+bench-delta-gamma = []
 
 [profile.bench]
-opt-level = 3 # like --release
-lto = "fat"              # Full LTO
-overflow-checks = false  # Disable integer overflow checks.
-debug = true             # Include debug info.
-debug-assertions = false # Enables debug assertions.
-codegen-units = 1        # slower compile times, but maybe better perf
-
+opt-level = 3
+lto = "thin"
+overflow-checks = false
+debug = true
+debug-assertions = false
+codegen-units = 1
 
 [[bench]]
-name = "write_unary"
+name = "tables"
 harness = false
 
 [[bench]]
-name = "write_gamma"
-harness = false
-
-[[bench]]
-name = "vbyte"
+name = "comparative"
 harness = false

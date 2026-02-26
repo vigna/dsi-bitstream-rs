@@ -37,10 +37,10 @@ for d in $DISTS; do
 	mkdir -p "$d"
 
 	# Remove stale Criterion results
-	rm -rf benchmarks/target/criterion/comparative
+	rm -rf target/criterion/comparative
 
 	# Run benchmarks for this distribution only
-	(cd benchmarks && BENCH_DIST=$d cargo bench --bench comparative $DASH_OPTS)
+	cargo bench --bench comparative --features implied -- "/$d/" $CRITERION_OPTS
 
 	# Extract results and generate plots directly into the dist directory
 	python3 ./python/extract_comp_results.py > "$d/comp.tsv"

@@ -23,7 +23,7 @@ import os
 import sys
 
 
-def get_criterion_results(target_dir="benchmarks/target/criterion"):
+def get_criterion_results(target_dir="target/criterion"):
     """Parse all Criterion benchmark results from the target directory.
 
     Recursively walks the directory tree looking for new/estimates.json
@@ -64,7 +64,7 @@ def get_criterion_results(target_dir="benchmarks/target/criterion"):
     return results
 
 
-def get_table_bench_results(target_dir="benchmarks/target/criterion", group="table"):
+def get_table_bench_results(target_dir="target/criterion", group="table"):
     """Parse table-sweep benchmark results.
 
     Looks inside the given group subdirectory (default "table"; use
@@ -142,7 +142,7 @@ def get_table_bench_results(target_dir="benchmarks/target/criterion", group="tab
     return results
 
 
-def get_comp_bench_results(target_dir="benchmarks/target/criterion"):
+def get_comp_bench_results(target_dir="target/criterion"):
     """Parse comparative benchmark results.
 
     Looks inside the "comparative" group subdirectory.  Criterion flattens

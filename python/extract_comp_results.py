@@ -29,8 +29,8 @@ def main():
     )
     parser.add_argument(
         "--target-dir",
-        default="benchmarks/target/criterion",
-        help="Path to the Criterion output directory (default: benchmarks/target/criterion)",
+        default="target/criterion",
+        help="Path to the Criterion output directory (default: target/criterion)",
     )
     args = parser.parse_args()
 
