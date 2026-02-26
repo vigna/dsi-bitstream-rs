@@ -50,7 +50,7 @@ impl<RE: Error + Send + Sync + 'static, WE: Error + Send + Sync + 'static> Error
 /// This trait specifies basic operations over which codes can be implemented by
 /// traits such as [`GammaReadParam`](crate::codes::gamma::GammaReadParam).
 ///
-/// To read quickly complex codes, such traits may use the
+/// To quickly read complex codes, such traits may use the
 /// [`peek_bits`](BitRead::peek_bits) method to read a few bits in advance and
 /// then use a table to decode them. For this to happen correctly,
 /// [`peek_bits`](BitRead::peek_bits) must return a sufficient number of bits.

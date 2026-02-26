@@ -4,7 +4,7 @@
 // Methods for reading and writing values using precomputed tables for omega codes
 use crate::traits::{BE, BitRead, BitWrite, LE};
 use num_traits::AsPrimitive;
-/// How many bits are needed to read the tables in this
+/// How many bits are needed to read the tables
 pub const READ_BITS: usize = 10;
 const _: () = assert!(
     READ_BITS >= 2,

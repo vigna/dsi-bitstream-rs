@@ -57,7 +57,7 @@ assert_eq!(reader.read_delta()?, 2);
 ```
 
 In this case, the backend is already word-based, but if you have a byte-based
-backend such as a file [`WordAdapter`] can be used to adapt it to a word-based
+backend such as a file, [`WordAdapter`] can be used to adapt it to a word-based
 backend.
 
 You can also use references to backends instead of owned values,

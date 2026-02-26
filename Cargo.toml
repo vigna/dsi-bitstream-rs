@@ -58,7 +58,7 @@ bench-delta-gamma = []
 
 [profile.bench]
 opt-level = 3
-lto = "fat" # Irrelevant with codegen-units = 1
+lto = "this"
 overflow-checks = false
 debug = true
 debug-assertions = false

@@ -28,11 +28,11 @@ impl<T: private::Endianness> Endianness for T {
 
 /// Marker trait for endianness selector types.
 ///
-/// Its only implementations are [`LittleEndian`] and [`BigEndian`]
+/// Its only implementations are [`LittleEndian`] and [`BigEndian`].
 ///
-/// Note that in principle marker traits are not necessary to use
-/// selector types, but they are useful to avoid that the user specifies
-/// a nonsensical type, and to document the meaning of type parameters.
+/// Note that in principle marker traits are not necessary to use selector
+/// types, but they are useful to prevent the user from specifying a nonsensical
+/// type, and to document the meaning of type parameters.
 pub trait Endianness: private::Endianness {
     /// The name of the endianness.
     const NAME: &'static str;

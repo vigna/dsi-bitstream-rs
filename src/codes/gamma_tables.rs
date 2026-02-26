@@ -4,7 +4,7 @@
 // Methods for reading and writing values using precomputed tables for gamma codes
 use crate::traits::{BE, BitRead, BitWrite, LE};
 use num_traits::AsPrimitive;
-/// How many bits are needed to read the tables in this
+/// How many bits are needed to read the tables
 pub const READ_BITS: usize = 9;
 /// Maximum value writable using the table(s)
 pub const WRITE_MAX: u64 = 63;
@@ -74,7 +74,7 @@ pub fn write_table_be<B: BitWrite<BE>>(backend: &mut B, n: u64) -> Result<Option
 }
 /// The len we assign to a code that cannot be decoded through the table
 pub const MISSING_VALUE_LEN_BE: u8 = 10;
-/// Precomputed table for writing gamma codes
+/// Precomputed table for reading gamma codes
 pub const READ_BE: &[u8] = &[
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
     27, 28, 29, 30, 7, 7, 7, 7, 8, 8, 8, 8, 9, 9, 9, 9, 10, 10, 10, 10, 11, 11, 11, 11, 12, 12, 12,
@@ -116,7 +116,7 @@ pub const READ_LEN_BE: &[u8] = &[
 ];
 /// The len we assign to a code that cannot be decoded through the table
 pub const MISSING_VALUE_LEN_LE: u8 = 10;
-/// Precomputed table for writing gamma codes
+/// Precomputed table for reading gamma codes
 pub const READ_LE: &[u8] = &[
     0, 0, 1, 0, 3, 0, 2, 0, 7, 0, 1, 0, 4, 0, 2, 0, 15, 0, 1, 0, 5, 0, 2, 0, 8, 0, 1, 0, 6, 0, 2,
     0, 0, 0, 1, 0, 3, 0, 2, 0, 9, 0, 1, 0, 4, 0, 2, 0, 16, 0, 1, 0, 5, 0, 2, 0, 10, 0, 1, 0, 6, 0,
@@ -156,32 +156,32 @@ pub const READ_LEN_LE: &[u8] = &[
     1, 3, 1, 5, 1, 3, 1, 7, 1, 3, 1, 5, 1, 3, 1, 10, 1, 3, 1, 5, 1, 3, 1, 7, 1, 3, 1, 5, 1, 3, 1,
     9, 1, 3, 1, 5, 1, 3, 1, 7, 1, 3, 1, 5, 1, 3, 1,
 ];
-///Table used to speed up the writing of gamma codes
+/// Table used to speed up the writing of gamma codes
 pub const WRITE_BE: &[u16] = &[
     1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
     27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50,
     51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64,
 ];
-///Table used to speed up the writing of gamma codes
+/// Table used to speed up the writing of gamma codes
 pub const WRITE_LEN_BE: &[u16] = &[
     1, 3, 3, 5, 5, 5, 5, 7, 7, 7, 7, 7, 7, 7, 7, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9,
     11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11,
     11, 11, 11, 11, 11, 11, 11, 11, 13,
 ];
-///Table used to speed up the writing of gamma codes
+/// Table used to speed up the writing of gamma codes
 pub const WRITE_LE: &[u16] = &[
     1, 2, 6, 4, 12, 20, 28, 8, 24, 40, 56, 72, 88, 104, 120, 16, 48, 80, 112, 144, 176, 208, 240,
     272, 304, 336, 368, 400, 432, 464, 496, 32, 96, 160, 224, 288, 352, 416, 480, 544, 608, 672,
     736, 800, 864, 928, 992, 1056, 1120, 1184, 1248, 1312, 1376, 1440, 1504, 1568, 1632, 1696,
     1760, 1824, 1888, 1952, 2016, 64,
 ];
-///Table used to speed up the writing of gamma codes
+/// Table used to speed up the writing of gamma codes
 pub const WRITE_LEN_LE: &[u16] = &[
     1, 3, 3, 5, 5, 5, 5, 7, 7, 7, 7, 7, 7, 7, 7, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9,
     11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11,
     11, 11, 11, 11, 11, 11, 11, 11, 13,
 ];
-///Table used to speed up the skipping of gamma codes
+/// Table used to speed up the skipping of gamma codes
 pub const LEN: &[u8] = &[
     1, 3, 3, 5, 5, 5, 5, 7, 7, 7, 7, 7, 7, 7, 7, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9,
     11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11,

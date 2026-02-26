@@ -43,8 +43,8 @@ impl<F: Fn(u64) -> usize> Iterator for FindChangePoints<F> {
         // the last change point.
         let mut step = 1;
         loop {
-            // Avoid overflow, use <= instead of < because none of our codes
-            // can encode u64::MAX, so let's just ignore it
+            // Avoid overflow, use <= instead of < because most of our codes
+            // cannot encode u64::MAX, so let's just ignore it
             if u64::MAX - self.current <= step {
                 return None;
             }
@@ -61,7 +61,7 @@ impl<F: Fn(u64) -> usize> Iterator for FindChangePoints<F> {
             if new_val != self.prev_value {
                 break;
             }
-            step *= 2;
+            step = step.saturating_mul(2);
         }
 
         // Binary search in the last exponential step to find exact change point

@@ -83,6 +83,11 @@ impl_fuzz_repr!(
     mem_word_reader
 );
 impl_fuzz_repr!(
+    fuzz_mem_word_reader_strict,
+    fuzz_mem_word_reader_strict_zip,
+    mem_word_reader_strict
+);
+impl_fuzz_repr!(
     fuzz_mem_word_writer,
     fuzz_mem_word_writer_zip,
     mem_word_writer

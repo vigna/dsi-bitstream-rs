@@ -218,8 +218,8 @@ impl WriteParams for DefaultWriteParams {}
 
 macro_rules! impl_default_write_codes {
     ($($endianness:ident),*) => {$(
-        impl<WR: WordWrite> GammaWrite<$endianness>
-            for BufBitWriter<$endianness, WR, DefaultWriteParams>
+        impl<WR: WordWrite, WP: WriteParams> GammaWrite<$endianness>
+            for BufBitWriter<$endianness, WR, WP>
             where u64: AsPrimitive<WR::Word>,
         {
             #[inline(always)]

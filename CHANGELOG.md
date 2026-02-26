@@ -55,7 +55,7 @@
 
 - We use `core::error::Error` everywhere.
 
-- Parametric-codes traits and function are no longer exported at the top
+- Parametric-codes traits and functions are no longer exported at the top
   level.
 
 - All benchmarks are now in the `benches` directory, and they are all based on

@@ -440,7 +440,7 @@ impl<'de> serde::Deserialize<'de> for Codes {
 /// [`DynamicCodeRead`], [`DynamicCodeWrite`], [`StaticCodeRead`],
 /// [`StaticCodeWrite`] or [`CodeLen`] implementing minimal binary coding
 /// is necessary.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct MinimalBinary(
     /// The upper bound of the minimal binary code.
     pub u64,

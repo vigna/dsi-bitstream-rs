@@ -4,7 +4,7 @@
 // Methods for reading and writing values using precomputed tables for zeta codes
 use crate::traits::{BE, BitRead, BitWrite, LE};
 use num_traits::AsPrimitive;
-/// How many bits are needed to read the tables in this
+/// How many bits are needed to read the tables
 pub const READ_BITS: usize = 12;
 /// Maximum value writable using the table(s)
 pub const WRITE_MAX: u64 = 1023;
@@ -74,7 +74,7 @@ pub fn write_table_be<B: BitWrite<BE>>(backend: &mut B, n: u64) -> Result<Option
 }
 /// The len we assign to a code that cannot be decoded through the table
 pub const MISSING_VALUE_LEN_BE: u8 = 13;
-/// Precomputed table for writing zeta codes
+/// Precomputed table for reading zeta codes
 pub const READ_BE: &[u16] = &[
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -369,7 +369,7 @@ pub const READ_LEN_BE: &[u8] = &[
 ];
 /// The len we assign to a code that cannot be decoded through the table
 pub const MISSING_VALUE_LEN_LE: u8 = 13;
-/// Precomputed table for writing zeta codes
+/// Precomputed table for reading zeta codes
 pub const READ_LE: &[u16] = &[
     0, 0, 7, 1, 63, 3, 8, 5, 0, 0, 9, 2, 64, 4, 10, 6, 0, 0, 11, 1, 65, 3, 12, 5, 0, 0, 13, 2, 66,
     4, 14, 6, 0, 0, 15, 1, 67, 3, 17, 5, 0, 0, 19, 2, 68, 4, 21, 6, 0, 0, 23, 1, 69, 3, 25, 5, 0,
@@ -667,7 +667,7 @@ pub const READ_LEN_LE: &[u8] = &[
     12, 4, 8, 4, 13, 3, 8, 4, 12, 4, 8, 4, 13, 3, 8, 4, 12, 4, 8, 4, 13, 3, 8, 4, 12, 4, 8, 4, 13,
     3, 8, 4, 12, 4, 8, 4,
 ];
-///Table used to speed up the writing of zeta codes
+/// Table used to speed up the writing of zeta codes
 pub const WRITE_BE: &[u16] = &[
     4, 10, 11, 12, 13, 14, 15, 32, 33, 34, 35, 36, 37, 38, 39, 80, 81, 82, 83, 84, 85, 86, 87, 88,
     89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109,
@@ -729,7 +729,7 @@ pub const WRITE_BE: &[u16] = &[
     2531, 2532, 2533, 2534, 2535, 2536, 2537, 2538, 2539, 2540, 2541, 2542, 2543, 2544, 2545, 2546,
     2547, 2548, 2549, 2550, 2551, 2552, 2553, 2554, 2555, 2556, 2557, 2558, 2559, 5120,
 ];
-///Table used to speed up the writing of zeta codes
+/// Table used to speed up the writing of zeta codes
 pub const WRITE_LEN_BE: &[u16] = &[
     3, 4, 4, 4, 4, 4, 4, 7, 7, 7, 7, 7, 7, 7, 7, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
     8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
@@ -775,7 +775,7 @@ pub const WRITE_LEN_BE: &[u16] = &[
     15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
     16,
 ];
-///Table used to speed up the writing of zeta codes
+/// Table used to speed up the writing of zeta codes
 pub const WRITE_LE: &[u16] = &[
     1, 3, 11, 5, 13, 7, 15, 2, 6, 10, 14, 18, 22, 26, 30, 34, 162, 38, 166, 42, 170, 46, 174, 50,
     178, 54, 182, 58, 186, 62, 190, 66, 194, 70, 198, 74, 202, 78, 206, 82, 210, 86, 214, 90, 218,
@@ -840,7 +840,7 @@ pub const WRITE_LE: &[u16] = &[
     7928, 7944, 7960, 7976, 7992, 8008, 8024, 8040, 8056, 8072, 8088, 8104, 8120, 8136, 8152, 8168,
     8184, 8200,
 ];
-///Table used to speed up the writing of zeta codes
+/// Table used to speed up the writing of zeta codes
 pub const WRITE_LEN_LE: &[u16] = &[
     3, 4, 4, 4, 4, 4, 4, 7, 7, 7, 7, 7, 7, 7, 7, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
     8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
@@ -886,7 +886,7 @@ pub const WRITE_LEN_LE: &[u16] = &[
     15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
     16,
 ];
-///Table used to speed up the skipping of zeta codes
+/// Table used to speed up the skipping of zeta codes
 pub const LEN: &[u8] = &[
     3, 4, 4, 4, 4, 4, 4, 7, 7, 7, 7, 7, 7, 7, 7, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
     8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,

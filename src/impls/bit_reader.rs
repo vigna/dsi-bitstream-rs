@@ -44,6 +44,7 @@ pub struct BitReader<E: Endianness, WR, RP: ReadParams = DefaultReadParams> {
 }
 
 impl<E: Endianness, WR, RP: ReadParams> BitReader<E, WR, RP> {
+    /// Creates a new [`BitReader`] with the given word reader.
     #[must_use]
     pub fn new(data: WR) -> Self {
         Self {
@@ -69,12 +70,12 @@ impl<WR: WordRead<Word = u64> + WordSeek<Error = <WR as WordRead>::Error>, RP: R
 
     #[inline]
     fn read_bits(&mut self, num_bits: usize) -> Result<u64, Self::Error> {
+        #[cfg(feature = "checks")]
+        assert!(num_bits <= 64);
+
         if num_bits == 0 {
             return Ok(0);
         }
-
-        #[cfg(feature = "checks")]
-        assert!(num_bits <= 64);
 
         self.data.set_word_pos(self.bit_index / 64)?;
         let in_word_offset = (self.bit_index % 64) as usize;

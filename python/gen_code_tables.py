@@ -156,7 +156,7 @@ def gen_table(
         f.write("use crate::traits::{BE, BitRead, BitWrite, LE};\n")
         f.write("use num_traits::AsPrimitive;\n")
 
-        f.write("/// How many bits are needed to read the tables in this\n")
+        f.write("/// How many bits are needed to read the tables\n")
         f.write("pub const READ_BITS: usize = {};\n".format(read_bits))
         f.write("/// Maximum value writable using the table(s)\n")
         f.write("pub const WRITE_MAX: u64 = {};\n".format(write_max_val))
@@ -211,7 +211,7 @@ def gen_table(
                 f.write("];\n")
             else:
                 f.write(
-                    "/// Precomputed table for writing {} codes\n".format(  # NoQA
+                    "/// Precomputed table for reading {} codes\n".format(  # NoQA
                         code_name
                     )
                 )
@@ -260,7 +260,7 @@ def gen_table(
                 f.write("];\n")
             else:
                 f.write(
-                    "///Table used to speed up the writing of {} codes\n".format(
+                    "/// Table used to speed up the writing of {} codes\n".format(
                         code_name
                     )
                 )
@@ -277,7 +277,7 @@ def gen_table(
                 f.write("];\n")
 
                 f.write(
-                    "///Table used to speed up the writing of {} codes\n".format(
+                    "/// Table used to speed up the writing of {} codes\n".format(
                         code_name
                     )
                 )
@@ -291,7 +291,7 @@ def gen_table(
 
         # Write the len table
         f.write(
-            "///Table used to speed up the skipping of {} codes\n".format(code_name)
+            "/// Table used to speed up the skipping of {} codes\n".format(code_name)
         )
         f.write(
             "pub const LEN: &[%s] = &["
@@ -590,7 +590,7 @@ def gen_delta(read_bits, write_max_val, len_max_val=None, merged_table=False):
         f.write("use crate::traits::{BitRead, BitWrite, BE, LE};\n")
         f.write("use num_traits::AsPrimitive;\n")
 
-        f.write("/// How many bits are needed to read the tables in this\n")
+        f.write("/// How many bits are needed to read the tables\n")
         f.write("pub const READ_BITS: usize = {};\n".format(read_bits))
         f.write("/// Maximum value writable using the table(s)\n")
         f.write("pub const WRITE_MAX: u64 = {};\n".format(write_max_val))
@@ -1127,7 +1127,7 @@ def gen_omega(read_bits, write_max_val, len_max_val=None, merged_table=False):
         f.write("use crate::traits::{BitRead, BitWrite, BE, LE};\n")
         f.write("use num_traits::AsPrimitive;\n")
 
-        f.write("/// How many bits are needed to read the tables in this\n")
+        f.write("/// How many bits are needed to read the tables\n")
         f.write("pub const READ_BITS: usize = {};\n".format(read_bits))
         f.write(
             'const _: () = assert!(READ_BITS >= 2, "Read tables for Elias ω must use at least 2 bits");\n'
@@ -1502,7 +1502,7 @@ def gen_pi(read_bits, write_max_val, len_max_val=None, k=2, merged_table=False):
         f.write("use crate::traits::{BitRead, BitWrite, BE, LE};\n")
         f.write("use num_traits::AsPrimitive;\n")
 
-        f.write("/// How many bits are needed to read the tables in this\n")
+        f.write("/// How many bits are needed to read the tables\n")
         f.write("pub const READ_BITS: usize = {};\n".format(read_bits))
         f.write("/// Maximum value writable using the table(s)\n")
         f.write("pub const WRITE_MAX: u64 = {};\n".format(write_max_val))

@@ -13,7 +13,7 @@
 //! For each code, we generate samples either using its implied distribution
 //! p(w) = 2<sup>-|w|</sup> or a universal Zipf distribution ≈1/_x_
 //! Moreover, the functions return the hit ratio, that is, the ratio of values
-//! that is decodable using tables.
+//! that are decodable using tables.
 
 use super::N;
 use dsi_bitstream::prelude::*;

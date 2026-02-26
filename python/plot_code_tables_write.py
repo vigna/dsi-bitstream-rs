@@ -37,7 +37,7 @@ if dist not in {"implied", "univ"}:
 dist_label = (
     "(implied distribution)"
     if dist == "implied"
-    else "(universal Zip distribution ≈1/x, first billion integers)"
+    else "(universal Zipf distribution ≈1/x, first billion integers)"
 )
 
 nice = {

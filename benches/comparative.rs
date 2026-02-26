@@ -204,7 +204,9 @@ fn bench_comparative(c: &mut Criterion) {
     );
 
     // Specialized (table-using) variants
-    bench_comp!(group, "zeta3", write_zeta3(), read_zeta3(), |x| len_zeta(x, 3));
+    bench_comp!(group, "zeta3", write_zeta3(), read_zeta3(), |x| len_zeta(
+        x, 3
+    ));
     bench_comp!(group, "pi2", write_pi2(), read_pi2(), |x| len_pi(x, 2));
 
     // Parametric codes with k = 2..4 or 2..5

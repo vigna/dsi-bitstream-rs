@@ -11,9 +11,8 @@ use core::error::Error;
 use num_primitive::PrimitiveUnsigned;
 use num_traits::{AsPrimitive, ConstOne, ConstZero};
 
-/// This is a trait alias for all the properties that we need for words of
-/// memory read and written by either a [`WordRead`] or [`WordWrite`],
-/// respectively.
+/// This is a convenience trait bundling the bounds required for words read and
+/// written by either a [`WordRead`] or [`WordWrite`], respectively.
 pub trait Word: PrimitiveUnsigned + ConstZero + ConstOne {}
 impl<W: PrimitiveUnsigned + ConstZero + ConstOne> Word for W {}
 

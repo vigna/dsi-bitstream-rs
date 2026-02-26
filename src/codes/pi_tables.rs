@@ -4,7 +4,7 @@
 // Methods for reading and writing values using precomputed tables for pi codes
 use crate::traits::{BE, BitRead, BitWrite, LE};
 use num_traits::AsPrimitive;
-/// How many bits are needed to read the tables in this
+/// How many bits are needed to read the tables
 pub const READ_BITS: usize = 13;
 /// Maximum value writable using the table(s)
 pub const WRITE_MAX: u64 = 1023;

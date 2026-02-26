@@ -71,20 +71,21 @@ pub struct CodesStats<
     /// The total space used to store the elements if
     /// they were stored using the variable byte code.
     pub vbyte: u64,
-    /// The total space used to store the elements if
-    /// they were stored using the zeta code.
+    /// The total space used to store the elements if they were stored using a
+    /// zeta code. `zeta[0]` represents ζ₁, `zeta[1]` represents ζ₂, and so on.
     pub zeta: [u64; ZETA],
-    /// The total space used to store the elements if
-    /// they were stored using the Golomb code.
+    /// The total space used to store the elements if they were stored using a
+    /// Golomb code. `golomb[0]` represents the Golomb code with modulus,
+    /// `golomb[1]` represents the Golomb code with modulus 2, and so on.
     pub golomb: [u64; GOLOMB],
-    /// The total space used to store the elements if
-    /// they were stored using the exponential Golomb code.
+    /// The total space used to store the elements if they were stored using an
+    /// exponential Golomb code.
     pub exp_golomb: [u64; EXP_GOLOMB],
-    /// The total space used to store the elements if
-    /// they were stored using the Rice code.
+    /// The total space used to store the elements if they were stored using a
+    /// Rice code.
     pub rice: [u64; RICE],
-    /// The total space used to store the elements if
-    /// they were stored using the Pi code.
+    /// The total space used to store the elements if they were stored using the
+    /// Pi code. `pi[0]` represents π₂, `pi[1]` represents π₃, and so on.
     pub pi: [u64; PI],
 }
 
@@ -465,7 +466,8 @@ impl<
     }
 }
 
-/// A struct that can wrap `Codes` and compute `CodesStats` for a given stream.
+/// A struct that can wrap a [`DynamicCodeRead`] or a [`DynamicCodeWrite`] and
+/// compute [`CodesStats`] for a given stream.
 #[derive(Debug)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
 #[cfg(feature = "std")]
