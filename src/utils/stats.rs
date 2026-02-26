@@ -75,7 +75,7 @@ pub struct CodesStats<
     /// zeta code. `zeta[0]` represents ζ₁, `zeta[1]` represents ζ₂, and so on.
     pub zeta: [u64; ZETA],
     /// The total space used to store the elements if they were stored using a
-    /// Golomb code. `golomb[0]` represents the Golomb code with modulus,
+    /// Golomb code. `golomb[0]` represents the Golomb code with modulus 1,
     /// `golomb[1]` represents the Golomb code with modulus 2, and so on.
     pub golomb: [u64; GOLOMB],
     /// The total space used to store the elements if they were stored using an

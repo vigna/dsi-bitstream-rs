@@ -79,7 +79,7 @@ writer.flush()?;
 // Let's recover the data
 let data = writer.into_inner()?.into_inner();
 
-// as in the example above, convert to u32 for better read performance
+// As in the example above, convert to u32 for better read performance
 let data = unsafe{data.align_to::<u32>().1};
 let mut reader = BufBitReader::<LE, _>::new(MemWordReader::new(&data));
 assert_eq!(reader.read_bits(10)?, 0);

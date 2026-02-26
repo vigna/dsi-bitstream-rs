@@ -68,7 +68,7 @@
 - Fixed bug in `Write` implementations for `BufBitWriter`, which would
   work only with word `u64`.
 
-- `get_implied_distribution` now uses also the last data point.
+- `get_implied_distribution` now also uses the last data point.
 
 ## [0.7.0] - 2026-01-27
 
@@ -89,7 +89,7 @@
 
 - Now we compile again correctly without std.
 
-## [0.5.3] - 2025-12-6
+## [0.5.3] - 2025-12-06
 
 ### New
 

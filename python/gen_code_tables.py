@@ -717,7 +717,7 @@ pub fn write_table_be<B: BitWrite<BE>>(backend: &mut B, n: u64) -> Result<Option
         # Write tables
         for bo in ["BE", "LE"]:
             f.write(
-                "///Table used to speed up the writing of {} codes\n".format(code_name)
+                "/// Table used to speed up the writing of {} codes\n".format(code_name)
             )
             f.write(
                 "pub const WRITE_%s: &[%s] = &["
@@ -731,7 +731,7 @@ pub fn write_table_be<B: BitWrite<BE>>(backend: &mut B, n: u64) -> Result<Option
             f.write("];\n")
 
             f.write(
-                "///Table used to speed up the writing of {} codes\n".format(code_name)
+                "/// Table used to speed up the writing of {} codes\n".format(code_name)
             )
             f.write(
                 "pub const WRITE_LEN_%s: &[%s] = &["
@@ -743,7 +743,7 @@ pub fn write_table_be<B: BitWrite<BE>>(backend: &mut B, n: u64) -> Result<Option
 
         # Len table
         f.write(
-            "///Table used to speed up the skipping of {} codes\n".format(code_name)
+            "/// Table used to speed up the skipping of {} codes\n".format(code_name)
         )
         f.write(
             "pub const LEN: &[%s] = &["
@@ -1283,7 +1283,7 @@ pub fn write_table_be<B: BitWrite<BE>>(backend: &mut B, mut n: u64) -> Result<Op
         # Write tables
         for bo in ["BE", "LE"]:
             f.write(
-                "///Table used to speed up the writing of {} codes\n".format(code_name)
+                "/// Table used to speed up the writing of {} codes\n".format(code_name)
             )
             f.write(
                 "pub const WRITE_%s: &[%s] = &["
@@ -1297,7 +1297,7 @@ pub fn write_table_be<B: BitWrite<BE>>(backend: &mut B, mut n: u64) -> Result<Op
             f.write("];\n")
 
             f.write(
-                "///Table used to speed up the writing of {} codes\n".format(code_name)
+                "/// Table used to speed up the writing of {} codes\n".format(code_name)
             )
             f.write(
                 "pub const WRITE_LEN_%s: &[%s] = &["
@@ -1309,7 +1309,7 @@ pub fn write_table_be<B: BitWrite<BE>>(backend: &mut B, mut n: u64) -> Result<Op
 
         # Len table
         f.write(
-            "///Table used to speed up the skipping of {} codes\n".format(code_name)
+            "/// Table used to speed up the skipping of {} codes\n".format(code_name)
         )
         f.write(
             "pub const LEN: &[%s] = &["
@@ -1631,7 +1631,7 @@ pub fn write_table_be<B: BitWrite<BE>>(backend: &mut B, n: u64) -> Result<Option
         # Write tables
         for bo in ["BE", "LE"]:
             f.write(
-                "///Table used to speed up the writing of {} codes\n".format(code_name)
+                "/// Table used to speed up the writing of {} codes\n".format(code_name)
             )
             f.write(
                 "pub const WRITE_%s: &[%s] = &["
@@ -1645,7 +1645,7 @@ pub fn write_table_be<B: BitWrite<BE>>(backend: &mut B, n: u64) -> Result<Option
             f.write("];\n")
 
             f.write(
-                "///Table used to speed up the writing of {} codes\n".format(code_name)
+                "/// Table used to speed up the writing of {} codes\n".format(code_name)
             )
             f.write(
                 "pub const WRITE_LEN_%s: &[%s] = &["
@@ -1657,7 +1657,7 @@ pub fn write_table_be<B: BitWrite<BE>>(backend: &mut B, n: u64) -> Result<Option
 
         # Len table
         f.write(
-            "///Table used to speed up the skipping of {} codes\n".format(code_name)
+            "/// Table used to speed up the skipping of {} codes\n".format(code_name)
         )
         f.write(
             "pub const LEN: &[%s] = &["
