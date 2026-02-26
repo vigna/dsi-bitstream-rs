@@ -168,6 +168,7 @@ impl<E: Endianness, CR: CodesRead<E> + ?Sized> FuncCodeReader<E, CR> {
     }
 
     /// Returns a new [`FuncCodeReader`] for the given function.
+    #[must_use]
     #[inline(always)]
     pub fn new_with_func(read_func: ReadFn<E, CR>) -> Self {
         Self(read_func)
@@ -339,6 +340,7 @@ impl<E: Endianness, CW: CodesWrite<E> + ?Sized> FuncCodeWriter<E, CW> {
     }
 
     /// Returns a new [`FuncCodeWriter`] for the given function.
+    #[must_use]
     #[inline(always)]
     pub fn new_with_func(write_func: WriteFn<E, CW>) -> Self {
         Self(write_func)
@@ -502,6 +504,7 @@ impl FuncCodeLen {
     }
 
     /// Returns a new [`FuncCodeLen`] for the given function.
+    #[must_use]
     #[inline(always)]
     pub fn new_with_func(len_func: LenFn) -> Self {
         Self(len_func)

@@ -87,6 +87,7 @@ where
 /// endianness and write word.
 ///
 /// See also [`from_path`] for a version that takes a path.
+#[must_use]
 #[cfg(feature = "std")]
 pub fn from_file<E: Endianness, W: Word>(
     file: std::fs::File,

@@ -100,9 +100,9 @@ impl Codes {
         DynamicCodeWrite::write(self, writer, n)
     }
 
-    /// Converts a code to the constant enum [`code_consts`]
-    /// used for [`ConstCode`]. This is mostly used to verify
-    /// that the code is supported by [`ConstCode`].
+    /// Converts a code to the constants in the [`code_consts`] module used for
+    /// [`ConstCode`]. This is mostly used to verify that the code is supported
+    /// by [`ConstCode`].
     ///
     /// The code is [canonicalized](Codes::canonicalize) before
     /// the conversion, so equivalent codes map to the same
@@ -431,7 +431,7 @@ impl<'de> serde::Deserialize<'de> for Codes {
     }
 }
 
-/// Structure representing minimal binary coding with a fixed length.
+/// Structure representing minimal binary coding with a fixed upper bound.
 ///
 /// [Minimal binary coding](crate::codes::minimal_binary) does not
 /// fit the [`Codes`] enum because it is not defined for all integers.

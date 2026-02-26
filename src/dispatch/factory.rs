@@ -258,6 +258,7 @@ impl<E: Endianness, CRF: CodesReaderFactoryHelper<E> + ?Sized> FactoryFuncCodeRe
     }
 
     /// Returns a new [`FactoryFuncCodeReader`] for the given function.
+    #[must_use]
     #[inline(always)]
     pub fn new_with_func(read_func: FactoryReadFn<E, CRF>) -> Self {
         Self(read_func)

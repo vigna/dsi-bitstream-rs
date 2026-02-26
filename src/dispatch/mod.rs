@@ -75,10 +75,10 @@
 //!
 //! # Implementations
 //!
-//! The [`Codes`] enum is an enum whose variants represent all the available
-//! codes. It implements all the dispatch traits, so it can be used to read or
-//! write any code both in a generic and in a specific way. It also implements
-//! the [`CodeLen`] trait, which provides a method to compute the length of a
+//! The [`Codes`] enum variants represent all the available codes. [`Codes`]
+//! implements all the dispatch traits, so it can be used to read or write any
+//! code both in a generic and in a specific way. It also implements the
+//! [`CodeLen`] trait, which provides a method to compute the length of a
 //! codeword. The only exception is for [minimal binary
 //! codes](crate::codes::minimal_binary), which have a separate
 //! [`MinimalBinary`] structure with the same functionality, as they cannot

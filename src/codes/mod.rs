@@ -37,10 +37,10 @@
 //! avoided with tests, but at the price of a significant performance drop.
 //!
 //! The traits ending with `Param` make it possible to specify parameters—for
-//! example, whether to use decoding tables. Usually, one would instead pull in
-//! scope non-parametric traits such as [`GammaRead`] and [`GammaWrite`], for
-//! which defaults are provided using the mechanism described in the [`params`]
-//! module.
+//! example, whether to use decoding tables. Usually, one would instead pull
+//! into scope non-parametric traits such as [`GammaRead`] and [`GammaWrite`],
+//! for which defaults are provided using the mechanism described in the
+//! [`params`] module.
 //!
 //! # Big-endian vs. little-endian
 //!
@@ -54,7 +54,7 @@
 //! Thus, reversing the bits of a big-endian bit stream containing a sequence of
 //! instantaneous codes will not yield a little-endian bit stream containing the
 //! same sequence of codes (again, with the exception of unary codes).
-//! Technically, the codes written for the little-endian case are different than
+//! Technically, the codes written for the little-endian case are different from
 //! those written for the big-endian case.
 //!
 //! For example, the [γ code](gamma) of 4 is `00101` in big-endian order, but it

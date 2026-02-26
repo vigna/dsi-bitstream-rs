@@ -108,8 +108,8 @@ There are a few options to modify the behavior of the bit read/write traits:
 More in-depth (and much more complicated) tuning can be obtained by modifying
 the default values for the parameters of instantaneous codes. Methods reading or
 writing instantaneous codes are defined in supporting traits and usually have
-const type parameters, in particular, whether to use decoding tables or not
-(e.g., [`GammaReadParam::read_gamma_param`]). Such traits are implemented for
+const parameters, in particular, whether to use decoding tables or not (e.g.,
+[`GammaReadParam::read_gamma_param`]). Such traits are implemented for
 [`BitRead`]/[`BitWrite`]. The only exception is unary code, which is implemented
 by [`BitRead::read_unary`] and [`BitWrite::write_unary`].
 
@@ -135,14 +135,14 @@ We provide several options to [dispatch] codes dynamically.
 
 ## Benchmarks
 
-To evaluate the performance on your hardware you can run the
+To evaluate the performance on your hardware, you can run the
 benchmarks in the `benches` directory, which test the speed of read/write
 operations under several combinations of parameters.
 
 Full table-size sweeps with plot generation are available via the Python scripts
 in the `python` directory (see `benches/README.md` for details). They can be
-used to choose whether to use tables on a specific hardware, or to generate
-tables of different length. `svg` directory contains reference results of these
+used to choose whether to use tables on specific hardware, or to generate tables
+of different length. The `svg` directory contains reference results of these
 benchmarks on a few architectures.
 
 ## Features
@@ -175,7 +175,7 @@ feature:
 cargo test --features fuzz
 ```
 
-When the feature is enabled, tests will be also run on local corpora found in
+When the feature is enabled, tests will also be run on local corpora found in
 the top-level `fuzz` directory, if any are present.
 
 ## Acknowledgments
