@@ -58,7 +58,7 @@ bench-delta-gamma = []
 
 [profile.bench]
 opt-level = 3
-lto = "this"
+lto = "thin"
 overflow-checks = false
 debug = true
 debug-assertions = false
