@@ -255,52 +255,44 @@ for bits in range(1, 17):
             )
 
         # Now run delta_g variant (delta with gamma tables)
-        for i in range(4, 5):  # This is just 4, but one can customize
-            gamma_bits = 2 * i + 1
-            gen_gamma(
-                read_bits=gamma_bits,
-                write_max_val=255,  # unused
-                merged_table=merged_table,
+        gen_gamma(
+            read_bits=9,
+            write_max_val=63,  # unused
+            merged_table=merged_table,
+        )
+        # Remove stale Criterion results before delta_g run
+        if os.path.isdir(table_dir):
+            shutil.rmtree(table_dir)
+        features = "implied,bench-reads,bench-%s,bench-delta-gamma" % read_word
+        if dist == "univ":
+            features += ",bench-univ"
+        ratio_text_dg = run_cargo_bench(
+            "cargo bench --bench tables --features %s -- %s '^table/'"
+            % (features, criterion_opts_str)
+        )
+        ratios_dg = parse_ratios_from_stderr(ratio_text_dg)
+        bench_results_dg = get_table_bench_results(criterion_base, group="table")
+        for r in sorted(
+            bench_results_dg, key=lambda r: (r["code"], r["endian"], r["op"])
+        ):
+            code = r["code"]
+            endian = r["endian"]
+            ratio = ratios_dg.get((code, endian, True), 0.0)
+            print(
+                "{}\t{}\t{}\t{}\t{}\t{:.4f}\t{:7.4f}\t{:7.4f}\t{:7.4f}".format(
+                    code,
+                    endian,
+                    bits,
+                    type_name,
+                    r["op"],
+                    ratio,
+                    r["cilower"] / n,
+                    r["mean_ns"] / n,
+                    r["ciupper"] / n,
+                ),
+                file=out,
             )
-
-            # Remove stale Criterion results before delta_g run
-            if os.path.isdir(table_dir):
-                shutil.rmtree(table_dir)
-
-            features = "implied,bench-reads,bench-%s,bench-delta-gamma" % read_word
-            if dist == "univ":
-                features += ",bench-univ"
-
-            ratio_text_dg = run_cargo_bench(
-                "cargo bench --bench tables --features %s -- %s '^table/'"
-                % (features, criterion_opts_str)
-            )
-
-            ratios_dg = parse_ratios_from_stderr(ratio_text_dg)
-            bench_results_dg = get_table_bench_results(criterion_base, group="table")
-
-            for r in sorted(
-                bench_results_dg, key=lambda r: (r["code"], r["endian"], r["op"])
-            ):
-                code = r["code"]
-                endian = r["endian"]
-                ratio = ratios_dg.get((code, endian, True), 0.0)
-                print(
-                    "{}\t{}\t{}\t{}\t{}\t{:.4f}\t{:7.4f}\t{:7.4f}\t{:7.4f}".format(
-                        code,
-                        endian,
-                        bits,
-                        type_name,
-                        r["op"],
-                        ratio,
-                        r["cilower"] / n,
-                        r["mean_ns"] / n,
-                        r["ciupper"] / n,
-                    ),
-                    file=out,
-                )
-
-        out.flush()
+    out.flush()
 
 if out is not sys.stdout:
     out.close()

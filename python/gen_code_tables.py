@@ -1706,8 +1706,8 @@ def generate_default_tables():
         merged_table=False,
     )
     gen_pi(
-        read_bits=13,  # 13 bits needed to decode 0-510, matching zeta3's 12-bit coverage
-        write_max_val=1023,  # Similar to zeta3
+        read_bits=13,  # 13 bits needed to decode 0-510, matching zeta3's 12-bit coverage; useless on all architectures
+        write_max_val=1023,  # Useless on all architectures
         k=2,
         merged_table=False,
     )
