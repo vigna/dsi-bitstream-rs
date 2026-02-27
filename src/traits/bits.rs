@@ -144,7 +144,7 @@ pub trait BitWrite<E: Endianness> {
     /// Implementations are required to support the range [0 . . 2⁶⁴ – 1).
     fn write_unary(&mut self, n: u64) -> Result<usize, Self::Error>;
 
-    /// Flush the buffer, consuming the bit stream.
+    /// Flushes the buffer, consuming the bit stream.
     ///
     /// Returns the number of bits written from the bit buffer (not
     /// including padding).

@@ -36,8 +36,8 @@ use crate::traits::*;
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
 pub struct BitReader<E: Endianness, WR, RP: ReadParams = DefaultReadParams> {
-    /// The stream which we will read words from.
-    data: WR,
+    /// The backend from which we will read words.
+    backend: WR,
     /// The index of the current bit.
     bit_index: u64,
     _marker: core::marker::PhantomData<(E, RP)>,
@@ -46,9 +46,9 @@ pub struct BitReader<E: Endianness, WR, RP: ReadParams = DefaultReadParams> {
 impl<E: Endianness, WR, RP: ReadParams> BitReader<E, WR, RP> {
     /// Creates a new [`BitReader`] with the given word reader.
     #[must_use]
-    pub fn new(data: WR) -> Self {
+    pub fn new(backend: WR) -> Self {
         Self {
-            data,
+            backend,
             bit_index: 0,
             _marker: core::marker::PhantomData,
         }
@@ -77,17 +77,17 @@ impl<WR: WordRead<Word = u64> + WordSeek<Error = <WR as WordRead>::Error>, RP: R
             return Ok(0);
         }
 
-        self.data.set_word_pos(self.bit_index / 64)?;
+        self.backend.set_word_pos(self.bit_index / 64)?;
         let in_word_offset = (self.bit_index % 64) as usize;
 
         let res = if (in_word_offset + num_bits) <= 64 {
             // single word access
-            let word = self.data.read_word()?.to_be();
+            let word = self.backend.read_word()?.to_be();
             (word << in_word_offset) >> (64 - num_bits)
         } else {
             // double word access
-            let high_word = self.data.read_word()?.to_be();
-            let low_word = self.data.read_word()?.to_be();
+            let high_word = self.backend.read_word()?.to_be();
+            let low_word = self.backend.read_word()?.to_be();
             let shamt1 = 64 - num_bits;
             let shamt2 = 128 - in_word_offset - num_bits;
             ((high_word << in_word_offset) >> shamt1) | (low_word >> shamt2)
@@ -105,17 +105,17 @@ impl<WR: WordRead<Word = u64> + WordSeek<Error = <WR as WordRead>::Error>, RP: R
         #[cfg(feature = "checks")]
         assert!(n_bits <= 32);
 
-        self.data.set_word_pos(self.bit_index / 64)?;
+        self.backend.set_word_pos(self.bit_index / 64)?;
         let in_word_offset = (self.bit_index % 64) as usize;
 
         let res = if (in_word_offset + n_bits) <= 64 {
             // single word access
-            let word = self.data.read_word()?.to_be();
+            let word = self.backend.read_word()?.to_be();
             (word << in_word_offset) >> (64 - n_bits)
         } else {
             // double word access
-            let high_word = self.data.read_word()?.to_be();
-            let low_word = self.data.read_word()?.to_be();
+            let high_word = self.backend.read_word()?.to_be();
+            let low_word = self.backend.read_word()?.to_be();
             let shamt1 = 64 - n_bits;
             let shamt2 = 128 - in_word_offset - n_bits;
             ((high_word << in_word_offset) >> shamt1) | (low_word >> shamt2)
@@ -125,12 +125,12 @@ impl<WR: WordRead<Word = u64> + WordSeek<Error = <WR as WordRead>::Error>, RP: R
 
     #[inline]
     fn read_unary(&mut self) -> Result<u64, Self::Error> {
-        self.data.set_word_pos(self.bit_index / 64)?;
+        self.backend.set_word_pos(self.bit_index / 64)?;
         let in_word_offset = self.bit_index % 64;
         let mut bits_in_word = 64 - in_word_offset;
         let mut total = 0;
 
-        let mut word = self.data.read_word()?.to_be();
+        let mut word = self.backend.read_word()?.to_be();
         word <<= in_word_offset;
         loop {
             let zeros = word.leading_zeros() as u64;
@@ -141,7 +141,7 @@ impl<WR: WordRead<Word = u64> + WordSeek<Error = <WR as WordRead>::Error>, RP: R
             }
             total += bits_in_word;
             bits_in_word = 64;
-            word = self.data.read_word()?.to_be();
+            word = self.backend.read_word()?.to_be();
         }
     }
 
@@ -186,18 +186,18 @@ impl<WR: WordRead<Word = u64> + WordSeek<Error = <WR as WordRead>::Error>, RP: R
             return Ok(0);
         }
 
-        self.data.set_word_pos(self.bit_index / 64)?;
+        self.backend.set_word_pos(self.bit_index / 64)?;
         let in_word_offset = (self.bit_index % 64) as usize;
 
         let res = if (in_word_offset + num_bits) <= 64 {
             // single word access
-            let word = self.data.read_word()?.to_le();
+            let word = self.backend.read_word()?.to_le();
             let shamt = 64 - num_bits;
             (word << (shamt - in_word_offset)) >> shamt
         } else {
             // double word access
-            let low_word = self.data.read_word()?.to_le();
-            let high_word = self.data.read_word()?.to_le();
+            let low_word = self.backend.read_word()?.to_le();
+            let high_word = self.backend.read_word()?.to_le();
             let shamt1 = 128 - in_word_offset - num_bits;
             let shamt2 = 64 - num_bits;
             ((high_word << shamt1) >> shamt2) | (low_word >> in_word_offset)
@@ -215,18 +215,18 @@ impl<WR: WordRead<Word = u64> + WordSeek<Error = <WR as WordRead>::Error>, RP: R
         #[cfg(feature = "checks")]
         assert!(n_bits <= 32);
 
-        self.data.set_word_pos(self.bit_index / 64)?;
+        self.backend.set_word_pos(self.bit_index / 64)?;
         let in_word_offset = (self.bit_index % 64) as usize;
 
         let res = if (in_word_offset + n_bits) <= 64 {
             // single word access
-            let word = self.data.read_word()?.to_le();
+            let word = self.backend.read_word()?.to_le();
             let shamt = 64 - n_bits;
             (word << (shamt - in_word_offset)) >> shamt
         } else {
             // double word access
-            let low_word = self.data.read_word()?.to_le();
-            let high_word = self.data.read_word()?.to_le();
+            let low_word = self.backend.read_word()?.to_le();
+            let high_word = self.backend.read_word()?.to_le();
             let shamt1 = 128 - in_word_offset - n_bits;
             let shamt2 = 64 - n_bits;
             ((high_word << shamt1) >> shamt2) | (low_word >> in_word_offset)
@@ -236,12 +236,12 @@ impl<WR: WordRead<Word = u64> + WordSeek<Error = <WR as WordRead>::Error>, RP: R
 
     #[inline]
     fn read_unary(&mut self) -> Result<u64, Self::Error> {
-        self.data.set_word_pos(self.bit_index / 64)?;
+        self.backend.set_word_pos(self.bit_index / 64)?;
         let in_word_offset = self.bit_index % 64;
         let mut bits_in_word = 64 - in_word_offset;
         let mut total = 0;
 
-        let mut word = self.data.read_word()?.to_le();
+        let mut word = self.backend.read_word()?.to_le();
         word >>= in_word_offset;
         loop {
             let zeros = word.trailing_zeros() as u64;
@@ -252,7 +252,7 @@ impl<WR: WordRead<Word = u64> + WordSeek<Error = <WR as WordRead>::Error>, RP: R
             }
             total += bits_in_word;
             bits_in_word = 64;
-            word = self.data.read_word()?.to_le();
+            word = self.backend.read_word()?.to_le();
         }
     }
 

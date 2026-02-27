@@ -15,7 +15,7 @@ use rand::rngs::SmallRng;
 use rand::{RngExt, SeedableRng};
 
 #[test]
-fn test() -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
+fn test_copy() -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
     test_endianness::<LE, u8>()?;
     test_endianness::<BE, u8>()?;
     test_endianness::<LE, u16>()?;

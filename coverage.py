@@ -91,7 +91,7 @@ if FUZZING:
         )
         .decode()
         .split("\n")[:-1]
-        )[:1]
+        )
     # Generate coverage for all the targets
     for fuzz_target in fuzz_targets:
         subprocess.check_call(
@@ -111,7 +111,7 @@ if FUZZING:
         for fuzz_target in fuzz_targets
     )
 
-# Merge the coverages into an unique file
+# Merge the coverages into a unique file
 subprocess.check_call(
     "{}/llvm-profdata merge -sparse {} -o {}".format(
         llvm_path,

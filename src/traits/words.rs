@@ -81,7 +81,7 @@ pub trait WordWrite {
     /// Writes a word and advances the current position.
     fn write_word(&mut self, word: Self::Word) -> Result<(), Self::Error>;
 
-    /// Flush the stream.
+    /// Flushes the stream.
     fn flush(&mut self) -> Result<(), Self::Error>;
 }
 

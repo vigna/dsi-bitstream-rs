@@ -33,7 +33,7 @@ pub const GAMMA_DATA: usize = 1_000_000;
 pub const CAPACITY: usize = 4 * GAMMA_DATA;
 
 /// Computes a vector of `n` values sampled from a Zipf distribution with parameter `8/7`,
-/// which is the implied distribution
+/// which is the implied distribution.
 pub fn gen_vbyte_data(n: usize) -> Vec<u64> {
     let mut rng = SmallRng::seed_from_u64(0);
     let distr = rand_distr::Zipf::new(usize::MAX as f64, 8.0 / 7.0).unwrap();
@@ -210,12 +210,21 @@ impl<E: Endianness, F: Format, B: IsComplete, C: ContinuationBit> WithName
     }
 }
 
-impl<E: Endianness> ByteCode for ByteStreamVByte<E, GroupedIfs, Complete, OneCont> {
+impl ByteCode for ByteStreamVByte<BE, GroupedIfs, Complete, OneCont> {
     fn read(r: &mut impl Read) -> Result<u64> {
         Ok(dsi_bitstream::codes::vbyte::vbyte_read_be(r)?)
     }
     fn write(value: u64, w: &mut impl Write) -> Result<usize> {
         Ok(dsi_bitstream::codes::vbyte::vbyte_write::<BE, _>(value, w)?)
+    }
+}
+
+impl ByteCode for ByteStreamVByte<LE, GroupedIfs, Complete, OneCont> {
+    fn read(r: &mut impl Read) -> Result<u64> {
+        Ok(dsi_bitstream::codes::vbyte::vbyte_read_le(r)?)
+    }
+    fn write(value: u64, w: &mut impl Write) -> Result<usize> {
+        Ok(dsi_bitstream::codes::vbyte::vbyte_write::<LE, _>(value, w)?)
     }
 }
 

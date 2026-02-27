@@ -79,10 +79,13 @@ pub struct CodesStats<
     /// `golomb[1]` represents the Golomb code with modulus 2, and so on.
     pub golomb: [u64; GOLOMB],
     /// The total space used to store the elements if they were stored using an
-    /// exponential Golomb code.
+    /// exponential Golomb code. `exp_golomb[0]` represents the exponential
+    /// Golomb code with parameter 0, `exp_golomb[1]` with parameter 1, and
+    /// so on.
     pub exp_golomb: [u64; EXP_GOLOMB],
     /// The total space used to store the elements if they were stored using a
-    /// Rice code.
+    /// Rice code. `rice[0]` represents the Rice code with log₂(*b*) = 0,
+    /// `rice[1]` with log₂(*b*) = 1, and so on.
     pub rice: [u64; RICE],
     /// The total space used to store the elements if they were stored using the
     /// Pi code. `pi[0]` represents π₂, `pi[1]` represents π₃, and so on.
@@ -278,7 +281,6 @@ impl<
     }
 }
 
-/// Combines additively this stats with another one.
 impl<
     const ZETA: usize,
     const GOLOMB: usize,
@@ -287,12 +289,12 @@ impl<
     const PI: usize,
 > core::ops::AddAssign for CodesStats<ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>
 {
+    /// Combines additively this stats with another one.
     fn add_assign(&mut self, rhs: Self) {
         self.add(&rhs);
     }
 }
 
-/// Combines additively this stats with another one creating a new one.
 impl<
     const ZETA: usize,
     const GOLOMB: usize,
@@ -303,6 +305,7 @@ impl<
 {
     type Output = Self;
 
+    /// Combines additively this stats with another one, creating a new one.
     fn add(self, rhs: Self) -> Self {
         let mut res = self;
         res += rhs;
@@ -310,7 +313,7 @@ impl<
     }
 }
 
-/// Allow to call .sum() on an iterator of CodesStats.
+/// Allows calling `.sum()` on an iterator of [`CodesStats`].
 impl<
     const ZETA: usize,
     const GOLOMB: usize,
@@ -466,8 +469,9 @@ impl<
     }
 }
 
-/// A struct that can wrap a [`DynamicCodeRead`] or a [`DynamicCodeWrite`] and
-/// compute [`CodesStats`] for a given stream.
+/// A struct that can wrap a [`DynamicCodeRead`], [`DynamicCodeWrite`],
+/// [`StaticCodeRead`], or [`StaticCodeWrite`] and compute [`CodesStats`]
+/// for a given stream.
 #[derive(Debug)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
 #[cfg(feature = "std")]

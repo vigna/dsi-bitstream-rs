@@ -154,7 +154,7 @@ impl<E: Endianness, WW: WordWrite, WP: WriteParams> core::ops::Drop for BufBitWr
     }
 }
 
-/// Helper function flushing a [`BufBitWriter`] in big-endian fashion.
+/// Helper function that flushes a [`BufBitWriter`] in big-endian fashion.
 ///
 /// The endianness is hardwired because the function is called
 /// from [`BufBitWriter::drop`] using a check on the
@@ -322,7 +322,7 @@ where
     }
 }
 
-/// Helper function flushing a [`BufBitWriter`] in little-endian fashion.
+/// Helper function that flushes a [`BufBitWriter`] in little-endian fashion.
 ///
 /// The endianness is hardwired because the function is called
 /// from [`BufBitWriter::drop`] using a check on the

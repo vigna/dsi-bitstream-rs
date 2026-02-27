@@ -79,7 +79,8 @@ pub fn len_omega_param<const USE_TABLE: bool>(n: u64) -> usize {
     recursive_len(n + 1)
 }
 
-/// Returns the length of the ω code for `n`.
+/// Returns the length of the ω code for `n`, using
+/// a default value for `USE_TABLE`.
 #[must_use]
 #[inline(always)]
 pub fn len_omega(n: u64) -> usize {
@@ -218,7 +219,7 @@ impl<B: BitWrite<BE>> OmegaWriteParam<BE> for B {
     fn write_omega_param<const USE_TABLE: bool>(&mut self, n: u64) -> Result<usize, Self::Error> {
         debug_assert!(n < u64::MAX);
         if USE_TABLE {
-            if let Ok(Some(len)) = omega_tables::write_table_be(self, n) {
+            if let Some(len) = omega_tables::write_table_be(self, n)? {
                 return Ok(len);
             }
         }
@@ -231,7 +232,7 @@ impl<B: BitWrite<LE>> OmegaWriteParam<LE> for B {
     fn write_omega_param<const USE_TABLE: bool>(&mut self, n: u64) -> Result<usize, Self::Error> {
         debug_assert!(n < u64::MAX);
         if USE_TABLE {
-            if let Ok(Some(len)) = omega_tables::write_table_le(self, n) {
+            if let Some(len) = omega_tables::write_table_le(self, n)? {
                 return Ok(len);
             }
         }

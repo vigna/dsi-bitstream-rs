@@ -178,10 +178,10 @@ impl<E: Endianness, BW: BitWrite<E> + PiWrite<E>, const PRINT: bool> PiWrite<E>
     }
 }
 
-impl<E: Endianness, BR: BitWrite<E> + BitSeek, const PRINT: bool> BitSeek
-    for CountBitWriter<E, BR, PRINT>
+impl<E: Endianness, BW: BitWrite<E> + BitSeek, const PRINT: bool> BitSeek
+    for CountBitWriter<E, BW, PRINT>
 {
-    type Error = <BR as BitSeek>::Error;
+    type Error = <BW as BitSeek>::Error;
 
     fn bit_pos(&mut self) -> Result<u64, Self::Error> {
         self.bit_write.bit_pos()

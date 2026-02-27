@@ -161,7 +161,7 @@ impl<WR: WordRead, RP: ReadParams> BufBitReader<BE, WR, RP>
 where
     WR::Word: DoubleType,
 {
-    /// Ensure that in the buffer there are at least `Self::WORD_BITS` bits to read.
+    /// Ensures that in the buffer there are at least `Self::WORD_BITS` bits to read.
     /// This method can be called only if there are at least
     /// `Self::WORD_BITS` free bits in the buffer.
     #[inline(always)]
@@ -400,7 +400,7 @@ impl<WR: WordRead, RP: ReadParams> BufBitReader<LE, WR, RP>
 where
     WR::Word: DoubleType,
 {
-    /// Ensure that in the buffer there are at least `Self::WORD_BITS` bits to read.
+    /// Ensures that in the buffer there are at least `Self::WORD_BITS` bits to read.
     /// This method can be called only if there are at least
     /// `Self::WORD_BITS` free bits in the buffer.
     #[inline(always)]

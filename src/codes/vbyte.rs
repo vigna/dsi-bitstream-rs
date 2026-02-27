@@ -48,7 +48,7 @@
 //!
 //! This basic representation discussed above is not *complete*, as there are
 //! sequences that are not used. For example, zero can be written in many ways
-//! (e.g., `0x00` or `0x80 0x00` ), but we are using only the single-byte
+//! (e.g., `0x00` or `0x80 0x00`), but we are using only the single-byte
 //! representation. Incompleteness leads to a (small) loss in compression.
 //!
 //! To have completeness, one can offset the representation in *k* bits by the

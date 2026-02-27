@@ -769,7 +769,7 @@ pub fn write_table_be<B: BitWrite<BE>>(backend: &mut B, n: u64) -> Result<Option
 
 
 def read_minimal_binary(max, bitstream, be):
-    """Read a minimal binary code code with max `max`"""
+    """Read a minimal binary code with max `max`"""
     l = int(floor(log2(max)))  # NoQA: E741
     v, bitstream = read_fixed(l, bitstream, be)
     limit = (1 << (l + 1)) - max
@@ -934,38 +934,6 @@ def gen_zeta(read_bits, write_max_val, len_max_val=None, k=3, merged_table=False
 ################################################################################
 
 
-def read_omega(bitstream, be):
-    """Read an omega code"""
-    n = 1
-    while True:
-        if be:
-            if not bitstream:
-                raise ValueError()
-            if bitstream[0] == "0":
-                return n - 1, bitstream[1:]
-
-            l = n
-            if len(bitstream) < l + 1:
-                raise ValueError()
-            block = bitstream[0 : l + 1]
-            bitstream = bitstream[l + 1 :]
-            n = int(block, 2)
-        else:  # LE
-            if not bitstream:
-                raise ValueError()
-            if bitstream[-1] == "0":
-                return n - 1, bitstream[:-1]
-
-            l = n
-            if len(bitstream) < l + 1:
-                raise ValueError()
-            block = bitstream[-(l + 1) :]
-            bitstream = bitstream[: -(l + 1)]
-
-            k = int(block, 2)
-            n = (k >> 1) | (1 << l)
-
-
 def read_omega_partial(bitstream, be):
     """Read an omega code with partial decoding support.
 
@@ -983,7 +951,7 @@ def read_omega_partial(bitstream, be):
         if be:
             if not bitstream:
                 # No more bits, return partial state
-                return n, bits_consumed | 0x80 if bits_consumed > 0 else 0
+                return n, (bits_consumed | 0x80) if bits_consumed > 0 else 0
             if bitstream[0] == "0":
                 # Complete code
                 return n - 1, bits_consumed + 1
@@ -991,7 +959,7 @@ def read_omega_partial(bitstream, be):
             l = n
             if len(bitstream) < l + 1:
                 # Incomplete block, return partial state
-                return n, bits_consumed | 0x80 if bits_consumed > 0 else 0
+                return n, (bits_consumed | 0x80) if bits_consumed > 0 else 0
             block = bitstream[0 : l + 1]
             bitstream = bitstream[l + 1 :]
             bits_consumed += l + 1
@@ -999,7 +967,7 @@ def read_omega_partial(bitstream, be):
         else:  # LE
             if not bitstream:
                 # No more bits, return partial state
-                return n, bits_consumed | 0x80 if bits_consumed > 0 else 0
+                return n, (bits_consumed | 0x80) if bits_consumed > 0 else 0
             if bitstream[-1] == "0":
                 # Complete code
                 return n - 1, bits_consumed + 1
@@ -1007,7 +975,7 @@ def read_omega_partial(bitstream, be):
             l = n
             if len(bitstream) < l + 1:
                 # Incomplete block, return partial state
-                return n, bits_consumed | 0x80 if bits_consumed > 0 else 0
+                return n, (bits_consumed | 0x80) if bits_consumed > 0 else 0
             block = bitstream[-(l + 1) :]
             bitstream = bitstream[: -(l + 1)]
             bits_consumed += l + 1
@@ -1226,7 +1194,6 @@ pub fn write_table_be<B: BitWrite<BE>>(backend: &mut B, mut n: u64) -> Result<Op
     })
 }
 """
-            % {"bo": bo, "BO": BO}
         )
 
         # Generate read tables with high-bit flag encoding for partial decoding
