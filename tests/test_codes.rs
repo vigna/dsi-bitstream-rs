@@ -156,9 +156,9 @@ where
 
     for (val, code) in val_codes.iter_mut() {
         let value = DynamicCodeRead::read(code, &mut read_dynamic)?;
-        assert_eq!(*val, value);
+        assert_eq!(value, *val);
         let value = StaticCodeRead::read(code, &mut read_static)?;
-        assert_eq!(*val, value);
+        assert_eq!(value, *val);
     }
 
     Ok(())

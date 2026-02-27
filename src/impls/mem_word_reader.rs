@@ -32,14 +32,14 @@ use mem_dbg::{MemDbg, MemSize};
 /// let words: [u32; 2] = [1, 2];
 ///
 /// let mut word_reader = MemWordReader::new(&words);
-/// assert_eq!(1, word_reader.read_word()?);
-/// assert_eq!(2, word_reader.read_word()?);
-/// assert_eq!(0, word_reader.read_word()?);
-/// assert_eq!(0, word_reader.read_word()?);
+/// assert_eq!(word_reader.read_word()?, 1);
+/// assert_eq!(word_reader.read_word()?, 2);
+/// assert_eq!(word_reader.read_word()?, 0);
+/// assert_eq!(word_reader.read_word()?, 0);
 ///
 /// let mut word_reader = MemWordReader::new_strict(&words);
-/// assert_eq!(1, word_reader.read_word()?);
-/// assert_eq!(2, word_reader.read_word()?);
+/// assert_eq!(word_reader.read_word()?, 1);
+/// assert_eq!(word_reader.read_word()?, 2);
 /// assert!(word_reader.read_word().is_err());
 /// # Ok(())
 /// # }
@@ -176,7 +176,7 @@ mod tests {
             crate::prelude::BufBitReader::<crate::prelude::LE, _>::new(MemWordReader::new(&words));
         for _ in 0..16 {
             // Here the last table read returns zero-extended data
-            assert_eq!(1, reader.read_delta_param::<true, true>().unwrap());
+            assert_eq!(reader.read_delta_param::<true, true>().unwrap(), 1);
         }
     }
 }
