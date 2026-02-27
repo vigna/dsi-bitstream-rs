@@ -274,7 +274,7 @@ macro_rules! impl_default_write_codes {
 
             #[inline(always)]
             fn write_pi2(&mut self, n: u64) -> Result<usize, Self::Error> {
-                self.write_pi2_param::<true>(n)
+                self.write_pi2_param::<false>(n)
             }
         }
 
