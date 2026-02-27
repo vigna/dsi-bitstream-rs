@@ -71,3 +71,7 @@ harness = false
 [[bench]]
 name = "comparative"
 harness = false
+
+[[bench]]
+name = "vbyte"
+harness = false

@@ -1,8 +1,9 @@
 # Benchmarks for `dsi-bitstream`
 
 This directory contains Criterion-based performance benchmarks for reading and
-writing instantaneous codes. In particular, there are table benchmarks and a
-global comparative performance test.
+writing instantaneous codes. In particular, there are table benchmarks, a
+global comparative performance test, and a test comparing different 
+implementations of variable-length byte codes.
 
 ## Table Benchmarks
 
