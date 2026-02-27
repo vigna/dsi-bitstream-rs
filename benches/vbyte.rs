@@ -32,7 +32,9 @@ type Result<T> = std::result::Result<T, Box<dyn core::error::Error>>;
 pub const GAMMA_DATA: usize = 1_000_000;
 pub const CAPACITY: usize = 4 * GAMMA_DATA;
 
-pub fn gen_gamma_data(n: usize) -> Vec<u64> {
+/// Computes a vector of `n` values sampled from a Zipf distribution with parameter `8/7`,
+/// which is the implied distribution
+pub fn gen_vbyte_data(n: usize) -> Vec<u64> {
     let mut rng = SmallRng::seed_from_u64(0);
     let distr = rand_distr::Zipf::new(usize::MAX as f64, 8.0 / 7.0).unwrap();
 
@@ -112,7 +114,7 @@ pub fn bench_byte_stream<C: ByteCode + WithName>(c: &mut Criterion) {
         }
     }
 
-    let s = gen_gamma_data(GAMMA_DATA);
+    let s = gen_vbyte_data(GAMMA_DATA);
     c.bench_function(&format!("bytes,{},write", C::name()), |b| {
         b.iter(|| {
             let mut w = std::io::Cursor::new(&mut v);
@@ -169,7 +171,7 @@ where
         }
     }
 
-    let s = gen_gamma_data(GAMMA_DATA);
+    let s = gen_vbyte_data(GAMMA_DATA);
 
     let endian_short = if E::NAME == "big" { "be" } else { "le" };
     c.bench_function(&format!("bits_{},{},write", endian_short, C::name()), |b| {
