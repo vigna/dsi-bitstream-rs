@@ -115,7 +115,7 @@ pub fn bench_byte_stream<C: ByteCode + WithName>(c: &mut Criterion) {
     }
 
     let s = gen_vbyte_data(GAMMA_DATA);
-    c.bench_function(&format!("bytes,{},write", C::name()), |b| {
+    c.bench_function(&format!("bytes/{}/write", C::name()), |b| {
         b.iter(|| {
             let mut w = std::io::Cursor::new(&mut v);
             for &v in &s {
@@ -124,7 +124,7 @@ pub fn bench_byte_stream<C: ByteCode + WithName>(c: &mut Criterion) {
         })
     });
 
-    c.bench_function(&format!("bytes,{},read", C::name()), |b| {
+    c.bench_function(&format!("bytes/{}/read", C::name()), |b| {
         b.iter(|| {
             let mut r = std::io::Cursor::new(v.as_slice());
             for _ in &s {
@@ -173,8 +173,8 @@ where
 
     let s = gen_vbyte_data(GAMMA_DATA);
 
-    let endian_short = if E::NAME == "big" { "be" } else { "le" };
-    c.bench_function(&format!("bits_{},{},write", endian_short, C::name()), |b| {
+    let endian = if E::NAME == "big" { "BE" } else { "LE" };
+    c.bench_function(&format!("bits/{}/{}/write", endian, C::name()), |b| {
         b.iter(|| {
             let mut w = <BufBitWriter<E, _>>::new(MemWordWriterVec::new(&mut v));
             for &v in &s {
@@ -187,7 +187,7 @@ where
     // u32.
     let v = unsafe { v.align_to::<u32>().1 };
 
-    c.bench_function(&format!("bits_{},{},read", endian_short, C::name()), |b| {
+    c.bench_function(&format!("bits/{}/{}/read", endian, C::name()), |b| {
         b.iter(|| {
             let mut r = BufBitReader::<E, _>::new(MemWordReader::new(v));
             for _ in &s {
@@ -206,7 +206,8 @@ impl<E: Endianness, F: Format, B: IsComplete, C: ContinuationBit> WithName
     for ByteStreamVByte<E, F, B, C>
 {
     fn name() -> String {
-        format!("{},{},{},{}_endian", F::NAME, B::NAME, C::NAME, E::NAME)
+        let endian = if E::NAME == "big" { "be" } else { "le" };
+        format!("vbyte_{}/{}/{}/{}", endian, F::NAME, B::NAME, C::NAME)
     }
 }
 
@@ -428,7 +429,7 @@ pub struct BitStreamVByteBE<F: Format, B: IsComplete, C: ContinuationBit>(Phanto
 
 impl<F: Format, B: IsComplete, C: ContinuationBit> WithName for BitStreamVByteBE<F, B, C> {
     fn name() -> String {
-        format!("vbyte_be,{},{},{}", F::NAME, B::NAME, C::NAME)
+        format!("vbyte_be/{}/{}/{}", F::NAME, B::NAME, C::NAME)
     }
 }
 
@@ -448,7 +449,7 @@ pub struct BitStreamVByteLE<F: Format, B: IsComplete, C: ContinuationBit>(Phanto
 
 impl<F: Format, B: IsComplete, C: ContinuationBit> WithName for BitStreamVByteLE<F, B, C> {
     fn name() -> String {
-        format!("vbyte_le,{},{},{}", F::NAME, B::NAME, C::NAME)
+        format!("vbyte_le/{}/{}/{}", F::NAME, B::NAME, C::NAME)
     }
 }
 
@@ -477,14 +478,8 @@ pub fn benchmark(c: &mut Criterion) {
     bench_byte_stream::<ByteStreamVByte<LE, GroupedIfs, Complete, OneCont>>(c);
     bench_byte_stream::<ByteStreamVByte<BE, GroupedIfs, Complete, OneCont>>(c);
 
-    // VByte byte order (BE vs LE) is orthogonal to stream bit-endianness;
-    // benchmark with LE only.
-    bench_bitstream_with_endianness::<BitStreamVByteBE<GroupedIfs, Complete, OneCont>, LittleEndian>(
-        c,
-    );
-    bench_bitstream_with_endianness::<BitStreamVByteLE<GroupedIfs, Complete, OneCont>, LittleEndian>(
-        c,
-    );
+    bench_bitstream::<BitStreamVByteBE<GroupedIfs, Complete, OneCont>>(c);
+    bench_bitstream::<BitStreamVByteLE<GroupedIfs, Complete, OneCont>>(c);
 
     bench_byte_stream::<ByteStreamVByte<BE, GroupedCLZ, NonComplete, OneCont>>(c);
 }
