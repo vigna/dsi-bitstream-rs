@@ -35,6 +35,11 @@
 
 ### Changed
 
+- The strict and non-strict version of `MemWordWriter` have been
+  exchanged, in the sense that the default now is the strict version,
+  which is now as fast as the 0-extended version, likely because
+  of improvements in codegen.
+
 - Upgraded to `rand` 0.10.0, `rand_distr` 0.6.0, and `mem_dbg` 0.4.0.
 
 - Removed spurious const parameter from `write_pi_param` and
@@ -69,6 +74,9 @@
   work only with word `u64`.
 
 - `get_implied_distribution` now also uses the last data point.
+
+- Write benchmarks were using a vector rather than a slice, which was causing
+  significant resizing overhead.
 
 ## [0.7.0] - 2026-01-27
 

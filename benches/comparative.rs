@@ -79,10 +79,10 @@ macro_rules! bench_comp {
                 let bench_id = format!("{}/BE/{}/write", name_str, dist_name);
                 let data_ref = &data;
                 $group.bench_function(&bench_id, |b| {
+                    let mut buffer: Box<[WriteWord]> = vec![0; 10 * N].into_boxed_slice();
                     b.iter(|| {
-                        let mut buffer: Vec<WriteWord> = Vec::with_capacity(N);
                         let mut w = BufBitWriter::<BE, _>::new(
-                            MemWordWriterVec::<WriteWord, _>::new(&mut buffer),
+                            MemWordWriterSlice::<WriteWord, _>::new(&mut *buffer),
                         );
                         for &value in data_ref {
                             black_box(w.$write_method(value, $($wargs),*).unwrap());
@@ -94,10 +94,10 @@ macro_rules! bench_comp {
                 let bench_id = format!("{}/LE/{}/write", name_str, dist_name);
                 let data_ref = &data;
                 $group.bench_function(&bench_id, |b| {
+                    let mut buffer: Box<[WriteWord]> = vec![0; 10 * N].into_boxed_slice();
                     b.iter(|| {
-                        let mut buffer: Vec<WriteWord> = Vec::with_capacity(N);
                         let mut w = BufBitWriter::<LE, _>::new(
-                            MemWordWriterVec::<WriteWord, _>::new(&mut buffer),
+                            MemWordWriterSlice::<WriteWord, _>::new(&mut *buffer),
                         );
                         for &value in data_ref {
                             black_box(w.$write_method(value, $($wargs),*).unwrap());
@@ -106,15 +106,15 @@ macro_rules! bench_comp {
                 });
             }
 
-            // Read benchmarks — encode into Vec<u64> to guarantee alignment
+            // Read benchmarks — encode into Box<[u64]> to guarantee alignment
             // for reinterpretation as &[ReadWord] via align_to.
             {
                 let encoded = {
-                    let mut buffer: Vec<u64> = Vec::with_capacity(N);
+                    let mut buffer: Box<[u64]> = vec![0u64; 10 * N].into_boxed_slice();
                     {
-                        let mut w = BufBitWriter::<BE, _>::new(MemWordWriterVec::<u64, _>::new(
-                            &mut buffer,
-                        ));
+                        let mut w = BufBitWriter::<BE, _>::new(
+                            MemWordWriterSlice::<u64, _>::new(&mut *buffer),
+                        );
                         for &value in &data {
                             w.$write_method(value, $($wargs),*).unwrap();
                         }
@@ -125,11 +125,11 @@ macro_rules! bench_comp {
                 let bench_id = format!("{}/BE/{}/read", name_str, dist_name);
                 $group.bench_function(&bench_id, |b| {
                     b.iter(|| {
-                        // SAFETY: Vec<u64> is aligned to 8 bytes, which
+                        // SAFETY: Box<[u64]> is aligned to 8 bytes, which
                         // satisfies alignment for ReadWord (u16/u32/u64).
                         let slice: &[ReadWord] = unsafe { encoded.align_to::<ReadWord>().1 };
                         let mut r =
-                            BufBitReader::<BE, _>::new(MemWordReader::<ReadWord, _>::new(slice));
+                            BufBitReader::<BE, _>::new(MemWordReader::new(slice));
                         for _ in 0..n {
                             black_box(r.$read_method($($rargs),*).unwrap());
                         }
@@ -138,11 +138,11 @@ macro_rules! bench_comp {
             }
             {
                 let encoded = {
-                    let mut buffer: Vec<u64> = Vec::with_capacity(N);
+                    let mut buffer: Box<[u64]> = vec![0u64; 10 * N].into_boxed_slice();
                     {
-                        let mut w = BufBitWriter::<LE, _>::new(MemWordWriterVec::<u64, _>::new(
-                            &mut buffer,
-                        ));
+                        let mut w = BufBitWriter::<LE, _>::new(
+                            MemWordWriterSlice::<u64, _>::new(&mut *buffer),
+                        );
                         for &value in &data {
                             w.$write_method(value, $($wargs),*).unwrap();
                         }
@@ -153,11 +153,11 @@ macro_rules! bench_comp {
                 let bench_id = format!("{}/LE/{}/read", name_str, dist_name);
                 $group.bench_function(&bench_id, |b| {
                     b.iter(|| {
-                        // SAFETY: Vec<u64> is aligned to 8 bytes, which
+                        // SAFETY: Box<[u64]> is aligned to 8 bytes, which
                         // satisfies alignment for ReadWord (u16/u32/u64).
                         let slice: &[ReadWord] = unsafe { encoded.align_to::<ReadWord>().1 };
                         let mut r =
-                            BufBitReader::<LE, _>::new(MemWordReader::<ReadWord, _>::new(slice));
+                            BufBitReader::<LE, _>::new(MemWordReader::new(slice));
                         for _ in 0..n {
                             black_box(r.$read_method($($rargs),*).unwrap());
                         }

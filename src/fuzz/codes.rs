@@ -297,11 +297,11 @@ pub fn harness(data: FuzzCase) {
         )
     };
     {
-        let mut big = BitReader::<BE, _>::new(MemWordReader::new(&buffer_be));
-        let mut big_buff = BufBitReader::<BE, _>::new(MemWordReader::new(be_trans));
+        let mut big = BitReader::<BE, _>::new(MemWordReader::new_inf(&buffer_be));
+        let mut big_buff = BufBitReader::<BE, _>::new(MemWordReader::new_inf(be_trans));
 
-        let mut little = BitReader::<LE, _>::new(MemWordReader::new(&buffer_le));
-        let mut little_buff = BufBitReader::<LE, _>::new(MemWordReader::new(le_trans));
+        let mut little = BitReader::<LE, _>::new(MemWordReader::new_inf(&buffer_le));
+        let mut little_buff = BufBitReader::<LE, _>::new(MemWordReader::new_inf(le_trans));
 
         for (succ, command) in writes.into_iter().zip(data.commands.into_iter()) {
             let pos = big.bit_pos().unwrap();

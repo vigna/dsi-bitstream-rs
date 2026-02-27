@@ -15,13 +15,13 @@ use mem_dbg::{MemDbg, MemSize};
 ///
 /// The implementation depends on the `INF` parameter: if true, the reader will
 /// behave as if the slice is infinitely extended with zeros.
-/// If false, the reader will return an error when reading
-/// beyond the end of the slice. You can create a zero-extended
-/// reader with [`MemWordReader::new`] and a strict reader with
-/// [`MemWordReader::new_strict`].
+/// If false (default), the reader will return an error when reading
+/// beyond the end of the slice. You can create a strict
+/// reader with [`MemWordReader::new`] and a zero-extended
+/// reader with [`MemWordReader::new_inf`].
 ///
-/// The zero-extended reader is usually much faster than the strict reader, but
-/// it might loop infinitely when reading beyond the end of the slice.
+/// The zero-extended reader might loop infinitely when reading beyond the end
+/// of the slice. It is mainly of historical value.
 ///
 /// # Examples
 ///
@@ -34,22 +34,30 @@ use mem_dbg::{MemDbg, MemSize};
 /// let mut word_reader = MemWordReader::new(&words);
 /// assert_eq!(word_reader.read_word()?, 1);
 /// assert_eq!(word_reader.read_word()?, 2);
-/// assert_eq!(word_reader.read_word()?, 0);
-/// assert_eq!(word_reader.read_word()?, 0);
+/// assert!(word_reader.read_word().is_err());
 ///
-/// let mut word_reader = MemWordReader::new_strict(&words);
+/// let mut word_reader = MemWordReader::new_inf(&words);
 /// assert_eq!(word_reader.read_word()?, 1);
 /// assert_eq!(word_reader.read_word()?, 2);
-/// assert!(word_reader.read_word().is_err());
+/// assert_eq!(word_reader.read_word()?, 0);
+/// assert_eq!(word_reader.read_word()?, 0);
 /// # Ok(())
 /// # }
 /// ```
 #[derive(Debug, Clone, PartialEq)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
-pub struct MemWordReader<W: Word, B, const INF: bool = true> {
+pub struct MemWordReader<W: Word, B, const INF: bool = false> {
     data: B,
     word_index: usize,
     _marker: core::marker::PhantomData<W>,
+}
+
+impl<W: Word, B, const INF: bool> MemWordReader<W, B, INF> {
+    /// Consumes this reader and returns the underlying data.
+    #[must_use]
+    pub fn into_inner(self) -> B {
+        self.data
+    }
 }
 
 impl<W: Word, B: AsRef<[W]>> MemWordReader<W, B> {
@@ -62,18 +70,15 @@ impl<W: Word, B: AsRef<[W]>> MemWordReader<W, B> {
             _marker: Default::default(),
         }
     }
-
-    /// Consumes this reader and returns the underlying data.
-    #[must_use]
-    pub fn into_inner(self) -> B {
-        self.data
-    }
 }
 
-impl<W: Word, B: AsRef<[W]>> MemWordReader<W, B, false> {
+impl<W: Word, B: AsRef<[W]>> MemWordReader<W, B, true> {
     /// Creates a new [`MemWordReader`] from a slice of data.
+    ///
+    /// The resulting reader behaves as if the slice is infinitely
+    /// extended with zeros.
     #[must_use]
-    pub fn new_strict(data: B) -> Self {
+    pub fn new_inf(data: B) -> Self {
         Self {
             data,
             word_index: 0,
@@ -172,8 +177,9 @@ mod tests {
         writer.flush().unwrap();
         drop(writer);
 
-        let mut reader =
-            crate::prelude::BufBitReader::<crate::prelude::LE, _>::new(MemWordReader::new(&words));
+        let mut reader = crate::prelude::BufBitReader::<crate::prelude::LE, _>::new(
+            MemWordReader::new_inf(&words),
+        );
         for _ in 0..16 {
             // Here the last table read returns zero-extended data
             assert_eq!(reader.read_delta_param::<true, true>().unwrap(), 1);

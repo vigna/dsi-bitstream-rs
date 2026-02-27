@@ -48,7 +48,7 @@ let data = writer.into_inner()?.into_inner();
 // twice as large as the read word size, it is more efficient to use a
 // u32 as read word, so we need to reinterpret the data.
 let data = unsafe{data.align_to::<u32>().1};
-let mut reader = BufBitReader::<LE, _>::new(MemWordReader::new(data));
+let mut reader = BufBitReader::<LE, _>::new(MemWordReader::new_inf(data));
 assert_eq!(reader.read_bits(10)?, 0);
 assert_eq!(reader.read_unary()?, 0);
 assert_eq!(reader.read_gamma()?, 1);
@@ -81,7 +81,7 @@ let data = writer.into_inner()?.into_inner();
 
 // As in the example above, convert to u32 for better read performance
 let data = unsafe{data.align_to::<u32>().1};
-let mut reader = BufBitReader::<LE, _>::new(MemWordReader::new(&data));
+let mut reader = BufBitReader::<LE, _>::new(MemWordReader::new_inf(&data));
 assert_eq!(reader.read_bits(10)?, 0);
 assert_eq!(reader.read_unary()?, 0);
 assert_eq!(reader.read_gamma()?, 1);

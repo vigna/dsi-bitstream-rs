@@ -80,10 +80,10 @@ macro_rules! bench_code_tables {
                 let bench_id = format!("{}::BE::{}/write", $code_name, table_str);
                 let data_ref = data;
                 $group.bench_function(&bench_id, |b| {
+                    let mut buffer: Box<[WriteWord]> = vec![0; 10 * N].into_boxed_slice();
                     b.iter(|| {
-                        let mut buffer: Vec<WriteWord> = Vec::with_capacity(N);
                         let mut w = BufBitWriter::<BE, _>::new(
-                            MemWordWriterVec::<WriteWord, _>::new(&mut buffer),
+                            MemWordWriterSlice::<WriteWord, _>::new(&mut *buffer),
                         );
                         for &value in data_ref {
                             black_box(w.$write_fn::<$($table_param),*>(value).unwrap());
@@ -96,10 +96,10 @@ macro_rules! bench_code_tables {
                 let bench_id = format!("{}::LE::{}/write", $code_name, table_str);
                 let data_ref = data;
                 $group.bench_function(&bench_id, |b| {
+                    let mut buffer: Box<[WriteWord]> = vec![0; 10 * N].into_boxed_slice();
                     b.iter(|| {
-                        let mut buffer: Vec<WriteWord> = Vec::with_capacity(N);
                         let mut w = BufBitWriter::<LE, _>::new(
-                            MemWordWriterVec::<WriteWord, _>::new(&mut buffer),
+                            MemWordWriterSlice::<WriteWord, _>::new(&mut *buffer),
                         );
                         for &value in data_ref {
                             black_box(w.$write_fn::<$($table_param),*>(value).unwrap());
@@ -113,10 +113,10 @@ macro_rules! bench_code_tables {
         {
             // Encode data for reads
             let encoded_be = {
-                let mut buffer: Vec<WriteWord> = Vec::with_capacity(N);
+                let mut buffer: Box<[WriteWord]> = vec![0; 10 * N].into_boxed_slice();
                 {
                     let mut w = BufBitWriter::<BE, _>::new(
-                        MemWordWriterVec::<WriteWord, _>::new(&mut buffer),
+                        MemWordWriterSlice::<WriteWord, _>::new(&mut *buffer),
                     );
                     for &value in data {
                         w.$write_fn::<$($table_param),*>(value).unwrap();
@@ -125,10 +125,10 @@ macro_rules! bench_code_tables {
                 buffer
             };
             let encoded_le = {
-                let mut buffer: Vec<WriteWord> = Vec::with_capacity(N);
+                let mut buffer: Box<[WriteWord]> = vec![0; 10 * N].into_boxed_slice();
                 {
                     let mut w = BufBitWriter::<LE, _>::new(
-                        MemWordWriterVec::<WriteWord, _>::new(&mut buffer),
+                        MemWordWriterSlice::<WriteWord, _>::new(&mut *buffer),
                     );
                     for &value in data {
                         w.$write_fn::<$($table_param),*>(value).unwrap();
@@ -144,12 +144,11 @@ macro_rules! bench_code_tables {
                 let bench_id = format!("{}::BE::{}/read_b", $code_name, table_str);
                 $group.bench_function(&bench_id, |b| {
                     b.iter(|| {
-                        // SAFETY: WriteWord is u64 (set by bench-reads feature),
-                        // so Vec<WriteWord> is aligned to 8 bytes, satisfying
+                        // SAFETY: Box<[u64]> is aligned to 8 bytes, satisfying
                         // alignment for any ReadWord (u16/u32/u64).
                         let slice: &[ReadWord] = unsafe { encoded_be.align_to::<ReadWord>().1 };
                         let mut r = BufBitReader::<BE, _>::new(
-                            MemWordReader::<ReadWord, _>::new(slice),
+                            MemWordReader::new(slice),
                         );
                         for _ in 0..n {
                             black_box(r.$read_fn::<$($table_param),*>().unwrap());
@@ -162,12 +161,11 @@ macro_rules! bench_code_tables {
                 let bench_id = format!("{}::LE::{}/read_b", $code_name, table_str);
                 $group.bench_function(&bench_id, |b| {
                     b.iter(|| {
-                        // SAFETY: WriteWord is u64 (set by bench-reads feature),
-                        // so Vec<WriteWord> is aligned to 8 bytes, satisfying
+                        // SAFETY: Box<[u64]> is aligned to 8 bytes, satisfying
                         // alignment for any ReadWord (u16/u32/u64).
                         let slice: &[ReadWord] = unsafe { encoded_le.align_to::<ReadWord>().1 };
                         let mut r = BufBitReader::<LE, _>::new(
-                            MemWordReader::<ReadWord, _>::new(slice),
+                            MemWordReader::new(slice),
                         );
                         for _ in 0..n {
                             black_box(r.$read_fn::<$($table_param),*>().unwrap());
@@ -181,7 +179,7 @@ macro_rules! bench_code_tables {
                 $group.bench_function(&bench_id, |b| {
                     b.iter(|| {
                         let mut r = BitReader::<BE, _>::new(
-                            MemWordReader::new(&encoded_be),
+                            MemWordReader::new(&*encoded_be),
                         );
                         for _ in 0..n {
                             black_box(r.$read_fn::<$($table_param),*>().unwrap());
@@ -195,7 +193,7 @@ macro_rules! bench_code_tables {
                 $group.bench_function(&bench_id, |b| {
                     b.iter(|| {
                         let mut r = BitReader::<LE, _>::new(
-                            MemWordReader::new(&encoded_le),
+                            MemWordReader::new(&*encoded_le),
                         );
                         for _ in 0..n {
                             black_box(r.$read_fn::<$($table_param),*>().unwrap());

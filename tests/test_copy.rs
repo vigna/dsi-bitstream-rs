@@ -51,9 +51,9 @@ fn verify_write<E: Endianness, W: Word + DoubleType, A: AsRef<[W]>>(
     skip_read: bool,
 ) -> Result<(), Box<dyn Error + Send + Sync + 'static>>
 where
-    BufBitReader<E, MemWordReader<W, A>>: BitRead<E>,
+    BufBitReader<E, MemWordReader<W, A, true>>: BitRead<E>,
 {
-    let mut read = BufBitReader::<E, _>::new(MemWordReader::new(buffer));
+    let mut read = BufBitReader::<E, _>::new(MemWordReader::new_inf(buffer));
     let mut r = SmallRng::seed_from_u64(0);
     if skip_read {
         len -= skip as u64;
@@ -81,7 +81,7 @@ const MAX_LEN: u64 = 500;
 fn test_endianness<E: Endianness, W: Word + PrimitiveInteger + DoubleType + 'static>()
 -> Result<(), Box<dyn Error + Send + Sync + 'static>>
 where
-    BufBitReader<E, MemWordReader<W, Vec<W>>>: BitRead<E>,
+    BufBitReader<E, MemWordReader<W, Vec<W>, true>>: BitRead<E>,
     BufBitWriter<E, MemWordWriterVec<W, Vec<W>>>: BitWrite<E>,
 {
     let mut write = BufBitWriter::<E, _>::new(MemWordWriterVec::new(Vec::<W>::new()));
@@ -95,7 +95,7 @@ where
         // copy_to, BufBitReader implementation
 
         for skip in 0..=(W::BITS as usize).min(len as usize) {
-            let mut read = BufBitReader::<E, _>::new(MemWordReader::new(buffer.clone()));
+            let mut read = BufBitReader::<E, _>::new(MemWordReader::new_inf(buffer.clone()));
             let mut copy_write = BufBitWriter::<E, _>::new(MemWordWriterVec::new(Vec::<W>::new()));
             read.skip_bits(skip)?;
             read.copy_to(&mut copy_write, len - skip as u64)?;
@@ -112,7 +112,7 @@ where
         // copy_from, BufBitWriter implementation
 
         for skip in 0..=(W::BITS as usize).min(len as usize) {
-            let mut read = BufBitReader::<E, _>::new(MemWordReader::new(buffer.clone()));
+            let mut read = BufBitReader::<E, _>::new(MemWordReader::new_inf(buffer.clone()));
             let mut copy_write = BufBitWriter::<E, _>::new(MemWordWriterVec::new(Vec::<W>::new()));
             for _ in 0..skip {
                 copy_write.write_bits(0, 1)?;

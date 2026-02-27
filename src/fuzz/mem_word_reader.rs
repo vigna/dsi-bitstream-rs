@@ -23,7 +23,7 @@ pub enum RandomCommand {
 
 pub fn harness(data: FuzzCase) {
     let mut idx = 0;
-    let mut reader = MemWordReader::new(&data.init);
+    let mut reader = MemWordReader::new_inf(&data.init);
     for command in data.commands {
         match command {
             RandomCommand::GetPosition => {

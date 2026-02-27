@@ -13,7 +13,7 @@ use dsi_bitstream::dispatch::{CodeLen, CodesRead, CodesWrite, MinimalBinary};
 use dsi_bitstream::prelude::*;
 
 type BW<'a, E> = BufBitWriter<E, MemWordWriterVec<u64, &'a mut Vec<u64>>>;
-type BR<'a, E> = BufBitReader<E, MemWordReader<u32, &'a [u32]>>;
+type BR<'a, E> = BufBitReader<E, MemWordReader<u32, &'a [u32], true>>;
 
 #[test]
 fn test_codes() -> Result<(), Box<dyn core::error::Error>> {
@@ -151,8 +151,8 @@ where
     let slice_dynamic = unsafe { buffer_dynamic.as_slice().align_to::<u32>().1 };
     let slice_static = unsafe { buffer_static.as_slice().align_to::<u32>().1 };
 
-    let mut read_dynamic = BufBitReader::<E, _>::new(MemWordReader::new(slice_dynamic));
-    let mut read_static = BufBitReader::<E, _>::new(MemWordReader::new(slice_static));
+    let mut read_dynamic = BufBitReader::<E, _>::new(MemWordReader::new_inf(slice_dynamic));
+    let mut read_static = BufBitReader::<E, _>::new(MemWordReader::new_inf(slice_static));
 
     for (val, code) in val_codes.iter_mut() {
         let value = DynamicCodeRead::read(code, &mut read_dynamic)?;

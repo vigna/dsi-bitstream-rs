@@ -76,7 +76,7 @@
 //! writer.flush()?;
 //! drop(writer); // We must drop the writer to release the borrow on v
 //!
-//! let mut reader = BufBitReader::<BE, _>::new(MemWordReader::new(&v));
+//! let mut reader = BufBitReader::<BE, _>::new(MemWordReader::new_inf(&v));
 //! assert_eq!(reader.read_gamma()?, 42);
 //! # Ok(())
 //! # }

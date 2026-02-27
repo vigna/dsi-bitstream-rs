@@ -133,7 +133,7 @@ where
     /// ```
     /// use dsi_bitstream::prelude::*;
     /// let words: [u32; 2] = [0x0043b59f, 0xccf16077];
-    /// let word_reader = MemWordReader::new(&words);
+    /// let word_reader = MemWordReader::new_inf(&words);
     /// let mut buf_bit_reader = <BufBitReader<BE, _>>::new(word_reader);
     /// ```
     #[must_use]
@@ -724,12 +724,12 @@ mod tests {
         let data_u32 = unsafe { data.align_to::<u32>().1 };
 
         for i in 0..data.len() {
-            let mut reader = BufBitReader::<LE, _>::new(MemWordReader::new(&data_u32));
+            let mut reader = BufBitReader::<LE, _>::new(MemWordReader::new_inf(&data_u32));
             let mut buffer = vec![0; i];
             assert_eq!(reader.read(&mut buffer)?, i);
             assert_eq!(&buffer, &data[..i]);
 
-            let mut reader = BufBitReader::<BE, _>::new(MemWordReader::new(&data_u32));
+            let mut reader = BufBitReader::<BE, _>::new(MemWordReader::new_inf(&data_u32));
             let mut buffer = vec![0; i];
             assert_eq!(reader.read(&mut buffer)?, i);
             assert_eq!(&buffer, &data[..i]);
@@ -816,8 +816,8 @@ mod tests {
                     )
                 };
 
-                let mut big_buff = BufBitReader::<BE, _>::new(MemWordReader::new(be_trans));
-                let mut little_buff = BufBitReader::<LE, _>::new(MemWordReader::new(le_trans));
+                let mut big_buff = BufBitReader::<BE, _>::new(MemWordReader::new_inf(be_trans));
+                let mut little_buff = BufBitReader::<LE, _>::new(MemWordReader::new_inf(le_trans));
 
                 let mut r = SmallRng::seed_from_u64(0);
 

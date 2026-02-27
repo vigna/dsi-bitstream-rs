@@ -270,7 +270,7 @@ mod tests {
             let code_len = writer.write_pi(value, k).unwrap();
             assert_eq!(code_len, len_pi(value, k));
             drop(writer);
-            let mut reader = <BufBitReader<BE, _>>::new(MemWordReader::new(&data));
+            let mut reader = <BufBitReader<BE, _>>::new(MemWordReader::new_inf(&data));
             assert_eq!(
                 reader.read_pi(k).unwrap(),
                 value,
@@ -291,7 +291,7 @@ mod tests {
             let code_len = writer.write_pi2(value).unwrap();
             assert_eq!(code_len, len_pi(value, 2));
             drop(writer);
-            let mut reader = <BufBitReader<BE, _>>::new(MemWordReader::new(&data));
+            let mut reader = <BufBitReader<BE, _>>::new(MemWordReader::new_inf(&data));
             assert_eq!(reader.read_pi2().unwrap(), value, "BE for value: {}", value,);
 
             // Test LE
@@ -300,7 +300,7 @@ mod tests {
             let code_len = writer.write_pi2(value).unwrap();
             assert_eq!(code_len, len_pi(value, 2));
             drop(writer);
-            let mut reader = <BufBitReader<LE, _>>::new(MemWordReader::new(&data));
+            let mut reader = <BufBitReader<LE, _>>::new(MemWordReader::new_inf(&data));
             assert_eq!(reader.read_pi2().unwrap(), value, "LE for value: {}", value,);
         }
     }
@@ -315,7 +315,7 @@ mod tests {
             let code_len = writer.write_pi2_param::<true>(value).unwrap();
             assert_eq!(code_len, len_pi(value, 2));
             drop(writer);
-            let mut reader = <BufBitReader<BE, _>>::new(MemWordReader::new(&data));
+            let mut reader = <BufBitReader<BE, _>>::new(MemWordReader::new_inf(&data));
             assert_eq!(
                 reader.read_pi2_param::<true>().unwrap(),
                 value,
@@ -329,7 +329,7 @@ mod tests {
             let code_len = writer.write_pi2_param::<false>(value).unwrap();
             assert_eq!(code_len, len_pi(value, 2));
             drop(writer);
-            let mut reader = <BufBitReader<BE, _>>::new(MemWordReader::new(&data));
+            let mut reader = <BufBitReader<BE, _>>::new(MemWordReader::new_inf(&data));
             assert_eq!(
                 reader.read_pi2_param::<false>().unwrap(),
                 value,
@@ -343,7 +343,7 @@ mod tests {
             let code_len = writer.write_pi2_param::<true>(value).unwrap();
             assert_eq!(code_len, len_pi(value, 2));
             drop(writer);
-            let mut reader = <BufBitReader<LE, _>>::new(MemWordReader::new(&data));
+            let mut reader = <BufBitReader<LE, _>>::new(MemWordReader::new_inf(&data));
             assert_eq!(
                 reader.read_pi2_param::<true>().unwrap(),
                 value,
@@ -357,7 +357,7 @@ mod tests {
             let code_len = writer.write_pi2_param::<false>(value).unwrap();
             assert_eq!(code_len, len_pi(value, 2));
             drop(writer);
-            let mut reader = <BufBitReader<LE, _>>::new(MemWordReader::new(&data));
+            let mut reader = <BufBitReader<LE, _>>::new(MemWordReader::new_inf(&data));
             assert_eq!(
                 reader.read_pi2_param::<false>().unwrap(),
                 value,

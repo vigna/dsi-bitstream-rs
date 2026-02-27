@@ -689,8 +689,8 @@ mod tests {
                     )
                 };
 
-                let mut big_buff = BufBitReader::<BE, _>::new(MemWordReader::new(be_trans));
-                let mut little_buff = BufBitReader::<LE, _>::new(MemWordReader::new(le_trans));
+                let mut big_buff = BufBitReader::<BE, _>::new(MemWordReader::new_inf(be_trans));
+                let mut little_buff = BufBitReader::<LE, _>::new(MemWordReader::new_inf(le_trans));
 
                 let mut r = SmallRng::seed_from_u64(0);
 
