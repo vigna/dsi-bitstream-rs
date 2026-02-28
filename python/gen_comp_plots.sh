@@ -8,6 +8,7 @@
 
 DIST="both"
 CRITERION_OPTS=""
+TARGET_DIR="${CARGO_TARGET_DIR:-target}/criterion"
 
 # Parse arguments: optional dist, then optional -- criterion-opts
 if [ $# -gt 0 ] && [ "$1" != "--" ]; then
@@ -41,12 +42,12 @@ for d in $DISTS; do
 	mkdir -p "$d"
 
 	# Remove stale Criterion results
-	rm -rf target/criterion/comparative
+	rm -rf "$TARGET_DIR/comparative"
 
 	# Run benchmarks for this distribution only
 	cargo bench --bench comparative --features implied,bench-reads -- "/$d/" $CRITERION_OPTS
 
 	# Extract results and generate plots directly into the dist directory
-	python3 ./python/extract_comp_results.py > "$d/comp.tsv"
+	python3 ./python/extract_comp_results.py --target-dir "$TARGET_DIR" > "$d/comp.tsv"
 	python3 ./python/plot_comp.py "$d/comp.tsv" --output-dir "$d" --write-word u64
 done

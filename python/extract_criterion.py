@@ -23,7 +23,16 @@ import os
 import sys
 
 
-def get_criterion_results(target_dir="target/criterion"):
+def default_criterion_dir():
+    """Return the default Criterion output directory.
+
+    Respects the CARGO_TARGET_DIR environment variable, falling back to
+    "target" when it is not set.
+    """
+    return os.path.join(os.environ.get("CARGO_TARGET_DIR", "target"), "criterion")
+
+
+def get_criterion_results(target_dir=None):
     """Parse all Criterion benchmark results from the target directory.
 
     Recursively walks the directory tree looking for new/estimates.json
@@ -36,6 +45,8 @@ def get_criterion_results(target_dir="target/criterion"):
         cilower: confidence interval lower bound in ns
         ciupper: confidence interval upper bound in ns
     """
+    if target_dir is None:
+        target_dir = default_criterion_dir()
     results = {}
     if not os.path.isdir(target_dir):
         return results
@@ -64,7 +75,7 @@ def get_criterion_results(target_dir="target/criterion"):
     return results
 
 
-def get_table_bench_results(target_dir="target/criterion", group="table"):
+def get_table_bench_results(target_dir=None, group="table"):
     """Parse table-sweep benchmark results.
 
     Looks inside the given group subdirectory (default "table"; use
@@ -83,6 +94,8 @@ def get_table_bench_results(target_dir="target/criterion", group="table"):
         cilower: confidence interval lower bound
         ciupper: confidence interval upper bound
     """
+    if target_dir is None:
+        target_dir = default_criterion_dir()
     results = []
     group_dir = os.path.join(target_dir, group)
     all_results = get_criterion_results(group_dir)
@@ -142,7 +155,7 @@ def get_table_bench_results(target_dir="target/criterion", group="table"):
     return results
 
 
-def get_comp_bench_results(target_dir="target/criterion"):
+def get_comp_bench_results(target_dir=None):
     """Parse comparative benchmark results.
 
     Looks inside the "comparative" group subdirectory.  Criterion flattens
@@ -153,6 +166,8 @@ def get_comp_bench_results(target_dir="target/criterion"):
     Returns a list of dicts with keys:
         code, op, dist, endian, cilower, mean_ns, ciupper
     """
+    if target_dir is None:
+        target_dir = default_criterion_dir()
     results = []
     group_dir = os.path.join(target_dir, "comparative")
     all_results = get_criterion_results(group_dir)

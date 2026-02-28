@@ -8,7 +8,7 @@
 
 """Extracts comparative benchmark results from Criterion's JSON output.
 
-Reads the target/criterion/ directory and produces TSV output
+Reads the Criterion output directory and produces TSV output
 compatible with the plot_comp.py script.
 
 Usage:
@@ -20,7 +20,7 @@ Output columns: code, op, dist, endian, cilower, mean, ciupper
 
 import argparse
 import sys
-from extract_criterion import get_comp_bench_results
+from extract_criterion import default_criterion_dir, get_comp_bench_results
 
 
 def main():
@@ -29,14 +29,15 @@ def main():
     )
     parser.add_argument(
         "--target-dir",
-        default="target/criterion",
-        help="Path to the Criterion output directory (default: target/criterion)",
+        default=None,
+        help="Path to the Criterion output directory (default: $CARGO_TARGET_DIR/criterion or target/criterion)",
     )
     args = parser.parse_args()
 
-    results = get_comp_bench_results(args.target_dir)
+    target_dir = args.target_dir or default_criterion_dir()
+    results = get_comp_bench_results(target_dir)
     if not results:
-        sys.exit(f"No comparative benchmark results found in: {args.target_dir}")
+        sys.exit(f"No comparative benchmark results found in: {target_dir}")
 
     print("code\top\tdist\tendian\tcilower\tmean\tciupper")
 

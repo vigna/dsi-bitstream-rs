@@ -26,7 +26,7 @@ import shutil
 import subprocess
 import sys
 
-from extract_criterion import get_table_bench_results, parse_ratios_from_stderr
+from extract_criterion import default_criterion_dir, get_table_bench_results, parse_ratios_from_stderr
 from gen_code_tables import *
 
 if not os.path.exists("benches") or not os.path.exists("python"):
@@ -93,7 +93,7 @@ def run_cargo_bench(cmd):
     return "\n".join(ratio_lines)
 
 
-criterion_base = os.path.join("target", "criterion")
+criterion_base = default_criterion_dir()
 
 # TSV header: t_bits is 0 for no table, >0 for table (= number of lookup bits)
 print("code\tendian\tt_bits\ttype\top\tratio\tcilower\tmean\tciupper", file=out)
