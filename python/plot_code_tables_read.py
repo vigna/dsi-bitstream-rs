@@ -181,7 +181,8 @@ for code_name in ["gamma", "delta", "delta_g", "zeta3", "pi2", "omega"]:
     )
     ax.set_xlabel("table bits")
     ax.set_ylabel("ns")
-    plots.append((fig, ax, os.path.join(outdir, "%s_read_tables.svg" % code_name)))
+    file_name = {"delta_g": "delta_gamma"}.get(code_name, code_name)
+    plots.append((fig, ax, os.path.join(outdir, "%s_read_tables.svg" % file_name)))
 
 min_x, max_x = np.inf, -np.inf
 min_y, max_y = np.inf, -np.inf
