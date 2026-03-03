@@ -1652,12 +1652,12 @@ pub fn write_table_be<B: BitWrite<BE>>(backend: &mut B, n: u64) -> Result<Option
 def generate_default_tables():
     # Generate the default tables
     gen_gamma(
-        read_bits=9,  # No use on Xeon/ARM, little useful on i7
-        write_max_val=63,
+        read_bits=9,  # No use for buffered, some use for unbuffered
+        write_max_val=63, # Useful on all architecture for implied, harmful for universal
         merged_table=False,  # Irrelevant for speed, a bit smaller
     )
     gen_delta(
-        read_bits=10,  # No use on any architecture if 9-bit gamma tables are available, but just in case someone selects it
+        read_bits=10,  # No use on any architecture if 9-bit gamma tables are available, but just in case someone selects it; ARM is better table-less (even for gamma)
         write_max_val=255,  # Very useful, both tables (delta and gamma)
         merged_table=False,
     )
@@ -1673,7 +1673,7 @@ def generate_default_tables():
         merged_table=False,
     )
     gen_pi(
-        read_bits=13,  # 13 bits needed to decode 0-510, matching zeta3's 12-bit coverage; useless on all architectures
+        read_bits=10,  # Useful only for the unbufferd case
         write_max_val=1023,  # Useless on all architectures
         k=2,
         merged_table=False,

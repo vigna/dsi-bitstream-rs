@@ -96,6 +96,9 @@ macro_rules! impl_default_read_codes {
         {
             #[inline(always)]
             fn read_delta(&mut self) -> Result<u64, Self::Error> {
+				#[cfg(target_arch = "aarch64")]
+                self.read_delta_param::<false, false>()
+				#[cfg(not(target_arch = "aarch64"))]
                 self.read_delta_param::<false, true>()
             }
         }
@@ -142,9 +145,7 @@ macro_rules! impl_default_read_codes {
         {
             #[inline(always)]
             fn read_gamma(&mut self) -> Result<u64, Self::Error> {
-                // From our tests, the ARM architecture is faster
-                // without tables for ɣ codes.
-                self.read_gamma_param::<false>()
+                self.read_gamma_param::<true>()
             }
         }
 
@@ -153,7 +154,8 @@ macro_rules! impl_default_read_codes {
         {
             #[inline(always)]
             fn read_delta(&mut self) -> Result<u64, Self::Error> {
-                self.read_delta_param::<false, true>()
+				// <false, true> is better on the universal Zipf distribution
+                self.read_delta_param::<true, true>()
             }
         }
 
@@ -190,7 +192,7 @@ macro_rules! impl_default_read_codes {
 
             #[inline(always)]
             fn read_pi2(&mut self) -> Result<u64, Self::Error> {
-                self.read_pi2_param::<false>()
+                self.read_pi2_param::<true>()
             }
         }
     )*};
