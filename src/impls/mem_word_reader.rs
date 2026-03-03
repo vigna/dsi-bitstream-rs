@@ -63,11 +63,11 @@ impl<W: Word, B, const INF: bool> MemWordReader<W, B, INF> {
 impl<W: Word, B: AsRef<[W]>> MemWordReader<W, B> {
     /// Creates a new [`MemWordReader`] from a slice of data.
     #[must_use]
-    pub fn new(data: B) -> Self {
+    pub const fn new(data: B) -> Self {
         Self {
             data,
             word_index: 0,
-            _marker: Default::default(),
+            _marker: core::marker::PhantomData,
         }
     }
 }
@@ -78,11 +78,11 @@ impl<W: Word, B: AsRef<[W]>> MemWordReader<W, B, true> {
     /// The resulting reader behaves as if the slice is infinitely
     /// extended with zeros.
     #[must_use]
-    pub fn new_inf(data: B) -> Self {
+    pub const fn new_inf(data: B) -> Self {
         Self {
             data,
             word_index: 0,
-            _marker: Default::default(),
+            _marker: core::marker::PhantomData,
         }
     }
 }

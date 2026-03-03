@@ -40,7 +40,7 @@ pub struct WordAdapter<W: Word, B> {
 impl<W: Word, B> WordAdapter<W, B> {
     /// Creates a new [`WordAdapter`].
     #[must_use]
-    pub fn new(backend: B) -> Self {
+    pub const fn new(backend: B) -> Self {
         Self {
             backend,
             _marker: core::marker::PhantomData,

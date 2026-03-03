@@ -71,11 +71,11 @@ pub struct MemWordWriterSlice<W: Word, B> {
 impl<W: Word, B: AsRef<[W]>> MemWordWriterSlice<W, B> {
     /// Creates a new [`MemWordWriterSlice`] from a slice.
     #[must_use]
-    pub fn new(data: B) -> Self {
+    pub const fn new(data: B) -> Self {
         Self {
             data,
             word_index: 0,
-            _marker: Default::default(),
+            _marker: core::marker::PhantomData,
         }
     }
 
@@ -136,11 +136,11 @@ pub struct MemWordWriterVec<W: Word, B> {
 impl<W: Word, B: AsRef<Vec<W>>> MemWordWriterVec<W, B> {
     /// Creates a new [`MemWordWriterVec`] from a vector.
     #[must_use]
-    pub fn new(data: B) -> Self {
+    pub const fn new(data: B) -> Self {
         Self {
             data,
             word_index: 0,
-            _marker: Default::default(),
+            _marker: core::marker::PhantomData,
         }
     }
 

@@ -43,7 +43,7 @@ use crate::traits::*;
 /// Returns the length of the Golomb code for `n` with modulus `b`.
 #[must_use]
 #[inline(always)]
-pub fn len_golomb(n: u64, b: u64) -> usize {
+pub const fn len_golomb(n: u64, b: u64) -> usize {
     (n / b) as usize + 1 + len_minimal_binary(n % b, b)
 }
 

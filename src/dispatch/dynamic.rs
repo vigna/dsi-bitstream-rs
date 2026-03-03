@@ -170,14 +170,14 @@ impl<E: Endianness, CR: CodesRead<E> + ?Sized> FuncCodeReader<E, CR> {
     /// Returns a new [`FuncCodeReader`] for the given function.
     #[must_use]
     #[inline(always)]
-    pub fn new_with_func(read_func: ReadFn<E, CR>) -> Self {
+    pub const fn new_with_func(read_func: ReadFn<E, CR>) -> Self {
         Self(read_func)
     }
 
     /// Returns the function pointer for the code.
     #[must_use]
     #[inline(always)]
-    pub fn get_func(&self) -> ReadFn<E, CR> {
+    pub const fn get_func(&self) -> ReadFn<E, CR> {
         self.0
     }
 }
@@ -342,14 +342,14 @@ impl<E: Endianness, CW: CodesWrite<E> + ?Sized> FuncCodeWriter<E, CW> {
     /// Returns a new [`FuncCodeWriter`] for the given function.
     #[must_use]
     #[inline(always)]
-    pub fn new_with_func(write_func: WriteFn<E, CW>) -> Self {
+    pub const fn new_with_func(write_func: WriteFn<E, CW>) -> Self {
         Self(write_func)
     }
 
     /// Returns the function pointer for the code.
     #[must_use]
     #[inline(always)]
-    pub fn get_func(&self) -> WriteFn<E, CW> {
+    pub const fn get_func(&self) -> WriteFn<E, CW> {
         self.0
     }
 }
@@ -506,13 +506,13 @@ impl FuncCodeLen {
     /// Returns a new [`FuncCodeLen`] for the given function.
     #[must_use]
     #[inline(always)]
-    pub fn new_with_func(len_func: LenFn) -> Self {
+    pub const fn new_with_func(len_func: LenFn) -> Self {
         Self(len_func)
     }
     /// Returns the function pointer for the code.
     #[must_use]
     #[inline(always)]
-    pub fn get_func(&self) -> LenFn {
+    pub const fn get_func(&self) -> LenFn {
         self.0
     }
 }

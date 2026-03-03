@@ -118,7 +118,7 @@ impl<E: Endianness, WW: WordWrite, WP: WriteParams> BufBitWriter<E, WW, WP> {
     /// # }
     /// ```
     #[must_use]
-    pub fn new(backend: WW) -> Self {
+    pub const fn new(backend: WW) -> Self {
         Self {
             backend,
             buffer: WW::Word::ZERO,

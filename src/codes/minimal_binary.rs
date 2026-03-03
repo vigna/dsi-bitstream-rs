@@ -31,7 +31,7 @@ use crate::traits::*;
 /// Returns the length of the minimal binary code for `n` with upper bound `u`.
 #[must_use]
 #[inline(always)]
-pub fn len_minimal_binary(n: u64, u: u64) -> usize {
+pub const fn len_minimal_binary(n: u64, u: u64) -> usize {
     debug_assert!(n < u);
     let l = u.ilog2();
     let limit = ((1_u64 << l) << 1).wrapping_sub(u);

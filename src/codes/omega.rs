@@ -87,7 +87,7 @@ pub fn len_omega(n: u64) -> usize {
     len_omega_param::<true>(n)
 }
 
-fn recursive_len(n: u64) -> usize {
+const fn recursive_len(n: u64) -> usize {
     if n <= 1 {
         return 1;
     }

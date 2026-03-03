@@ -28,7 +28,7 @@ pub struct CountBitWriter<E: Endianness, BW: BitWrite<E>, const PRINT: bool = fa
 
 impl<E: Endianness, BW: BitWrite<E>, const PRINT: bool> CountBitWriter<E, BW, PRINT> {
     #[must_use]
-    pub fn new(bit_write: BW) -> Self {
+    pub const fn new(bit_write: BW) -> Self {
         Self {
             bit_write,
             bits_written: 0,
@@ -206,7 +206,7 @@ pub struct CountBitReader<E: Endianness, BR: BitRead<E>, const PRINT: bool = fal
 
 impl<E: Endianness, BR: BitRead<E>, const PRINT: bool> CountBitReader<E, BR, PRINT> {
     #[must_use]
-    pub fn new(bit_read: BR) -> Self {
+    pub const fn new(bit_read: BR) -> Self {
         Self {
             bit_read,
             bits_read: 0,

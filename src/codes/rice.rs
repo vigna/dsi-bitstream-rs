@@ -41,7 +41,7 @@ use crate::traits::*;
 /// Returns the length of the Rice code for `n` with parameter `log2_b`.
 #[must_use]
 #[inline(always)]
-pub fn len_rice(n: u64, log2_b: usize) -> usize {
+pub const fn len_rice(n: u64, log2_b: usize) -> usize {
     debug_assert!(log2_b < 64);
     (n >> log2_b) as usize + 1 + log2_b
 }

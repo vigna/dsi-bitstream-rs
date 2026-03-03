@@ -515,7 +515,7 @@ impl<
     }
 
     /// Returns a reference to the stats.
-    pub fn stats(&self) -> &Mutex<CodesStats<ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>> {
+    pub const fn stats(&self) -> &Mutex<CodesStats<ZETA, GOLOMB, EXP_GOLOMB, RICE, PI>> {
         &self.stats
     }
 

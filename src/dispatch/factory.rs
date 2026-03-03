@@ -260,14 +260,14 @@ impl<E: Endianness, CRF: CodesReaderFactoryHelper<E> + ?Sized> FactoryFuncCodeRe
     /// Returns a new [`FactoryFuncCodeReader`] for the given function.
     #[must_use]
     #[inline(always)]
-    pub fn new_with_func(read_func: FactoryReadFn<E, CRF>) -> Self {
+    pub const fn new_with_func(read_func: FactoryReadFn<E, CRF>) -> Self {
         Self(read_func)
     }
 
     /// Returns the function pointer for the code.
     #[must_use]
     #[inline(always)]
-    pub fn get_func(&self) -> FactoryReadFn<E, CRF> {
+    pub const fn get_func(&self) -> FactoryReadFn<E, CRF> {
         self.0
     }
 
@@ -275,7 +275,7 @@ impl<E: Endianness, CRF: CodesReaderFactoryHelper<E> + ?Sized> FactoryFuncCodeRe
     /// [`CodesReaderFactory::CodesReader`] for a given lifetime `'a`.
     #[must_use]
     #[inline(always)]
-    pub fn get<'a>(
+    pub const fn get<'a>(
         &self,
     ) -> super::FuncCodeReader<E, <CRF as CodesReaderFactory<E>>::CodesReader<'a>> {
         super::FuncCodeReader::new_with_func(self.0)

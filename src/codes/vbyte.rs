@@ -116,7 +116,7 @@ use crate::traits::*;
 /// Returns the length of the variable-length byte code for `n` in bytes.
 #[must_use]
 #[inline(always)]
-pub fn byte_len_vbyte(mut n: u64) -> usize {
+pub const fn byte_len_vbyte(mut n: u64) -> usize {
     let mut len = 1;
     loop {
         n >>= 7;
@@ -131,7 +131,7 @@ pub fn byte_len_vbyte(mut n: u64) -> usize {
 /// Returns the length of the variable-length byte code for `n` in bits.
 #[must_use]
 #[inline(always)]
-pub fn bit_len_vbyte(n: u64) -> usize {
+pub const fn bit_len_vbyte(n: u64) -> usize {
     8 * byte_len_vbyte(n)
 }
 

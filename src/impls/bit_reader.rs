@@ -46,7 +46,7 @@ pub struct BitReader<E: Endianness, WR, RP: ReadParams = DefaultReadParams> {
 impl<E: Endianness, WR, RP: ReadParams> BitReader<E, WR, RP> {
     /// Creates a new [`BitReader`] with the given word reader.
     #[must_use]
-    pub fn new(backend: WR) -> Self {
+    pub const fn new(backend: WR) -> Self {
         Self {
             backend,
             bit_index: 0,

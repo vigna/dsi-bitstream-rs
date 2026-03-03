@@ -137,7 +137,7 @@ where
     /// let mut buf_bit_reader = <BufBitReader<BE, _>>::new(word_reader);
     /// ```
     #[must_use]
-    pub fn new(backend: WR) -> Self {
+    pub const fn new(backend: WR) -> Self {
         Self {
             backend,
             buffer: BB::<WR>::ZERO,
