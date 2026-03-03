@@ -69,8 +69,10 @@ macro_rules! bench_code_tables {
         let ratio = $ratio;
         let data = $data;
 
-        // Print hit ratio to stderr for the Python scripts to capture
-        eprintln!("RATIO:{}::BE::{},{:.6}", $code_name, table_str, ratio);
+        // Print hit ratio to stderr for the Python scripts to capture.
+        // The leading \n ensures the line starts fresh even if Criterion's
+        // last stderr output did not end with a newline.
+        eprint!("\nRATIO:{}::BE::{},{:.6}\n", $code_name, table_str, ratio);
         eprintln!("RATIO:{}::LE::{},{:.6}", $code_name, table_str, ratio);
 
         #[cfg(not(feature = "bench-reads"))]
