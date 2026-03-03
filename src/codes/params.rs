@@ -96,10 +96,11 @@ macro_rules! impl_default_read_codes {
         {
             #[inline(always)]
             fn read_delta(&mut self) -> Result<u64, Self::Error> {
-				#[cfg(target_arch = "aarch64")]
-                self.read_delta_param::<false, false>()
-				#[cfg(not(target_arch = "aarch64"))]
-                self.read_delta_param::<false, true>()
+				if cfg!(target_arch = "aarch64") {
+	                self.read_delta_param::<false, false>()
+				} else {
+	                self.read_delta_param::<false, true>()
+				}
             }
         }
 
