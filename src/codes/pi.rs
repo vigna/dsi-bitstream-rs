@@ -5,7 +5,7 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
-//! Streamlined Apostolico−Drovandi π codes.
+//! Streamlined Apostolico–Drovandi π codes.
 //!
 //! The streamlined π code with parameter *k* ≥ 0 of a natural number *n* is the
 //! concatenation of the [Rice code](super::rice) with parameter 2*ᵏ* of

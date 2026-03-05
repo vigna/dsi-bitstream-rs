@@ -1673,7 +1673,7 @@ def generate_default_tables():
         merged_table=False,
     )
     gen_pi(
-        read_bits=10,  # Useful only for the unbufferd case
+        read_bits=10,  # Useful only for the unbuffered case
         write_max_val=1023,  # Useless on all architectures
         k=2,
         merged_table=False,

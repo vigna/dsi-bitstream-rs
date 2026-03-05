@@ -87,8 +87,8 @@ pub struct CodesStats<
     /// Rice code. `rice[0]` represents the Rice code with log₂(*b*) = 0,
     /// `rice[1]` with log₂(*b*) = 1, and so on.
     pub rice: [u64; RICE],
-    /// The total space used to store the elements if they were stored using the
-    /// Pi code. `pi[0]` represents π₂, `pi[1]` represents π₃, and so on.
+    /// The total space used to store the elements if they were stored using a
+    /// pi code. `pi[0]` represents π₂, `pi[1]` represents π₃, and so on.
     pub pi: [u64; PI],
 }
 

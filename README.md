@@ -15,10 +15,10 @@ codes for compression.
 This library mimics the behavior of the analogous classes in the [DSI
 Utilities], but it aims at being much more flexible and (hopefully) efficient.
 
-The two main traits are [`BitRead`] and [`BitWrite`], with which are associated
-two main implementations [`BufBitReader`] and [`BufBitWriter`]. Additional
-traits make it possible to read and write instantaneous codes, like the
-[exponential Golomb codes] used in [H.264 (MPEG-4)] and [H.265].
+The two main traits are [`BitRead`] and [`BitWrite`], associated with two main
+implementations [`BufBitReader`] and [`BufBitWriter`]. Additional traits make it
+possible to read and write instantaneous codes, like the [exponential Golomb
+codes] used in [H.264 (MPEG-4)] and [H.265].
 
 ```rust
 use dsi_bitstream::prelude::*;

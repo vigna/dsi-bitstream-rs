@@ -6,7 +6,7 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
-//! Boldi−Vigna ζ codes.
+//! Boldi–Vigna ζ codes.
 //!
 //! The ζ code with parameter *k* ≥ 1 of a natural number *n* is the
 //! concatenation of the unary code of *h* = ⌊⌊log₂(*n* + 1)⌋ / *k*⌋ and of
@@ -28,9 +28,9 @@
 //!
 //! # References
 //!
-//! Paolo Boldi and Sebastiano Vigna. “[Codes for the World−Wide
+//! Paolo Boldi and Sebastiano Vigna. “[Codes for the World–Wide
 //! Web](https://doi.org/10.1080/15427951.2005.10129113)”. Internet Math.,
-//! 2(4):405−427, 2005.
+//! 2(4):405–427, 2005.
 
 use super::{MinimalBinaryRead, MinimalBinaryWrite, len_minimal_binary, zeta_tables};
 use crate::traits::*;

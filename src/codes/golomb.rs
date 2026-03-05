@@ -30,12 +30,12 @@
 //!
 //! Solomon W. Golomb, “[Run-length encodings
 //! (Corresp.)](https://doi.org/10.1109/TIT.1966.1053907)”. IEEE Transactions on
-//! Information Theory, 12(3):399−401, July 1966.
+//! Information Theory, 12(3):399–401, July 1966.
 //!
 //! Robert G. Gallager and David C. Van Voorhis, “[Optimal source codes for
 //! geometrically distributed integer alphabets
 //! (Corresp.)](https://doi.org/10.1109/TIT.1975.1055357)”. IEEE Transactions on
-//! Information Theory, 21(2):228−230, March 1975.
+//! Information Theory, 21(2):228–230, March 1975.
 
 use super::minimal_binary::{MinimalBinaryRead, MinimalBinaryWrite, len_minimal_binary};
 use crate::traits::*;
