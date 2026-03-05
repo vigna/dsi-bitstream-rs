@@ -123,7 +123,7 @@ impl<W: Word, B: AsRef<[W]>> MemWordWriterSlice<W, B> {
 /// # Ok(())
 /// # }
 /// ```
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Default, PartialEq)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
 #[cfg(feature = "alloc")]
 pub struct MemWordWriterVec<W: Word, B> {
