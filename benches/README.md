@@ -7,7 +7,7 @@ implementations of variable-length byte codes.
 
 ## Table Benchmarks
 
-Tests each code with different table sizes. Each code with tables (ɣ, δ, ζ₃, π₂,
+Tests each code with different table sizes. Each code with tables (γ, δ, ζ₃, π₂,
 ω) is tested in all combinations of:
 
 - Big endian / little endian
@@ -20,7 +20,7 @@ code's implied distribution is used; with it, a universal Zipf distribution
 
 Word size is controlled by features: `bench-u16`, `bench-u32`, or `bench-u64`.
 The feature `bench-reads` tests reads; without it, writes are tested. The
-feature `bench-delta-gamma` tests δ codes with 9-bit tables for ɣ codes.
+feature `bench-delta-gamma` tests δ codes with 9-bit tables for γ codes.
 
 ### Running Table-Sweep Benchmarks
 

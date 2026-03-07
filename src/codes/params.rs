@@ -8,7 +8,7 @@
 
 //! Mechanisms for selecting parameters.
 //!
-//! Traits and structures in this file are of no interest for the standard
+//! Traits and structures in this module are not normally needed by the typical
 //! user. Their purpose is to provide a systematic way, and in particular
 //! a default way, to select parameters for parameterized traits
 //! such as [`GammaReadParam`] and [`GammaWriteParam`].
@@ -85,7 +85,7 @@ macro_rules! impl_default_read_codes {
         {
             #[inline(always)]
             fn read_gamma(&mut self) -> Result<u64, Self::Error> {
-                // From our tests on all architectures ɣ codes are faster
+                // From our tests on all architectures γ codes are faster
                 // without tables
                 self.read_gamma_param::<false>()
             }
@@ -96,11 +96,11 @@ macro_rules! impl_default_read_codes {
         {
             #[inline(always)]
             fn read_delta(&mut self) -> Result<u64, Self::Error> {
-				if cfg!(target_arch = "aarch64") {
-	                self.read_delta_param::<false, false>()
-				} else {
-	                self.read_delta_param::<false, true>()
-				}
+                if cfg!(target_arch = "aarch64") {
+                    self.read_delta_param::<false, false>()
+                } else {
+                    self.read_delta_param::<false, true>()
+                }
             }
         }
 

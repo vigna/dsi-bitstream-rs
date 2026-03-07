@@ -64,7 +64,7 @@ read_func_merged_table = """
 #[inline(always)]
 pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> Option<(u64, usize)> {
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
-        let idx: usize = idx.as_() as usize;
+        let idx: usize = idx.as_to();
         let (value, len) = READ_%(BO)s[idx];
         if len != MISSING_VALUE_LEN_%(BO)s {
             backend.skip_bits_after_peek(len as usize);
@@ -83,7 +83,7 @@ read_func_two_table = """
 #[inline(always)]
 pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> Option<(u64, usize)> {
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
-        let idx: usize = idx.as_() as usize;
+        let idx: usize = idx.as_to();
         let len = READ_LEN_%(BO)s[idx];
         if len != MISSING_VALUE_LEN_%(BO)s {
             backend.skip_bits_after_peek(len as usize);
@@ -154,7 +154,7 @@ def gen_table(
             )
         )
         f.write("use crate::traits::{BE, BitRead, BitWrite, LE};\n")
-        f.write("use num_traits::AsPrimitive;\n")
+        f.write("use num_primitive::PrimitiveNumber;\n")
 
         f.write("/// How many bits are needed to read the tables\n")
         f.write("pub const READ_BITS: usize = {};\n".format(read_bits))
@@ -588,7 +588,7 @@ def gen_delta(read_bits, write_max_val, len_max_val=None, merged_table=False):
             )
         )
         f.write("use crate::traits::{BitRead, BitWrite, BE, LE};\n")
-        f.write("use num_traits::AsPrimitive;\n")
+        f.write("use num_primitive::PrimitiveNumber;\n")
 
         f.write("/// How many bits are needed to read the tables\n")
         f.write("pub const READ_BITS: usize = {};\n".format(read_bits))
@@ -612,7 +612,7 @@ def gen_delta(read_bits, write_max_val, len_max_val=None, merged_table=False):
 #[inline(always)]
 pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> (i8, u64) {
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
-        let idx: usize = idx.as_() as usize;
+        let idx: usize = idx.as_to();
         let len_with_flag = READ_LEN_%(BO)s[idx];
         let value_or_gamma = READ_%(BO)s[idx] as u64;
         backend.skip_bits_after_peek((len_with_flag & 0x7F) as usize);
@@ -1093,7 +1093,7 @@ def gen_omega(read_bits, write_max_val, len_max_val=None, merged_table=False):
             )
         )
         f.write("use crate::traits::{BitRead, BitWrite, BE, LE};\n")
-        f.write("use num_traits::AsPrimitive;\n")
+        f.write("use num_primitive::PrimitiveNumber;\n")
 
         f.write("/// How many bits are needed to read the tables\n")
         f.write("pub const READ_BITS: usize = {};\n".format(read_bits))
@@ -1125,7 +1125,7 @@ def gen_omega(read_bits, write_max_val, len_max_val=None, merged_table=False):
 #[inline(always)]
 pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> (i8, u64) {
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
-        let idx: usize = idx.as_() as usize;
+        let idx: usize = idx.as_to();
         let len_with_flag = READ_LEN_%(BO)s[idx];
         let value = READ_%(BO)s[idx] as u64;
         backend.skip_bits_after_peek((len_with_flag & 0x7F) as usize);
@@ -1467,7 +1467,7 @@ def gen_pi(read_bits, write_max_val, len_max_val=None, k=2, merged_table=False):
             )
         )
         f.write("use crate::traits::{BitRead, BitWrite, BE, LE};\n")
-        f.write("use num_traits::AsPrimitive;\n")
+        f.write("use num_primitive::PrimitiveNumber;\n")
 
         f.write("/// How many bits are needed to read the tables\n")
         f.write("pub const READ_BITS: usize = {};\n".format(read_bits))
@@ -1493,7 +1493,7 @@ def gen_pi(read_bits, write_max_val, len_max_val=None, k=2, merged_table=False):
 #[inline(always)]
 pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> (i8, u64) {
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
-        let idx: usize = idx.as_() as usize;
+        let idx: usize = idx.as_to();
         let len_with_flag = READ_LEN_%(BO)s[idx];
         let value_or_lambda = READ_%(BO)s[idx] as u64;
         backend.skip_bits_after_peek((len_with_flag & 0x7F) as usize);

@@ -73,9 +73,9 @@ where
                         e.kind(),
                         format!(concat!(
                             "Unexpected end of file. ",
-                            "This might happen because the file length is not a multiple of the word size used for reading ({} bytes). ",
+                            "This might happen because the file length is not a multiple of the word size used for reading ({0} bytes). ",
                             "In this case, please pad with zeros at the end of the file so that the file length is a multiple of {0}. ",
-                            "The inner std::io::Error was {:?}"), (W::BITS as usize / 8), e),
+                            "The inner std::io::Error was {1:?}"), (W::BITS as usize / 8), e),
                     )
                 }
                 _ => e,

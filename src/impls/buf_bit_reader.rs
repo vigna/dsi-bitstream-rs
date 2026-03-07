@@ -252,7 +252,7 @@ where
         // count the zeros from the left
         let zeros: usize = self.buffer.leading_zeros() as _;
 
-        // if we encountered an 1 in the bits_in_buffer we can return
+        // if we encountered a 1 in the bits_in_buffer we can return
         if zeros < self.bits_in_buffer {
             self.buffer = self.buffer << zeros << 1;
             self.bits_in_buffer -= zeros + 1;
@@ -493,7 +493,7 @@ where
         // count the zeros from the right
         let zeros: usize = self.buffer.trailing_zeros() as usize;
 
-        // if we encountered an 1 in the bits_in_buffer we can return
+        // if we encountered a 1 in the bits_in_buffer we can return
         if zeros < self.bits_in_buffer {
             self.buffer = self.buffer >> zeros >> 1;
             self.bits_in_buffer -= zeros + 1;
