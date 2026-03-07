@@ -9,12 +9,32 @@
 use core::error::Error;
 
 use num_primitive::PrimitiveUnsigned;
-use num_traits::{AsPrimitive, ConstOne, ConstZero};
 
 /// This is a convenience trait bundling the bounds required for words read and
 /// written by either a [`WordRead`] or [`WordWrite`], respectively.
-pub trait Word: PrimitiveUnsigned + ConstZero + ConstOne {}
-impl<W: PrimitiveUnsigned + ConstZero + ConstOne> Word for W {}
+///
+/// We provide `ZERO` and `ONE` associated constants to avoid depending on
+/// [`num-traits`](https://crates.io/crates/num-traits)'s
+/// [`ConstZero`](https://docs.rs/num-traits/latest/num_traits/identities/trait.ConstZero.html)
+/// and
+/// [`ConstOne`](https://docs.rs/num-traits/latest/num_traits/identities/trait.ConstOne.html).
+pub trait Word: PrimitiveUnsigned {
+    const ZERO: Self;
+    const ONE: Self;
+}
+
+macro_rules! impl_word {
+    ($($t:ty),*) => {
+        $(
+            impl Word for $t {
+                const ZERO: Self = 0;
+                const ONE: Self = 1;
+            }
+        )*
+    };
+}
+
+impl_word!(u8, u16, u32, u64, u128, usize);
 
 /// Trait providing the double-width type for a given unsigned integer type.
 ///
@@ -26,7 +46,7 @@ impl<W: PrimitiveUnsigned + ConstZero + ConstOne> Word for W {}
 /// used to convert a word into its double-width type or to a `u64`,
 /// respectively, without loss of precision.
 pub trait DoubleType {
-    type DoubleType: Word + AsPrimitive<u64>;
+    type DoubleType: Word;
 
     /// Converts a word into its double-width type without loss of precision.
     fn as_double(&self) -> Self::DoubleType;

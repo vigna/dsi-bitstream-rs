@@ -58,7 +58,7 @@ use crate::impls::*;
 use crate::traits::*;
 #[cfg(feature = "mem_dbg")]
 use mem_dbg::{MemDbg, MemSize};
-use num_traits::AsPrimitive;
+use num_primitive::PrimitiveNumberAs;
 
 /// Marker trait for read-parameters selector types.
 ///
@@ -223,7 +223,7 @@ macro_rules! impl_default_write_codes {
     ($($endianness:ident),*) => {$(
         impl<WR: WordWrite, WP: WriteParams> GammaWrite<$endianness>
             for BufBitWriter<$endianness, WR, WP>
-            where u64: AsPrimitive<WR::Word>,
+            where u64: PrimitiveNumberAs<WR::Word>,
         {
             #[inline(always)]
             fn write_gamma(&mut self, n: u64) -> Result<usize, Self::Error> {
@@ -233,7 +233,7 @@ macro_rules! impl_default_write_codes {
 
         impl<WR: WordWrite, WP: WriteParams> DeltaWrite<$endianness>
             for BufBitWriter<$endianness, WR, WP>
-            where u64: AsPrimitive<WR::Word>,
+            where u64: PrimitiveNumberAs<WR::Word>,
         {
             #[inline(always)]
             fn write_delta(&mut self, n: u64) -> Result<usize, Self::Error> {
@@ -243,7 +243,7 @@ macro_rules! impl_default_write_codes {
 
         impl<WR: WordWrite, WP: WriteParams> OmegaWrite<$endianness>
             for BufBitWriter<$endianness, WR, WP>
-            where u64: AsPrimitive<WR::Word>,
+            where u64: PrimitiveNumberAs<WR::Word>,
         {
             #[inline(always)]
             fn write_omega(&mut self, n: u64) -> Result<usize, Self::Error> {
@@ -253,7 +253,7 @@ macro_rules! impl_default_write_codes {
 
         impl<WR: WordWrite, WP: WriteParams> ZetaWrite<$endianness>
             for BufBitWriter<$endianness, WR, WP>
-            where u64: AsPrimitive<WR::Word>,
+            where u64: PrimitiveNumberAs<WR::Word>,
         {
             #[inline(always)]
             fn write_zeta(&mut self, n: u64, k: usize) -> Result<usize, Self::Error> {
@@ -268,7 +268,7 @@ macro_rules! impl_default_write_codes {
 
         impl<WR: WordWrite, WP: WriteParams> PiWrite<$endianness>
             for BufBitWriter<$endianness, WR, WP>
-            where u64: AsPrimitive<WR::Word>,
+            where u64: PrimitiveNumberAs<WR::Word>,
         {
             #[inline(always)]
             fn write_pi(&mut self, n: u64, k: usize) -> Result<usize, Self::Error> {

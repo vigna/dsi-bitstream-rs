@@ -13,8 +13,7 @@ use crate::codes::params::{DefaultWriteParams, WriteParams};
 use crate::traits::*;
 #[cfg(feature = "mem_dbg")]
 use mem_dbg::{MemDbg, MemSize};
-use num_primitive::PrimitiveInteger;
-use num_traits::{AsPrimitive, ConstOne, ConstZero};
+use num_primitive::{PrimitiveInteger, PrimitiveNumber, PrimitiveNumberAs};
 
 /// An implementation of [`BitWrite`] for a [`WordWrite`].
 ///
@@ -185,7 +184,7 @@ fn flush_be<E: Endianness, WW: WordWrite, WP: WriteParams>(
 
 impl<WW: WordWrite, WP: WriteParams> BitWrite<BE> for BufBitWriter<BE, WW, WP>
 where
-    u64: AsPrimitive<WW::Word>,
+    u64: PrimitiveNumberAs<WW::Word>,
 {
     type Error = <WW as WordWrite>::Error;
 
@@ -216,7 +215,7 @@ where
         if num_bits < self.space_left_in_buffer {
             self.buffer <<= num_bits;
             // Clean up bits higher than num_bits
-            self.buffer |= value.as_() & !(WW::Word::MAX << num_bits as u32);
+            self.buffer |= value.as_to() & !(WW::Word::MAX << num_bits as u32);
             self.space_left_in_buffer -= num_bits;
             return Ok(num_bits);
         }
@@ -224,18 +223,19 @@ where
         // Load the bottom of the buffer, if necessary, and dump the whole buffer
         self.buffer = self.buffer << (self.space_left_in_buffer - 1) << 1;
         // The first shift discards bits higher than num_bits
-        self.buffer |= (value << (64 - num_bits) >> (64 - self.space_left_in_buffer)).as_();
+        self.buffer |= (value << (64 - num_bits) >> (64 - self.space_left_in_buffer)).as_to();
         self.backend.write_word(self.buffer.to_be())?;
 
         let mut to_write = num_bits - self.space_left_in_buffer;
 
         for _ in 0..to_write / (Self::WORD_BITS) {
             to_write -= Self::WORD_BITS;
-            self.backend.write_word((value >> to_write).as_().to_be())?;
+            self.backend
+                .write_word((value >> to_write).as_to().to_be())?;
         }
 
         self.space_left_in_buffer = Self::WORD_BITS - to_write;
-        self.buffer = value.as_();
+        self.buffer = value.as_to();
         Ok(num_bits)
     }
 
@@ -292,7 +292,7 @@ where
                 | bit_read
                     .read_bits(n as usize)
                     .map_err(CopyError::ReadError)?
-                    .as_();
+                    .as_to();
             self.space_left_in_buffer -= n as usize;
             return Ok(());
         }
@@ -301,7 +301,7 @@ where
             | bit_read
                 .read_bits(self.space_left_in_buffer)
                 .map_err(CopyError::ReadError)?
-                .as_();
+                .as_to();
         n -= self.space_left_in_buffer as u64;
 
         self.backend
@@ -314,7 +314,7 @@ where
                     bit_read
                         .read_bits(Self::WORD_BITS)
                         .map_err(CopyError::ReadError)?
-                        .as_()
+                        .as_to()
                         .to_be(),
                 )
                 .map_err(CopyError::WriteError)?;
@@ -324,7 +324,7 @@ where
         self.buffer = bit_read
             .read_bits(n as usize)
             .map_err(CopyError::ReadError)?
-            .as_();
+            .as_to();
         self.space_left_in_buffer = Self::WORD_BITS - n as usize;
 
         Ok(())
@@ -353,7 +353,7 @@ fn flush_le<E: Endianness, WW: WordWrite, WP: WriteParams>(
 
 impl<WW: WordWrite, WP: WriteParams> BitWrite<LE> for BufBitWriter<LE, WW, WP>
 where
-    u64: AsPrimitive<WW::Word>,
+    u64: PrimitiveNumberAs<WW::Word>,
 {
     type Error = <WW as WordWrite>::Error;
 
@@ -384,27 +384,27 @@ where
             self.buffer >>= num_bits;
             // Clean up bits higher than num_bits
             self.buffer |=
-                (value.as_() & !(WW::Word::MAX << num_bits as u32)).rotate_right(num_bits as u32);
+                (value.as_to() & !(WW::Word::MAX << num_bits as u32)).rotate_right(num_bits as u32);
             self.space_left_in_buffer -= num_bits;
             return Ok(num_bits);
         }
 
         // Load the top of the buffer, if necessary, and dump the whole buffer
         self.buffer = self.buffer >> (self.space_left_in_buffer - 1) >> 1;
-        self.buffer |= value.as_() << (Self::WORD_BITS - self.space_left_in_buffer);
+        self.buffer |= value.as_to() << (Self::WORD_BITS - self.space_left_in_buffer);
         self.backend.write_word(self.buffer.to_le())?;
 
         let to_write = num_bits - self.space_left_in_buffer;
         value = value >> (self.space_left_in_buffer - 1) >> 1;
 
         for _ in 0..to_write / (Self::WORD_BITS) {
-            self.backend.write_word(value.as_().to_le())?;
+            self.backend.write_word(value.as_to().to_le())?;
             // This cannot be executed with WW::Word::BITS >= 64
             value >>= WW::Word::BITS;
         }
 
         self.space_left_in_buffer = Self::WORD_BITS - to_write % (Self::WORD_BITS);
-        self.buffer = value.as_().rotate_right(to_write as u32);
+        self.buffer = value.as_to().rotate_right(to_write as u32);
         Ok(num_bits)
     }
 
@@ -462,7 +462,7 @@ where
                 | (bit_read
                     .read_bits(n as usize)
                     .map_err(CopyError::ReadError)?)
-                .as_()
+                .as_to()
                 .rotate_right(n as u32);
             self.space_left_in_buffer -= n as usize;
             return Ok(());
@@ -472,7 +472,7 @@ where
             | (bit_read
                 .read_bits(self.space_left_in_buffer)
                 .map_err(CopyError::ReadError)?
-                .as_())
+                .as_to())
             .rotate_right(self.space_left_in_buffer as u32);
         n -= self.space_left_in_buffer as u64;
 
@@ -486,7 +486,7 @@ where
                     bit_read
                         .read_bits(Self::WORD_BITS)
                         .map_err(CopyError::ReadError)?
-                        .as_()
+                        .as_to()
                         .to_le(),
                 )
                 .map_err(CopyError::WriteError)?;
@@ -496,7 +496,7 @@ where
         self.buffer = bit_read
             .read_bits(n as usize)
             .map_err(CopyError::ReadError)?
-            .as_()
+            .as_to()
             .rotate_right(n as u32);
         self.space_left_in_buffer = Self::WORD_BITS - n as usize;
 
@@ -507,7 +507,7 @@ where
 #[cfg(feature = "std")]
 impl<WW: WordWrite, WP: WriteParams> std::io::Write for BufBitWriter<BE, WW, WP>
 where
-    u64: AsPrimitive<WW::Word>,
+    u64: PrimitiveNumberAs<WW::Word>,
 {
     #[inline(always)]
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
@@ -542,7 +542,7 @@ where
 #[cfg(feature = "std")]
 impl<WW: WordWrite, WP: WriteParams> std::io::Write for BufBitWriter<LE, WW, WP>
 where
-    u64: AsPrimitive<WW::Word>,
+    u64: PrimitiveNumberAs<WW::Word>,
 {
     #[inline(always)]
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {

@@ -1,5 +1,15 @@
 # Change Log
 
+## [0.9.0] - 2026-03-07
+
+### Changed
+
+- Replaced `AsPrimitive` from `num-traits` with `PrimitiveNumberAs` from
+  `num-primitive` for more precise semantics.
+
+- Removed dependency on `num-traits`, as we were using only the constants
+  `ZERO` and `ONE`.
+
 ## [0.8.0] - 2026-03-05
 
 ### New

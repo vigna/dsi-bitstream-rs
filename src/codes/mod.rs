@@ -85,8 +85,7 @@
 //! source. To pass a choice of code dynamically, please have a look at the
 //! [`dispatch`](crate::dispatch) module.
 
-use num_primitive::{PrimitiveSigned, PrimitiveUnsigned};
-use num_traits::{AsPrimitive, ConstOne};
+use num_primitive::{PrimitiveNumberAs, PrimitiveSigned, PrimitiveUnsigned};
 
 pub mod params;
 
@@ -157,14 +156,14 @@ pub trait ToInt {
     fn to_int(self) -> Self::Signed;
 }
 
-impl<U: PrimitiveUnsigned + ConstOne + AsPrimitive<U::Signed>> ToInt for U
+impl<U: PrimitiveUnsigned + PrimitiveNumberAs<U::Signed>> ToInt for U
 where
-    U::Signed: PrimitiveSigned + Copy + 'static,
+    U::Signed: PrimitiveSigned,
 {
     type Signed = U::Signed;
     #[inline]
     fn to_int(self) -> U::Signed {
-        (self >> 1u32).as_() ^ -((self & U::ONE).as_())
+        (self >> 1u32).as_to::<U::Signed>() ^ -((self & U::from(1u8)).as_to::<U::Signed>())
     }
 }
 
@@ -193,13 +192,13 @@ pub trait ToNat {
     fn to_nat(self) -> Self::Unsigned;
 }
 
-impl<S: PrimitiveSigned + AsPrimitive<S::Unsigned>> ToNat for S
+impl<S: PrimitiveSigned + PrimitiveNumberAs<S::Unsigned>> ToNat for S
 where
-    S::Unsigned: PrimitiveUnsigned + Copy + 'static,
+    S::Unsigned: PrimitiveUnsigned,
 {
     type Unsigned = S::Unsigned;
     #[inline]
     fn to_nat(self) -> S::Unsigned {
-        (self << 1u32).as_() ^ (self >> (S::BITS - 1)).as_()
+        (self << 1u32).as_to::<S::Unsigned>() ^ (self >> (S::BITS - 1)).as_to::<S::Unsigned>()
     }
 }

@@ -3,7 +3,7 @@
 // ~~~~~~~~~~~~~~~~~~~ DO NOT MODIFY ~~~~~~~~~~~~~~~~~~~~~~
 // Methods for reading and writing values using precomputed tables for gamma codes
 use crate::traits::{BE, BitRead, BitWrite, LE};
-use num_traits::AsPrimitive;
+use num_primitive::PrimitiveNumber;
 /// How many bits are needed to read the tables
 pub const READ_BITS: usize = 9;
 /// Maximum value writable using the table(s)
@@ -16,7 +16,7 @@ pub const WRITE_MAX: u64 = 63;
 #[inline(always)]
 pub fn read_table_le<B: BitRead<LE>>(backend: &mut B) -> Option<(u64, usize)> {
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
-        let idx: usize = idx.as_() as usize;
+        let idx: usize = idx.as_to();
         let len = READ_LEN_LE[idx];
         if len != MISSING_VALUE_LEN_LE {
             backend.skip_bits_after_peek(len as usize);
@@ -48,7 +48,7 @@ pub fn write_table_le<B: BitWrite<LE>>(backend: &mut B, n: u64) -> Result<Option
 #[inline(always)]
 pub fn read_table_be<B: BitRead<BE>>(backend: &mut B) -> Option<(u64, usize)> {
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
-        let idx: usize = idx.as_() as usize;
+        let idx: usize = idx.as_to();
         let len = READ_LEN_BE[idx];
         if len != MISSING_VALUE_LEN_BE {
             backend.skip_bits_after_peek(len as usize);

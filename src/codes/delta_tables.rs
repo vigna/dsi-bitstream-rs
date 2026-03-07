@@ -3,7 +3,7 @@
 // ~~~~~~~~~~~~~~~~~~~ DO NOT MODIFY ~~~~~~~~~~~~~~~~~~~~~~
 // Methods for reading and writing values using precomputed tables for delta codes
 use crate::traits::{BE, BitRead, BitWrite, LE};
-use num_traits::AsPrimitive;
+use num_primitive::PrimitiveNumber;
 /// How many bits are needed to read the tables
 pub const READ_BITS: usize = 10;
 /// Maximum value writable using the table(s)
@@ -21,7 +21,7 @@ pub const WRITE_MAX: u64 = 255;
 #[inline(always)]
 pub fn read_table_le<B: BitRead<LE>>(backend: &mut B) -> (i8, u64) {
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
-        let idx: usize = idx.as_() as usize;
+        let idx: usize = idx.as_to();
         let len_with_flag = READ_LEN_LE[idx];
         let value_or_gamma = READ_LE[idx] as u64;
         backend.skip_bits_after_peek((len_with_flag & 0x7F) as usize);
@@ -44,7 +44,7 @@ pub fn read_table_le<B: BitRead<LE>>(backend: &mut B) -> (i8, u64) {
 #[inline(always)]
 pub fn read_table_be<B: BitRead<BE>>(backend: &mut B) -> (i8, u64) {
     if let Ok(idx) = backend.peek_bits(READ_BITS) {
-        let idx: usize = idx.as_() as usize;
+        let idx: usize = idx.as_to();
         let len_with_flag = READ_LEN_BE[idx];
         let value_or_gamma = READ_BE[idx] as u64;
         backend.skip_bits_after_peek((len_with_flag & 0x7F) as usize);

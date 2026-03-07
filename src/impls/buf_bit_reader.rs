@@ -6,8 +6,7 @@
  * SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
  */
 
-use num_primitive::PrimitiveInteger;
-use num_traits::{AsPrimitive, ConstOne, ConstZero};
+use num_primitive::{PrimitiveInteger, PrimitiveNumber};
 
 use crate::codes::params::{DefaultReadParams, ReadParams};
 use crate::traits::*;
@@ -213,14 +212,14 @@ where
         // most common path, we just read the buffer
         if num_bits <= self.bits_in_buffer {
             // Valid right shift of BB::<WR>::BITS - num_bits, even when num_bits is zero
-            let result: u64 = (self.buffer >> (Self::BUFFER_BITS - num_bits - 1) >> 1_u32).as_();
+            let result: u64 = (self.buffer >> (Self::BUFFER_BITS - num_bits - 1) >> 1_u32).as_to();
             self.bits_in_buffer -= num_bits;
             self.buffer <<= num_bits;
             return Ok(result);
         }
 
         let mut result: u64 =
-            (self.buffer >> (Self::BUFFER_BITS - 1 - self.bits_in_buffer) >> 1_u8).as_();
+            (self.buffer >> (Self::BUFFER_BITS - 1 - self.bits_in_buffer) >> 1_u8).as_to();
         num_bits -= self.bits_in_buffer;
 
         // Directly read to the result without updating the buffer
@@ -312,7 +311,7 @@ where
         self.buffer = self.buffer.rotate_left(from_buffer as _);
 
         #[allow(unused_mut)]
-        let mut self_buffer_u64: u64 = self.buffer.as_();
+        let mut self_buffer_u64: u64 = self.buffer.as_to();
 
         #[cfg(feature = "checks")]
         {
@@ -452,13 +451,13 @@ where
 
         // most common path, we just read the buffer
         if num_bits <= self.bits_in_buffer {
-            let result: u64 = (self.buffer & ((BB::<WR>::ONE << num_bits) - BB::<WR>::ONE)).as_();
+            let result: u64 = (self.buffer & ((BB::<WR>::ONE << num_bits) - BB::<WR>::ONE)).as_to();
             self.bits_in_buffer -= num_bits;
             self.buffer >>= num_bits;
             return Ok(result);
         }
 
-        let mut result: u64 = self.buffer.as_();
+        let mut result: u64 = self.buffer.as_to();
         let mut bits_in_res = self.bits_in_buffer;
 
         // Directly read to the result without updating the buffer
@@ -551,7 +550,7 @@ where
         let from_buffer = Ord::min(n, self.bits_in_buffer as _);
 
         #[allow(unused_mut)]
-        let mut self_buffer_u64: u64 = self.buffer.as_();
+        let mut self_buffer_u64: u64 = self.buffer.as_to();
 
         #[cfg(feature = "checks")]
         {
