@@ -32,13 +32,14 @@ pub fn read_table_le<B: BitRead<LE>>(backend: &mut B) -> Option<(u64, usize)> {
 /// length of the code is returned.
 #[inline(always)]
 pub fn write_table_le<B: BitWrite<LE>>(backend: &mut B, n: u64) -> Result<Option<usize>, B::Error> {
-    Ok(if let Some(bits) = WRITE_LE.get(n as usize) {
-        let len = WRITE_LEN_LE[n as usize] as usize;
-        backend.write_bits(*bits as u64, len)?;
-        Some(len)
-    } else {
-        None
-    })
+    // We cannot use .get() here because n is a u64
+    if n >= WRITE_LE.len() as u64 {
+        return Ok(None);
+    }
+    let n = n as usize;
+    let len = WRITE_LEN_LE[n] as usize;
+    backend.write_bits(WRITE_LE[n] as u64, len)?;
+    Ok(Some(len))
 }
 
 /// Reads a value using a decoding table.
@@ -64,13 +65,14 @@ pub fn read_table_be<B: BitRead<BE>>(backend: &mut B) -> Option<(u64, usize)> {
 /// length of the code is returned.
 #[inline(always)]
 pub fn write_table_be<B: BitWrite<BE>>(backend: &mut B, n: u64) -> Result<Option<usize>, B::Error> {
-    Ok(if let Some(bits) = WRITE_BE.get(n as usize) {
-        let len = WRITE_LEN_BE[n as usize] as usize;
-        backend.write_bits(*bits as u64, len)?;
-        Some(len)
-    } else {
-        None
-    })
+    // We cannot use .get() here because n is a u64
+    if n >= WRITE_BE.len() as u64 {
+        return Ok(None);
+    }
+    let n = n as usize;
+    let len = WRITE_LEN_BE[n] as usize;
+    backend.write_bits(WRITE_BE[n] as u64, len)?;
+    Ok(Some(len))
 }
 /// The len we assign to a code that cannot be decoded through the table
 pub const MISSING_VALUE_LEN_BE: u8 = 13;

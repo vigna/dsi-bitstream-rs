@@ -1,5 +1,12 @@
 # Change Log
 
+## Unreleased
+
+### Fixed
+
+- Table indexing would fail at write time on 32-bit platform because of an early
+  `as usize` cast.
+
 ## [0.9.0] - 2026-03-07
 
 ### Changed

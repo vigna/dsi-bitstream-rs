@@ -59,8 +59,9 @@ pub fn len_pi_param<const USE_TABLE: bool>(mut n: u64, k: usize) -> usize {
     debug_assert!(k < 64);
     if USE_TABLE {
         if k == pi_tables::K {
-            if let Some(idx) = pi_tables::LEN.get(n as usize) {
-                return *idx as usize;
+            // We cannot use .get() here because n is a u64
+            if n < pi_tables::LEN.len() as u64 {
+                return pi_tables::LEN[n as usize] as usize;
             }
         }
     }

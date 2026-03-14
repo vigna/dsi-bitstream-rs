@@ -102,12 +102,14 @@ write_func_merged_table = """
 #[inline(always)]
 #[allow(clippy::unnecessary_cast)]  // rationale: "*bits as u64" is flaky redundant
 pub fn write_table_%(bo)s<B: BitWrite<%(BO)s>>(backend: &mut B, n: u64) -> Result<Option<usize>, B::Error> {
-    Ok(if let Some((bits, len)) = WRITE_%(BO)s.get(n as usize) {
-        backend.write_bits(*bits as u64, *len as usize)?;
-        Some(*len as usize)
-    } else {
-        None
-    })
+    // We cannot use .get() here because n is a u64
+    if n >= WRITE_%(BO)s.len() as u64 {
+        return Ok(None);
+    }
+    let n = n as usize;
+    let (bits, len) = WRITE_%(BO)s[n];
+    backend.write_bits(bits as u64, len as usize)?;
+    Ok(Some(len as usize))
 }
 """
 
@@ -118,13 +120,14 @@ write_func_two_table = """
 /// length of the code is returned.
 #[inline(always)]
 pub fn write_table_%(bo)s<B: BitWrite<%(BO)s>>(backend: &mut B, n: u64) -> Result<Option<usize>, B::Error> {
-    Ok(if let Some(bits) = WRITE_%(BO)s.get(n as usize) {
-        let len = WRITE_LEN_%(BO)s[n as usize] as usize;
-        backend.write_bits(*bits as u64, len)?;
-        Some(len)
-    } else {
-        None
-    })
+    // We cannot use .get() here because n is a u64
+    if n >= WRITE_%(BO)s.len() as u64 {
+        return Ok(None);
+    }
+    let n = n as usize;
+    let len = WRITE_LEN_%(BO)s[n] as usize;
+    backend.write_bits(WRITE_%(BO)s[n] as u64, len)?;
+    Ok(Some(len))
 }
 """
 
@@ -634,13 +637,14 @@ pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> (i8, u64) {
 /// length of the code is returned.
 #[inline(always)]
 pub fn write_table_le<B: BitWrite<LE>>(backend: &mut B, n: u64) -> Result<Option<usize>, B::Error> {
-    Ok(if let Some(bits) = WRITE_LE.get(n as usize) {
-        let len = WRITE_LEN_LE[n as usize] as usize;
-        backend.write_bits(*bits as u64, len)?;
-        Some(len)
-    } else {
-        None
-    })
+    // We cannot use .get() here because n is a u64
+    if n >= WRITE_LE.len() as u64 {
+        return Ok(None);
+    }
+    let n = n as usize;
+    let len = WRITE_LEN_LE[n] as usize;
+    backend.write_bits(WRITE_LE[n] as u64, len)?;
+    Ok(Some(len))
 }
 
 /// Writes a value using an encoding table.
@@ -649,13 +653,14 @@ pub fn write_table_le<B: BitWrite<LE>>(backend: &mut B, n: u64) -> Result<Option
 /// length of the code is returned.
 #[inline(always)]
 pub fn write_table_be<B: BitWrite<BE>>(backend: &mut B, n: u64) -> Result<Option<usize>, B::Error> {
-    Ok(if let Some(bits) = WRITE_BE.get(n as usize) {
-        let len = WRITE_LEN_BE[n as usize] as usize;
-        backend.write_bits(*bits as u64, len)?;
-        Some(len)
-    } else {
-        None
-    })
+    // We cannot use .get() here because n is a u64
+    if n >= WRITE_BE.len() as u64 {
+        return Ok(None);
+    }
+    let n = n as usize;
+    let len = WRITE_LEN_BE[n] as usize;
+    backend.write_bits(WRITE_BE[n] as u64, len)?;
+    Ok(Some(len))
 }
 """
         )
@@ -1148,28 +1153,29 @@ pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> (i8, u64) {
 /// length of the code is returned.
 #[inline(always)]
 pub fn write_table_le<B: BitWrite<LE>>(backend: &mut B, mut n: u64) -> Result<Option<usize>, B::Error> {
-    Ok(if let Some(bits) = WRITE_LE.get(n as usize) {
-    let len = WRITE_LEN_LE[n as usize] as usize;
-        backend.write_bits(*bits as u64, len)?;
-        Some(len)
-    } else {
-        n += 1;
-        let λ = n.ilog2() as usize;
-        let bits = WRITE_LE[λ - 1];
-        let len = WRITE_LEN_LE[λ - 1] as usize;
-        backend.write_bits(bits as u64, len - 1)?;
-        #[cfg(feature = "checks")]
-        {
-            // Clean up after the lowest λ bits in case checks are enabled
-            n &= u64::MAX >> (u64::BITS - (λ as u32));
-        }
-        // Little-endian case: rotate left the lower λ + 1 bits (the bit in
-        // position λ is a one) so that the lowest bit can be peeked to find the
-        // block.
-        backend.write_bits(n << 1 | 1, λ + 1)?;
-        backend.write_bits(0, 1)?;
-        Some(λ + len + 1)
-    })
+    // We cannot use .get() here because n is a u64
+    if n < WRITE_LE.len() as u64 {
+        let n = n as usize;
+        let len = WRITE_LEN_LE[n] as usize;
+        backend.write_bits(WRITE_LE[n] as u64, len)?;
+        return Ok(Some(len));
+    }
+    n += 1;
+    let λ = n.ilog2() as usize;
+    let bits = WRITE_LE[λ - 1];
+    let len = WRITE_LEN_LE[λ - 1] as usize;
+    backend.write_bits(bits as u64, len - 1)?;
+    #[cfg(feature = "checks")]
+    {
+        // Clean up after the lowest λ bits in case checks are enabled
+        n &= u64::MAX >> (u64::BITS - (λ as u32));
+    }
+    // Little-endian case: rotate left the lower λ + 1 bits (the bit in
+    // position λ is a one) so that the lowest bit can be peeked to find the
+    // block.
+    backend.write_bits(n << 1 | 1, λ + 1)?;
+    backend.write_bits(0, 1)?;
+    Ok(Some(λ + len + 1))
 }
 
 /// Writes a value using an encoding table.
@@ -1178,20 +1184,21 @@ pub fn write_table_le<B: BitWrite<LE>>(backend: &mut B, mut n: u64) -> Result<Op
 /// length of the code is returned.
 #[inline(always)]
 pub fn write_table_be<B: BitWrite<BE>>(backend: &mut B, mut n: u64) -> Result<Option<usize>, B::Error> {
-    Ok(if let Some(bits) = WRITE_BE.get(n as usize) {
-    let len = WRITE_LEN_BE[n as usize] as usize;
-        backend.write_bits(*bits as u64, len)?;
-        Some(len)
-    } else {
-        n += 1;
-        let λ = n.ilog2() as usize;
-        let bits = WRITE_BE[λ - 1];
-        let len = WRITE_LEN_BE[λ - 1] as usize;
-        backend.write_bits(bits as u64 >> 1, len - 1)?;
-        backend.write_bits(n, λ + 1)?;
-        backend.write_bits(0, 1)?;
-        Some(λ + len + 1)
-    })
+    // We cannot use .get() here because n is a u64
+    if n < WRITE_BE.len() as u64 {
+        let n = n as usize;
+        let len = WRITE_LEN_BE[n] as usize;
+        backend.write_bits(WRITE_BE[n] as u64, len)?;
+        return Ok(Some(len));
+    }
+    n += 1;
+    let λ = n.ilog2() as usize;
+    let bits = WRITE_BE[λ - 1];
+    let len = WRITE_LEN_BE[λ - 1] as usize;
+    backend.write_bits(bits as u64 >> 1, len - 1)?;
+    backend.write_bits(n, λ + 1)?;
+    backend.write_bits(0, 1)?;
+    Ok(Some(λ + len + 1))
 }
 """
         )
@@ -1515,13 +1522,14 @@ pub fn read_table_%(bo)s<B: BitRead<%(BO)s>>(backend: &mut B) -> (i8, u64) {
 /// length of the code is returned.
 #[inline(always)]
 pub fn write_table_le<B: BitWrite<LE>>(backend: &mut B, n: u64) -> Result<Option<usize>, B::Error> {
-    Ok(if let Some(bits) = WRITE_LE.get(n as usize) {
-        let len = WRITE_LEN_LE[n as usize] as usize;
-        backend.write_bits(*bits as u64, len)?;
-        Some(len)
-    } else {
-        None
-    })
+    // We cannot use .get() here because n is a u64
+    if n >= WRITE_LE.len() as u64 {
+        return Ok(None);
+    }
+    let n = n as usize;
+    let len = WRITE_LEN_LE[n] as usize;
+    backend.write_bits(WRITE_LE[n] as u64, len)?;
+    Ok(Some(len))
 }
 
 /// Writes a value using an encoding table.
@@ -1530,13 +1538,14 @@ pub fn write_table_le<B: BitWrite<LE>>(backend: &mut B, n: u64) -> Result<Option
 /// length of the code is returned.
 #[inline(always)]
 pub fn write_table_be<B: BitWrite<BE>>(backend: &mut B, n: u64) -> Result<Option<usize>, B::Error> {
-    Ok(if let Some(bits) = WRITE_BE.get(n as usize) {
-        let len = WRITE_LEN_BE[n as usize] as usize;
-        backend.write_bits(*bits as u64, len)?;
-        Some(len)
-    } else {
-        None
-    })
+    // We cannot use .get() here because n is a u64
+    if n >= WRITE_BE.len() as u64 {
+        return Ok(None);
+    }
+    let n = n as usize;
+    let len = WRITE_LEN_BE[n] as usize;
+    backend.write_bits(WRITE_BE[n] as u64, len)?;
+    Ok(Some(len))
 }
 """
         )

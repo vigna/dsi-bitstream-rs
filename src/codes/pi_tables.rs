@@ -63,13 +63,14 @@ pub fn read_table_be<B: BitRead<BE>>(backend: &mut B) -> (i8, u64) {
 /// length of the code is returned.
 #[inline(always)]
 pub fn write_table_le<B: BitWrite<LE>>(backend: &mut B, n: u64) -> Result<Option<usize>, B::Error> {
-    Ok(if let Some(bits) = WRITE_LE.get(n as usize) {
-        let len = WRITE_LEN_LE[n as usize] as usize;
-        backend.write_bits(*bits as u64, len)?;
-        Some(len)
-    } else {
-        None
-    })
+    // We cannot use .get() here because n is a u64
+    if n >= WRITE_LE.len() as u64 {
+        return Ok(None);
+    }
+    let n = n as usize;
+    let len = WRITE_LEN_LE[n] as usize;
+    backend.write_bits(WRITE_LE[n] as u64, len)?;
+    Ok(Some(len))
 }
 
 /// Writes a value using an encoding table.
@@ -78,13 +79,14 @@ pub fn write_table_le<B: BitWrite<LE>>(backend: &mut B, n: u64) -> Result<Option
 /// length of the code is returned.
 #[inline(always)]
 pub fn write_table_be<B: BitWrite<BE>>(backend: &mut B, n: u64) -> Result<Option<usize>, B::Error> {
-    Ok(if let Some(bits) = WRITE_BE.get(n as usize) {
-        let len = WRITE_LEN_BE[n as usize] as usize;
-        backend.write_bits(*bits as u64, len)?;
-        Some(len)
-    } else {
-        None
-    })
+    // We cannot use .get() here because n is a u64
+    if n >= WRITE_BE.len() as u64 {
+        return Ok(None);
+    }
+    let n = n as usize;
+    let len = WRITE_LEN_BE[n] as usize;
+    backend.write_bits(WRITE_BE[n] as u64, len)?;
+    Ok(Some(len))
 }
 /// Precomputed table for reading pi codes
 /// For complete codes: stores the decoded value

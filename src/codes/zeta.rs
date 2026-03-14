@@ -43,8 +43,9 @@ pub fn len_zeta_param<const USE_TABLE: bool>(mut n: u64, k: usize) -> usize {
     debug_assert!(k >= 1);
     if USE_TABLE {
         if k == zeta_tables::K {
-            if let Some(idx) = zeta_tables::LEN.get(n as usize) {
-                return *idx as usize;
+            // We cannot use .get() here because n is a u64
+            if n < zeta_tables::LEN.len() as u64 {
+                return zeta_tables::LEN[n as usize] as usize;
             }
         }
     }

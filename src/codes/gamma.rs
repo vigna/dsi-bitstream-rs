@@ -34,8 +34,9 @@ use crate::traits::*;
 pub fn len_gamma_param<const USE_TABLE: bool>(mut n: u64) -> usize {
     debug_assert!(n < u64::MAX);
     if USE_TABLE {
-        if let Some(idx) = gamma_tables::LEN.get(n as usize) {
-            return *idx as usize;
+        // We cannot use .get() here because n is a u64
+        if n < gamma_tables::LEN.len() as u64 {
+            return gamma_tables::LEN[n as usize] as usize;
         }
     }
     n += 1;

@@ -72,8 +72,9 @@ use num_primitive::PrimitiveNumber;
 pub fn len_omega_param<const USE_TABLE: bool>(n: u64) -> usize {
     debug_assert!(n < u64::MAX);
     if USE_TABLE {
-        if let Some(len) = omega_tables::LEN.get(n as usize) {
-            return *len as usize;
+        // We cannot use .get() here because n is a u64
+        if n < omega_tables::LEN.len() as u64 {
+            return omega_tables::LEN[n as usize] as usize;
         }
     }
     recursive_len(n + 1)
