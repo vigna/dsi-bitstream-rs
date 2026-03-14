@@ -34,7 +34,7 @@ fn verify_read<E: Endianness>(
     let mut r = SmallRng::seed_from_u64(0);
 
     for _ in 0..len {
-        let _ = r.random_range(0..2);
+        let _: u64 = r.random_range(0..2);
     }
 
     for _ in len..MAX_LEN {
@@ -58,7 +58,7 @@ where
     if skip_read {
         len -= skip as u64;
         for _ in 0..skip {
-            r.random_range(0..2);
+            let _: u64 = r.random_range(0..2);
         }
     } else {
         read.skip_bits(skip)?;
@@ -95,6 +95,7 @@ where
         // copy_to, BufBitReader implementation
 
         for skip in 0..=(W::BITS as usize).min(len as usize) {
+
             let mut read = BufBitReader::<E, _>::new(MemWordReader::new_inf(buffer.clone()));
             let mut copy_write = BufBitWriter::<E, _>::new(MemWordWriterVec::new(Vec::<W>::new()));
             read.skip_bits(skip)?;
@@ -112,6 +113,7 @@ where
         // copy_from, BufBitWriter implementation
 
         for skip in 0..=(W::BITS as usize).min(len as usize) {
+
             let mut read = BufBitReader::<E, _>::new(MemWordReader::new_inf(buffer.clone()));
             let mut copy_write = BufBitWriter::<E, _>::new(MemWordWriterVec::new(Vec::<W>::new()));
             for _ in 0..skip {
