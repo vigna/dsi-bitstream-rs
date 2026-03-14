@@ -47,7 +47,7 @@ let data = writer.into_inner()?.into_inner();
 // Reading back the data is similar, but since a reader has a bit buffer
 // twice as large as the read word size, it is more efficient to use a
 // u32 as read word, so we need to reinterpret the data.
-let data = unsafe{data.align_to::<u32>().1};
+let data = unsafe{ data.align_to::<u32>().1 };
 let mut reader = BufBitReader::<LE, _>::new(MemWordReader::new_inf(data));
 assert_eq!(reader.read_bits(10)?, 0);
 assert_eq!(reader.read_unary()?, 0);
@@ -59,35 +59,6 @@ assert_eq!(reader.read_delta()?, 2);
 In this case, the backend is already word-based, but if you have a byte-based
 backend such as a file, [`WordAdapter`] can be used to adapt it to a word-based
 backend.
-
-You can also use references to backends instead of owned values,
-but this approach is less efficient:
-
-```rust
-use dsi_bitstream::prelude::*;
-#[cfg(feature = "alloc")]
-let mut word_write = MemWordWriterVec::new(Vec::<u64>::new());
-#[cfg(not(feature = "alloc"))]
-let mut word_write = MemWordWriterSlice::new([0_u64; 10]);
-let mut writer = BufBitWriter::<LE, _>::new(word_write);
-writer.write_bits(0, 10)?;
-writer.write_unary(0)?;
-writer.write_gamma(1)?;
-writer.write_delta(2)?;
-writer.flush()?;
-
-// Let's recover the data
-let data = writer.into_inner()?.into_inner();
-
-// As in the example above, convert to u32 for better read performance
-let data = unsafe{data.align_to::<u32>().1};
-let mut reader = BufBitReader::<LE, _>::new(MemWordReader::new_inf(&data));
-assert_eq!(reader.read_bits(10)?, 0);
-assert_eq!(reader.read_unary()?, 0);
-assert_eq!(reader.read_gamma()?, 1);
-assert_eq!(reader.read_delta()?, 2);
-# Ok::<(), Box<dyn core::error::Error>>(())
-```
 
 Please read the documentation of the [`traits`] module and the [`impls`] module
 for more details.
@@ -151,7 +122,8 @@ benchmarks on a few architectures.
   parameters (in particular, written value must fit within
   the provided bit width).
 - `std` (default): enables standard library support, including
-  [`WordAdapter`] and convenience functions such as [`from_path`].
+  [`WordAdapter`] and convenience functions such as [`from_path`] and
+  [`from_file`].
   Implies `alloc`.
 - `alloc`: enables heap allocation without full `std` (e.g.,
   [`MemWordWriterVec`]). This feature is sufficient for `no_std`
@@ -215,4 +187,5 @@ Union nor the Italian MUR can be held responsible for them.
 [`MemWordWriterVec`]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/impls/struct.MemWordWriterVec.html
 [dispatch]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/dispatch/index.html
 [`from_path`]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/impls/buf_bit_reader/fn.from_path.html
+[`from_file`]: https://docs.rs/dsi-bitstream/latest/dsi_bitstream/impls/buf_bit_reader/fn.from_file.html
 [`serde`]: https://crates.io/crates/serde

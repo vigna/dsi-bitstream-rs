@@ -63,7 +63,8 @@
 //! integers](https://doi.org/10.1109/TIT.1975.1055349)”. IEEE Transactions on
 //! Information Theory, 21(2):194–203, March 1975.
 
-use crate::{codes::omega_tables, prelude::*};
+use crate::codes::omega_tables;
+use crate::traits::*;
 use num_primitive::PrimitiveNumber;
 
 /// Returns the length of the ω code for `n`.

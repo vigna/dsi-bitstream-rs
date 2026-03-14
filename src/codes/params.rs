@@ -155,7 +155,7 @@ macro_rules! impl_default_read_codes {
         {
             #[inline(always)]
             fn read_delta(&mut self) -> Result<u64, Self::Error> {
-				// <false, true> is better on the universal Zipf distribution
+                // <false, true> is better on the universal Zipf distribution
                 self.read_delta_param::<true, true>()
             }
         }
