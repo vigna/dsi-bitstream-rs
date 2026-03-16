@@ -9,11 +9,15 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
       - name: Check formatting
         run: cargo fmt -- --check
-      - name: Run clippy
+      - name: Clippy (default)
         run: cargo clippy -- -D warnings
+      - name: Clippy (no default features)
+        run: cargo clippy --no-default-features -- -D warnings
+      - name: Clippy (all features)
+        run: cargo clippy --all-features -- -D warnings
 
   build:
     runs-on: ubuntu-latest
@@ -34,14 +38,14 @@ jobs:
 
     steps:
       - name: Install rust (${{ matrix.rust }})
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ matrix.rust }}
-          profile: minimal
-          override: true
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
       - name: Build
         run: cargo build --verbose ${{ matrix.features }}
+      - name: Test
+        run: cargo test --verbose ${{ matrix.features }}
 
   coverage:
     needs: build
@@ -53,7 +57,7 @@ jobs:
       options: --security-opt seccomp=unconfined
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v6
 
       - name: Generate code coverage
         run: |
@@ -64,3 +68,16 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path-to-lcov: "lcov.info"
+
+  build-i686:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install 32-bit support
+        run: sudo apt-get update && sudo apt-get install -y gcc-multilib
+      - name: Add i686 target
+        run: rustup target add i686-unknown-linux-gnu
+      - name: Build (32-bit)
+        run: cargo build --target i686-unknown-linux-gnu
+      - name: Test (32-bit)
+        run: cargo test --target i686-unknown-linux-gnu
