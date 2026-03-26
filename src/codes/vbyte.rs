@@ -53,8 +53,8 @@
 //!
 //! To have completeness, one can offset the representation in *k* bits by the
 //! maximum number representable using *k* − 1 bits. That is, we represent the
-//! interval [0..2⁷) with one byte, then the interval [2⁷..2⁷ + 2¹⁴) with two
-//! bytes, the interval [2⁷ + 2¹⁴..2⁷ + 2¹⁴ + 2²¹) with three bytes, and so on.
+//! interval [0 . . 2⁷) with one byte, then the interval [2⁷ . . 2⁷ + 2¹⁴) with two
+//! bytes, the interval [2⁷ + 2¹⁴ . . 2⁷ + 2¹⁴ + 2²¹) with three bytes, and so on.
 //!
 //! ## Grouping
 //!

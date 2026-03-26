@@ -28,7 +28,7 @@ use mem_dbg::{MemDbg, MemSize};
 /// code as a string in a configuration file and then parse it back.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
-#[cfg_attr(feature = "mem_dbg", mem_size_flat)]
+#[cfg_attr(feature = "mem_dbg", mem_size(flat))]
 #[cfg_attr(feature = "fuzz", derive(arbitrary::Arbitrary))]
 #[non_exhaustive]
 pub enum Codes {

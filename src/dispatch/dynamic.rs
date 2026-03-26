@@ -378,7 +378,7 @@ type LenFn = fn(u64) -> usize;
 /// method, it is more efficient to clone a [`FuncCodeLen`] than to create a new one.
 #[derive(Debug, Clone, Copy)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
-#[cfg_attr(feature = "mem_dbg", mem_size_flat)]
+#[cfg_attr(feature = "mem_dbg", mem_size(flat))]
 pub struct FuncCodeLen(LenFn);
 
 impl FuncCodeLen {
