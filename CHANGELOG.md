@@ -1,5 +1,11 @@
 # Change Log
 
+## [0.9.2] - 2026-05-11
+
+### Fixed
+
+- `mem_size_flat` has been replaced with `mem_size(flat)`.
+
 ## [0.9.1] - 2026-03-17
 
 ### Fixed
