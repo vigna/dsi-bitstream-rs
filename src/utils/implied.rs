@@ -90,15 +90,45 @@ pub fn sample_implied_distribution(
     rng: &mut impl Rng,
 ) -> impl Iterator<Item = u64> + '_ {
     let (change_points, probabilities) = get_implied_distribution(len);
-    let dist = WeightedIndex::new(probabilities)
-        .expect("get_implied_distribution returns non-empty, positive weights");
+    // A length function that is constant over the whole u64 domain yields a
+    // single change point and no probability groups; its implied distribution
+    // is then uniform (every value has the same codeword length). Handle that
+    // case without panicking, and use the weighted distribution otherwise.
+    let dist = if probabilities.is_empty() {
+        None
+    } else {
+        Some(
+            WeightedIndex::new(probabilities)
+                .expect("get_implied_distribution returns positive weights"),
+        )
+    };
 
-    InfiniteIterator.map(move |_| {
-        // sample a len with the correct probability
-        let idx = dist.sample(rng);
-        // now we sample a random value with the sampled len
-        let (start_input, _len) = change_points[idx];
-        let (end_input, _len) = change_points[idx + 1];
-        rng.random_range(start_input..end_input)
+    InfiniteIterator.map(move |_| match &dist {
+        None => rng.random::<u64>(),
+        Some(dist) => {
+            // sample a length with the correct probability, then a value with it
+            let idx = dist.sample(rng);
+            let (start_input, _len) = change_points[idx];
+            let (end_input, _len) = change_points[idx + 1];
+            rng.random_range(start_input..end_input)
+        }
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::sample_implied_distribution;
+    use rand::SeedableRng;
+    use rand::rngs::SmallRng;
+
+    #[test]
+    fn constant_length_samples_uniformly_without_panic() {
+        let mut rng = SmallRng::seed_from_u64(0);
+        // A constant length function has an empty set of probability groups; it
+        // must sample uniformly instead of panicking on WeightedIndex::new.
+        let vals: Vec<u64> = sample_implied_distribution(|_| 7, &mut rng)
+            .take(100)
+            .collect();
+        assert_eq!(vals.len(), 100);
+    }
 }
