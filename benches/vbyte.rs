@@ -115,6 +115,7 @@ pub fn bench_byte_stream<C: ByteCode + WithName>(c: &mut Criterion) {
     }
 
     let s = gen_vbyte_data(GAMMA_DATA);
+
     c.bench_function(&format!("bytes/{}/write", C::name()), |b| {
         b.iter(|| {
             let mut w = std::io::Cursor::new(&mut v);
@@ -124,9 +125,21 @@ pub fn bench_byte_stream<C: ByteCode + WithName>(c: &mut Criterion) {
         })
     });
 
+    // Encode the read input into its own buffer so the read benchmark runs
+    // independently of the write benchmark: Criterion skips a filtered-out
+    // benchmark's body, so a read-only run (e.g. `-- read`) must not depend on
+    // the write closure having populated `v`.
+    let mut read_buf = <Vec<u8>>::with_capacity(CAPACITY);
+    {
+        let mut w = std::io::Cursor::new(&mut read_buf);
+        for &v in &s {
+            C::write(v, &mut w).unwrap();
+        }
+    }
+
     c.bench_function(&format!("bytes/{}/read", C::name()), |b| {
         b.iter(|| {
-            let mut r = std::io::Cursor::new(v.as_slice());
+            let mut r = std::io::Cursor::new(read_buf.as_slice());
             for _ in &s {
                 black_box(C::read(&mut r).unwrap());
             }
@@ -183,13 +196,23 @@ where
         })
     });
 
+    // Encode the read input into its own buffer so the read benchmark runs
+    // independently of the write benchmark (see `bench_byte_stream`).
+    let mut read_v = <Vec<u64>>::with_capacity(CAPACITY);
+    {
+        let mut w = BufBitWriter::<E, _>::new(MemWordWriterVec::new(&mut read_v));
+        for &v in &s {
+            C::write(v, &mut w).unwrap();
+        }
+        drop(w);
+    }
     // SAFETY: Vec<u64> is aligned to 8 bytes, which satisfies alignment for
     // u32.
-    let v = unsafe { v.align_to::<u32>().1 };
+    let read_words = unsafe { read_v.align_to::<u32>().1 };
 
     c.bench_function(&format!("bits/{}/{}/read", endian, C::name()), |b| {
         b.iter(|| {
-            let mut r = BufBitReader::<E, _>::new(MemWordReader::new(v));
+            let mut r = BufBitReader::<E, _>::new(MemWordReader::new(read_words));
             for _ in &s {
                 black_box(C::read(&mut r).unwrap());
             }
