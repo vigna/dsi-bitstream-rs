@@ -36,16 +36,25 @@
 //! write the number [`u64::MAX`] because of overflow issues, which could be
 //! avoided with tests, but at the price of a significant performance drop.
 //!
-//! For the same reason, reading methods assume well-formed input: decoding a
-//! corrupted or malicious bit stream may return arbitrary values and, in debug
-//! builds, may panic because of overflow checks. If you need to decode
-//! untrusted data, you must validate the decoded values.
-//!
 //! The traits ending with `Param` make it possible to specify parameters—for
 //! example, whether to use decoding tables. Usually, one would instead pull
 //! into scope non-parametric traits such as [`GammaRead`] and [`GammaWrite`],
 //! for which defaults are provided using the mechanism described in the
 //! [`params`] module.
+//!
+//! # Decoding untrusted input
+//!
+//! For performance, the decoders assume a well-formed stream produced by the
+//! corresponding encoder: some derived codeword lengths are guarded only by a
+//! `debug_assert!`, and other reachable arithmetic (shifts, `quotient * b`) is
+//! unchecked. A malformed or adversarial bit stream (for example one read
+//! through [`BufBitReader`](crate::impls::BufBitReader) over an untrusted
+//! source) may therefore panic or return an incorrect value -- depending on the
+//! code and on the `debug-assertions`/`overflow-checks` settings -- instead of
+//! returning an error. The [VByte](vbyte) decoders are the exception: they
+//! bound the codeword length. Validate untrusted input, or restrict decoding to
+//! a trusted producer, before use; the [`Codes`](crate::dispatch::Codes)
+//! descriptor is itself validated when parsed or deserialized.
 //!
 //! # Big-endian vs. little-endian
 //!
