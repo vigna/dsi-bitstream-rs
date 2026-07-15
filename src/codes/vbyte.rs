@@ -135,6 +135,9 @@ pub const fn bit_len_vbyte(n: u64) -> usize {
     8 * byte_len_vbyte(n)
 }
 
+/// Maximum number of bytes in the variable-length byte code of a `u64`.
+const MAX_VBYTE_LEN: usize = byte_len_vbyte(u64::MAX);
+
 /// Trait for reading big-endian variable-length byte codes.
 ///
 /// Note that the endianness of the code is independent
@@ -156,10 +159,20 @@ impl<E: Endianness, B: BitRead<E>> VByteBeRead<E> for B {
     fn read_vbyte_be(&mut self) -> Result<u64, Self::Error> {
         let mut byte = self.read_bits(8)?;
         let mut value = byte & 0x7F;
-        while (byte >> 7) != 0 {
-            value += 1;
+        // A u64 vbyte code is at most MAX_VBYTE_LEN bytes; stop there so a
+        // malformed continuation bit on the last byte cannot read into the
+        // following data (BE) or shift by >= 64 (LE). BitRead has no
+        // malformed-input error channel (the backend Error may be Infallible),
+        // so a non-canonical overlong code yields a bounded value rather than a
+        // panic, a desync, or an unbounded read.
+        let mut read = 1;
+        while (byte >> 7) != 0 && read < MAX_VBYTE_LEN {
+            // wrapping: a malformed overlong code may carry a value past u64;
+            // BitRead has no error channel, so wrap (bounded) instead of panicking.
+            value = value.wrapping_add(1);
             byte = self.read_bits(8)?;
             value = (value << 7) | (byte & 0x7F);
+            read += 1;
         }
         Ok(value)
     }
@@ -168,16 +181,20 @@ impl<E: Endianness, B: BitRead<E>> VByteBeRead<E> for B {
 impl<E: Endianness, B: BitRead<E>> VByteLeRead<E> for B {
     #[inline(always)]
     fn read_vbyte_le(&mut self) -> Result<u64, Self::Error> {
-        let mut result = 0;
+        let mut result: u64 = 0;
         let mut shift = 0;
+        // See read_vbyte_be: bound the code to MAX_VBYTE_LEN bytes so a
+        // malformed continuation bit cannot push shift to >= 64.
+        let mut read = 0;
         loop {
             let byte = self.read_bits(8)?;
-            result += (byte & 0x7F) << shift;
-            if (byte >> 7) == 0 {
+            result = result.wrapping_add((byte & 0x7F) << shift);
+            read += 1;
+            if (byte >> 7) == 0 || read == MAX_VBYTE_LEN {
                 break;
             }
             shift += 7;
-            result += 1 << shift;
+            result = result.wrapping_add(1 << shift);
         }
         Ok(result)
     }
@@ -297,6 +314,16 @@ pub fn vbyte_write_le<W: std::io::Write>(mut n: u64, writer: &mut W) -> std::io:
     Ok(len)
 }
 
+/// Error for a byte-stream vbyte code that is longer than, or encodes a value
+/// outside, the `u64` range.
+#[cfg(feature = "std")]
+fn overlong_vbyte() -> std::io::Error {
+    std::io::Error::new(
+        std::io::ErrorKind::InvalidData,
+        "vbyte code too long or out of range for a u64",
+    )
+}
+
 /// Decode a natural number from a byte stream using variable-length byte codes.
 ///
 /// This method just delegates to the correct endianness-specific method.
@@ -316,15 +343,22 @@ pub fn vbyte_read<E: Endianness, R: std::io::Read>(reader: &mut R) -> std::io::R
 #[cfg(feature = "std")]
 pub fn vbyte_read_be<R: std::io::Read>(reader: &mut R) -> std::io::Result<u64> {
     let mut buf = [0u8; 1];
-    let mut value: u64;
     reader.read_exact(&mut buf)?;
-    value = (buf[0] & 0x7F) as u64;
+    // Accumulate in u128 so a malformed high-payload code cannot overflow
+    // silently; a code longer than MAX_VBYTE_LEN bytes or a value exceeding
+    // u64 is rejected (this reader has an io error channel).
+    let mut value = u128::from(buf[0] & 0x7F);
+    let mut read = 1;
     while (buf[0] >> 7) != 0 {
+        if read == MAX_VBYTE_LEN {
+            return Err(overlong_vbyte());
+        }
         value += 1;
         reader.read_exact(&mut buf)?;
-        value = (value << 7) | ((buf[0] & 0x7F) as u64);
+        value = (value << 7) | u128::from(buf[0] & 0x7F);
+        read += 1;
     }
-    Ok(value)
+    u64::try_from(value).map_err(|_| overlong_vbyte())
 }
 
 /// Decode a natural number from a little-endian byte stream using
@@ -332,20 +366,27 @@ pub fn vbyte_read_be<R: std::io::Read>(reader: &mut R) -> std::io::Result<u64> {
 #[inline(always)]
 #[cfg(feature = "std")]
 pub fn vbyte_read_le<R: std::io::Read>(reader: &mut R) -> std::io::Result<u64> {
-    let mut result = 0;
+    // Accumulate in u128 so a malformed high-payload code cannot overflow
+    // silently; see vbyte_read_be.
+    let mut result: u128 = 0;
     let mut shift = 0;
     let mut buffer = [0; 1];
+    let mut read = 0;
     loop {
         reader.read_exact(&mut buffer)?;
         let byte = buffer[0];
-        result += ((byte & 0x7F) as u64) << shift;
+        result += u128::from(byte & 0x7F) << shift;
+        read += 1;
         if (byte >> 7) == 0 {
             break;
         }
+        if read == MAX_VBYTE_LEN {
+            return Err(overlong_vbyte());
+        }
         shift += 7;
-        result += 1 << shift;
+        result += 1u128 << shift;
     }
-    Ok(result)
+    u64::try_from(result).map_err(|_| overlong_vbyte())
 }
 
 #[cfg(test)]
@@ -418,4 +459,35 @@ mod tests {
 
     impl_tests!(test_vbytes_be, BE);
     impl_tests!(test_vbytes_le, LE);
+
+    #[test]
+    fn io_reader_rejects_overlong() {
+        // 11 continuation bytes: longer than any u64 vbyte code.
+        let data = [0xFFu8; 11];
+        assert!(vbyte_read_be(&mut std::io::Cursor::new(&data[..])).is_err());
+        assert!(vbyte_read_le(&mut std::io::Cursor::new(&data[..])).is_err());
+    }
+
+    #[test]
+    fn bit_reader_is_bounded_on_overlong() {
+        use crate::prelude::{BufBitReader, MemWordReader};
+        // Every byte has its continuation bit set; without the length cap the
+        // little-endian reader would shift by >= 64 (panic in debug), and the
+        // big-endian reader would read far past a valid code.
+        let words = [u64::MAX; 4];
+        let mut rb = BufBitReader::<BE, _>::new(MemWordReader::new_inf(&words));
+        let _ = rb.read_vbyte_be().unwrap();
+        let mut rl = BufBitReader::<LE, _>::new(MemWordReader::new_inf(&words));
+        let _ = rl.read_vbyte_le().unwrap();
+    }
+
+    #[test]
+    fn io_reader_rejects_value_over_u64() {
+        // A 10-byte code (within the byte cap) whose payload encodes a value
+        // far above u64::MAX: the terminal byte clears the continuation bit, so
+        // only the u128 range check catches it.
+        let data = [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F];
+        assert!(vbyte_read_be(&mut std::io::Cursor::new(&data[..])).is_err());
+        assert!(vbyte_read_le(&mut std::io::Cursor::new(&data[..])).is_err());
+    }
 }
