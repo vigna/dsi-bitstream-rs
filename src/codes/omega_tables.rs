@@ -20,7 +20,7 @@ pub const WRITE_MAX: u64 = 63;
 /// Reads from the decoding table.
 ///
 /// Returns `(len_with_flag, value)` where:
-/// - If len_with_flag >= 0: complete code, value is decoded value, len_with_flag is code length
+/// - If len_with_flag > 0: complete code, value is decoded value, len_with_flag is code length
 /// - If len_with_flag < 0: partial code, value is partial_n, (len_with_flag & 0x7F) is partial_len
 /// - If len_with_flag = 0: no valid decoding (cannot occur with >= 2 bit tables)
 ///
@@ -44,7 +44,7 @@ pub fn read_table_le<B: BitRead<LE>>(backend: &mut B) -> (i8, u64) {
 /// Reads from the decoding table.
 ///
 /// Returns `(len_with_flag, value)` where:
-/// - If len_with_flag >= 0: complete code, value is decoded value, len_with_flag is code length
+/// - If len_with_flag > 0: complete code, value is decoded value, len_with_flag is code length
 /// - If len_with_flag < 0: partial code, value is partial_n, (len_with_flag & 0x7F) is partial_len
 /// - If len_with_flag = 0: no valid decoding (cannot occur with >= 2 bit tables)
 ///

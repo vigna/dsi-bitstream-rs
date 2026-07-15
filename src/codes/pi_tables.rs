@@ -14,7 +14,7 @@ pub const K: usize = 2;
 /// Reads from the decoding table.
 ///
 /// Returns `(len_with_flag, value_or_lambda)` where:
-/// - If len_with_flag >= 0: complete code, value_or_lambda is decoded value, len_with_flag is code length
+/// - If len_with_flag > 0: complete code, value_or_lambda is decoded value, len_with_flag is code length
 /// - If len_with_flag < 0: partial code (rice decoded), value_or_lambda is lambda, (len_with_flag & 0x7F) is rice code length
 /// - If len_with_flag = 0: no valid decoding (rice not decoded)
 ///
@@ -37,7 +37,7 @@ pub fn read_table_le<B: BitRead<LE>>(backend: &mut B) -> (i8, u64) {
 /// Reads from the decoding table.
 ///
 /// Returns `(len_with_flag, value_or_lambda)` where:
-/// - If len_with_flag >= 0: complete code, value_or_lambda is decoded value, len_with_flag is code length
+/// - If len_with_flag > 0: complete code, value_or_lambda is decoded value, len_with_flag is code length
 /// - If len_with_flag < 0: partial code (rice decoded), value_or_lambda is lambda, (len_with_flag & 0x7F) is rice code length
 /// - If len_with_flag = 0: no valid decoding (rice not decoded)
 ///
