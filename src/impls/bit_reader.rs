@@ -267,40 +267,30 @@ impl<WR: WordRead<Word = u64> + WordSeek<Error = <WR as WordRead>::Error>, RP: R
 impl<WR: WordRead<Word = u64> + WordSeek<Error = <WR as WordRead>::Error>, RP: ReadParams>
     std::io::Read for BitReader<LE, WR, RP>
 {
+    /// Note that this implementation does not use `Ok(0)` to signal
+    /// stream exhaustion (an empty `buf` still yields `Ok(0)` as required):
+    /// the underlying [`WordRead`] error type cannot distinguish end of
+    /// stream from a backend failure, so reading past the last available
+    /// byte fails with
+    /// [`std::io::ErrorKind::UnexpectedEof`] rather than silently reporting
+    /// end of file (which would make a genuine backend error look like a
+    /// clean EOF). To read a stream of known length to its end, bound the
+    /// reader with [`std::io::Read::take`] or use exact-length reads.
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
-        let mut read = 0;
-        let mut iter = buf.chunks_exact_mut(8);
-
-        for chunk in &mut iter {
-            match self.read_bits(64) {
-                Ok(word) => {
-                    chunk.copy_from_slice(&word.to_le_bytes());
-                    read += 8;
+        // Read byte by byte so the returned count reflects exactly the bytes
+        // produced (read_bits(64) is not atomic on a narrow-word backend near
+        // EOF); the reader's endianness handles bit order.
+        for (i, slot) in buf.iter_mut().enumerate() {
+            match self.read_bits(8) {
+                Ok(byte) => {
+                    debug_assert!(byte < 256, "read_bits(8) yields at most 8 bits");
+                    *slot = byte as u8;
                 }
-                // If we read some bytes, return them; the error will
-                // resurface at the next call
-                Err(_) if read > 0 => return Ok(read),
-                Err(e) => {
-                    return Err(std::io::Error::new(std::io::ErrorKind::UnexpectedEof, e));
-                }
+                Err(_) if i > 0 => return Ok(i),
+                Err(_) => return Err(std::io::ErrorKind::UnexpectedEof.into()),
             }
         }
-
-        let rem = iter.into_remainder();
-        if !rem.is_empty() {
-            match self.read_bits(rem.len() * 8) {
-                Ok(word) => {
-                    rem.copy_from_slice(&word.to_le_bytes()[..rem.len()]);
-                    read += rem.len();
-                }
-                Err(_) if read > 0 => return Ok(read),
-                Err(e) => {
-                    return Err(std::io::Error::new(std::io::ErrorKind::UnexpectedEof, e));
-                }
-            }
-        }
-
-        Ok(read)
+        Ok(buf.len())
     }
 }
 
@@ -308,39 +298,20 @@ impl<WR: WordRead<Word = u64> + WordSeek<Error = <WR as WordRead>::Error>, RP: R
 impl<WR: WordRead<Word = u64> + WordSeek<Error = <WR as WordRead>::Error>, RP: ReadParams>
     std::io::Read for BitReader<BE, WR, RP>
 {
+    /// Does not use `Ok(0)` to signal stream exhaustion; see the
+    /// little-endian implementation.
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
-        let mut read = 0;
-        let mut iter = buf.chunks_exact_mut(8);
-
-        for chunk in &mut iter {
-            match self.read_bits(64) {
-                Ok(word) => {
-                    chunk.copy_from_slice(&word.to_be_bytes());
-                    read += 8;
+        // See the little-endian impl.
+        for (i, slot) in buf.iter_mut().enumerate() {
+            match self.read_bits(8) {
+                Ok(byte) => {
+                    debug_assert!(byte < 256, "read_bits(8) yields at most 8 bits");
+                    *slot = byte as u8;
                 }
-                // If we read some bytes, return them; the error will
-                // resurface at the next call
-                Err(_) if read > 0 => return Ok(read),
-                Err(e) => {
-                    return Err(std::io::Error::new(std::io::ErrorKind::UnexpectedEof, e));
-                }
+                Err(_) if i > 0 => return Ok(i),
+                Err(_) => return Err(std::io::ErrorKind::UnexpectedEof.into()),
             }
         }
-
-        let rem = iter.into_remainder();
-        if !rem.is_empty() {
-            match self.read_bits(rem.len() * 8) {
-                Ok(word) => {
-                    rem.copy_from_slice(&word.to_be_bytes()[8 - rem.len()..]);
-                    read += rem.len();
-                }
-                Err(_) if read > 0 => return Ok(read),
-                Err(e) => {
-                    return Err(std::io::Error::new(std::io::ErrorKind::UnexpectedEof, e));
-                }
-            }
-        }
-
-        Ok(read)
+        Ok(buf.len())
     }
 }

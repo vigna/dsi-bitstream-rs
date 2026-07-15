@@ -479,30 +479,31 @@ where
 {
     #[inline(always)]
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-        let mut iter = buf.chunks_exact(8);
-
-        for word in &mut iter {
-            self.write_bits(u64::from_be_bytes(word.try_into().unwrap()), 64)
-                .map_err(|_| std::io::Error::other("could not write bits to stream"))?;
-        }
-
-        let rem = iter.remainder();
-        if !rem.is_empty() {
-            let mut word = 0;
-            let bits = rem.len() * 8;
-            for byte in rem.iter() {
-                word <<= 8;
-                word |= *byte as u64;
+        // Write byte by byte. Snapshot the buffer state around each byte so a
+        // backend failure leaves the writer exactly as it was before that byte:
+        // the returned partial count is then safe for write_all to retry, and
+        // the writer is not left corrupted. Confined to the io adapter; the hot
+        // write_bits path is unchanged. The endianness handles bit order.
+        for (i, &byte) in buf.iter().enumerate() {
+            let saved = (self.buffer, self.space_left_in_buffer);
+            match self.write_bits(u64::from(byte), 8) {
+                Ok(_) => {}
+                Err(e) => {
+                    self.buffer = saved.0;
+                    self.space_left_in_buffer = saved.1;
+                    return if i > 0 {
+                        Ok(i)
+                    } else {
+                        Err(std::io::Error::other(e))
+                    };
+                }
             }
-            self.write_bits(word, bits)
-                .map_err(|_| std::io::Error::other("could not write bits to stream"))?;
         }
-
         Ok(buf.len())
     }
 
     fn flush(&mut self) -> std::io::Result<()> {
-        flush_be(self).map_err(|_| std::io::Error::other("could not flush bits to stream"))?;
+        flush_be(self).map_err(std::io::Error::other)?;
         Ok(())
     }
 }
@@ -514,30 +515,27 @@ where
 {
     #[inline(always)]
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-        let mut iter = buf.chunks_exact(8);
-
-        for word in &mut iter {
-            self.write_bits(u64::from_le_bytes(word.try_into().unwrap()), 64)
-                .map_err(|_| std::io::Error::other("could not write bits to stream"))?;
-        }
-
-        let rem = iter.remainder();
-        if !rem.is_empty() {
-            let mut word = 0;
-            let bits = rem.len() * 8;
-            for byte in rem.iter().rev() {
-                word <<= 8;
-                word |= *byte as u64;
+        // See the big-endian impl.
+        for (i, &byte) in buf.iter().enumerate() {
+            let saved = (self.buffer, self.space_left_in_buffer);
+            match self.write_bits(u64::from(byte), 8) {
+                Ok(_) => {}
+                Err(e) => {
+                    self.buffer = saved.0;
+                    self.space_left_in_buffer = saved.1;
+                    return if i > 0 {
+                        Ok(i)
+                    } else {
+                        Err(std::io::Error::other(e))
+                    };
+                }
             }
-            self.write_bits(word, bits)
-                .map_err(|_| std::io::Error::other("could not write bits to stream"))?;
         }
-
         Ok(buf.len())
     }
 
     fn flush(&mut self) -> std::io::Result<()> {
-        flush_le(self).map_err(|_| std::io::Error::other("could not flush bits to stream"))?;
+        flush_le(self).map_err(std::io::Error::other)?;
         Ok(())
     }
 }
