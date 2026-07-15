@@ -5,7 +5,7 @@
  */
 #![cfg(feature = "std")]
 
-use std::{env, path::PathBuf};
+use std::env;
 
 use dsi_bitstream::{
     codes::{DeltaRead, DeltaWrite},
@@ -15,15 +15,22 @@ use dsi_bitstream::{
 
 #[test]
 fn test_from() -> Result<(), Box<dyn core::error::Error>> {
-    let temp_dir: PathBuf = env::temp_dir();
-    let mut writer = buf_bit_writer::from_path::<LE, u64>(&temp_dir.join("test.bin"))?;
+    // Unique per-process path so concurrent test binaries do not clobber one
+    // another (and to avoid reusing a predictable, possibly pre-existing file).
+    let path = env::temp_dir().join(format!(
+        "dsi_bitstream_test_from_{}.bin",
+        std::process::id()
+    ));
+    let mut writer = buf_bit_writer::from_path::<LE, u64>(&path)?;
     for i in 0..100 {
         writer.write_delta(i)?;
     }
     drop(writer);
-    let mut reader = buf_bit_reader::from_path::<LE, u64>(&temp_dir.join("test.bin"))?;
+    let mut reader = buf_bit_reader::from_path::<LE, u64>(&path)?;
     for i in 0..100 {
         assert_eq!(reader.read_delta()?, i);
     }
+    drop(reader);
+    let _ = std::fs::remove_file(&path);
     Ok(())
 }
