@@ -15,6 +15,11 @@ pub struct FindChangePoints<F: Fn(u64) -> usize> {
     func: F,
     current: u64,
     prev_value: usize,
+    /// Whether the initial `(0, f(0))` point has been emitted. Using a flag
+    /// (rather than a `prev_value == usize::MAX` sentinel) lets `f` legitimately
+    /// return `usize::MAX`, which previously collided with the sentinel and made
+    /// `next` loop forever re-emitting `(0, usize::MAX)`.
+    started: bool,
 }
 
 impl<F: Fn(u64) -> usize> FindChangePoints<F> {
@@ -23,7 +28,8 @@ impl<F: Fn(u64) -> usize> FindChangePoints<F> {
         Self {
             func,
             current: 0,
-            prev_value: usize::MAX,
+            prev_value: 0,
+            started: false,
         }
     }
 }
@@ -34,7 +40,8 @@ impl<F: Fn(u64) -> usize> Iterator for FindChangePoints<F> {
 
     fn next(&mut self) -> Option<Self::Item> {
         // handle the first case, we don't need to search for the first change
-        if self.current == 0 && self.prev_value == usize::MAX {
+        if !self.started {
+            self.started = true;
             self.prev_value = (self.func)(0);
             return Some((0, self.prev_value));
         }
@@ -114,6 +121,15 @@ mod tests {
         test_func(crate::codes::len_omega);
         test_func(|x| crate::codes::len_zeta(x, 3));
         test_func(|x| crate::codes::len_pi(x, 3));
+    }
+
+    #[test]
+    fn constant_usize_max_terminates() {
+        // A length function that returns usize::MAX everywhere used to collide
+        // with the initialization sentinel and re-emit (0, usize::MAX) forever.
+        let mut it = FindChangePoints::new(|_| usize::MAX);
+        assert_eq!(it.next(), Some((0, usize::MAX)));
+        assert_eq!(it.next(), None);
     }
 
     fn test_func(func: impl Fn(u64) -> usize) {
