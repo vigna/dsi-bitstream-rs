@@ -32,13 +32,19 @@
 //! blanket implementations for parameterless traits contained in
 //! this module.
 //!
-//! However, you can also create new selector types implementing
-//! [`ReadParams`]/[`WriteParams`] and write blanket implementations
-//! for the bitstream readers and writers in [`crate::impls`] where
-//! `RP`/`WP` is set to your selector types. Then, by specifying
-//! your type as value of the parameter `RP`/`WP` when creating such
-//! readers and writers you will use automatically your blanket
-//! implementations instead of the ones provided by this module.
+//! You can also define a new selector type implementing
+//! [`ReadParams`]/[`WriteParams`] and, *within this crate*, provide blanket
+//! implementations of the parameterless code traits for the bitstream readers
+//! and writers in [`crate::impls`] with `RP`/`WP` set to that type; a reader or
+//! writer using it then picks up those implementations instead of the ones
+//! provided here. Both the read and write blanket implementations in this
+//! module are provided specifically for
+//! [`DefaultReadParams`]/[`DefaultWriteParams`], so a different selector does
+//! not silently inherit the defaults. Note that, because both the code traits
+//! and the bitstream types are defined in this crate, Rust's orphan rules
+//! prevent a downstream crate from adding such implementations for its own
+//! selector type; a fully custom selector must therefore be added within this
+//! crate.
 //!
 //! Note that the default implementations provided by this module are targeted at
 //! `u32` read words and `u64` write words. If you use different word sizes,
@@ -221,8 +227,8 @@ impl WriteParams for DefaultWriteParams {}
 
 macro_rules! impl_default_write_codes {
     ($($endianness:ident),*) => {$(
-        impl<WR: WordWrite, WP: WriteParams> GammaWrite<$endianness>
-            for BufBitWriter<$endianness, WR, WP>
+        impl<WR: WordWrite> GammaWrite<$endianness>
+            for BufBitWriter<$endianness, WR, DefaultWriteParams>
             where u64: PrimitiveNumberAs<WR::Word>,
         {
             #[inline(always)]
@@ -231,8 +237,8 @@ macro_rules! impl_default_write_codes {
             }
         }
 
-        impl<WR: WordWrite, WP: WriteParams> DeltaWrite<$endianness>
-            for BufBitWriter<$endianness, WR, WP>
+        impl<WR: WordWrite> DeltaWrite<$endianness>
+            for BufBitWriter<$endianness, WR, DefaultWriteParams>
             where u64: PrimitiveNumberAs<WR::Word>,
         {
             #[inline(always)]
@@ -241,8 +247,8 @@ macro_rules! impl_default_write_codes {
             }
         }
 
-        impl<WR: WordWrite, WP: WriteParams> OmegaWrite<$endianness>
-            for BufBitWriter<$endianness, WR, WP>
+        impl<WR: WordWrite> OmegaWrite<$endianness>
+            for BufBitWriter<$endianness, WR, DefaultWriteParams>
             where u64: PrimitiveNumberAs<WR::Word>,
         {
             #[inline(always)]
@@ -251,8 +257,8 @@ macro_rules! impl_default_write_codes {
             }
         }
 
-        impl<WR: WordWrite, WP: WriteParams> ZetaWrite<$endianness>
-            for BufBitWriter<$endianness, WR, WP>
+        impl<WR: WordWrite> ZetaWrite<$endianness>
+            for BufBitWriter<$endianness, WR, DefaultWriteParams>
             where u64: PrimitiveNumberAs<WR::Word>,
         {
             #[inline(always)]
@@ -266,8 +272,8 @@ macro_rules! impl_default_write_codes {
             }
         }
 
-        impl<WR: WordWrite, WP: WriteParams> PiWrite<$endianness>
-            for BufBitWriter<$endianness, WR, WP>
+        impl<WR: WordWrite> PiWrite<$endianness>
+            for BufBitWriter<$endianness, WR, DefaultWriteParams>
             where u64: PrimitiveNumberAs<WR::Word>,
         {
             #[inline(always)]
