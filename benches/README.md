@@ -18,7 +18,7 @@ The distribution is controlled by the `bench-univ` feature: without it, each
 code's implied distribution is used; with it, a universal Zipf distribution
 ≈1/_x_ on the first billion integers is used.
 
-Word size is controlled by features: `bench-u16`, `bench-u32`, or `bench-u64`.
+Word size defaults to `u32`; enable `bench-u16` or `bench-u64` to override it.
 The feature `bench-reads` tests reads; without it, writes are tested. The
 feature `bench-delta-gamma` tests δ codes with 9-bit tables for γ codes.
 
@@ -81,7 +81,7 @@ Criterion timing can be controlled via CLI options passed after `--`:
 
 ```bash
 # Quick dry run
-cargo bench --bench tables --features implied,bench-reads,bench-u32 -- --warm-up-time 0.01 --measurement-time 0.01
+cargo bench --bench tables --features implied,bench-reads -- --warm-up-time 0.01 --measurement-time 0.01
 
 # Fine-grained table benchmarks
     ./python/gen_table_plots.sh implied -- --warm-up-time 0.5 --measurement-time 1

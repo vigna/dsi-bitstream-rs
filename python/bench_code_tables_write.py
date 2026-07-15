@@ -57,6 +57,9 @@ if (
     )
 
 write_word = positional[0]
+# u32 is the default word size (selected by enabling no word-size feature);
+# u16 and u64 have explicit features.
+word_feat = "" if write_word == "u32" else ",bench-%s" % write_word
 dist = positional[1] if len(positional) >= 2 else "univ"
 out_path = positional[2] if len(positional) >= 3 else None
 
@@ -108,7 +111,7 @@ print(
     file=sys.stderr,
 )
 
-features = "implied,bench-%s" % write_word
+features = "implied" + word_feat
 if dist == "univ":
     features += ",bench-univ"
 
@@ -139,7 +142,7 @@ for r in sorted(bench_results, key=lambda r: (r["code"], r["endian"], r["op"])):
     )
 
 # Also run delta_g no-table baseline
-features_dg = "implied,bench-delta-gamma,bench-%s" % write_word
+features_dg = "implied,bench-delta-gamma" + word_feat
 if dist == "univ":
     features_dg += ",bench-univ"
 
@@ -214,7 +217,7 @@ for bits in range(1, 17):
         if os.path.isdir(table_dir):
             shutil.rmtree(table_dir)
 
-        features = "implied,bench-%s" % write_word
+        features = "implied" + word_feat
         if dist == "univ":
             features += ",bench-univ"
 
@@ -258,7 +261,7 @@ for bits in range(1, 17):
         if os.path.isdir(table_dir):
             shutil.rmtree(table_dir)
 
-        features = "implied,bench-delta-gamma,bench-%s" % write_word
+        features = "implied,bench-delta-gamma" + word_feat
         if dist == "univ":
             features += ",bench-univ"
 

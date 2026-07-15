@@ -51,8 +51,8 @@ offset_of_enum = []
 serde = ["dep:serde", "alloc"]
 # Benchmark-only feature flags
 bench-reads = []
+# u32 is the default word size; enable bench-u16 or bench-u64 to override it.
 bench-u16 = []
-bench-u32 = []
 bench-u64 = []
 bench-univ = []
 bench-delta-gamma = []

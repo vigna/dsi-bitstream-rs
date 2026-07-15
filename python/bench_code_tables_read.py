@@ -57,6 +57,9 @@ if (
     )
 
 read_word = positional[0]
+# u32 is the default word size (selected by enabling no word-size feature);
+# u16 and u64 have explicit features.
+word_feat = "" if read_word == "u32" else ",bench-%s" % read_word
 dist = positional[1] if len(positional) >= 2 else "univ"
 out_path = positional[2] if len(positional) >= 3 else None
 
@@ -114,7 +117,7 @@ print(
     file=sys.stderr,
 )
 
-features = "implied,bench-reads,bench-%s" % read_word
+features = "implied,bench-reads" + word_feat
 if dist == "univ":
     features += ",bench-univ"
 
@@ -147,7 +150,7 @@ for r in sorted(bench_results, key=lambda r: (r["code"], r["endian"], r["op"])):
     )
 
 # Also run delta_g no-table baseline
-features_dg = "implied,bench-reads,bench-%s,bench-delta-gamma" % read_word
+features_dg = "implied,bench-reads" + word_feat + ",bench-delta-gamma"
 if dist == "univ":
     features_dg += ",bench-univ"
 
@@ -221,7 +224,7 @@ for bits in range(1, min(16, max_table_bits) + 1):
         if os.path.isdir(table_dir):
             shutil.rmtree(table_dir)
 
-        features = "implied,bench-reads,bench-%s" % read_word
+        features = "implied,bench-reads" + word_feat
         if dist == "univ":
             features += ",bench-univ"
 
@@ -267,7 +270,7 @@ for bits in range(1, min(16, max_table_bits) + 1):
         # Remove stale Criterion results before delta_g run
         if os.path.isdir(table_dir):
             shutil.rmtree(table_dir)
-        features = "implied,bench-reads,bench-%s,bench-delta-gamma" % read_word
+        features = "implied,bench-reads" + word_feat + ",bench-delta-gamma"
         if dist == "univ":
             features += ",bench-univ"
         ratio_text_dg = run_cargo_bench(features, "^table/")
