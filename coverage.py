@@ -16,11 +16,11 @@ FUZZING = True
 ROOT = os.path.dirname(os.path.abspath(__file__))
 target_folder = os.path.join(ROOT, "target")
 # Get info about the rust installation
-rustup_info = subprocess.check_output("rustup show", shell=True).decode()
+rustup_info = subprocess.check_output(["rustup", "show"]).decode()
 arch = re.findall(r"Default host: (.+)", rustup_info)[0]
 
 # Get where LLVM is installed
-sysroot = subprocess.check_output("rustc --print sysroot", shell=True).decode().strip()
+sysroot = subprocess.check_output(["rustc", "--print", "sysroot"]).decode().strip()
 llvm_path = os.path.join(sysroot, "lib", "rustlib", arch, "bin")
 
 # Check that people can read the doc
@@ -40,16 +40,14 @@ exec_files = []
 
 # Clean up the targets folder
 subprocess.check_call(
-    "cargo clean",
-    shell=True,
+    ["cargo", "clean"],
     cwd=ROOT,
 )
 # Create a folder for the test coverage
 os.makedirs(target_folder, exist_ok=True)
 
 out = subprocess.check_output(
-    "cargo test",
-    shell=True,
+    ["cargo", "test"],
     cwd=ROOT,
     stderr=subprocess.STDOUT,
     universal_newlines=True,
@@ -85,8 +83,7 @@ if FUZZING:
     # Get the list of fuzzing targets
     fuzz_targets = (
         subprocess.check_output(
-            "cargo fuzz list",
-            shell=True,
+            ["cargo", "fuzz", "list"],
             cwd=ROOT,
         )
         .decode()
@@ -95,8 +92,7 @@ if FUZZING:
     # Generate coverage for all the targets
     for fuzz_target in fuzz_targets:
         subprocess.check_call(
-            "cargo fuzz coverage {}".format(fuzz_target),
-            shell=True,
+            ["cargo", "fuzz", "coverage", fuzz_target],
             cwd=ROOT,
         )
 
@@ -113,25 +109,26 @@ if FUZZING:
 
 # Merge the coverages into a unique file
 subprocess.check_call(
-    "{}/llvm-profdata merge -sparse {} -o {}".format(
-        llvm_path,
-        " ".join(cov_files),
+    [
+        os.path.join(llvm_path, "llvm-profdata"),
+        "merge",
+        "-sparse",
+        *cov_files,
+        "-o",
         final_cov_path,
-    ),
-    shell=True,
+    ],
     cwd=ROOT,
 )
 
 # Create the report!
 subprocess.check_call(
-    (
-        "{}/llvm-cov report --Xdemangler=rustfilt --instr-profile={} "
-        "-ignore-filename-regex='.cargo' -object {}"
-    ).format(
-        llvm_path,
-        final_cov_path,
-        " -object ".join(exec_files),
-    ),
-    shell=True,
+    [
+        os.path.join(llvm_path, "llvm-cov"),
+        "report",
+        "--Xdemangler=rustfilt",
+        "--instr-profile=" + final_cov_path,
+        "-ignore-filename-regex=.cargo",
+        *(arg for f in exec_files for arg in ("-object", f)),
+    ],
     cwd=ROOT,
 )

@@ -63,19 +63,22 @@ out_path = positional[2] if len(positional) >= 3 else None
 if dist not in {"implied", "univ"}:
     sys.exit("Distribution must be 'implied' or 'univ'")
 
-# Build Criterion CLI options (without leading --, combined with regex after single --)
-criterion_opts_str = " ".join(criterion_opts)
 
 # Open output: file or stdout
 out = open(out_path, "w") if out_path else sys.stdout
 
 
-def run_cargo_bench(cmd):
+def run_cargo_bench(features, bench_filter):
     """Run cargo bench, letting Criterion output go to stdout and forwarding
-    compiler output to stderr.  Returns captured RATIO lines as a string."""
+    compiler output to stderr.  Returns captured RATIO lines as a string.
+    Uses an argv list (no shell) so caller-supplied Criterion options cannot be
+    interpreted as shell syntax."""
+    cmd = [
+        "cargo", "bench", "--bench", "tables",
+        "--features", features, "--", *criterion_opts, bench_filter,
+    ]
     process = subprocess.Popen(
         cmd,
-        shell=True,
         stdout=None,  # Criterion output → script's stdout
         stderr=subprocess.PIPE,  # capture for RATIO parsing + forwarding
         text=True,
@@ -114,10 +117,7 @@ no_table_dir = os.path.join(criterion_base, "no_table")
 if os.path.isdir(no_table_dir):
     shutil.rmtree(no_table_dir)
 
-ratio_text = run_cargo_bench(
-    "cargo bench --bench tables --features %s -- %s '^no_table/'"
-    % (features, criterion_opts_str)
-)
+ratio_text = run_cargo_bench(features, "^no_table/")
 
 bench_results = get_table_bench_results(criterion_base, group="no_table")
 
@@ -146,10 +146,7 @@ if dist == "univ":
 if os.path.isdir(no_table_dir):
     shutil.rmtree(no_table_dir)
 
-ratio_text_dg = run_cargo_bench(
-    "cargo bench --bench tables --features %s -- %s '^no_table/'"
-    % (features_dg, criterion_opts_str)
-)
+ratio_text_dg = run_cargo_bench(features_dg, "^no_table/")
 
 bench_results_dg = get_table_bench_results(criterion_base, group="no_table")
 for r in sorted(bench_results_dg, key=lambda r: (r["code"], r["endian"], r["op"])):
@@ -221,10 +218,7 @@ for bits in range(1, 17):
         if dist == "univ":
             features += ",bench-univ"
 
-        ratio_text = run_cargo_bench(
-            "cargo bench --bench tables --features %s -- %s '^table/'"
-            % (features, criterion_opts_str)
-        )
+        ratio_text = run_cargo_bench(features, "^table/")
 
         # Parse hit ratios
         ratios = parse_ratios_from_stderr(ratio_text)
@@ -268,10 +262,7 @@ for bits in range(1, 17):
         if dist == "univ":
             features += ",bench-univ"
 
-        ratio_text_dg = run_cargo_bench(
-            "cargo bench --bench tables --features %s -- %s '^table/'"
-            % (features, criterion_opts_str)
-        )
+        ratio_text_dg = run_cargo_bench(features, "^table/")
 
         ratios_dg = parse_ratios_from_stderr(ratio_text_dg)
         bench_results_dg = get_table_bench_results(criterion_base, group="table")
