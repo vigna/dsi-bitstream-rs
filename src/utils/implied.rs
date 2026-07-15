@@ -16,21 +16,35 @@ use rand::prelude::*;
 /// probability 2⁻*ⁿ*.
 ///
 /// This function works only with monotonic non-decreasing length functions. It
-/// returns two vectors: the first vector contains one entry per distinct code
-/// length up to 128, plus one sentinel entry (the first change point with
-/// length > 128) that serves as the upper bound for the last valid group; the
-/// second vector contains the probability of each valid length group; its
-/// length is always one less than that of the first vector.
+/// returns two vectors: the first contains one entry per distinct code length,
+/// followed by a sentinel entry that upper-bounds the last group -- either the
+/// first change point with length > 128, or, if the function never exceeds 128,
+/// the end of the domain (`u64::MAX`, exclusive). The second vector contains the
+/// probability of each length group; its length is always one less than that of
+/// the first.
 pub fn get_implied_distribution(f: impl Fn(u64) -> usize) -> (Vec<(u64, usize)>, Vec<f64>) {
     // Collect change points with code length up to 128, plus the first
     // change point with length > 128 as a sentinel upper bound for the
     // last valid length group.
     let mut change_points = Vec::new();
+    let mut hit_sentinel = false;
     for item in FindChangePoints::new(f) {
         let len = item.1;
         change_points.push(item);
         if len > 128 {
+            hit_sentinel = true;
             break;
+        }
+    }
+    // Real code length functions stay well below 128, so FindChangePoints
+    // exhausts without ever emitting the > 128 sentinel. Append an upper bound
+    // at the end of the domain (u64::MAX, exclusive) so the windows(2) below
+    // does not drop the final (highest-value) length group.
+    if !hit_sentinel {
+        if let Some(&(last_input, last_len)) = change_points.last() {
+            if last_input != u64::MAX {
+                change_points.push((u64::MAX, last_len));
+            }
         }
     }
 
@@ -122,13 +136,25 @@ mod tests {
     use rand::rngs::SmallRng;
 
     #[test]
-    fn constant_length_samples_uniformly_without_panic() {
+    fn constant_length_samples_without_panic() {
         let mut rng = SmallRng::seed_from_u64(0);
-        // A constant length function has an empty set of probability groups; it
-        // must sample uniformly instead of panicking on WeightedIndex::new.
+        // A constant length function yields a single length group spanning the
+        // whole domain; sampling must not panic.
         let vals: Vec<u64> = sample_implied_distribution(|_| 7, &mut rng)
             .take(100)
             .collect();
         assert_eq!(vals.len(), 100);
+    }
+
+    #[test]
+    fn distribution_includes_final_group() {
+        use super::get_implied_distribution;
+        use crate::codes::len_gamma;
+        let (change_points, probabilities) = get_implied_distribution(len_gamma);
+        // Real code lengths never exceed 128, so the last group used to be
+        // dropped; it must now be present, bounded by the domain-end sentinel.
+        assert!(!probabilities.is_empty());
+        assert_eq!(probabilities.len(), change_points.len() - 1);
+        assert_eq!(change_points.last().unwrap().0, u64::MAX);
     }
 }
