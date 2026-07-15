@@ -21,8 +21,10 @@ mkdir tmp
 unzip "tests/corpus/${TARGET}.zip" -d tmp
 # Merge and deduplicate the current corpus 
 cargo fuzz run ${TARGET} -- -merge=1 tmp fuzz/corpus/${TARGET}
-# Recompress
-zip tests/corpus/${TARGET}.zip tmp/*
+# Recompress from inside tmp so entries have no tmp/ prefix, into a fresh
+# archive (remove the old one first so stale entries are not kept)
+rm -f "tests/corpus/${TARGET}.zip"
+(cd tmp && zip -r "../tests/corpus/${TARGET}.zip" .)
 # Delete tmp folder
 rm -rfd tmp
 ```
