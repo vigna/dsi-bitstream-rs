@@ -25,7 +25,9 @@ serde = { version = "1.0.228", optional = true }
 dsi-bitstream = { path = ".", features = ["implied"] }
 criterion = "0.6.0"
 rand = "0.10.0"
-zip = "7.0.0"
+# default-features disabled to drop the optional `time` dependency (and other
+# codecs) we do not use; the checked-in corpora are STORED or DEFLATED only.
+zip = { version = "7.0.0", default-features = false, features = ["deflate"] }
 rand_distr = "0.6.0"
 serde_json = "1.0"
 
