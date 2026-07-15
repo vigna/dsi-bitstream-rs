@@ -33,9 +33,9 @@ fn test_word_pos() -> Result<(), Box<dyn core::error::Error>> {
     let mut reader = CountBitReader::<_, _, false>::new(reader);
     for _ in 0..100 {
         let _ = reader.read_gamma()?;
+        let pos = reader.bit_pos()?;
         assert_eq!(
-            reader.bits_read as u64,
-            reader.bit_pos()?,
+            reader.bits_read, pos,
             "Number of bits read and position in bit stream are different"
         );
     }
