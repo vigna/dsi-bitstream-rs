@@ -327,6 +327,9 @@ pub enum CodeError {
     ParseError(core::num::ParseIntError),
     /// Unknown code name. Uses a fixed-size array instead of `String` for `no_std` compatibility.
     UnknownCode([u8; 32]),
+    /// A parameter is outside the valid range for its code (for example
+    /// `Golomb(0)`, `Zeta(0)`, or a shift parameter `>= 64`).
+    InvalidParameter([u8; 32]),
 }
 impl core::error::Error for CodeError {}
 impl core::fmt::Display for CodeError {
@@ -335,6 +338,16 @@ impl core::fmt::Display for CodeError {
             CodeError::ParseError(e) => write!(f, "parse error: {}", e),
             CodeError::UnknownCode(s) => {
                 write!(f, "unknown code: ")?;
+                for c in s {
+                    if *c == 0 {
+                        break;
+                    }
+                    write!(f, "{}", *c as char)?;
+                }
+                Ok(())
+            }
+            CodeError::InvalidParameter(s) => {
+                write!(f, "invalid parameter for code: ")?;
                 for c in s {
                     if *c == 0 {
                         break;
@@ -391,36 +404,59 @@ impl core::str::FromStr for Codes {
             "VByteLe" => Ok(Codes::VByteLe),
 
             _ => {
-                let mut parts = s.split('(');
-                let name = parts
-                    .next()
+                // Strict grammar: exactly `Name(param)` with `param` a single
+                // integer and nothing after the closing parenthesis. The former
+                // `split` accepted trailing/incomplete text (e.g. `Zeta(3)x`).
+                let inner = s
+                    .strip_suffix(')')
                     .ok_or_else(|| CodeError::UnknownCode(array_format_error(s)))?;
-                let k = parts
-                    .next()
-                    .ok_or_else(|| CodeError::UnknownCode(array_format_error(s)))?
-                    .split(')')
-                    .next()
+                let (name, param) = inner
+                    .split_once('(')
                     .ok_or_else(|| CodeError::UnknownCode(array_format_error(s)))?;
+                if param.contains('(') || param.contains(')') {
+                    return Err(CodeError::UnknownCode(array_format_error(s)));
+                }
+                let invalid = || CodeError::InvalidParameter(array_format_error(s));
                 match name {
+                    // zeta is defined for k in [1, 64).
                     "Zeta" => {
-                        let k: usize = k.parse()?;
-                        // ζ codes are defined only for k >= 1
-                        if k == 0 {
-                            return Err(CodeError::UnknownCode(array_format_error(s)));
+                        let k: usize = param.parse()?;
+                        if k == 0 || k >= 64 {
+                            return Err(invalid());
                         }
                         Ok(Codes::Zeta(k))
                     }
-                    "Pi" => Ok(Codes::Pi(k.parse()?)),
+                    // pi, exponential Golomb and Rice shift by their parameter,
+                    // so it must stay below 64.
+                    "Pi" => {
+                        let k: usize = param.parse()?;
+                        if k >= 64 {
+                            return Err(invalid());
+                        }
+                        Ok(Codes::Pi(k))
+                    }
+                    "ExpGolomb" => {
+                        let k: usize = param.parse()?;
+                        if k >= 64 {
+                            return Err(invalid());
+                        }
+                        Ok(Codes::ExpGolomb(k))
+                    }
+                    "Rice" => {
+                        let k: usize = param.parse()?;
+                        if k >= 64 {
+                            return Err(invalid());
+                        }
+                        Ok(Codes::Rice(k))
+                    }
+                    // Golomb divides by its modulus, which must be positive.
                     "Golomb" => {
-                        let b: u64 = k.parse()?;
-                        // Golomb codes are defined only for b >= 1
+                        let b: u64 = param.parse()?;
                         if b == 0 {
-                            return Err(CodeError::UnknownCode(array_format_error(s)));
+                            return Err(invalid());
                         }
                         Ok(Codes::Golomb(b))
                     }
-                    "ExpGolomb" => Ok(Codes::ExpGolomb(k.parse()?)),
-                    "Rice" => Ok(Codes::Rice(k.parse()?)),
                     _ => Err(CodeError::UnknownCode(array_format_error(name))),
                 }
             }
@@ -498,5 +534,46 @@ impl<E: Endianness, CW: CodesWrite<E> + ?Sized> StaticCodeWrite<E, CW> for Minim
 impl CodeLen for MinimalBinary {
     fn len(&self, n: u64) -> usize {
         len_minimal_binary(n, self.0)
+    }
+}
+
+#[cfg(test)]
+mod parse_tests {
+    use super::Codes;
+    use core::str::FromStr;
+
+    #[test]
+    fn parses_valid_parameterized_codes() {
+        assert_eq!(Codes::from_str("Unary").unwrap(), Codes::Unary);
+        assert_eq!(Codes::from_str("Zeta(3)").unwrap(), Codes::Zeta(3));
+        assert_eq!(Codes::from_str("Pi(2)").unwrap(), Codes::Pi(2));
+        assert_eq!(Codes::from_str("Golomb(7)").unwrap(), Codes::Golomb(7));
+        assert_eq!(
+            Codes::from_str("ExpGolomb(0)").unwrap(),
+            Codes::ExpGolomb(0)
+        );
+        assert_eq!(Codes::from_str("Rice(0)").unwrap(), Codes::Rice(0));
+        assert_eq!(Codes::from_str("Rice(63)").unwrap(), Codes::Rice(63));
+    }
+
+    #[test]
+    fn rejects_out_of_range_parameters() {
+        // These previously deserialized into values that panic on first use
+        // (divide-by-zero) or shift by >= 64.
+        assert!(Codes::from_str("Golomb(0)").is_err());
+        assert!(Codes::from_str("Zeta(0)").is_err());
+        assert!(Codes::from_str("Zeta(64)").is_err());
+        assert!(Codes::from_str("Rice(64)").is_err());
+        assert!(Codes::from_str("Pi(64)").is_err());
+        assert!(Codes::from_str("ExpGolomb(64)").is_err());
+    }
+
+    #[test]
+    fn rejects_malformed_grammar() {
+        assert!(Codes::from_str("Zeta(3").is_err());
+        assert!(Codes::from_str("Zeta(3)x").is_err());
+        assert!(Codes::from_str("Zeta(3)(4)").is_err());
+        assert!(Codes::from_str("Zeta()").is_err());
+        assert!(Codes::from_str("Nope(1)").is_err());
     }
 }
