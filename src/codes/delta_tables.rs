@@ -12,7 +12,7 @@ pub const WRITE_MAX: u64 = 255;
 /// Reads from the decoding table.
 ///
 /// Returns `(len_with_flag, value_or_gamma)` where:
-/// - If len_with_flag >= 0: complete code, value_or_gamma is decoded value, len_with_flag is code length
+/// - If len_with_flag > 0: complete code, value_or_gamma is decoded value, len_with_flag is code length
 /// - If len_with_flag < 0: partial code (gamma decoded), value_or_gamma is gamma_len, (len_with_flag & 0x7F) is gamma code length
 /// - If len_with_flag = 0: no valid decoding (gamma not decoded)
 ///
@@ -35,7 +35,7 @@ pub fn read_table_le<B: BitRead<LE>>(backend: &mut B) -> (i8, u64) {
 /// Reads from the decoding table.
 ///
 /// Returns `(len_with_flag, value_or_gamma)` where:
-/// - If len_with_flag >= 0: complete code, value_or_gamma is decoded value, len_with_flag is code length
+/// - If len_with_flag > 0: complete code, value_or_gamma is decoded value, len_with_flag is code length
 /// - If len_with_flag < 0: partial code (gamma decoded), value_or_gamma is gamma_len, (len_with_flag & 0x7F) is gamma code length
 /// - If len_with_flag = 0: no valid decoding (gamma not decoded)
 ///

@@ -606,7 +606,7 @@ def gen_delta(read_bits, write_max_val, len_max_val=None, merged_table=False):
 /// Reads from the decoding table.
 ///
 /// Returns `(len_with_flag, value_or_gamma)` where:
-/// - If len_with_flag >= 0: complete code, value_or_gamma is decoded value, len_with_flag is code length
+/// - If len_with_flag > 0: complete code, value_or_gamma is decoded value, len_with_flag is code length
 /// - If len_with_flag < 0: partial code (gamma decoded), value_or_gamma is gamma_len, (len_with_flag & 0x7F) is gamma code length
 /// - If len_with_flag = 0: no valid decoding (gamma not decoded)
 ///
@@ -1121,7 +1121,7 @@ def gen_omega(read_bits, write_max_val, len_max_val=None, merged_table=False):
 /// Reads from the decoding table.
 ///
 /// Returns `(len_with_flag, value)` where:
-/// - If len_with_flag >= 0: complete code, value is decoded value, len_with_flag is code length
+/// - If len_with_flag > 0: complete code, value is decoded value, len_with_flag is code length
 /// - If len_with_flag < 0: partial code, value is partial_n, (len_with_flag & 0x7F) is partial_len
 /// - If len_with_flag = 0: no valid decoding (cannot occur with >= 2 bit tables)
 ///
@@ -1491,7 +1491,7 @@ def gen_pi(read_bits, write_max_val, len_max_val=None, k=2, merged_table=False):
 /// Reads from the decoding table.
 ///
 /// Returns `(len_with_flag, value_or_lambda)` where:
-/// - If len_with_flag >= 0: complete code, value_or_lambda is decoded value, len_with_flag is code length
+/// - If len_with_flag > 0: complete code, value_or_lambda is decoded value, len_with_flag is code length
 /// - If len_with_flag < 0: partial code (rice decoded), value_or_lambda is lambda, (len_with_flag & 0x7F) is rice code length
 /// - If len_with_flag = 0: no valid decoding (rice not decoded)
 ///
