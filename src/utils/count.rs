@@ -21,8 +21,10 @@ use mem_dbg::{MemDbg, MemSize};
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
 pub struct CountBitWriter<E: Endianness, BW: BitWrite<E>, const PRINT: bool = false> {
     bit_write: BW,
-    /// The number of bits written so far on the underlying [`BitWrite`].
-    pub bits_written: usize,
+    /// The number of bits written so far on the underlying [`BitWrite`]. Uses
+    /// u64 (bit positions are u64) so it does not wrap after 2^32 bits on
+    /// 32-bit targets. Increments widen usize losslessly (usize <= 64 bits).
+    pub bits_written: u64,
     _marker: core::marker::PhantomData<E>,
 }
 
@@ -50,7 +52,7 @@ impl<E: Endianness, BW: BitWrite<E>, const PRINT: bool> BitWrite<E>
 
     fn write_bits(&mut self, value: u64, num_bits: usize) -> Result<usize, Self::Error> {
         self.bit_write.write_bits(value, num_bits).inspect(|x| {
-            self.bits_written += *x;
+            self.bits_written += *x as u64;
             if PRINT {
                 #[cfg(feature = "std")]
                 eprintln!(
@@ -63,7 +65,7 @@ impl<E: Endianness, BW: BitWrite<E>, const PRINT: bool> BitWrite<E>
 
     fn write_unary(&mut self, n: u64) -> Result<usize, Self::Error> {
         self.bit_write.write_unary(n).inspect(|x| {
-            self.bits_written += *x;
+            self.bits_written += *x as u64;
             if PRINT {
                 #[cfg(feature = "std")]
                 eprintln!("write_unary({}) = {} (total = {})", n, x, self.bits_written);
@@ -89,7 +91,7 @@ impl<E: Endianness, BW: BitWrite<E> + GammaWrite<E>, const PRINT: bool> GammaWri
 {
     fn write_gamma(&mut self, n: u64) -> Result<usize, BW::Error> {
         self.bit_write.write_gamma(n).inspect(|x| {
-            self.bits_written += *x;
+            self.bits_written += *x as u64;
             if PRINT {
                 #[cfg(feature = "std")]
                 eprintln!("write_gamma({}) = {} (total = {})", n, x, self.bits_written);
@@ -103,7 +105,7 @@ impl<E: Endianness, BW: BitWrite<E> + DeltaWrite<E>, const PRINT: bool> DeltaWri
 {
     fn write_delta(&mut self, n: u64) -> Result<usize, BW::Error> {
         self.bit_write.write_delta(n).inspect(|x| {
-            self.bits_written += *x;
+            self.bits_written += *x as u64;
             if PRINT {
                 #[cfg(feature = "std")]
                 eprintln!("write_delta({}) = {} (total = {})", n, x, self.bits_written);
@@ -117,7 +119,7 @@ impl<E: Endianness, BW: BitWrite<E> + ZetaWrite<E>, const PRINT: bool> ZetaWrite
 {
     fn write_zeta(&mut self, n: u64, k: usize) -> Result<usize, BW::Error> {
         self.bit_write.write_zeta(n, k).inspect(|x| {
-            self.bits_written += *x;
+            self.bits_written += *x as u64;
             if PRINT {
                 #[cfg(feature = "std")]
                 eprintln!(
@@ -130,7 +132,7 @@ impl<E: Endianness, BW: BitWrite<E> + ZetaWrite<E>, const PRINT: bool> ZetaWrite
 
     fn write_zeta3(&mut self, n: u64) -> Result<usize, BW::Error> {
         self.bit_write.write_zeta3(n).inspect(|x| {
-            self.bits_written += *x;
+            self.bits_written += *x as u64;
             if PRINT {
                 #[cfg(feature = "std")]
                 eprintln!("write_zeta3({}) = {} (total = {})", n, x, self.bits_written);
@@ -144,7 +146,7 @@ impl<E: Endianness, BW: BitWrite<E> + OmegaWrite<E>, const PRINT: bool> OmegaWri
 {
     fn write_omega(&mut self, n: u64) -> Result<usize, BW::Error> {
         self.bit_write.write_omega(n).inspect(|x| {
-            self.bits_written += *x;
+            self.bits_written += *x as u64;
             if PRINT {
                 #[cfg(feature = "std")]
                 eprintln!("write_omega({}) = {} (total = {})", n, x, self.bits_written);
@@ -158,7 +160,7 @@ impl<E: Endianness, BW: BitWrite<E> + PiWrite<E>, const PRINT: bool> PiWrite<E>
 {
     fn write_pi(&mut self, n: u64, k: usize) -> Result<usize, BW::Error> {
         self.bit_write.write_pi(n, k).inspect(|x| {
-            self.bits_written += *x;
+            self.bits_written += *x as u64;
             if PRINT {
                 #[cfg(feature = "std")]
                 eprintln!(
@@ -171,7 +173,7 @@ impl<E: Endianness, BW: BitWrite<E> + PiWrite<E>, const PRINT: bool> PiWrite<E>
 
     fn write_pi2(&mut self, n: u64) -> Result<usize, BW::Error> {
         self.bit_write.write_pi2(n).inspect(|x| {
-            self.bits_written += *x;
+            self.bits_written += *x as u64;
             if PRINT {
                 #[cfg(feature = "std")]
                 eprintln!("write_pi2({}) = {} (total = {})", n, x, self.bits_written);
@@ -201,8 +203,9 @@ impl<E: Endianness, BW: BitWrite<E> + BitSeek, const PRINT: bool> BitSeek
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
 pub struct CountBitReader<E: Endianness, BR: BitRead<E>, const PRINT: bool = false> {
     bit_read: BR,
-    /// The number of bits read (or skipped) so far from the underlying [`BitRead`].
-    pub bits_read: usize,
+    /// The number of bits read (or skipped) so far from the underlying
+    /// [`BitRead`]. Uses u64 (see `bits_written`).
+    pub bits_read: u64,
     _marker: core::marker::PhantomData<E>,
 }
 
@@ -231,7 +234,7 @@ impl<E: Endianness, BR: BitRead<E>, const PRINT: bool> BitRead<E> for CountBitRe
     fn read_bits(&mut self, num_bits: usize) -> Result<u64, Self::Error> {
         self.bit_read.read_bits(num_bits).inspect(|x| {
             let _ = x;
-            self.bits_read += num_bits;
+            self.bits_read += num_bits as u64;
             if PRINT {
                 #[cfg(feature = "std")]
                 eprintln!(
@@ -244,7 +247,7 @@ impl<E: Endianness, BR: BitRead<E>, const PRINT: bool> BitRead<E> for CountBitRe
 
     fn read_unary(&mut self) -> Result<u64, Self::Error> {
         self.bit_read.read_unary().inspect(|x| {
-            self.bits_read += *x as usize + 1;
+            self.bits_read += *x + 1;
             if PRINT {
                 #[cfg(feature = "std")]
                 eprintln!("read_unary() = {} (total = {})", x, self.bits_read);
@@ -257,8 +260,11 @@ impl<E: Endianness, BR: BitRead<E>, const PRINT: bool> BitRead<E> for CountBitRe
     }
 
     fn skip_bits(&mut self, n_bits: usize) -> Result<(), Self::Error> {
+        // Count only on success: a failed skip must not report the bits as
+        // skipped (previously the counter was incremented before the fallible
+        // call).
         self.bit_read.skip_bits(n_bits).inspect(|_| {
-            self.bits_read += n_bits;
+            self.bits_read += n_bits as u64;
             if PRINT {
                 #[cfg(feature = "std")]
                 eprintln!("skip_bits({}) (total = {})", n_bits, self.bits_read);
@@ -267,6 +273,9 @@ impl<E: Endianness, BR: BitRead<E>, const PRINT: bool> BitRead<E> for CountBitRe
     }
 
     fn skip_bits_after_peek(&mut self, n: usize) {
+        // This fast path advances the underlying stream, so count it too;
+        // it is infallible.
+        self.bits_read += n as u64;
         self.bit_read.skip_bits_after_peek(n)
     }
 }
@@ -276,7 +285,7 @@ impl<E: Endianness, BR: BitRead<E> + GammaRead<E>, const PRINT: bool> GammaRead<
 {
     fn read_gamma(&mut self) -> Result<u64, BR::Error> {
         self.bit_read.read_gamma().inspect(|x| {
-            self.bits_read += len_gamma(*x);
+            self.bits_read += len_gamma(*x) as u64;
             if PRINT {
                 #[cfg(feature = "std")]
                 eprintln!("read_gamma() = {} (total = {})", x, self.bits_read);
@@ -290,7 +299,7 @@ impl<E: Endianness, BR: BitRead<E> + DeltaRead<E>, const PRINT: bool> DeltaRead<
 {
     fn read_delta(&mut self) -> Result<u64, BR::Error> {
         self.bit_read.read_delta().inspect(|x| {
-            self.bits_read += len_delta(*x);
+            self.bits_read += len_delta(*x) as u64;
             if PRINT {
                 #[cfg(feature = "std")]
                 eprintln!("read_delta() = {} (total = {})", x, self.bits_read);
@@ -304,7 +313,7 @@ impl<E: Endianness, BR: BitRead<E> + ZetaRead<E>, const PRINT: bool> ZetaRead<E>
 {
     fn read_zeta(&mut self, k: usize) -> Result<u64, BR::Error> {
         self.bit_read.read_zeta(k).inspect(|x| {
-            self.bits_read += len_zeta(*x, k);
+            self.bits_read += len_zeta(*x, k) as u64;
             if PRINT {
                 #[cfg(feature = "std")]
                 eprintln!("read_zeta({}) = {} (total = {})", k, x, self.bits_read);
@@ -314,7 +323,7 @@ impl<E: Endianness, BR: BitRead<E> + ZetaRead<E>, const PRINT: bool> ZetaRead<E>
 
     fn read_zeta3(&mut self) -> Result<u64, BR::Error> {
         self.bit_read.read_zeta3().inspect(|x| {
-            self.bits_read += len_zeta(*x, 3);
+            self.bits_read += len_zeta(*x, 3) as u64;
             if PRINT {
                 #[cfg(feature = "std")]
                 eprintln!("read_zeta3() = {} (total = {})", x, self.bits_read);
@@ -328,7 +337,7 @@ impl<E: Endianness, BR: BitRead<E> + OmegaRead<E>, const PRINT: bool> OmegaRead<
 {
     fn read_omega(&mut self) -> Result<u64, BR::Error> {
         self.bit_read.read_omega().inspect(|x| {
-            self.bits_read += len_omega(*x);
+            self.bits_read += len_omega(*x) as u64;
             if PRINT {
                 #[cfg(feature = "std")]
                 eprintln!("read_omega() = {} (total = {})", x, self.bits_read);
@@ -342,7 +351,7 @@ impl<E: Endianness, BR: BitRead<E> + PiRead<E>, const PRINT: bool> PiRead<E>
 {
     fn read_pi(&mut self, k: usize) -> Result<u64, BR::Error> {
         self.bit_read.read_pi(k).inspect(|x| {
-            self.bits_read += len_pi(*x, k);
+            self.bits_read += len_pi(*x, k) as u64;
             if PRINT {
                 #[cfg(feature = "std")]
                 eprintln!("read_pi({}) = {} (total = {})", k, x, self.bits_read);
@@ -352,7 +361,7 @@ impl<E: Endianness, BR: BitRead<E> + PiRead<E>, const PRINT: bool> PiRead<E>
 
     fn read_pi2(&mut self) -> Result<u64, BR::Error> {
         self.bit_read.read_pi2().inspect(|x| {
-            self.bits_read += len_pi(*x, 2);
+            self.bits_read += len_pi(*x, 2) as u64;
             if PRINT {
                 #[cfg(feature = "std")]
                 eprintln!("read_pi2() = {} (total = {})", x, self.bits_read);
@@ -404,13 +413,16 @@ mod tests {
         count_bit_write.write_zeta3(0)?;
         assert_eq!(count_bit_write.bits_written, 174);
         count_bit_write.write_omega(3)?;
-        assert_eq!(count_bit_write.bits_written, 174 + len_omega(3));
+        assert_eq!(count_bit_write.bits_written, 174 + len_omega(3) as u64);
         let after_omega = count_bit_write.bits_written;
         count_bit_write.write_pi(5, 3)?;
-        assert_eq!(count_bit_write.bits_written, after_omega + len_pi(5, 3));
+        assert_eq!(
+            count_bit_write.bits_written,
+            after_omega + len_pi(5, 3) as u64
+        );
         let after_pi = count_bit_write.bits_written;
         count_bit_write.write_pi2(7)?;
-        assert_eq!(count_bit_write.bits_written, after_pi + len_pi(7, 2));
+        assert_eq!(count_bit_write.bits_written, after_pi + len_pi(7, 2) as u64);
         let after_pi2 = count_bit_write.bits_written;
         count_bit_write.flush()?;
         // Flushing must not change the count
@@ -445,5 +457,28 @@ mod tests {
         assert_eq!(count_bit_read.bits_read, after_pi2);
 
         Ok(())
+    }
+
+    #[test]
+    fn skip_bits_after_peek_is_counted() {
+        let buffer = vec![0u64; 4];
+        let bit_read = <BufBitReader<LE, _>>::new(MemWordReader::<u64, _>::new(&buffer));
+        let mut r = CountBitReader::<_, _, false>::new(bit_read);
+        let _ = r.peek_bits(5).unwrap();
+        r.skip_bits_after_peek(5);
+        // peek does not consume; the post-peek skip advances the stream, so it
+        // must be counted (previously it was not).
+        assert_eq!(r.bits_read, 5);
+    }
+
+    #[test]
+    fn failed_skip_bits_is_not_counted() {
+        // Strict reader over an empty backend: skip_bits hits EOF.
+        let buffer = Vec::<u64>::new();
+        let bit_read = <BufBitReader<LE, _>>::new(MemWordReader::<u64, _>::new(&buffer));
+        let mut r = CountBitReader::<_, _, false>::new(bit_read);
+        assert!(r.skip_bits(1).is_err());
+        // A failed skip must not report the bits as skipped.
+        assert_eq!(r.bits_read, 0);
     }
 }
