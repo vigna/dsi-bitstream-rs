@@ -55,12 +55,13 @@ where
 {
     /// The [`WordRead`] used to fill the buffer.
     backend: WR,
-    /// The 2-word bit buffer that is used to read the codes. It is never full,
-    /// but it may be empty. Only the upper (BE) or lower (LE)
-    /// `bits_in_buffer` bits are valid; the other bits are always zeroes.
+    /// The 2-word bit buffer that is used to read the codes. It may be empty
+    /// and, after a peek of more than a word of bits, completely full. Only
+    /// the upper (BE) or lower (LE) `bits_in_buffer` bits are valid; the
+    /// other bits are always zeroes.
     buffer: BB<WR>,
     /// Number of valid upper (BE) or lower (LE) bits in the buffer.
-    /// It is always smaller than `BB::<WR>::BITS`.
+    /// It is at most `BB::<WR>::BITS`.
     bits_in_buffer: usize,
     _marker: core::marker::PhantomData<(E, RP)>,
 }
@@ -172,6 +173,15 @@ where
         self.buffer |= new_word << (Self::BUFFER_BITS - self.bits_in_buffer);
         Ok(())
     }
+
+    /// Second refill for a peek of more than a word of bits from an
+    /// almost-empty buffer; out of line to keep the code of the common peek
+    /// path small.
+    #[inline(never)]
+    #[cold]
+    fn refill_second(&mut self) -> Result<(), <WR as WordRead>::Error> {
+        self.refill()
+    }
 }
 
 impl<WR: WordRead, RP: ReadParams> BitRead<BE> for BufBitReader<BE, WR, RP>
@@ -187,9 +197,16 @@ where
         debug_assert!(n_bits > 0);
         debug_assert!(n_bits <= Self::PeekWord::BITS as usize);
 
-        // A peek can do at most one refill, otherwise we might lose data
         if n_bits > self.bits_in_buffer {
             self.refill()?;
+            // A peek of more than WORD_BITS bits (e.g., PEEK_BITS bits) from
+            // an empty buffer needs a second refill; the first condition
+            // makes this check disappear at compile time whenever n_bits is
+            // a constant not exceeding WORD_BITS (e.g., in table-based code
+            // readers)
+            if n_bits > Self::WORD_BITS && n_bits > self.bits_in_buffer {
+                self.refill_second()?;
+            }
         }
 
         debug_assert!(n_bits <= self.bits_in_buffer);
@@ -207,10 +224,17 @@ where
     #[inline]
     fn read_bits(&mut self, mut num_bits: usize) -> Result<u64, Self::Error> {
         debug_assert!(num_bits <= 64);
-        debug_assert!(self.bits_in_buffer < Self::BUFFER_BITS);
+        debug_assert!(self.bits_in_buffer <= Self::BUFFER_BITS);
 
-        // most common path, we just read the buffer
-        if num_bits <= self.bits_in_buffer {
+        // most common path, we just read the buffer; the second condition
+        // excludes the rare case of the complete read of a completely full
+        // buffer (possible only after a peek of more than a word of bits),
+        // which would overflow the shifts below, and is handled by the next
+        // branch; when the buffer is larger than 64 bits the second condition
+        // is resolved at compile time, giving a single-comparison fast path
+        if num_bits <= self.bits_in_buffer
+            && (Self::BUFFER_BITS > 64 || num_bits != Self::BUFFER_BITS)
+        {
             // Valid right shift of BB::<WR>::BITS - num_bits, even when num_bits is zero
             let result: u64 = (self.buffer >> (Self::BUFFER_BITS - num_bits - 1) >> 1_u32).as_to();
             self.bits_in_buffer -= num_bits;
@@ -218,8 +242,22 @@ where
             return Ok(result);
         }
 
-        let mut result: u64 =
-            (self.buffer >> (Self::BUFFER_BITS - 1 - self.bits_in_buffer) >> 1_u8).as_to();
+        // Complete read of a completely full buffer
+        if num_bits == self.bits_in_buffer {
+            let result: u64 = self.buffer.as_to();
+            self.bits_in_buffer = 0;
+            self.buffer = BB::<WR>::ZERO;
+            return Ok(result);
+        }
+
+        // The buffer can be full only if BUFFER_BITS <= 64, as num_bits <= 64;
+        // the condition on BUFFER_BITS is resolved at compile time
+        let mut result: u64 = if Self::BUFFER_BITS < 64 && self.bits_in_buffer == Self::BUFFER_BITS
+        {
+            self.buffer.as_to()
+        } else {
+            (self.buffer >> (Self::BUFFER_BITS - 1 - self.bits_in_buffer) >> 1_u8).as_to()
+        };
         num_bits -= self.bits_in_buffer;
 
         // Directly read to the result without updating the buffer
@@ -247,7 +285,7 @@ where
 
     #[inline]
     fn read_unary(&mut self) -> Result<u64, Self::Error> {
-        debug_assert!(self.bits_in_buffer < Self::BUFFER_BITS);
+        debug_assert!(self.bits_in_buffer <= Self::BUFFER_BITS);
 
         // count the zeros from the left
         let zeros: usize = self.buffer.leading_zeros() as _;
@@ -276,11 +314,19 @@ where
 
     #[inline]
     fn skip_bits(&mut self, mut n_bits: usize) -> Result<(), Self::Error> {
-        debug_assert!(self.bits_in_buffer < Self::BUFFER_BITS);
+        debug_assert!(self.bits_in_buffer <= Self::BUFFER_BITS);
         // happy case, just shift the buffer
         if n_bits <= self.bits_in_buffer {
             self.bits_in_buffer -= n_bits;
-            self.buffer <<= n_bits;
+            // n_bits == BUFFER_BITS is possible only when the buffer is
+            // completely full after a peek of more than a word of bits, and
+            // in that case the shift would overflow; the branch is
+            // essentially never taken
+            if n_bits == Self::BUFFER_BITS {
+                self.buffer = BB::<WR>::ZERO;
+            } else {
+                self.buffer <<= n_bits;
+            }
             return Ok(());
         }
 
@@ -307,30 +353,26 @@ where
         bit_write: &mut W,
         mut n: u64,
     ) -> Result<(), CopyError<Self::Error, W::Error>> {
-        let from_buffer = Ord::min(n, self.bits_in_buffer as _);
-        self.buffer = self.buffer.rotate_left(from_buffer as _);
-
-        #[allow(unused_mut)]
-        let mut self_buffer_u64: u64 = self.buffer.as_to();
-
-        #[cfg(feature = "checks")]
-        {
-            // Clean up in case checks are enabled
-            if n < 64 {
-                self_buffer_u64 &= (1_u64 << n) - 1;
-            }
+        // Copy from the buffer at most 64 bits at a time, as the buffer
+        // can hold more than 64 bits, but write_bits accepts at most 64
+        while n > 0 && self.bits_in_buffer > 0 {
+            let m = Ord::min(Ord::min(n, 64), self.bits_in_buffer as u64) as usize;
+            // The m highest bits of the buffer; m >= 1, so the shift is valid
+            let value: u64 = (self.buffer >> (Self::BUFFER_BITS - m)).as_to();
+            bit_write
+                .write_bits(value, m)
+                .map_err(CopyError::WriteError)?;
+            // m >= 1, so the two-step shift is valid even when m == BUFFER_BITS
+            self.buffer = self.buffer << (m - 1) << 1;
+            self.bits_in_buffer -= m;
+            n -= m as u64;
         }
 
-        bit_write
-            .write_bits(self_buffer_u64, from_buffer as usize)
-            .map_err(CopyError::WriteError)?;
-        n -= from_buffer;
-
         if n == 0 {
-            self.bits_in_buffer -= from_buffer as usize;
             return Ok(());
         }
 
+        // The buffer is empty: copy whole words
         while n > Self::WORD_BITS as u64 {
             bit_write
                 .write_bits(
@@ -346,6 +388,8 @@ where
         }
 
         debug_assert!(n > 0);
+        // Copy the n highest bits of a final word, and store the remaining
+        // bits at the top of the buffer, with zeros below
         let new_word = self
             .backend
             .read_word()
@@ -355,9 +399,8 @@ where
         bit_write
             .write_bits((new_word >> self.bits_in_buffer).as_u64(), n as usize)
             .map_err(CopyError::WriteError)?;
-        self.buffer = new_word
-            .as_double()
-            .rotate_right(Self::WORD_BITS as u32 - n as u32);
+        // n >= 1, so the two-step shift is valid
+        self.buffer = (new_word.as_double() << (Self::WORD_BITS + n as usize - 1)) << 1;
 
         Ok(())
     }
@@ -411,6 +454,15 @@ where
         self.bits_in_buffer += Self::WORD_BITS;
         Ok(())
     }
+
+    /// Second refill for a peek of more than a word of bits from an
+    /// almost-empty buffer; out of line to keep the code of the common peek
+    /// path small.
+    #[inline(never)]
+    #[cold]
+    fn refill_second(&mut self) -> Result<(), <WR as WordRead>::Error> {
+        self.refill()
+    }
 }
 
 impl<WR: WordRead, RP: ReadParams> BitRead<LE> for BufBitReader<LE, WR, RP>
@@ -426,9 +478,16 @@ where
         debug_assert!(n_bits > 0);
         debug_assert!(n_bits <= Self::PeekWord::BITS as usize);
 
-        // A peek can do at most one refill, otherwise we might lose data
         if n_bits > self.bits_in_buffer {
             self.refill()?;
+            // A peek of more than WORD_BITS bits (e.g., PEEK_BITS bits) from
+            // an empty buffer needs a second refill; the first condition
+            // makes this check disappear at compile time whenever n_bits is
+            // a constant not exceeding WORD_BITS (e.g., in table-based code
+            // readers)
+            if n_bits > Self::WORD_BITS && n_bits > self.bits_in_buffer {
+                self.refill_second()?;
+            }
         }
 
         debug_assert!(n_bits <= self.bits_in_buffer);
@@ -447,13 +506,28 @@ where
     #[inline]
     fn read_bits(&mut self, mut num_bits: usize) -> Result<u64, Self::Error> {
         debug_assert!(num_bits <= 64);
-        debug_assert!(self.bits_in_buffer < Self::BUFFER_BITS);
+        debug_assert!(self.bits_in_buffer <= Self::BUFFER_BITS);
 
-        // most common path, we just read the buffer
-        if num_bits <= self.bits_in_buffer {
+        // most common path, we just read the buffer; the second condition
+        // excludes the rare case of the complete read of a completely full
+        // buffer (possible only after a peek of more than a word of bits),
+        // which would overflow the shifts below, and is handled by the next
+        // branch; when the buffer is larger than 64 bits the second condition
+        // is resolved at compile time, giving a single-comparison fast path
+        if num_bits <= self.bits_in_buffer
+            && (Self::BUFFER_BITS > 64 || num_bits != Self::BUFFER_BITS)
+        {
             let result: u64 = (self.buffer & ((BB::<WR>::ONE << num_bits) - BB::<WR>::ONE)).as_to();
             self.bits_in_buffer -= num_bits;
             self.buffer >>= num_bits;
+            return Ok(result);
+        }
+
+        // Complete read of a completely full buffer
+        if num_bits == self.bits_in_buffer {
+            let result: u64 = self.buffer.as_to();
+            self.bits_in_buffer = 0;
+            self.buffer = BB::<WR>::ZERO;
             return Ok(result);
         }
 
@@ -488,7 +562,7 @@ where
 
     #[inline]
     fn read_unary(&mut self) -> Result<u64, Self::Error> {
-        debug_assert!(self.bits_in_buffer < Self::BUFFER_BITS);
+        debug_assert!(self.bits_in_buffer <= Self::BUFFER_BITS);
 
         // count the zeros from the right
         let zeros: usize = self.buffer.trailing_zeros() as usize;
@@ -517,11 +591,19 @@ where
 
     #[inline]
     fn skip_bits(&mut self, mut n_bits: usize) -> Result<(), Self::Error> {
-        debug_assert!(self.bits_in_buffer < Self::BUFFER_BITS);
+        debug_assert!(self.bits_in_buffer <= Self::BUFFER_BITS);
         // happy case, just shift the buffer
         if n_bits <= self.bits_in_buffer {
             self.bits_in_buffer -= n_bits;
-            self.buffer >>= n_bits;
+            // n_bits == BUFFER_BITS is possible only when the buffer is
+            // completely full after a peek of more than a word of bits, and
+            // in that case the shift would overflow; the branch is
+            // essentially never taken
+            if n_bits == Self::BUFFER_BITS {
+                self.buffer = BB::<WR>::ZERO;
+            } else {
+                self.buffer >>= n_bits;
+            }
             return Ok(());
         }
 
@@ -547,31 +629,26 @@ where
         bit_write: &mut W,
         mut n: u64,
     ) -> Result<(), CopyError<Self::Error, W::Error>> {
-        let from_buffer = Ord::min(n, self.bits_in_buffer as _);
-
-        #[allow(unused_mut)]
-        let mut self_buffer_u64: u64 = self.buffer.as_to();
-
-        #[cfg(feature = "checks")]
-        {
-            // Clean up in case checks are enabled
-            if n < 64 {
-                self_buffer_u64 &= (1_u64 << n) - 1;
-            }
+        // Copy from the buffer at most 64 bits at a time, as the buffer
+        // can hold more than 64 bits, but write_bits accepts at most 64
+        while n > 0 && self.bits_in_buffer > 0 {
+            let m = Ord::min(Ord::min(n, 64), self.bits_in_buffer as u64) as usize;
+            // The m lowest bits of the buffer; m >= 1, so the mask shift is valid
+            let value = self.buffer.as_to::<u64>() & (u64::MAX >> (64 - m));
+            bit_write
+                .write_bits(value, m)
+                .map_err(CopyError::WriteError)?;
+            // m >= 1, so the two-step shift is valid even when m == BUFFER_BITS
+            self.buffer = self.buffer >> (m - 1) >> 1;
+            self.bits_in_buffer -= m;
+            n -= m as u64;
         }
 
-        bit_write
-            .write_bits(self_buffer_u64, from_buffer as usize)
-            .map_err(CopyError::WriteError)?;
-
-        self.buffer >>= from_buffer;
-        n -= from_buffer;
-
         if n == 0 {
-            self.bits_in_buffer -= from_buffer as usize;
             return Ok(());
         }
 
+        // The buffer is empty: copy whole words
         while n > Self::WORD_BITS as u64 {
             bit_write
                 .write_bits(
@@ -587,26 +664,18 @@ where
         }
 
         debug_assert!(n > 0);
+        // Copy the n lowest bits of a final word, and store the remaining
+        // bits at the bottom of the buffer, with zeros above
         let new_word = self
             .backend
             .read_word()
             .map_err(CopyError::ReadError)?
             .to_le();
         self.bits_in_buffer = Self::WORD_BITS - n as usize;
-
-        #[allow(unused_mut)]
-        let mut new_word_u64: u64 = new_word.as_u64();
-
-        #[cfg(feature = "checks")]
-        {
-            // Clean up in case checks are enabled
-            if n < 64 {
-                new_word_u64 &= (1_u64 << n) - 1;
-            }
-        }
-
+        // n >= 1, so the mask shift is valid
+        let value = new_word.as_u64() & (u64::MAX >> (64 - n as usize));
         bit_write
-            .write_bits(new_word_u64, n as usize)
+            .write_bits(value, n as usize)
             .map_err(CopyError::WriteError)?;
         self.buffer = new_word.as_double() >> n;
         Ok(())
@@ -648,24 +717,39 @@ where
     WR::Word: DoubleType,
 {
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+        let mut read = 0;
         let mut iter = buf.chunks_exact_mut(8);
 
         for chunk in &mut iter {
-            let word = self
-                .read_bits(64)
-                .map_err(|_| std::io::ErrorKind::UnexpectedEof)?;
-            chunk.copy_from_slice(&word.to_le_bytes());
+            match self.read_bits(64) {
+                Ok(word) => {
+                    chunk.copy_from_slice(&word.to_le_bytes());
+                    read += 8;
+                }
+                // If we read some bytes, return them; the error will
+                // resurface at the next call
+                Err(_) if read > 0 => return Ok(read),
+                Err(e) => {
+                    return Err(std::io::Error::new(std::io::ErrorKind::UnexpectedEof, e));
+                }
+            }
         }
 
         let rem = iter.into_remainder();
         if !rem.is_empty() {
-            let word = self
-                .read_bits(rem.len() * 8)
-                .map_err(|_| std::io::ErrorKind::UnexpectedEof)?;
-            rem.copy_from_slice(&word.to_le_bytes()[..rem.len()]);
+            match self.read_bits(rem.len() * 8) {
+                Ok(word) => {
+                    rem.copy_from_slice(&word.to_le_bytes()[..rem.len()]);
+                    read += rem.len();
+                }
+                Err(_) if read > 0 => return Ok(read),
+                Err(e) => {
+                    return Err(std::io::Error::new(std::io::ErrorKind::UnexpectedEof, e));
+                }
+            }
         }
 
-        Ok(buf.len())
+        Ok(read)
     }
 }
 
@@ -675,24 +759,39 @@ where
     WR::Word: DoubleType,
 {
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+        let mut read = 0;
         let mut iter = buf.chunks_exact_mut(8);
 
         for chunk in &mut iter {
-            let word = self
-                .read_bits(64)
-                .map_err(|_| std::io::ErrorKind::UnexpectedEof)?;
-            chunk.copy_from_slice(&word.to_be_bytes());
+            match self.read_bits(64) {
+                Ok(word) => {
+                    chunk.copy_from_slice(&word.to_be_bytes());
+                    read += 8;
+                }
+                // If we read some bytes, return them; the error will
+                // resurface at the next call
+                Err(_) if read > 0 => return Ok(read),
+                Err(e) => {
+                    return Err(std::io::Error::new(std::io::ErrorKind::UnexpectedEof, e));
+                }
+            }
         }
 
         let rem = iter.into_remainder();
         if !rem.is_empty() {
-            let word = self
-                .read_bits(rem.len() * 8)
-                .map_err(|_| std::io::ErrorKind::UnexpectedEof)?;
-            rem.copy_from_slice(&word.to_be_bytes()[8 - rem.len()..]);
+            match self.read_bits(rem.len() * 8) {
+                Ok(word) => {
+                    rem.copy_from_slice(&word.to_be_bytes()[8 - rem.len()..]);
+                    read += rem.len();
+                }
+                Err(_) if read > 0 => return Ok(read),
+                Err(e) => {
+                    return Err(std::io::Error::new(std::io::ErrorKind::UnexpectedEof, e));
+                }
+            }
         }
 
-        Ok(buf.len())
+        Ok(read)
     }
 }
 
@@ -733,6 +832,90 @@ mod tests {
             assert_eq!(reader.read(&mut buffer)?, i);
             assert_eq!(&buffer, &data[..i]);
         }
+        Ok(())
+    }
+
+    #[test]
+    fn test_peek_bits_two_refills() -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
+        // A peek of PEEK_BITS bits from an empty buffer needs two refills
+        let data: Vec<u32> = vec![0, u32::from_be(0x8000_0000), 0, 0];
+        let mut r = BufBitReader::<BE, _>::new(MemWordReader::new(&data));
+        assert_eq!(r.peek_bits(33)?, 1);
+        assert_eq!(r.read_bits(33)?, 1);
+
+        // After two peeks the buffer may be completely full
+        let mut r = BufBitReader::<BE, _>::new(MemWordReader::new(&data));
+        let _ = r.peek_bits(1)?;
+        let _ = r.peek_bits(33)?;
+        assert_eq!(r.read_bits(64)?, 1 << 31);
+
+        let mut r = BufBitReader::<BE, _>::new(MemWordReader::new(&data));
+        let _ = r.peek_bits(1)?;
+        let _ = r.peek_bits(33)?;
+        r.skip_bits(64)?;
+        assert_eq!(r.read_bits(32)?, 0);
+
+        let data: Vec<u32> = vec![0, u32::from_le(1), 0, 0];
+        let mut r = BufBitReader::<LE, _>::new(MemWordReader::new(&data));
+        assert_eq!(r.peek_bits(33)?, 1 << 32);
+        assert_eq!(r.read_bits(33)?, 1 << 32);
+
+        let mut r = BufBitReader::<LE, _>::new(MemWordReader::new(&data));
+        let _ = r.peek_bits(1)?;
+        let _ = r.peek_bits(33)?;
+        assert_eq!(r.read_bits(64)?, 1 << 32);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_copy_to_then_decode() -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
+        use crate::prelude::BufBitWriter;
+        // Regression test: the big-endian copy_to used to leave garbage in
+        // the low bits of the buffer, corrupting reads after a refill
+        // caused by a peek
+        let data: Vec<u32> = vec![u32::from_be(0x0000_FFFF), 0, 0, 0, 0, 0, 0, 0];
+        let mut r = BufBitReader::<BE, _>::new(MemWordReader::new(&data));
+        assert_eq!(r.read_bits(16)?, 0);
+        let mut sink: Vec<u64> = vec![];
+        let mut w = BufBitWriter::<BE, _>::new(MemWordWriterVec::new(&mut sink));
+        r.copy_to(&mut w, 10)?;
+        assert_eq!(r.read_bits(2)?, 0b11);
+        let _ = r.peek_bits(33)?;
+        assert_eq!(r.read_bits(30)?, 0b1111 << 26);
+        let _ = r.peek_bits(33)?;
+        assert_eq!(r.read_bits(33)?, 0);
+        Ok(())
+    }
+
+    #[test]
+    fn test_copy_to_large_buffer() -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
+        use crate::prelude::BufBitWriter;
+        // Regression test: copy_to used to pass more than 64 bits to a
+        // single write_bits call when the buffer held more than 64 bits
+        let data: Vec<u64> = vec![
+            u64::from_be(0x0123_4567_89AB_CDEF),
+            u64::from_be(0xFEDC_BA98_7654_3210),
+            u64::from_be(0xAAAA_5555_AAAA_5555),
+            0,
+            0,
+        ];
+        let mut r = BufBitReader::<BE, _>::new(MemWordReader::new(&data));
+        let _ = r.read_bits(10)?;
+        let _ = r.peek_bits(65)?; // now the buffer holds more than 64 bits
+        let mut sink: Vec<u64> = vec![];
+        {
+            let mut w = BufBitWriter::<BE, _>::new(MemWordWriterVec::new(&mut sink));
+            r.copy_to(&mut w, 100)?;
+            w.flush()?;
+        }
+        let mut r2 = BufBitReader::<BE, _>::new(MemWordReader::new(&data));
+        let _ = r2.read_bits(10)?;
+        let hi = r2.read_bits(50)?;
+        let lo = r2.read_bits(50)?;
+        let mut check = BufBitReader::<BE, _>::new(MemWordReader::new(&sink));
+        assert_eq!(check.read_bits(50)?, hi);
+        assert_eq!(check.read_bits(50)?, lo);
         Ok(())
     }
 

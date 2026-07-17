@@ -303,7 +303,7 @@ pub fn harness(data: FuzzCase) {
         let mut little = BitReader::<LE, _>::new(MemWordReader::new_inf(&buffer_le));
         let mut little_buff = BufBitReader::<LE, _>::new(MemWordReader::new_inf(le_trans));
 
-        for (succ, command) in writes.into_iter().zip(data.commands.into_iter()) {
+        for (succ, command) in writes.into_iter().zip(data.commands) {
             let pos = big.bit_pos().unwrap();
             assert_eq!(pos, little.bit_pos().unwrap());
             assert_eq!(pos, big_buff.bit_pos().unwrap());

@@ -21,7 +21,7 @@
 //!
 //! The supported range is [0 . . 2⁶⁴) for log₂(*b*) in [0 . . 64), but writing
 //! 2⁶⁴ – 1 when *b* = 1 requires writing the unary code for 2⁶⁴ – 1, which
-//! might not be possible depending on the [`BitWrite`](crate::traits::BitWrite)
+//! might not be possible depending on the [`BitWrite`]
 //! implementation (and would require writing 2⁶⁴ bits anyway).
 //!
 //! # References

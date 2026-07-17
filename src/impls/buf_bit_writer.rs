@@ -142,12 +142,19 @@ where
 {
     /// Returns the backend, consuming this writer after
     /// [flushing it](BufBitWriter::flush).
+    ///
+    /// # Errors
+    ///
+    /// If the flush fails, the flush error is returned and the backend is
+    /// dropped, together with the buffered bits.
     pub fn into_inner(mut self) -> Result<WW, <Self as BitWrite<E>>::Error> {
-        self.flush()?;
-        // SAFETY: forget(self) prevents double dropping backend
+        let flush_result = self.flush();
+        // SAFETY: forget(self) prevents double dropping backend; moreover,
+        // it prevents the drop-time flush from running (and panicking)
+        // after a failed flush
         let backend = unsafe { ptr::read(&self.backend) };
         mem::forget(self);
-        Ok(backend)
+        flush_result.map(|_| backend)
     }
 }
 
@@ -172,10 +179,10 @@ fn flush_be<E: Endianness, WW: WordWrite, WP: WriteParams>(
 ) -> Result<usize, WW::Error> {
     let to_flush = WW::Word::BITS as usize - buf_bit_writer.space_left_in_buffer;
     if to_flush != 0 {
-        buf_bit_writer.buffer <<= buf_bit_writer.space_left_in_buffer;
-        buf_bit_writer
-            .backend
-            .write_word(buf_bit_writer.buffer.to_be())?;
+        // The outgoing word is computed in a local so that a failed write
+        // leaves the writer state unchanged and the flush can be retried
+        let word = buf_bit_writer.buffer << buf_bit_writer.space_left_in_buffer;
+        buf_bit_writer.backend.write_word(word.to_be())?;
         buf_bit_writer.space_left_in_buffer = WW::Word::BITS as usize;
     }
     buf_bit_writer.backend.flush()?;
@@ -220,11 +227,13 @@ where
             return Ok(num_bits);
         }
 
-        // Load the bottom of the buffer, if necessary, and dump the whole buffer
-        self.buffer = self.buffer << (self.space_left_in_buffer - 1) << 1;
-        // The first shift discards bits higher than num_bits
-        self.buffer |= (value << (64 - num_bits) >> (64 - self.space_left_in_buffer)).as_to();
-        self.backend.write_word(self.buffer.to_be())?;
+        // Load the bottom of the buffer, if necessary, and dump the whole
+        // buffer. The outgoing word is computed in a local so that a failed
+        // write leaves the buffer state consistent.
+        // The first shift on value discards bits higher than num_bits
+        let word: WW::Word = (self.buffer << (self.space_left_in_buffer - 1) << 1)
+            | (value << (64 - num_bits) >> (64 - self.space_left_in_buffer)).as_to();
+        self.backend.write_word(word.to_be())?;
 
         let mut to_write = num_bits - self.space_left_in_buffer;
 
@@ -259,8 +268,10 @@ where
             return Ok(code_length as usize);
         }
 
-        self.buffer = self.buffer << (self.space_left_in_buffer - 1) << 1;
-        self.backend.write_word(self.buffer.to_be())?;
+        // The outgoing word is computed in a local so that a failed write
+        // leaves the buffer state consistent
+        let word: WW::Word = self.buffer << (self.space_left_in_buffer - 1) << 1;
+        self.backend.write_word(word.to_be())?;
 
         n -= self.space_left_in_buffer as u64;
 
@@ -287,45 +298,22 @@ where
         bit_read: &mut R,
         mut n: u64,
     ) -> Result<(), CopyError<R::Error, Self::Error>> {
-        if n < self.space_left_in_buffer as u64 {
-            self.buffer = (self.buffer << n)
-                | bit_read
-                    .read_bits(n as usize)
-                    .map_err(CopyError::ReadError)?
-                    .as_to();
-            self.space_left_in_buffer -= n as usize;
-            return Ok(());
+        // Copy at most 64 bits at a time, as read_bits returns at most 64
+        // bits, but the buffer word might be larger
+        while n > 0 {
+            let m = Ord::min(Ord::min(n, 64), self.space_left_in_buffer as u64) as usize;
+            let bits = bit_read.read_bits(m).map_err(CopyError::ReadError)?;
+            // m >= 1, so the two-step shift is valid even when m == WORD_BITS
+            self.buffer = (self.buffer << (m - 1) << 1) | bits.as_to();
+            self.space_left_in_buffer -= m;
+            n -= m as u64;
+            if self.space_left_in_buffer == 0 {
+                self.backend
+                    .write_word(self.buffer.to_be())
+                    .map_err(CopyError::WriteError)?;
+                self.space_left_in_buffer = Self::WORD_BITS;
+            }
         }
-
-        self.buffer = (self.buffer << (self.space_left_in_buffer - 1) << 1)
-            | bit_read
-                .read_bits(self.space_left_in_buffer)
-                .map_err(CopyError::ReadError)?
-                .as_to();
-        n -= self.space_left_in_buffer as u64;
-
-        self.backend
-            .write_word(self.buffer.to_be())
-            .map_err(CopyError::WriteError)?;
-
-        for _ in 0..n / WW::Word::BITS as u64 {
-            self.backend
-                .write_word(
-                    bit_read
-                        .read_bits(Self::WORD_BITS)
-                        .map_err(CopyError::ReadError)?
-                        .as_to()
-                        .to_be(),
-                )
-                .map_err(CopyError::WriteError)?;
-        }
-
-        n %= WW::Word::BITS as u64;
-        self.buffer = bit_read
-            .read_bits(n as usize)
-            .map_err(CopyError::ReadError)?
-            .as_to();
-        self.space_left_in_buffer = Self::WORD_BITS - n as usize;
 
         Ok(())
     }
@@ -341,10 +329,10 @@ fn flush_le<E: Endianness, WW: WordWrite, WP: WriteParams>(
 ) -> Result<usize, WW::Error> {
     let to_flush = WW::Word::BITS as usize - buf_bit_writer.space_left_in_buffer;
     if to_flush != 0 {
-        buf_bit_writer.buffer >>= buf_bit_writer.space_left_in_buffer;
-        buf_bit_writer
-            .backend
-            .write_word(buf_bit_writer.buffer.to_le())?;
+        // The outgoing word is computed in a local so that a failed write
+        // leaves the writer state unchanged and the flush can be retried
+        let word = buf_bit_writer.buffer >> buf_bit_writer.space_left_in_buffer;
+        buf_bit_writer.backend.write_word(word.to_le())?;
         buf_bit_writer.space_left_in_buffer = WW::Word::BITS as usize;
     }
     buf_bit_writer.backend.flush()?;
@@ -389,10 +377,12 @@ where
             return Ok(num_bits);
         }
 
-        // Load the top of the buffer, if necessary, and dump the whole buffer
-        self.buffer = self.buffer >> (self.space_left_in_buffer - 1) >> 1;
-        self.buffer |= value.as_to() << (Self::WORD_BITS - self.space_left_in_buffer);
-        self.backend.write_word(self.buffer.to_le())?;
+        // Load the top of the buffer, if necessary, and dump the whole
+        // buffer. The outgoing word is computed in a local so that a failed
+        // write leaves the buffer state consistent.
+        let word: WW::Word = (self.buffer >> (self.space_left_in_buffer - 1) >> 1)
+            | (value.as_to() << (Self::WORD_BITS - self.space_left_in_buffer));
+        self.backend.write_word(word.to_le())?;
 
         let to_write = num_bits - self.space_left_in_buffer;
         value = value >> (self.space_left_in_buffer - 1) >> 1;
@@ -428,8 +418,10 @@ where
             return Ok(code_length as usize);
         }
 
-        self.buffer = self.buffer >> (self.space_left_in_buffer - 1) >> 1;
-        self.backend.write_word(self.buffer.to_le())?;
+        // The outgoing word is computed in a local so that a failed write
+        // leaves the buffer state consistent
+        let word: WW::Word = self.buffer >> (self.space_left_in_buffer - 1) >> 1;
+        self.backend.write_word(word.to_le())?;
 
         n -= self.space_left_in_buffer as u64;
 
@@ -457,48 +449,24 @@ where
         bit_read: &mut R,
         mut n: u64,
     ) -> Result<(), CopyError<R::Error, Self::Error>> {
-        if n < self.space_left_in_buffer as u64 {
-            self.buffer = (self.buffer >> n)
-                | (bit_read
-                    .read_bits(n as usize)
-                    .map_err(CopyError::ReadError)?)
-                .as_to()
-                .rotate_right(n as u32);
-            self.space_left_in_buffer -= n as usize;
-            return Ok(());
+        // Copy at most 64 bits at a time, as read_bits returns at most 64
+        // bits, but the buffer word might be larger
+        while n > 0 {
+            let m = Ord::min(Ord::min(n, 64), self.space_left_in_buffer as u64) as usize;
+            let bits = bit_read.read_bits(m).map_err(CopyError::ReadError)?;
+            // The new bits go at the top of the buffer: the rotation moves
+            // the m lowest bits (the remaining bits are zero) to the top;
+            // m >= 1, so the two-step shift is valid even when m == WORD_BITS
+            self.buffer = (self.buffer >> (m - 1) >> 1) | bits.as_to().rotate_right(m as u32);
+            self.space_left_in_buffer -= m;
+            n -= m as u64;
+            if self.space_left_in_buffer == 0 {
+                self.backend
+                    .write_word(self.buffer.to_le())
+                    .map_err(CopyError::WriteError)?;
+                self.space_left_in_buffer = Self::WORD_BITS;
+            }
         }
-
-        self.buffer = (self.buffer >> (self.space_left_in_buffer - 1) >> 1)
-            | (bit_read
-                .read_bits(self.space_left_in_buffer)
-                .map_err(CopyError::ReadError)?
-                .as_to())
-            .rotate_right(self.space_left_in_buffer as u32);
-        n -= self.space_left_in_buffer as u64;
-
-        self.backend
-            .write_word(self.buffer.to_le())
-            .map_err(CopyError::WriteError)?;
-
-        for _ in 0..n / WW::Word::BITS as u64 {
-            self.backend
-                .write_word(
-                    bit_read
-                        .read_bits(Self::WORD_BITS)
-                        .map_err(CopyError::ReadError)?
-                        .as_to()
-                        .to_le(),
-                )
-                .map_err(CopyError::WriteError)?;
-        }
-
-        n %= WW::Word::BITS as u64;
-        self.buffer = bit_read
-            .read_bits(n as usize)
-            .map_err(CopyError::ReadError)?
-            .as_to()
-            .rotate_right(n as u32);
-        self.space_left_in_buffer = Self::WORD_BITS - n as usize;
 
         Ok(())
     }
@@ -618,6 +586,21 @@ mod tests {
             assert_eq!(unsafe { &buffer.align_to::<u8>().1[..i] }, &data[..i]);
         }
         Ok(())
+    }
+
+    #[test]
+    fn test_into_inner_error() {
+        use crate::prelude::MemWordWriterSlice;
+        // Regression test: into_inner used to panic in the drop-time
+        // flush when the flush of the buffered bits failed
+        let mut slice = [0_u64; 1];
+        let mut writer = BufBitWriter::<BE, _>::new(MemWordWriterSlice::new(&mut slice));
+        writer.write_bits(0xAAAA_AAAA, 32).unwrap();
+        // This fills the backend
+        writer.write_bits(0x5555_5555, 32).unwrap();
+        // These bits cannot be flushed
+        writer.write_bits(0x3333_3333, 32).unwrap();
+        assert!(writer.into_inner().is_err());
     }
 
     macro_rules! test_buf_bit_writer {

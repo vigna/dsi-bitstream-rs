@@ -193,7 +193,7 @@ impl<W: Word, B: AsRef<[W]>> WordSeek for MemWordWriterSlice<W, B> {
     fn set_word_pos(&mut self, word_index: u64) -> Result<(), WordError> {
         if word_index > self.data.as_ref().len() as u64 {
             Err(WordError::UnexpectedEof {
-                word_pos: self.word_index,
+                word_pos: word_index as usize,
             })
         } else {
             self.word_index = word_index as usize;
@@ -278,7 +278,7 @@ impl<W: Word, B: AsRef<Vec<W>>> WordSeek for MemWordWriterVec<W, B> {
     fn set_word_pos(&mut self, word_index: u64) -> Result<(), WordError> {
         if word_index > self.data.as_ref().len() as u64 {
             Err(WordError::UnexpectedEof {
-                word_pos: self.word_index,
+                word_pos: word_index as usize,
             })
         } else {
             self.word_index = word_index as usize;

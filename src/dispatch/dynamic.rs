@@ -382,7 +382,12 @@ type LenFn = fn(u64) -> usize;
 pub struct FuncCodeLen(LenFn);
 
 impl FuncCodeLen {
-    const UNARY: LenFn = |n| n as usize + 1;
+    // The checked conversion avoids truncation on 32-bit platforms
+    const UNARY: LenFn = |n| {
+        n.checked_add(1)
+            .and_then(|len| usize::try_from(len).ok())
+            .expect("unary code length does not fit in a usize")
+    };
     const GAMMA: LenFn = |n| len_gamma(n);
     const DELTA: LenFn = |n| len_delta(n);
     const OMEGA: LenFn = |n| len_omega(n);

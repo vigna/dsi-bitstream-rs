@@ -70,6 +70,7 @@ impl<WR: WordRead<Word = u64> + WordSeek<Error = <WR as WordRead>::Error>, RP: R
 
     #[inline]
     fn read_bits(&mut self, num_bits: usize) -> Result<u64, Self::Error> {
+        debug_assert!(num_bits <= 64);
         #[cfg(feature = "checks")]
         assert!(num_bits <= 64);
 
@@ -267,24 +268,39 @@ impl<WR: WordRead<Word = u64> + WordSeek<Error = <WR as WordRead>::Error>, RP: R
     std::io::Read for BitReader<LE, WR, RP>
 {
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+        let mut read = 0;
         let mut iter = buf.chunks_exact_mut(8);
 
         for chunk in &mut iter {
-            let word = self
-                .read_bits(64)
-                .map_err(|_| std::io::ErrorKind::UnexpectedEof)?;
-            chunk.copy_from_slice(&word.to_le_bytes());
+            match self.read_bits(64) {
+                Ok(word) => {
+                    chunk.copy_from_slice(&word.to_le_bytes());
+                    read += 8;
+                }
+                // If we read some bytes, return them; the error will
+                // resurface at the next call
+                Err(_) if read > 0 => return Ok(read),
+                Err(e) => {
+                    return Err(std::io::Error::new(std::io::ErrorKind::UnexpectedEof, e));
+                }
+            }
         }
 
         let rem = iter.into_remainder();
         if !rem.is_empty() {
-            let word = self
-                .read_bits(rem.len() * 8)
-                .map_err(|_| std::io::ErrorKind::UnexpectedEof)?;
-            rem.copy_from_slice(&word.to_le_bytes()[..rem.len()]);
+            match self.read_bits(rem.len() * 8) {
+                Ok(word) => {
+                    rem.copy_from_slice(&word.to_le_bytes()[..rem.len()]);
+                    read += rem.len();
+                }
+                Err(_) if read > 0 => return Ok(read),
+                Err(e) => {
+                    return Err(std::io::Error::new(std::io::ErrorKind::UnexpectedEof, e));
+                }
+            }
         }
 
-        Ok(buf.len())
+        Ok(read)
     }
 }
 
@@ -293,23 +309,38 @@ impl<WR: WordRead<Word = u64> + WordSeek<Error = <WR as WordRead>::Error>, RP: R
     std::io::Read for BitReader<BE, WR, RP>
 {
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+        let mut read = 0;
         let mut iter = buf.chunks_exact_mut(8);
 
         for chunk in &mut iter {
-            let word = self
-                .read_bits(64)
-                .map_err(|_| std::io::ErrorKind::UnexpectedEof)?;
-            chunk.copy_from_slice(&word.to_be_bytes());
+            match self.read_bits(64) {
+                Ok(word) => {
+                    chunk.copy_from_slice(&word.to_be_bytes());
+                    read += 8;
+                }
+                // If we read some bytes, return them; the error will
+                // resurface at the next call
+                Err(_) if read > 0 => return Ok(read),
+                Err(e) => {
+                    return Err(std::io::Error::new(std::io::ErrorKind::UnexpectedEof, e));
+                }
+            }
         }
 
         let rem = iter.into_remainder();
         if !rem.is_empty() {
-            let word = self
-                .read_bits(rem.len() * 8)
-                .map_err(|_| std::io::ErrorKind::UnexpectedEof)?;
-            rem.copy_from_slice(&word.to_be_bytes()[8 - rem.len()..]);
+            match self.read_bits(rem.len() * 8) {
+                Ok(word) => {
+                    rem.copy_from_slice(&word.to_be_bytes()[8 - rem.len()..]);
+                    read += rem.len();
+                }
+                Err(_) if read > 0 => return Ok(read),
+                Err(e) => {
+                    return Err(std::io::Error::new(std::io::ErrorKind::UnexpectedEof, e));
+                }
+            }
         }
 
-        Ok(buf.len())
+        Ok(read)
     }
 }

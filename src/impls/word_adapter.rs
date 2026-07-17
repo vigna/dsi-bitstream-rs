@@ -19,13 +19,13 @@ use std::io::{Read, Seek, SeekFrom, Write};
 /// as [`std::fs::File`], [`std::io::BufReader`], sockets, etc.) into a source
 /// or destination of words.
 ///
-/// Due to the necessity of managing files whose length is not a multiple of the
-/// word length, [`read_word`](WordAdapter::read_word) will return a partially
-/// read word extended with zeros at the end of such files.
+/// Note that the length of adapted files or memory regions must be a multiple
+/// of the word length; a nonempty partial-word tail will not be readable.
 ///
-/// To provide a sensible value after such a read,
-/// [`word_pos`](WordAdapter::word_pos) will always return the position
-/// of the underlying [`Seek`] rounded up to the next multiple of the byte size of `W`.
+/// To provide a sensible value after a failed read of a partial word at the
+/// end of a file, [`word_pos`](WordAdapter::word_pos) will always return the
+/// position of the underlying [`Seek`] rounded up to the next multiple of the
+/// byte size of `W`.
 /// This approach, however, requires that if you adapt a [`Seek`],
 /// its current position must be a multiple of the byte size of `W`, or the
 /// results of [`word_pos`](WordAdapter::word_pos)
@@ -115,8 +115,15 @@ impl<W: Word, B: Seek> WordSeek for WordAdapter<W, B> {
 
     #[inline(always)]
     fn set_word_pos(&mut self, word_index: u64) -> Result<(), std::io::Error> {
-        self.backend
-            .seek(SeekFrom::Start(word_index * (W::BITS as usize / 8) as u64))?;
+        let byte_pos = word_index
+            .checked_mul((W::BITS as usize / 8) as u64)
+            .ok_or_else(|| {
+                std::io::Error::new(
+                    std::io::ErrorKind::InvalidInput,
+                    "word position overflows a byte position",
+                )
+            })?;
+        self.backend.seek(SeekFrom::Start(byte_pos))?;
         Ok(())
     }
 }

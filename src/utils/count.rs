@@ -72,8 +72,10 @@ impl<E: Endianness, BW: BitWrite<E>, const PRINT: bool> BitWrite<E>
     }
 
     fn flush(&mut self) -> Result<usize, Self::Error> {
+        // Note that the flushed bits have already been counted by the
+        // write methods, so they are not added to `bits_written`
         self.bit_write.flush().inspect(|x| {
-            self.bits_written += *x;
+            let _ = x;
             if PRINT {
                 #[cfg(feature = "std")]
                 eprintln!("flush() = {} (total = {})", x, self.bits_written);
@@ -255,12 +257,13 @@ impl<E: Endianness, BR: BitRead<E>, const PRINT: bool> BitRead<E> for CountBitRe
     }
 
     fn skip_bits(&mut self, n_bits: usize) -> Result<(), Self::Error> {
-        self.bits_read += n_bits;
-        if PRINT {
-            #[cfg(feature = "std")]
-            eprintln!("skip_bits({}) (total = {})", n_bits, self.bits_read);
-        }
-        self.bit_read.skip_bits(n_bits)
+        self.bit_read.skip_bits(n_bits).inspect(|_| {
+            self.bits_read += n_bits;
+            if PRINT {
+                #[cfg(feature = "std")]
+                eprintln!("skip_bits({}) (total = {})", n_bits, self.bits_read);
+            }
+        })
     }
 
     fn skip_bits_after_peek(&mut self, n: usize) {
@@ -410,6 +413,8 @@ mod tests {
         assert_eq!(count_bit_write.bits_written, after_pi + len_pi(7, 2));
         let after_pi2 = count_bit_write.bits_written;
         count_bit_write.flush()?;
+        // Flushing must not change the count
+        assert_eq!(count_bit_write.bits_written, after_pi2);
         drop(count_bit_write);
 
         let bit_read = <BufBitReader<LE, _>>::new(MemWordReader::<u64, _>::new(&buffer));

@@ -302,7 +302,11 @@ impl CodeLen for Codes {
     #[inline]
     fn len(&self, n: u64) -> usize {
         match self.canonicalize() {
-            Codes::Unary => n as usize + 1,
+            // The checked conversion avoids truncation on 32-bit platforms
+            Codes::Unary => n
+                .checked_add(1)
+                .and_then(|len| usize::try_from(len).ok())
+                .expect("unary code length does not fit in a usize"),
             Codes::Gamma => len_gamma(n),
             Codes::Delta => len_delta(n),
             Codes::Omega => len_omega(n),
@@ -398,9 +402,23 @@ impl core::str::FromStr for Codes {
                     .next()
                     .ok_or_else(|| CodeError::UnknownCode(array_format_error(s)))?;
                 match name {
-                    "Zeta" => Ok(Codes::Zeta(k.parse()?)),
+                    "Zeta" => {
+                        let k: usize = k.parse()?;
+                        // ζ codes are defined only for k >= 1
+                        if k == 0 {
+                            return Err(CodeError::UnknownCode(array_format_error(s)));
+                        }
+                        Ok(Codes::Zeta(k))
+                    }
                     "Pi" => Ok(Codes::Pi(k.parse()?)),
-                    "Golomb" => Ok(Codes::Golomb(k.parse()?)),
+                    "Golomb" => {
+                        let b: u64 = k.parse()?;
+                        // Golomb codes are defined only for b >= 1
+                        if b == 0 {
+                            return Err(CodeError::UnknownCode(array_format_error(s)));
+                        }
+                        Ok(Codes::Golomb(b))
+                    }
                     "ExpGolomb" => Ok(Codes::ExpGolomb(k.parse()?)),
                     "Rice" => Ok(Codes::Rice(k.parse()?)),
                     _ => Err(CodeError::UnknownCode(array_format_error(name))),

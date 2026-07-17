@@ -1,5 +1,50 @@
 # Change Log
 
+## [Unreleased]
+
+### Fixed
+
+- The big-endian `BufBitReader::copy_to` no longer leaves already-copied bits
+  in the bit buffer; they could corrupt reads performed after the copy.
+
+- `BufBitReader::copy_to` and `BufBitWriter::copy_from` now transfer at most
+  64 bits per `read_bits`/`write_bits` call; previously they could exceed the
+  trait limits when buffers held more than 64 bits, silently corrupting the
+  copy.
+
+- `BufBitReader::peek_bits` now performs up to two refills, so a peek of
+  `PEEK_BITS` bits returns the correct result even when the bit buffer is
+  empty; moreover, all methods now handle correctly a completely full bit
+  buffer, which can be caused by such a peek.
+
+- `BufBitWriter::into_inner` now returns the flush error instead of
+  panicking in the drop-time flush.
+
+- `BufBitWriter` flushes no longer modify the bit buffer before writing to
+  the backend, so a failed flush can be retried without corrupting the
+  stream; the slow paths of `write_bits` and `write_unary` similarly keep
+  the buffer state consistent on backend errors.
+
+- `CountBitWriter::flush` no longer double-counts the bits remaining in the
+  buffer of the underlying writer; `CountBitReader::skip_bits` no longer
+  updates the count when the underlying skip fails.
+
+- Parsing `Zeta(0)` or `Golomb(0)` with `Codes::from_str` now returns an
+  error instead of producing a code that panics with a division by zero
+  when used.
+
+- The length of the unary code computed by `CodeLen`/`FuncCodeLen` is no
+  longer silently truncated on 32-bit platforms.
+
+- The `std::io::Read` implementations of `BufBitReader` and `BitReader` now
+  return the number of bytes read before an error, and preserve the
+  underlying error as source instead of discarding it.
+
+- `WordAdapter::set_word_pos` detects overflow when converting a word
+  position to a byte position; `set_word_pos` on memory-based word readers
+  and writers now reports the requested (offending) position instead of the
+  current one.
+
 ## [0.9.2] - 2026-05-11
 
 ### Fixed

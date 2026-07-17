@@ -36,6 +36,11 @@
 //! write the number [`u64::MAX`] because of overflow issues, which could be
 //! avoided with tests, but at the price of a significant performance drop.
 //!
+//! For the same reason, reading methods assume well-formed input: decoding a
+//! corrupted or malicious bit stream may return arbitrary values and, in debug
+//! builds, may panic because of overflow checks. If you need to decode
+//! untrusted data, you must validate the decoded values.
+//!
 //! The traits ending with `Param` make it possible to specify parameters—for
 //! example, whether to use decoding tables. Usually, one would instead pull
 //! into scope non-parametric traits such as [`GammaRead`] and [`GammaWrite`],

@@ -78,6 +78,45 @@ where
 
 const MAX_LEN: u64 = 500;
 
+#[test]
+fn test_copy_from_u128_words() -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
+    // Regression test: copy_from used to request more than 64 bits at a
+    // time from read_bits when the writer word is u128
+    let mut write = BufBitWriter::<BE, _>::new(MemWordWriterVec::new(Vec::<u32>::new()));
+    let mut r = SmallRng::seed_from_u64(0);
+    for _ in 0..MAX_LEN {
+        write.write_bits(r.random_range(0..2), 1)?;
+    }
+    let buffer = write.into_inner()?.into_inner();
+
+    let mut read = BufBitReader::<BE, _>::new(MemWordReader::new_inf(buffer));
+    let mut copy_write = BufBitWriter::<BE, _>::new(MemWordWriterVec::new(Vec::<u128>::new()));
+    copy_write.copy_from(&mut read, 100)?;
+    let mut r1 = SmallRng::seed_from_u64(1);
+    for _ in 0..100 {
+        copy_write.write_bits(r1.random_range(0..2), 1)?;
+    }
+    let copy = copy_write.into_inner()?.into_inner();
+
+    // Convert the u128 words to u32 words to read the copy back (u128 has
+    // no double type, so it cannot be used as a read word)
+    let bytes: Vec<u8> = copy.iter().flat_map(|w| w.to_ne_bytes()).collect();
+    let words: Vec<u32> = bytes
+        .chunks_exact(4)
+        .map(|c| u32::from_ne_bytes(c.try_into().unwrap()))
+        .collect();
+    let mut check = BufBitReader::<BE, _>::new(MemWordReader::new_inf(words));
+    let mut r = SmallRng::seed_from_u64(0);
+    for _ in 0..100 {
+        assert_eq!(check.read_bits(1)?, r.random_range(0..2));
+    }
+    let mut r1 = SmallRng::seed_from_u64(1);
+    for _ in 0..100 {
+        assert_eq!(check.read_bits(1)?, r1.random_range(0..2));
+    }
+    Ok(())
+}
+
 fn test_endianness<E: Endianness, W: Word + PrimitiveInteger + DoubleType + 'static>()
 -> Result<(), Box<dyn Error + Send + Sync + 'static>>
 where

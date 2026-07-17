@@ -101,6 +101,11 @@ pub trait BitRead<E: Endianness> {
 
     /// Copy bits from `self` to a [`BitWrite`] stream.
     ///
+    /// Note that when the endianness `F` of the destination is different from
+    /// the endianness `E` of the source, the resulting bit order is
+    /// implementation-dependent, as bits are copied in chunks, and each chunk
+    /// is written in the bit order of the destination.
+    ///
     /// # Errors
     ///
     /// This method can return a [`CopyError`] if the source stream returns an
@@ -151,6 +156,11 @@ pub trait BitWrite<E: Endianness> {
     fn flush(&mut self) -> Result<usize, Self::Error>;
 
     /// Copy bits from a [`BitRead`] stream to `self`.
+    ///
+    /// Note that when the endianness `F` of the source is different from the
+    /// endianness `E` of the destination, the resulting bit order is
+    /// implementation-dependent, as bits are copied in chunks, and each chunk
+    /// is written in the bit order of the destination.
     ///
     /// # Errors
     ///
