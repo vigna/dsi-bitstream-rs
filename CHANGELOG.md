@@ -12,10 +12,13 @@
   trait limits when buffers held more than 64 bits, silently corrupting the
   copy.
 
-- `BufBitReader::peek_bits` now performs up to two refills, so a peek of
-  `PEEK_BITS` bits returns the correct result even when the bit buffer is
-  empty; moreover, all methods now handle correctly a completely full bit
-  buffer, which can be caused by such a peek.
+- `BufBitReader::peek_bits` previously advertised `PEEK_BITS` = one word + 1
+  bits but could only guarantee one word after a single refill, returning an
+  incorrect result when peeking more than one word from an almost-empty
+  buffer. `PEEK_BITS` is now exactly one word (half the bit buffer), which is
+  sufficient for all decoding tables; a single refill always suffices, the bit
+  buffer is never completely full, and the read/skip/unary hot paths are
+  unchanged from before (no extra full-buffer handling).
 
 - `BufBitWriter::into_inner` now returns the flush error instead of
   panicking in the drop-time flush.

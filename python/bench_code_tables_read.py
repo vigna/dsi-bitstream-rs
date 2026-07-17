@@ -63,6 +63,13 @@ out_path = positional[2] if len(positional) >= 3 else None
 if dist not in {"implied", "univ"}:
     sys.exit("Distribution must be 'implied' or 'univ'")
 
+# A BufBitReader with a W-bit read word peeks at most W bits (PEEK_BITS is now
+# exactly one word, half the two-word bit buffer). A decoding table that needs
+# more than W lookup bits cannot be peeked, so we must not generate it for this
+# read word (e.g., 9-bit gamma tables require at least a 16-bit read word).
+word_bits = {"u16": 16, "u32": 32, "u64": 64}[read_word]
+max_table_bits = word_bits  # = PEEK_BITS for this read word
+
 # Build Criterion CLI options (without leading --, combined with regex after single --)
 criterion_opts_str = " ".join(criterion_opts)
 
@@ -174,7 +181,7 @@ out.flush()
 
 # ── Step 2: Table sweep (bits 1–16, merged/sep) ────────────────────────
 
-for bits in range(1, 17):
+for bits in range(1, min(16, max_table_bits) + 1):
     print(
         "\n===== Benchmarking with read word = %s, table bits = %d\n"
         % (read_word, bits),
@@ -254,6 +261,10 @@ for bits in range(1, 17):
                 file=out,
             )
 
+        # The delta-gamma variant uses 9-bit gamma tables, which a reader can
+        # peek only if its read word is at least 9 bits wide (PEEK_BITS >= 9).
+        if max_table_bits < 9:
+            continue
         # Now run delta_g variant (delta with gamma tables)
         gen_gamma(
             read_bits=9,
