@@ -2,6 +2,27 @@
 
 ## [Unreleased]
 
+### New
+
+- `WordRead` has a new method with a default implementation:
+  `read_word_opt`, atomically reading and consuming the next word if the
+  backend can determine cheaply that one is available (`None` otherwise,
+  never failing and never consuming past the end). `MemWordReader`
+  implements it.
+
+### Improved
+
+- `BufBitReader::read_bits` and `BufBitReader::read_unary` are significantly
+  faster: word-crossing reads of at most one word are composed with
+  straight-line code instead of the general word loop, and, on peekable
+  backends, refills load two words when possible, halving refill events and
+  branch mispredictions. The bit buffer still never fills completely, so the
+  hot paths carry no full-buffer handling. On Zen 4 with a u32 read word,
+  decoder read benchmarks (74 cases: gamma, delta, zeta, pi, rice,
+  exp-Golomb, Golomb, omega, unary, vbyte; both endians, implied and
+  universal distributions) measure a 17% geometric-mean speedup, up to -33%
+  on exp-Golomb and pi reads; u64-read-word unary decoding is ~13% faster.
+
 ### Fixed
 
 - The big-endian `BufBitReader::copy_to` no longer leaves already-copied bits

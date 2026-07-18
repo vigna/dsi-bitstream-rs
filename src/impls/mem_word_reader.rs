@@ -103,6 +103,20 @@ impl<W: Word, B: AsRef<[W]>> WordRead for MemWordReader<W, B, true> {
         self.word_index += 1;
         Ok(res)
     }
+
+    #[inline(always)]
+    fn read_word_opt(&mut self) -> Option<W> {
+        // Consistently with read_word, reading past the end returns zero,
+        // and the position may grow past the end.
+        let word = self
+            .data
+            .as_ref()
+            .get(self.word_index)
+            .copied()
+            .unwrap_or(W::ZERO);
+        self.word_index = self.word_index.saturating_add(1);
+        Some(word)
+    }
 }
 
 impl<W: Word, B: AsRef<[W]>> WordRead for MemWordReader<W, B, false> {
@@ -121,6 +135,15 @@ impl<W: Word, B: AsRef<[W]>> WordRead for MemWordReader<W, B, false> {
 
         self.word_index += 1;
         Ok(*res)
+    }
+
+    #[inline(always)]
+    fn read_word_opt(&mut self) -> Option<W> {
+        let word = self.data.as_ref().get(self.word_index).copied();
+        if word.is_some() {
+            self.word_index += 1;
+        }
+        word
     }
 }
 
