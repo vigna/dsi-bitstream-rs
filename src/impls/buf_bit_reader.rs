@@ -29,8 +29,9 @@ type BB<WR> = <<WR as WordRead>::Word as DoubleType>::DoubleType;
 ///
 /// The peek word is equal to the bit buffer. The value returned
 /// by [`peek_bits`](crate::traits::BitRead::peek_bits) contains at least as
-/// many bits as the word size plus one (extended with zeros beyond end of
-/// stream).
+/// many bits as the word size (extended with zeros beyond end of stream):
+/// a peek is served by at most one refill, so only one word of peekable
+/// bits can be guaranteed.
 ///
 /// The convenience functions [`from_path`] and [`from_file`] (requiring the
 /// `std` feature) create a [`BufBitReader`] around a buffered file reader.
@@ -226,7 +227,7 @@ where
     #[inline(always)]
     fn peek_bits(&mut self, n_bits: usize) -> Result<Self::PeekWord, Self::Error> {
         debug_assert!(n_bits > 0);
-        debug_assert!(n_bits <= Self::PeekWord::BITS as usize);
+        debug_assert!(n_bits <= Self::PEEK_BITS);
 
         // A peek can do at most one refill, otherwise we might lose data
         if n_bits > self.bits_in_buffer {
@@ -530,7 +531,7 @@ where
     #[inline(always)]
     fn peek_bits(&mut self, n_bits: usize) -> Result<Self::PeekWord, Self::Error> {
         debug_assert!(n_bits > 0);
-        debug_assert!(n_bits <= Self::PeekWord::BITS as usize);
+        debug_assert!(n_bits <= Self::PEEK_BITS);
 
         // A peek can do at most one refill, otherwise we might lose data
         if n_bits > self.bits_in_buffer {
@@ -889,6 +890,56 @@ mod tests {
         use core::any::TypeId;
         check!(BE, to_be);
         check!(LE, to_le);
+    }
+
+    /// The maximum documented peek (`PEEK_BITS` = one word) must be served
+    /// by a single refill from a completely empty buffer.
+    #[test]
+    fn test_peek_max_from_empty_buffer() {
+        macro_rules! check {
+            ($W:ty) => {{
+                const BITS: usize = <$W>::BITS as usize;
+                let words: [$W; 4] = [!0, 0, 0, 0];
+                let mut r = BufBitReader::<BE, _>::new(MemWordReader::new(&words));
+                assert_eq!(
+                    <BufBitReader<BE, MemWordReader<$W, &[$W; 4]>> as BitRead<BE>>::PEEK_BITS,
+                    BITS
+                );
+                assert_eq!(
+                    r.peek_bits(BITS).unwrap().as_to::<u64>(),
+                    (!0 as $W).as_to::<u64>()
+                );
+                let mut r = BufBitReader::<LE, _>::new(MemWordReader::new(&words));
+                assert_eq!(
+                    r.peek_bits(BITS).unwrap().as_to::<u64>(),
+                    (!0 as $W).as_to::<u64>()
+                );
+            }};
+        }
+        check!(u16);
+        check!(u32);
+        check!(u64);
+    }
+
+    /// Peeking more than `PEEK_BITS` bits violates the documented contract;
+    /// in debug builds the tightened assertion catches it.
+    #[test]
+    #[cfg(debug_assertions)]
+    #[should_panic]
+    fn test_peek_beyond_peek_bits_panics_be() {
+        let words: [u32; 4] = [0; 4];
+        let mut r = BufBitReader::<BE, _>::new(MemWordReader::new(&words));
+        let _ = r.peek_bits(33);
+    }
+
+    /// See [`test_peek_beyond_peek_bits_panics_be`].
+    #[test]
+    #[cfg(debug_assertions)]
+    #[should_panic]
+    fn test_peek_beyond_peek_bits_panics_le() {
+        let words: [u32; 4] = [0; 4];
+        let mut r = BufBitReader::<LE, _>::new(MemWordReader::new(&words));
+        let _ = r.peek_bits(33);
     }
 
     #[test]
