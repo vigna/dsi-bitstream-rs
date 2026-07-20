@@ -10,8 +10,8 @@ use crate::traits::*;
 #[cfg(feature = "mem_dbg")]
 use mem_dbg::{MemDbg, MemSize};
 
-/// A wrapper over a [`BitRead`] that reports on standard error all
-/// operations performed, including all code reads.
+/// A wrapper over a [`BitRead`] that reports on standard error the read
+/// operations it performs (only when the `std` feature is enabled).
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
 pub struct DbgBitReader<E: Endianness, R> {
@@ -143,8 +143,8 @@ where
     }
 }
 
-/// A wrapper over a [`BitWrite`] that reports on standard error all operations performed,
-/// including all code writes.
+/// A wrapper over a [`BitWrite`] that reports on standard error the write
+/// operations it performs (only when the `std` feature is enabled).
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
 pub struct DbgBitWriter<E: Endianness, W> {

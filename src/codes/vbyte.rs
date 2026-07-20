@@ -39,10 +39,11 @@
 //! little-endian codes, the first byte contains the lowest (least significant)
 //! bits.
 //!
-//! The advantage of the big-endian variant is that is lexicographical, that is,
-//! comparing lexicographically a stream of encoded natural numbers will give
-//! the same results as comparing lexicographically the encoded numbers, much
-//! like it happens for [UTF-8 encoding](https://en.wikipedia.org/wiki/UTF-8).
+//! In the big-endian variant the first byte holds the most significant bits.
+//! Note that the *complete* codes implemented here (which drop the redundant
+//! encodings) are not lexicographic across code-length boundaries: for example
+//! 16511 encodes to `[0xff, 0x7f]`, but the larger 16512 encodes to
+//! `[0x80, 0x80, 0x00]`, which compares byte-wise smaller.
 //!
 //! ## Completeness
 //!

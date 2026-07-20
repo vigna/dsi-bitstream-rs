@@ -12,9 +12,9 @@
 //! and [`BitWrite`](crate::traits::BitWrite), respectively,
 //! optionally printing on standard error the operations performed on the stream.
 //!
-//! [`DbgBitReader`] and [`DbgBitWriter`] print on standard error all
-//! operations performed by a [`BitRead`](crate::traits::BitRead) or
-//! [`BitWrite`](crate::traits::BitWrite).
+//! [`DbgBitReader`] and [`DbgBitWriter`] print the operations performed by a
+//! [`BitRead`](crate::traits::BitRead) or [`BitWrite`](crate::traits::BitWrite)
+//! on standard error (only when the `std` feature is enabled).
 //!
 //! [`CodesStats`] keeps track of the space needed to store a stream of
 //! integers using different codes.
