@@ -13,24 +13,21 @@
 //! a default way, to select parameters for parameterized traits
 //! such as [`GammaReadParam`] and [`GammaWriteParam`].
 //!
-//! The traits and structure in this module work closely with the
-//! bitstream readers and writers in [`impls`](crate::impls), which have an
-//! additional type parameter `RP`/`WP` that must
-//! implement marker traits [`ReadParams`] or [`WriteParams`], respectively.
-//! The type is then used as a selector type to provide blanket implementations
-//! of parameterless traits in [`codes`](crate::codes) such as [`GammaRead`],
-//! [`GammaWrite`], [`DeltaRead`], [`DeltaWrite`], and so on.
+//! The traits and structure in this module work closely with the bitstream
+//! readers and writers in [`impls`], which have an additional type parameter
+//! `RP`/`WP` that must implement marker traits [`ReadParams`] or
+//! [`WriteParams`], respectively. The type is then used as a selector type to
+//! provide blanket implementations of parameterless traits in [`codes`] such as
+//! [`GammaRead`], [`GammaWrite`], [`DeltaRead`], [`DeltaWrite`], and so on.
 //!
-//! This module provides default selector types
-//! [`DefaultReadParams`] and [`DefaultWriteParams`] which are also
-//! the default value for the parameter `RP`/`WP` in the bitstream
-//! readers and writers in [`crate::impls`]. Type-selected blanket
-//! implementations of all parameterless traits in [`crate::codes`]
-//! are provided for the bitstream readers and writers in
-//! [`impls`](crate::impls). Thus, if you do not specify a value for
-//! the parameter `RP`/`WP`, you will obtain automatically the
-//! blanket implementations for parameterless traits contained in
-//! this module.
+//! This module provides default selector types [`DefaultReadParams`] and
+//! [`DefaultWriteParams`] which are also the default value for the parameter
+//! `RP`/`WP` in the bitstream readers and writers in [`crate::impls`].
+//! Type-selected blanket implementations of all parameterless traits in
+//! [`crate::codes`] are provided for the bitstream readers and writers in
+//! [`impls`]. Thus, if you do not specify a value for the parameter `RP`/`WP`,
+//! you will obtain automatically the blanket implementations for parameterless
+//! traits contained in this module.
 //!
 //! You can also define a new selector type implementing
 //! [`ReadParams`]/[`WriteParams`] and, within this crate, provide blanket
@@ -58,6 +55,9 @@
 //! enough for the table when the corresponding `USE_TABLE` const parameter is
 //! `true`. These checks are short-circuited when the table is not used, so they
 //! are only triggered for the tables actually selected.
+//!
+//! [`impls`]: crate::impls
+//! [`codes`]: crate::codes
 
 use crate::codes::{delta::*, gamma::*, omega::*, pi::*, zeta::*};
 use crate::impls::*;

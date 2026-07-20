@@ -22,14 +22,14 @@ use std::io::{Read, Seek, SeekFrom, Write};
 /// Note that the length of adapted files or memory regions must be a multiple
 /// of the word length; a nonempty partial-word tail will not be readable.
 ///
-/// To provide a sensible value after a failed read of a partial word at the
-/// end of a file, [`word_pos`](WordAdapter::word_pos) will always return the
-/// position of the underlying [`Seek`] rounded up to the next multiple of the
-/// byte size of `W`.
-/// This approach, however, requires that if you adapt a [`Seek`],
-/// its current position must be a multiple of the byte size of `W`, or the
-/// results of [`word_pos`](WordAdapter::word_pos)
-/// will be shifted by the rounding.
+/// To provide a sensible value after a failed read of a partial word at the end
+/// of a file, [`word_pos`] will always return the position of the underlying
+/// [`Seek`] rounded up to the next multiple of the byte size of `W`. This
+/// approach, however, requires that if you adapt a [`Seek`], its current
+/// position must be a multiple of the byte size of `W`, or the results of
+/// [`word_pos`] will be shifted by the rounding.
+///
+/// [`word_pos`]: WordAdapter::word_pos
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
 pub struct WordAdapter<W: Word, B> {

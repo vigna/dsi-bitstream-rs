@@ -8,17 +8,16 @@
 //! Streamlined Apostolico–Drovandi π codes.
 //!
 //! The streamlined π code with parameter *k* ≥ 0 of a natural number *n* is the
-//! concatenation of the [Rice code](super::rice) with parameter 2*ᵏ* of
-//! ⌊log₂(*n* + 1)⌋ and of the binary representation of *n* + 1 with the most
-//! significant bit removed.
+//! concatenation of the [Rice code] with parameter 2*ᵏ* of ⌊log₂(*n* + 1)⌋ and
+//! of the binary representation of *n* + 1 with the most significant bit
+//! removed.
 //!
 //! The implied distribution of a π code with parameter *k* is ≈
 //! 1/*x*<sup>1 + 1/2*ᵏ*</sup>.
 //!
-//! Note that π₀ = [ζ₁](super::zeta) = [γ](super::gamma) and π₁ =
-//! [ζ₂](super::zeta). However, due to [subtle problems with
-//! endianness](crate::codes), in the little-endian case π₁ and ζ₂ have the same
-//! codeword lengths but slightly permuted bits.
+//! Note that π₀ = [ζ₁] = [γ] and π₁ = [ζ₂]. However, due to [subtle problems
+//! with endianness], in the little-endian case π₁ and ζ₂ have the same codeword
+//! lengths but slightly permuted bits.
 //!
 //! This module provides a generic implementation of π codes, and a specialized
 //! implementation for π₂ that may use tables.
@@ -26,26 +25,34 @@
 //! The supported range is [0 . . 2⁶⁴ – 1) for *k* in [0 . . 64).
 //!
 //! In the original paper the definition of the code is very convoluted, as the
-//! authors appear to have missed the connection with [Rice codes](super::rice).
-//! The codewords implemented by this module are equivalent to the ones in the
+//! authors appear to have missed the connection with [Rice codes]. The
+//! codewords implemented by this module are equivalent to the ones in the
 //! paper, in the sense that corresponding codewords have the same length, but
 //! the codewords for *k* ≥ 2 are different, and encoding/decoding is
 //! faster—hence the name "streamlined π codes".
 //!
 //! # Table-Based Optimization
 //!
-//! Like [δ](super::delta) codes, π codes use a special optimization for partial
-//! decoding. Due to the structure of π codes (a Rice code followed by fixed bits),
-//! when a complete codeword cannot be read from the table, the table may still
-//! provide partial information about the Rice prefix (λ) that was
-//! successfully decoded.
+//! Like [δ] codes, π codes use a special optimization for partial decoding. Due
+//! to the structure of π codes (a Rice code followed by fixed bits), when a
+//! complete codeword cannot be read from the table, the table may still provide
+//! partial information about the Rice prefix (λ) that was successfully decoded.
 //! This partial state is used to directly read the remaining λ fixed bits,
 //! avoiding re-reading the Rice prefix.
 //!
 //! # References
 //!
-//! Alberto Apostolico and Guido Drovandi. "[Graph Compression by
-//! BFS](https://doi.org/10.3390/a2031031)", Algorithms, 2:1031-1044, 2009.
+//! Alberto Apostolico and Guido Drovandi. "[Graph Compression by BFS]",
+//! Algorithms, 2:1031-1044, 2009.
+//!
+//! [Rice code]: super::rice
+//! [ζ₁]: super::zeta
+//! [γ]: super::gamma
+//! [ζ₂]: super::zeta
+//! [subtle problems with endianness]: crate::codes
+//! [Rice codes]: super::rice
+//! [δ]: super::delta
+//! [Graph Compression by BFS]: https://doi.org/10.3390/a2031031
 
 use crate::traits::*;
 

@@ -27,17 +27,15 @@ type BB<WR> = <<WR as WordRead>::Word as DoubleType>::DoubleType;
 /// that (i.e., `u32` for a 64-bit architecture). However, results will vary
 /// depending on the CPU.
 ///
-/// The peek word is equal to the bit buffer. The value returned
-/// by [`peek_bits`](crate::traits::BitRead::peek_bits) contains at least as
-/// many bits as the word size (extended with zeros beyond end of stream):
-/// a peek is served by at most one refill, so only one word of peekable
-/// bits can be guaranteed.
+/// The peek word is equal to the bit buffer. The value returned by
+/// [`peek_bits`] contains at least as many bits as the word size (extended with
+/// zeros beyond end of stream): a peek is served by at most one refill, so only
+/// one word of peekable bits can be guaranteed.
 ///
 /// The convenience functions [`from_path`] and [`from_file`] (requiring the
 /// `std` feature) create a [`BufBitReader`] around a buffered file reader.
 ///
-/// This implementation is usually faster than
-/// [`BitReader`](crate::impls::BitReader).
+/// This implementation is usually faster than [`BitReader`].
 ///
 /// The additional type parameter `RP` is used to select the parameters for the
 /// instantaneous codes, but the casual user should be happy with the default
@@ -47,6 +45,9 @@ type BB<WR> = <<WR as WordRead>::Word as DoubleType>::DoubleType;
 /// structure implements [`std::io::Read`]. Note that because of coherence
 /// rules it is not possible to implement [`std::io::Read`] for a generic
 /// [`BitRead`].
+///
+/// [`peek_bits`]: crate::traits::BitRead::peek_bits
+/// [`BitReader`]: crate::impls::BitReader
 
 #[derive(Debug)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
@@ -66,9 +67,8 @@ where
     _marker: core::marker::PhantomData<(E, RP)>,
 }
 
-/// Creates a new [`BufBitReader`] with [default read
-/// parameters](`DefaultReadParams`) from a file path using the provided
-/// endianness and read word.
+/// Creates a new [`BufBitReader`] with [default read parameters] from a file
+/// path using the provided endianness and read word.
 ///
 /// # Examples
 ///
@@ -77,6 +77,8 @@ where
 /// let mut reader = buf_bit_reader::from_path::<LE, u32>("data.bin")?;
 /// # Ok::<(), Box<dyn core::error::Error>>(())
 /// ```
+///
+/// [default read parameters]: `DefaultReadParams`
 #[cfg(feature = "std")]
 pub fn from_path<E: Endianness, W: Word + DoubleType>(
     path: impl AsRef<std::path::Path>,
@@ -89,11 +91,12 @@ where
     Ok(from_file::<E, W>(std::fs::File::open(path)?))
 }
 
-/// Creates a new [`BufBitReader`] with [default read
-/// parameters](`DefaultReadParams`) from a file using the provided
-/// endianness and read word.
+/// Creates a new [`BufBitReader`] with [default read parameters] from a file
+/// using the provided endianness and read word.
 ///
 /// See also [`from_path`] for a version that takes a path.
+///
+/// [default read parameters]: `DefaultReadParams`
 #[must_use]
 #[cfg(feature = "std")]
 pub fn from_file<E: Endianness, W: Word + DoubleType>(

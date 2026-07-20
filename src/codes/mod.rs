@@ -10,8 +10,7 @@
 //!
 //! This module contains code for reading and writing instantaneous codes.
 //! Codewords are uniformly indexed from 0 for all codes. For example, the first
-//! few words of [unary](crate::traits::BitRead::read_unary), [γ](gamma), and
-//! [δ](delta) codes are:
+//! few words of [unary], [γ], and [δ] codes are:
 //!
 //! | Arg |  unary   |    γ    |     δ    |
 //! |-----|---------:|--------:|---------:|
@@ -29,12 +28,11 @@
 //! natural numbers.
 //!
 //! Each code is implemented as a pair of traits for reading and writing (e.g.,
-//! [`GammaReadParam`](gamma::GammaReadParam) and
-//! [`GammaWriteParam`](gamma::GammaWriteParam)). The traits for reading depend
-//! on [`BitRead`](crate::traits::BitRead), whereas the traits for writing
-//! depend on [`BitWrite`](crate::traits::BitWrite). Note that most codes cannot
-//! write the number [`u64::MAX`] because of overflow issues, which could be
-//! avoided with tests, but at the price of a significant performance drop.
+//! [`GammaReadParam`] and [`GammaWriteParam`]). The traits for reading depend
+//! on [`BitRead`], whereas the traits for writing depend on [`BitWrite`]. Note
+//! that most codes cannot write the number [`u64::MAX`] because of overflow
+//! issues, which could be avoided with tests, but at the price of a significant
+//! performance drop.
 //!
 //! The traits ending with `Param` make it possible to specify parameters—for
 //! example, whether to use decoding tables. Usually, one would instead pull
@@ -48,22 +46,21 @@
 //! corresponding encoder: some derived codeword lengths are guarded only by a
 //! `debug_assert!`, and other reachable arithmetic (shifts, `quotient * b`) is
 //! unchecked. A malformed or adversarial bit stream (for example one read
-//! through [`BufBitReader`](crate::impls::BufBitReader) over an untrusted
-//! source) may therefore panic or return an incorrect value, depending on the
-//! code and on the `debug-assertions`/`overflow-checks` settings, instead of
-//! returning an error. The [VByte](vbyte) decoders additionally check, in
-//! debug builds only, that a code terminates within the maximum length of a
-//! `u64` code and that its value fits a `u64`. Validate untrusted input, or
-//! restrict decoding to a trusted producer, before use; the
-//! [`Codes`](crate::dispatch::Codes) descriptor is itself validated when
+//! through [`BufBitReader`] over an untrusted source) may therefore panic or
+//! return an incorrect value, depending on the code and on the
+//! `debug-assertions`/`overflow-checks` settings, instead of returning an
+//! error. The [VByte] decoders additionally check, in debug builds only, that a
+//! code terminates within the maximum length of a `u64` code and that its value
+//! fits a `u64`. Validate untrusted input, or restrict decoding to a trusted
+//! producer, before use; the [`Codes`] descriptor is itself validated when
 //! parsed or deserialized.
 //!
 //! # Big-endian vs. little-endian
 //!
-//! As discussed in the [traits module](crate::traits), in general reversing the
-//! bits of a big-endian bit stream will not yield a little-endian bit stream
-//! containing the same sequence of fixed-width integers. The same is true for
-//! codes, albeit the situation is more complex.
+//! As discussed in the [traits module], in general reversing the bits of a
+//! big-endian bit stream will not yield a little-endian bit stream containing
+//! the same sequence of fixed-width integers. The same is true for codes,
+//! albeit the situation is more complex.
 //!
 //! The only code that can be safely reversed is the unary code. All other codes
 //! contain some value, and that value is written without reversing its bits.
@@ -73,33 +70,48 @@
 //! Technically, the codes written for the little-endian case are different from
 //! those written for the big-endian case.
 //!
-//! For example, the [γ code](gamma) of 4 is `00101` in big-endian order, but it
-//! is `01100` in little-endian order, so that upon reading the unary code for 2
-//! we can read the `01` part without a bit reversal.
+//! For example, the [γ code] of 4 is `00101` in big-endian order, but it is
+//! `01100` in little-endian order, so that upon reading the unary code for 2 we
+//! can read the `01` part without a bit reversal.
 //!
-//! The case of [minimal binary codes](minimal_binary) is even more convoluted:
-//! for example, the code with upper bound 7 has codewords `00`, `010`, `011`,
-//! `100`, `101`, `110`, and `111`. To decode such a code without peeking at
-//! more bits than necessary, one first reads two bits, and then decides, based
-//! on their value, whether to read a further bit and add it on the right. But
-//! this means that we have to encode 2 as `011` in the big-endian case, and as
-//! `101` in the little-endian case, because we need to read the first two bits
-//! to decide whether to read the third one.
+//! The case of [minimal binary codes] is even more convoluted: for example, the
+//! code with upper bound 7 has codewords `00`, `010`, `011`, `100`, `101`,
+//! `110`, and `111`. To decode such a code without peeking at more bits than
+//! necessary, one first reads two bits, and then decides, based on their value,
+//! whether to read a further bit and add it on the right. But this means that
+//! we have to encode 2 as `011` in the big-endian case, and as `101` in the
+//! little-endian case, because we need to read the first two bits to decide
+//! whether to read the third one.
 //!
 //! In some cases, we resort to completely *ad hoc* solutions: for example, in
-//! the case of the [ω code](omega), for the little-endian case instead of
-//! reversing the bits written at each recursive call (which in principle would
-//! be necessary), we simply rotate them to the left by one position, exposing
-//! the most significant bit as first bit. This is sufficient to make the
-//! decoding possible, and the rotation is a much faster operation than bit
-//! reversal.
+//! the case of the [ω code], for the little-endian case instead of reversing
+//! the bits written at each recursive call (which in principle would be
+//! necessary), we simply rotate them to the left by one position, exposing the
+//! most significant bit as first bit. This is sufficient to make the decoding
+//! possible, and the rotation is a much faster operation than bit reversal.
 //!
 //! # Dispatch
 //!
-//! The basic method for accessing codes is through traits like
-//! [`GammaRead`] and [`GammaWrite`]. This approach, however, forces a choice of code in the
+//! The basic method for accessing codes is through traits like [`GammaRead`]
+//! and [`GammaWrite`]. This approach, however, forces a choice of code in the
 //! source. To pass a choice of code dynamically, please have a look at the
-//! [`dispatch`](crate::dispatch) module.
+//! [`dispatch`] module.
+//!
+//! [unary]: crate::traits::BitRead::read_unary
+//! [γ]: gamma
+//! [δ]: delta
+//! [`GammaReadParam`]: gamma::GammaReadParam
+//! [`GammaWriteParam`]: gamma::GammaWriteParam
+//! [`BitRead`]: crate::traits::BitRead
+//! [`BitWrite`]: crate::traits::BitWrite
+//! [`BufBitReader`]: crate::impls::BufBitReader
+//! [VByte]: vbyte
+//! [`Codes`]: crate::dispatch::Codes
+//! [traits module]: crate::traits
+//! [γ code]: gamma
+//! [minimal binary codes]: minimal_binary
+//! [ω code]: omega
+//! [`dispatch`]: crate::dispatch
 
 use num_primitive::{PrimitiveNumberAs, PrimitiveSigned, PrimitiveUnsigned};
 
@@ -149,23 +161,26 @@ pub mod zeta_tables;
 
 /// Extension trait mapping natural numbers bijectively to integers.
 ///
-/// The method [`to_int`](#method.to_int) will map a natural number `x` to `x
-/// / 2` if `x` is even, and to `−(x + 1) / 2` if `x` is odd. The inverse
-/// transformation is provided by the [`ToNat`] trait.
+/// The method [`to_int`] will map a natural number `x` to `x / 2` if `x` is
+/// even, and to `−(x + 1) / 2` if `x` is odd. The inverse transformation is
+/// provided by the [`ToNat`] trait.
 ///
 /// This pair of bijections makes it possible to use instantaneous codes for
 /// signed integers by mapping them to natural numbers and back.
 ///
 /// This bijection is best known as the “ZigZag” transformation in Google's
-/// [Protocol Buffers](https://protobuf.dev/), albeit it has been used by
-/// [WebGraph](http://webgraph.di.unimi.it/) since 2003, and most likely in
-/// other software, for the same purpose. Note that the compression standards
-/// H.264/H.265 use a different transformation for exponential Golomb codes,
-/// mapping a positive integer `x` to `2x − 1` and a zero or negative integer
-/// `x` to `−2x`.
+/// [Protocol Buffers], albeit it has been used by [WebGraph] since 2003, and
+/// most likely in other software, for the same purpose. Note that the
+/// compression standards H.264/H.265 use a different transformation for
+/// exponential Golomb codes, mapping a positive integer `x` to `2x − 1` and a
+/// zero or negative integer `x` to `−2x`.
 ///
 /// The implementation uses a blanket implementation for all primitive
 /// unsigned integer types.
+///
+/// [`to_int`]: #method.to_int
+/// [Protocol Buffers]: https://protobuf.dev/
+/// [WebGraph]: http://webgraph.di.unimi.it/
 pub trait ToInt {
     type Signed;
     #[must_use]
@@ -185,23 +200,26 @@ where
 
 /// Extension trait mapping signed integers bijectively to natural numbers.
 ///
-/// The method [`to_nat`](#method.to_nat) will map a nonnegative integer `x`
-/// to `2x` and a negative integer `x` to `−2x − 1`. The inverse transformation
-/// is provided by the [`ToInt`] trait.
+/// The method [`to_nat`] will map a nonnegative integer `x` to `2x` and a
+/// negative integer `x` to `−2x − 1`. The inverse transformation is provided by
+/// the [`ToInt`] trait.
 ///
 /// This pair of bijections makes it possible to use instantaneous codes
 /// for signed integers by mapping them to natural numbers and back.
 ///
 /// This bijection is best known as the “ZigZag” transformation in Google's
-/// [Protocol Buffers](https://protobuf.dev/), albeit it has been used by
-/// [WebGraph](http://webgraph.di.unimi.it/) since 2003, and most likely in
-/// other software, for the same purpose. Note that the compression standards
-/// H.264/H.265 use a different transformation for exponential Golomb codes,
-/// mapping a positive integer `x` to `2x − 1` and a zero or negative integer
-/// `x` to `−2x`.
+/// [Protocol Buffers], albeit it has been used by [WebGraph] since 2003, and
+/// most likely in other software, for the same purpose. Note that the
+/// compression standards H.264/H.265 use a different transformation for
+/// exponential Golomb codes, mapping a positive integer `x` to `2x − 1` and a
+/// zero or negative integer `x` to `−2x`.
 ///
 /// The implementation uses a blanket implementation for all primitive
 /// signed integer types.
+///
+/// [`to_nat`]: #method.to_nat
+/// [Protocol Buffers]: https://protobuf.dev/
+/// [WebGraph]: http://webgraph.di.unimi.it/
 pub trait ToNat {
     type Unsigned;
     #[must_use]

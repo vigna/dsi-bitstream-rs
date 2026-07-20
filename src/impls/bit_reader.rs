@@ -17,12 +17,11 @@ use crate::traits::*;
 /// [`BitSeek`] for a [`WordSeek`].
 ///
 /// This implementation randomly accesses the underlying [`WordRead`] without
-/// any buffering. It is usually slower than
-/// [`BufBitReader`](crate::impls::BufBitReader).
+/// any buffering. It is usually slower than [`BufBitReader`].
 ///
-/// The peek word is `u32`. The value returned by
-/// [`peek_bits`](crate::traits::BitRead::peek_bits) contains at least 32 bits
-/// (extended with zeros beyond end of stream), that is, a full peek word.
+/// The peek word is `u32`. The value returned by [`peek_bits`] contains at
+/// least 32 bits (extended with zeros beyond end of stream), that is, a full
+/// peek word.
 ///
 /// The additional type parameter `RP` is used to select the parameters for the
 /// instantaneous codes, but the casual user should be happy with the default
@@ -32,6 +31,9 @@ use crate::traits::*;
 /// structure implements [`std::io::Read`]. Note that because of coherence
 /// rules it is not possible to implement [`std::io::Read`] for a generic
 /// [`BitRead`].
+///
+/// [`BufBitReader`]: crate::impls::BufBitReader
+/// [`peek_bits`]: crate::traits::BitRead::peek_bits
 
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]

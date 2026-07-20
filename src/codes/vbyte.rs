@@ -10,9 +10,7 @@
 //! These codes represent a natural number as a sequence of bytes, the length of
 //! the sequence depends on the magnitude of the number. They are used in many
 //! contexts, and they are known under a plethora of different names such as
-//! “vbyte”, “varint”, “[variable-length
-//! quantity](https://en.wikipedia.org/wiki/Variable-length_quantity)”, “LEB”,
-//! and so on.
+//! “vbyte”, “varint”, “[variable-length quantity]”, “LEB”, and so on.
 //!
 //! There are several variants of their definition, but their implied
 //! distribution is always ≈ 1/*x*<sup>8/7</sup>
@@ -61,31 +59,28 @@
 //!
 //! In the basic representation, the continuation bit is the most significant
 //! bit of each byte. However, one can gather all continuation bits in the first
-//! byte ([as UTF-8 does](https://en.wikipedia.org/wiki/UTF-8)). This approach
-//! makes it possible to compute the length of the code using a call to
-//! [`u8::leading_ones`] on the first negated byte, which usually maps to a
-//! negation and a call to a fast instruction for the detection of the most
-//! significant bit, improving branch prediction.
+//! byte ([as UTF-8 does]). This approach makes it possible to compute the
+//! length of the code using a call to [`u8::leading_ones`] on the first negated
+//! byte, which usually maps to a negation and a call to a fast instruction for
+//! the detection of the most significant bit, improving branch prediction.
 //!
 //! Note that if the code is grouped, choosing a code with the same endianness
 //! as your hardware can lead to a performance improvement, as after the first
-//! byte the rest of the code can be read with a
-//![`read_exact`](std::io::Read::read_exact).
+//! byte the rest of the code can be read with a [`read_exact`].
 //!
 //! ## Sign
 //!
 //! It is possible to extend the codes to represent signed integers. Two
-//! possible approaches are using a [bijective mapping](crate::codes::ToInt)
-//! between the integers and the natural numbers, or defining a specialized
-//! code.
+//! possible approaches are using a [bijective mapping] between the integers and
+//! the natural numbers, or defining a specialized code.
 //!
 //! # Implementations
 //!
 //! We provide two unsigned, ungrouped, complete representations, one
-//! [big-endian](VByteBeRead) and one [little-endian](VByteLeRead). We recommend
-//! in general the big-endian version as it is lexicographical. However, the
-//! big-endian version needs a small buffer when writing, so on some hardware
-//! the little-endian version might be faster.
+//! [big-endian] and one [little-endian]. We recommend in general the big-endian
+//! version as it is lexicographical. However, the big-endian version needs a
+//! small buffer when writing, so on some hardware the little-endian version
+//! might be faster.
 //!
 //! Note that the endianness of the code is independent from the endianness of
 //! the underlying bit stream, as it just depends on the order in which bytes are
@@ -99,18 +94,24 @@
 //!
 //! # Examples
 //!
-//! - The [LEB128](https://en.wikipedia.org/wiki/LEB128) code used by LLVM is a
-//!   little-endian incomplete ungrouped representation. There is both a signed
-//!   and an unsigned version; the signed version represents negative numbers
-//!   using two's complement.
+//! - The [LEB128] code used by LLVM is a little-endian incomplete ungrouped
+//!   representation. There is both a signed and an unsigned version; the signed
+//!   version represents negative numbers using two's complement.
 //!
-//! - The [code used by
-//!   git](https://github.com/git/git/blob/7fb6aefd2aaffe66e614f7f7b83e5b7ab16d4806/varint.c)
-//!   is a big-endian complete ungrouped representation.
+//! - The [code used by git] is a big-endian complete ungrouped representation.
 //!
-//! - [This implementation in
-//!   folly](https://github.com/facebook/folly/blob/dd4a5eb057afbc3c7c7da71801df2ee3c61c47d1/folly/Varint.h#L109)
-//!   is a little-endian incomplete ungrouped representation.
+//! - [This implementation in folly] is a little-endian incomplete ungrouped
+//!   representation.
+//!
+//! [variable-length quantity]: https://en.wikipedia.org/wiki/Variable-length_quantity
+//! [as UTF-8 does]: https://en.wikipedia.org/wiki/UTF-8
+//! [`read_exact`]: std::io::Read::read_exact
+//! [bijective mapping]: crate::codes::ToInt
+//! [big-endian]: VByteBeRead
+//! [little-endian]: VByteLeRead
+//! [LEB128]: https://en.wikipedia.org/wiki/LEB128
+//! [code used by git]: https://github.com/git/git/blob/7fb6aefd2aaffe66e614f7f7b83e5b7ab16d4806/varint.c
+//! [This implementation in folly]: https://github.com/facebook/folly/blob/dd4a5eb057afbc3c7c7da71801df2ee3c61c47d1/folly/Varint.h#L109
 
 use crate::traits::*;
 

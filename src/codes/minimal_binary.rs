@@ -9,9 +9,8 @@
 //! Minimal binary codes.
 //!
 //! A minimal binary code with upper bound *u* > 0 (AKA [truncated binary
-//! encoding](https://en.wikipedia.org/wiki/Truncated_binary_encoding)) is an
-//! optimal prefix-free code for the first *u* natural numbers with uniform
-//! distribution.
+//! encoding]) is an optimal prefix-free code for the first *u* natural numbers
+//! with uniform distribution.
 //!
 //! There are several such codes, and the one implemented here is defined as
 //! follows: let *s* = ⌈log₂*u*⌉; then, given *x* < *u*, if *x* <
@@ -22,9 +21,11 @@
 //! The supported range for *u* is [1 . . 2⁶⁴). Note that calling any method
 //! with *u* = 0 will cause an arithmetic error.
 //!
-//! See the [codes module documentation](crate::codes) for some elaboration on
-//! the difference between the big-endian and little-endian versions of the
-//! codes.
+//! See the [codes module documentation] for some elaboration on the difference
+//! between the big-endian and little-endian versions of the codes.
+//!
+//! [truncated binary encoding]: https://en.wikipedia.org/wiki/Truncated_binary_encoding
+//! [codes module documentation]: crate::codes
 
 use crate::traits::*;
 

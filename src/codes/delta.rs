@@ -8,9 +8,9 @@
 
 //! Elias δ code.
 //!
-//! The δ code of a natural number *n* is the concatenation of the
-//! [γ](crate::codes::gamma) code of ⌊log₂(*n* + 1)⌋ and the binary
-//! representation of *n* + 1 with the most significant bit removed.
+//! The δ code of a natural number *n* is the concatenation of the [γ] code of
+//! ⌊log₂(*n* + 1)⌋ and the binary representation of *n* + 1 with the most
+//! significant bit removed.
 //!
 //! The implied distribution of the δ code is ≈ 1/2*x*(log *x*)².
 //!
@@ -23,18 +23,22 @@
 //!
 //! # Table-Based Optimization
 //!
-//! Like [ω](super::omega) codes, δ codes use a special optimization for partial
-//! decoding. Due to the structure of δ codes (a γ code followed by fixed bits),
-//! when a complete codeword cannot be read from the table, the table may still
-//! provide partial information about the γ prefix that was successfully decoded.
-//! This partial state is used to directly read the remaining fixed bits,
-//! avoiding re-reading the γ prefix.
+//! Like [ω] codes, δ codes use a special optimization for partial decoding. Due
+//! to the structure of δ codes (a γ code followed by fixed bits), when a
+//! complete codeword cannot be read from the table, the table may still provide
+//! partial information about the γ prefix that was successfully decoded. This
+//! partial state is used to directly read the remaining fixed bits, avoiding
+//! re-reading the γ prefix.
 //!
 //! # References
 //!
 //! Peter Elias, “[Universal codeword sets and representations of the
-//! integers](https://doi.org/10.1109/TIT.1975.1055349)”. IEEE Transactions on
-//! Information Theory, 21(2):194–203, March 1975.
+//! integers]”. IEEE Transactions on Information Theory, 21(2):194–203, March
+//! 1975.
+//!
+//! [γ]: crate::codes::gamma
+//! [ω]: super::omega
+//! [Universal codeword sets and representations of the integers]: https://doi.org/10.1109/TIT.1975.1055349
 
 use super::delta_tables;
 use super::gamma::{GammaReadParam, GammaWriteParam, len_gamma_param};

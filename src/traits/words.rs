@@ -14,10 +14,11 @@ use num_primitive::PrimitiveUnsigned;
 /// written by either a [`WordRead`] or [`WordWrite`], respectively.
 ///
 /// We provide `ZERO` and `ONE` associated constants to avoid depending on
-/// [`num-traits`](https://crates.io/crates/num-traits)'s
-/// [`ConstZero`](https://docs.rs/num-traits/latest/num_traits/identities/trait.ConstZero.html)
-/// and
-/// [`ConstOne`](https://docs.rs/num-traits/latest/num_traits/identities/trait.ConstOne.html).
+/// [`num-traits`]'s [`ConstZero`] and [`ConstOne`].
+///
+/// [`num-traits`]: https://crates.io/crates/num-traits
+/// [`ConstZero`]: https://docs.rs/num-traits/latest/num_traits/identities/trait.ConstZero.html
+/// [`ConstOne`]: https://docs.rs/num-traits/latest/num_traits/identities/trait.ConstOne.html
 pub trait Word: PrimitiveUnsigned {
     const ZERO: Self;
     const ONE: Self;
@@ -41,10 +42,11 @@ impl_word!(u8, u16, u32, u64, u128, usize);
 /// This is used by [`crate::impls::BufBitReader`] to provide a bit buffer
 /// that is twice the width of the word read from the backend.
 ///
-/// The methods
-/// [`as_double`](Self::as_double)/[`as_u64`](Self::as_u64) can be
-/// used to convert a word into its double-width type or to a `u64`,
-/// respectively, without loss of precision.
+/// The methods [`as_double`]/[`as_u64`] can be used to convert a word into its
+/// double-width type or to a `u64`, respectively, without loss of precision.
+///
+/// [`as_double`]: Self::as_double
+/// [`as_u64`]: Self::as_u64
 pub trait DoubleType {
     type DoubleType: Word;
 
@@ -102,11 +104,13 @@ pub trait WordRead {
     /// caller committed to consuming the word).
     ///
     /// The default implementation returns `None`. Backends with cheap random
-    /// access (e.g., [`MemWordReader`](crate::impls::MemWordReader)) should
-    /// override this method: readers such as
-    /// [`BufBitReader`](crate::impls::BufBitReader) use it to provide
-    /// branch-free read paths, falling back to
-    /// [`read_word`](WordRead::read_word) when `None` is returned.
+    /// access (e.g., [`MemWordReader`]) should override this method: readers
+    /// such as [`BufBitReader`] use it to provide branch-free read paths,
+    /// falling back to [`read_word`] when `None` is returned.
+    ///
+    /// [`MemWordReader`]: crate::impls::MemWordReader
+    /// [`BufBitReader`]: crate::impls::BufBitReader
+    /// [`read_word`]: WordRead::read_word
     #[inline(always)]
     fn read_word_opt(&mut self) -> Option<Self::Word> {
         None
@@ -132,9 +136,10 @@ pub trait WordSeek {
     type Error: Error + Send + Sync + 'static;
     /// Gets the current position in words from the start of the stream.
     ///
-    /// Note that, consistently with
-    /// [`Seek::stream_position`](https://doc.rust-lang.org/std/io/trait.Seek.html#method.stream_position),
-    /// this method takes a mutable reference to `self`.
+    /// Note that, consistently with [`Seek::stream_position`], this method
+    /// takes a mutable reference to `self`.
+    ///
+    /// [`Seek::stream_position`]: https://doc.rust-lang.org/std/io/trait.Seek.html#method.stream_position
     fn word_pos(&mut self) -> Result<u64, Self::Error>;
 
     /// Sets the current position in words from the start of the stream to `word_pos`.

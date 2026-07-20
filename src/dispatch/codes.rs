@@ -20,12 +20,15 @@ use mem_dbg::{MemDbg, MemSize};
 
 /// An enum whose variants represent all the available codes.
 ///
-/// This enum is kept in sync with implementations in the
-/// [`codes`](crate::codes) module.
+/// This enum is kept in sync with implementations in the [`codes`] module.
 ///
-/// Both [`Display`](core::fmt::Display) and [`FromStr`](core::str::FromStr) are
-/// implemented for this enum in a compatible way, making it possible to store a
-/// code as a string in a configuration file and then parse it back.
+/// Both [`Display`] and [`FromStr`] are implemented for this enum in a
+/// compatible way, making it possible to store a code as a string in a
+/// configuration file and then parse it back.
+///
+/// [`codes`]: crate::codes
+/// [`Display`]: core::fmt::Display
+/// [`FromStr`]: core::str::FromStr
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
 #[cfg_attr(feature = "mem_dbg", mem_size(flat))]
@@ -55,16 +58,21 @@ impl Codes {
     ///
     /// The mapping is:
     ///
-    /// - [`Rice(0)`](Codes::Rice),
-    ///   [`Golomb(1)`](Codes::Golomb) →
-    ///   [`Unary`](Codes::Unary)
+    /// - [`Rice(0)`], [`Golomb(1)`] → [`Unary`]
     ///
-    /// - [`Zeta(1)`](Codes::Zeta),
-    ///   [`ExpGolomb(0)`](Codes::ExpGolomb),
-    ///   [`Pi(0)`](Codes::Pi) →
-    ///   [`Gamma`](Codes::Gamma)
+    /// - [`Zeta(1)`], [`ExpGolomb(0)`], [`Pi(0)`] → [`Gamma`]
     ///
-    /// - [`Golomb(2ⁿ)`](Codes::Golomb) → [`Rice(n)`](Codes::Rice)
+    /// - [`Golomb(2ⁿ)`] → [`Rice(n)`]
+    ///
+    /// [`Rice(0)`]: Codes::Rice
+    /// [`Golomb(1)`]: Codes::Golomb
+    /// [`Unary`]: Codes::Unary
+    /// [`Zeta(1)`]: Codes::Zeta
+    /// [`ExpGolomb(0)`]: Codes::ExpGolomb
+    /// [`Pi(0)`]: Codes::Pi
+    /// [`Gamma`]: Codes::Gamma
+    /// [`Golomb(2ⁿ)`]: Codes::Golomb
+    /// [`Rice(n)`]: Codes::Rice
     #[must_use]
     pub const fn canonicalize(self) -> Self {
         match self {
@@ -104,14 +112,15 @@ impl Codes {
     /// [`ConstCode`]. This is mostly used to verify that the code is supported
     /// by [`ConstCode`].
     ///
-    /// The code is [canonicalized](Codes::canonicalize) before
-    /// the conversion, so equivalent codes map to the same
-    /// constant.
+    /// The code is [canonicalized] before the conversion, so equivalent codes
+    /// map to the same constant.
     ///
     /// # Errors
     ///
     /// Returns [`DispatchError::UnsupportedCode`] if the (canonicalized)
     /// code has no corresponding constant in [`code_consts`].
+    ///
+    /// [canonicalized]: Codes::canonicalize
     pub const fn to_code_const(&self) -> Result<usize, DispatchError> {
         Ok(match self.canonicalize() {
             Self::Unary => code_consts::UNARY,
@@ -487,13 +496,15 @@ impl<'de> serde::Deserialize<'de> for Codes {
 
 /// Structure representing minimal binary coding with a fixed upper bound.
 ///
-/// [Minimal binary coding](crate::codes::minimal_binary) does not
-/// fit the [`Codes`] enum because it is not defined for all integers.
+/// [Minimal binary coding] does not fit the [`Codes`] enum because it is not
+/// defined for all integers.
 ///
 /// Instances of this structure can be used in contexts in which a
 /// [`DynamicCodeRead`], [`DynamicCodeWrite`], [`StaticCodeRead`],
 /// [`StaticCodeWrite`] or [`CodeLen`] implementing minimal binary coding
 /// is necessary.
+///
+/// [Minimal binary coding]: crate::codes::minimal_binary
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct MinimalBinary(
     /// The upper bound of the minimal binary code.

@@ -6,18 +6,18 @@
 
 //! Rice codes.
 //!
-//! Rice codes (AKA Golomb–Rice codes) are a form of approximated [Golomb
-//! codes](crate::codes::golomb) in which the parameter *b* is a power of
-//! two. This restriction makes the code less precise in modeling data with a
-//! geometric distribution, but encoding and decoding can be performed without
-//! any integer arithmetic, and thus much more quickly.
+//! Rice codes (AKA Golomb–Rice codes) are a form of approximated [Golomb codes]
+//! in which the parameter *b* is a power of two. This restriction makes the
+//! code less precise in modeling data with a geometric distribution, but
+//! encoding and decoding can be performed without any integer arithmetic, and
+//! thus much more quickly.
 //!
 //! The implied distribution of a Rice code is [the same as that of a Golomb
-//! code with the same parameter](crate::codes::golomb).
+//! code with the same parameter].
 //!
 //! For natural numbers distributed with a geometric distribution with base *p*,
 //! the base-2 logarithm of the optimal *b* is [⌈log₂(ln((√5 + 1)/2) / ln(1 -
-//! *p*))⌉](log2_b).
+//! *p*))⌉].
 //!
 //! The supported range is [0 . . 2⁶⁴) for log₂(*b*) in [0 . . 64), but writing
 //! 2⁶⁴ – 1 when *b* = 1 requires writing the unary code for 2⁶⁴ – 1, which
@@ -26,15 +26,19 @@
 //!
 //! # References
 //!
-//! Robert F. Rice, “[Some practical universal noiseless coding
-//! techniques](https://ntrs.nasa.gov/api/citations/19790014634/downloads/19790014634.pdf)”.
+//! Robert F. Rice, “[Some practical universal noiseless coding techniques]”.
 //! Jet Propulsion Laboratory, Pasadena, CA, Tech. Rep. JPL-79-22, JPL-83-17,
 //! and JPL-91-3, March 1979.
 //!
-//! Aaron Kiely. “[Selecting the Golomb parameter in Rice
-//! coding](https://tda.jpl.nasa.gov/progress_report/42-159/159E.pdf)”.
+//! Aaron Kiely. “[Selecting the Golomb parameter in Rice coding]”.
 //! Interplanetary Network Progress report 42-159, Jet Propulsion Laboratory,
 //! 2004.
+//!
+//! [Golomb codes]: crate::codes::golomb
+//! [the same as that of a Golomb code with the same parameter]: crate::codes::golomb
+//! [⌈log₂(ln((√5 + 1)/2) / ln(1 - *p*))⌉]: log2_b
+//! [Some practical universal noiseless coding techniques]: https://ntrs.nasa.gov/api/citations/19790014634/downloads/19790014634.pdf
+//! [Selecting the Golomb parameter in Rice coding]: https://tda.jpl.nasa.gov/progress_report/42-159/159E.pdf
 
 use crate::traits::*;
 

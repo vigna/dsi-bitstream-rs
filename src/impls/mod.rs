@@ -9,10 +9,9 @@
 //! Implementations of bit and word (seekable) streams.
 //!
 //! Implementations of bit streams read from word streams, that is,
-//! implementations of [`WordRead`](crate::traits::WordRead) and
-//! [`WordWrite`](crate::traits::WordWrite). If you have a standard
-//! [`Read`](std::io::Read) or [`Write`](std::io::Write) byte stream
-//! you can wrap it into a [`WordAdapter`] to turn it into a word stream.
+//! implementations of [`WordRead`] and [`WordWrite`]. If you have a standard
+//! [`Read`] or [`Write`] byte stream you can wrap it into a [`WordAdapter`] to
+//! turn it into a word stream.
 //!
 //! If instead you want to read or write words directly from memory, you can use
 //! [`MemWordReader`] and [`MemWordWriterVec`]/[`MemWordWriterSlice`],
@@ -81,6 +80,11 @@
 //! # Ok(())
 //! # }
 //! ```
+//!
+//! [`WordRead`]: crate::traits::WordRead
+//! [`WordWrite`]: crate::traits::WordWrite
+//! [`Read`]: std::io::Read
+//! [`Write`]: std::io::Write
 
 mod mem_word_reader;
 pub use mem_word_reader::*;

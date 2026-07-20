@@ -10,8 +10,10 @@
 //!
 //! This kind of dispatch is resolved at runtime, but just once, at construction
 //! time, against a specific [`CodesRead`]. The code is stored in a function
-//! pointer, so it cannot be inlined like in the [static
-//! case](crate::dispatch::static), but the approach is more flexible.
+//! pointer, so it cannot be inlined like in the [static case], but the approach
+//! is more flexible.
+//!
+//! [static case]: crate::dispatch::static
 
 use super::*;
 #[cfg(feature = "mem_dbg")]
@@ -26,14 +28,15 @@ type ReadFn<E, CR> = fn(&mut CR) -> Result<u64, <CR as BitRead<E>>::Error>;
 /// [`FuncCodeReader`] does not need to do a runtime test to dispatch the
 /// correct code.
 ///
-/// Instances can be obtained by calling the [`new`](FuncCodeReader::new) method
-/// with a variant of the [`Codes`] enum, or by calling the
-/// [`new_with_func`](FuncCodeReader::new_with_func) method with a function
-/// pointer.
+/// Instances can be obtained by calling the [`new`] method with a variant of
+/// the [`Codes`] enum, or by calling the [`new_with_func`] method with a
+/// function pointer.
 ///
-/// Note that since selection of the code happens in the
-/// [`new`](FuncCodeReader::new) method, it is more efficient to clone a
-/// [`FuncCodeReader`] than to create a new one.
+/// Note that since selection of the code happens in the [`new`] method, it is
+/// more efficient to clone a [`FuncCodeReader`] than to create a new one.
+///
+/// [`new`]: FuncCodeReader::new
+/// [`new_with_func`]: FuncCodeReader::new_with_func
 #[derive(Debug, Copy)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
 pub struct FuncCodeReader<E: Endianness, CR: CodesRead<E> + ?Sized>(ReadFn<E, CR>);
@@ -101,13 +104,15 @@ impl<E: Endianness, CR: CodesRead<E> + ?Sized> FuncCodeReader<E, CR> {
 
     /// Returns a new [`FuncCodeReader`] for the given code.
     ///
-    /// The code is [canonicalized](Codes::canonicalize) before
-    /// the lookup, so equivalent codes yield the same reader.
+    /// The code is [canonicalized] before the lookup, so equivalent codes yield
+    /// the same reader.
     ///
     /// # Errors
     ///
     /// The method will return an error if there is no constant
     /// for the given code in [`FuncCodeReader`].
+    ///
+    /// [canonicalized]: Codes::canonicalize
     pub const fn new(code: Codes) -> Result<Self, DispatchError> {
         let code = code.canonicalize();
         let read_func = match code {
@@ -198,14 +203,15 @@ type WriteFn<E, CW> = fn(&mut CW, u64) -> Result<usize, <CW as BitWrite<E>>::Err
 /// a [`FuncCodeWriter`] does not need to do a runtime test to dispatch the
 /// correct code.
 ///
-/// Instances can be obtained by calling the [`new`](FuncCodeWriter::new) method
-/// with a variant of the [`Codes`] enum, or by calling the
-/// [`new_with_func`](FuncCodeWriter::new_with_func) method with a function
-/// pointer.
+/// Instances can be obtained by calling the [`new`] method with a variant of
+/// the [`Codes`] enum, or by calling the [`new_with_func`] method with a
+/// function pointer.
 ///
-/// Note that since selection of the code happens in the
-/// [`new`](FuncCodeWriter::new) method, it is more efficient to clone a
-/// [`FuncCodeWriter`] than to create a new one.
+/// Note that since selection of the code happens in the [`new`] method, it is
+/// more efficient to clone a [`FuncCodeWriter`] than to create a new one.
+///
+/// [`new`]: FuncCodeWriter::new
+/// [`new_with_func`]: FuncCodeWriter::new_with_func
 #[derive(Debug, Copy)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
 pub struct FuncCodeWriter<E: Endianness, CW: CodesWrite<E> + ?Sized>(WriteFn<E, CW>);
@@ -273,13 +279,15 @@ impl<E: Endianness, CW: CodesWrite<E> + ?Sized> FuncCodeWriter<E, CW> {
 
     /// Returns a new [`FuncCodeWriter`] for the given code.
     ///
-    /// The code is [canonicalized](Codes::canonicalize) before
-    /// the lookup, so equivalent codes yield the same writer.
+    /// The code is [canonicalized] before the lookup, so equivalent codes yield
+    /// the same writer.
     ///
     /// # Errors
     ///
     /// The method will return an error if there is no constant
     /// for the given code in [`FuncCodeWriter`].
+    ///
+    /// [canonicalized]: Codes::canonicalize
     pub const fn new(code: Codes) -> Result<Self, DispatchError> {
         let code = code.canonicalize();
         let write_func = match code {
@@ -370,12 +378,15 @@ type LenFn = fn(u64) -> usize;
 /// a [`FuncCodeLen`] does not need to do a runtime test to dispatch the correct
 /// method.
 ///
-/// Instances can be obtained by calling the [`new`](FuncCodeLen::new) method
-/// with a variant of the [`Codes`] enum, or by calling the
-/// [`new_with_func`](FuncCodeLen::new_with_func) method with a function pointer.
+/// Instances can be obtained by calling the [`new`] method with a variant of
+/// the [`Codes`] enum, or by calling the [`new_with_func`] method with a
+/// function pointer.
 ///
-/// Note that since selection of the code happens in the [`new`](FuncCodeLen::new)
-/// method, it is more efficient to clone a [`FuncCodeLen`] than to create a new one.
+/// Note that since selection of the code happens in the [`new`] method, it is
+/// more efficient to clone a [`FuncCodeLen`] than to create a new one.
+///
+/// [`new`]: FuncCodeLen::new
+/// [`new_with_func`]: FuncCodeLen::new_with_func
 #[derive(Debug, Clone, Copy)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
 #[cfg_attr(feature = "mem_dbg", mem_size(flat))]
@@ -441,14 +452,15 @@ impl FuncCodeLen {
 
     /// Returns a new [`FuncCodeLen`] for the given code.
     ///
-    /// The code is [canonicalized](Codes::canonicalize) before
-    /// the lookup, so equivalent codes yield the same length
-    /// function.
+    /// The code is [canonicalized] before the lookup, so equivalent codes yield
+    /// the same length function.
     ///
     /// # Errors
     ///
     /// The method will return an error if there is no constant
     /// for the given code in [`FuncCodeLen`].
+    ///
+    /// [canonicalized]: Codes::canonicalize
     pub const fn new(code: Codes) -> Result<Self, DispatchError> {
         let code = code.canonicalize();
         let len_func = match code {

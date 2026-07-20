@@ -9,17 +9,16 @@
 //! Boldi–Vigna ζ codes.
 //!
 //! The ζ code with parameter *k* ≥ 1 of a natural number *n* is the
-//! concatenation of the unary code of *h* = ⌊⌊log₂(*n* + 1)⌋ / *k*⌋ and of
-//! the [minimal binary code](crate::codes::minimal_binary) of *n* + 1 − 2*ʰᵏ*
-//! with 2⁽*ʰ* ⁺ ¹⁾*ᵏ* − 2*ʰᵏ* as upper bound.
+//! concatenation of the unary code of *h* = ⌊⌊log₂(*n* + 1)⌋ / *k*⌋ and of the
+//! [minimal binary code] of *n* + 1 − 2*ʰᵏ* with 2⁽*ʰ* ⁺ ¹⁾*ᵏ* − 2*ʰᵏ* as upper
+//! bound.
 //!
 //! The implied distribution of a ζ code with parameter *k* is ≈ 1/*x*<sup>1 +
 //! 1/*k*</sup>.
 //!
-//! Note that ζ₁ = [π₀](crate::codes::pi) = [γ](crate::codes::gamma) and ζ₂ =
-//! [π₁](crate::codes::pi). However, due to [subtle problems with
-//! endianness](crate::codes), in the little-endian case ζ₂ and π₁ have the same
-//! codeword lengths but slightly permuted bits.
+//! Note that ζ₁ = [π₀] = [γ] and ζ₂ = [π₁]. However, due to [subtle problems
+//! with endianness], in the little-endian case ζ₂ and π₁ have the same codeword
+//! lengths but slightly permuted bits.
 //!
 //! This module provides a generic implementation of ζ codes, and a specialized
 //! implementation for ζ₃ that may use tables.
@@ -28,9 +27,15 @@
 //!
 //! # References
 //!
-//! Paolo Boldi and Sebastiano Vigna. “[Codes for the World–Wide
-//! Web](https://doi.org/10.1080/15427951.2005.10129113)”. Internet Math.,
-//! 2(4):405–427, 2005.
+//! Paolo Boldi and Sebastiano Vigna. “[Codes for the World–Wide Web]”. Internet
+//! Math., 2(4):405–427, 2005.
+//!
+//! [minimal binary code]: crate::codes::minimal_binary
+//! [π₀]: crate::codes::pi
+//! [γ]: crate::codes::gamma
+//! [π₁]: crate::codes::pi
+//! [subtle problems with endianness]: crate::codes
+//! [Codes for the World–Wide Web]: https://doi.org/10.1080/15427951.2005.10129113
 
 use super::{MinimalBinaryRead, MinimalBinaryWrite, len_minimal_binary, zeta_tables};
 use crate::traits::*;

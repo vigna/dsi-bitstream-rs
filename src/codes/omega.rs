@@ -7,12 +7,11 @@
 
 //! Elias ω code.
 //!
-//! Elias [γ](super::gamma) and [δ](super::delta) codes encode a number *n* by
-//! storing the binary representation of *n* + 1, with the most significant bit
-//! removed, prefixed by its length in unary or [γ](super::gamma) code,
-//! respectively. Thus, [δ](super::delta) can be seen as adding one level of
-//! recursion in the length representation with respect to [γ](super::gamma).
-//! The ω code encodes the length of the binary representation of *n* + 1
+//! Elias [γ] and [δ] codes encode a number *n* by storing the binary
+//! representation of *n* + 1, with the most significant bit removed, prefixed
+//! by its length in unary or [γ] code, respectively. Thus, [δ] can be seen as
+//! adding one level of recursion in the length representation with respect to
+//! [γ]. The ω code encodes the length of the binary representation of *n* + 1
 //! recursively.
 //!
 //! The implied distribution for the ω code is difficult to write analytically,
@@ -39,29 +38,34 @@
 //! For example, `1110110`, which is formed by the blocks `11`, `1011`, and `0`,
 //! represents the number 10.
 //!
-//! As discussed in the [codes module documentation](crate::codes), to make the
-//! code readable in the little-endian case, rather than reversing the bits of
-//! the blocks, which would be expensive, we simply rotate by one on the left
-//! each block, with the result that the most significant bit of the block is
-//! now the first bit in the stream, making it possible to check for the
-//! presence of a continuation bit. For example, in the little-endian case, the
-//! code for 10 is `0011111`, which is formed by the blocks `11`, `0111`, and
-//! `0`.
+//! As discussed in the [codes module documentation], to make the code readable
+//! in the little-endian case, rather than reversing the bits of the blocks,
+//! which would be expensive, we simply rotate by one on the left each block,
+//! with the result that the most significant bit of the block is now the first
+//! bit in the stream, making it possible to check for the presence of a
+//! continuation bit. For example, in the little-endian case, the code for 10 is
+//! `0011111`, which is formed by the blocks `11`, `0111`, and `0`.
 //!
 //! # Table-Based Optimization
 //!
-//! Unlike [γ](super::gamma), [δ](super::delta), and [ζ](super::zeta) codes, ω
-//! codes use a special optimization for partial decoding. Due to the recursive
-//! nature of ω codes, when a complete codeword cannot be read from the table
-//! the table still provides partial information about the blocks that were
-//! successfully decoded. This partial state is used to continue decoding
-//! efficiently, avoiding re-reading the initial blocks.
+//! Unlike [γ], [δ], and [ζ] codes, ω codes use a special optimization for
+//! partial decoding. Due to the recursive nature of ω codes, when a complete
+//! codeword cannot be read from the table the table still provides partial
+//! information about the blocks that were successfully decoded. This partial
+//! state is used to continue decoding efficiently, avoiding re-reading the
+//! initial blocks.
 //!
 //! # References
 //!
 //! Peter Elias. “[Universal codeword sets and representations of the
-//! integers](https://doi.org/10.1109/TIT.1975.1055349)”. IEEE Transactions on
-//! Information Theory, 21(2):194–203, March 1975.
+//! integers]”. IEEE Transactions on Information Theory, 21(2):194–203, March
+//! 1975.
+//!
+//! [γ]: super::gamma
+//! [δ]: super::delta
+//! [codes module documentation]: crate::codes
+//! [ζ]: super::zeta
+//! [Universal codeword sets and representations of the integers]: https://doi.org/10.1109/TIT.1975.1055349
 
 use crate::codes::omega_tables;
 use crate::traits::*;

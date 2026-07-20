@@ -33,13 +33,16 @@ use alloc::{vec, vec::Vec};
 /// different codes.
 ///
 /// This structure can be used to determine empirically which code provides the
-/// best compression for a given stream. You have to [update the
-/// structure](Self::update) with the integers in the stream; at any time, you
-/// can examine the statistics or call [`best_code`](Self::best_code) to get the
-/// best code.
+/// best compression for a given stream. You have to [update the structure] with
+/// the integers in the stream; at any time, you can examine the statistics or
+/// call [`best_code`] to get the best code.
 ///
-/// The structure keeps tracks of the codes for which the module
-/// [`code_consts`](crate::dispatch::code_consts) provide constants.
+/// The structure keeps tracks of the codes for which the module [`code_consts`]
+/// provide constants.
+///
+/// [update the structure]: Self::update
+/// [`best_code`]: Self::best_code
+/// [`code_consts`]: crate::dispatch::code_consts
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
 pub struct CodesStats<

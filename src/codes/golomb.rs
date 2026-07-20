@@ -6,9 +6,9 @@
 
 //! Golomb codes.
 //!
-//! Given a modulus *b* ≥ 1, the Golomb code of a natural number *x* is given by ⌊*x*
-//! / *b*⌋ in [unary code](BitRead::read_unary) followed by the [minimal binary
-//! code](super::minimal_binary) of *x* mod *b*.
+//! Given a modulus *b* ≥ 1, the Golomb code of a natural number *x* is given by
+//! ⌊*x* / *b*⌋ in [unary code] followed by the [minimal binary code] of *x* mod
+//! *b*.
 //!
 //! Let *r* be the root of order *b* of 2: then, the implied distribution of the
 //! Golomb code with modulus *b* is ≈ 1/*rˣ*.
@@ -17,9 +17,9 @@
 //!
 //! For natural numbers distributed with a geometric distribution with base *p*,
 //! the optimal code is a Golomb code with [*b* = ⌈−log(2 − *p*) / log(1 −
-//! *p*)⌉](b).
+//! *p*)⌉].
 //!
-//! For a faster, less precise alternative, see [Rice codes](super::rice).
+//! For a faster, less precise alternative, see [Rice codes].
 //!
 //! The supported range is [0 . . 2⁶⁴) for *b* in [1 . . 2⁶⁴), but writing
 //! 2⁶⁴ – 1 when *b* = 1 requires writing the unary code for 2⁶⁴ – 1, which
@@ -28,14 +28,19 @@
 //!
 //! # References
 //!
-//! Solomon W. Golomb, “[Run-length encodings
-//! (Corresp.)](https://doi.org/10.1109/TIT.1966.1053907)”. IEEE Transactions on
+//! Solomon W. Golomb, “[Run-length encodings (Corresp.)]”. IEEE Transactions on
 //! Information Theory, 12(3):399–401, July 1966.
 //!
 //! Robert G. Gallager and David C. Van Voorhis, “[Optimal source codes for
-//! geometrically distributed integer alphabets
-//! (Corresp.)](https://doi.org/10.1109/TIT.1975.1055357)”. IEEE Transactions on
-//! Information Theory, 21(2):228–230, March 1975.
+//! geometrically distributed integer alphabets (Corresp.)]”. IEEE Transactions
+//! on Information Theory, 21(2):228–230, March 1975.
+//!
+//! [unary code]: BitRead::read_unary
+//! [minimal binary code]: super::minimal_binary
+//! [*b* = ⌈−log(2 − *p*) / log(1 − *p*)⌉]: b
+//! [Rice codes]: super::rice
+//! [Run-length encodings (Corresp.)]: https://doi.org/10.1109/TIT.1966.1053907
+//! [Optimal source codes for geometrically distributed integer alphabets (Corresp.)]: https://doi.org/10.1109/TIT.1975.1055357
 
 use super::minimal_binary::{MinimalBinaryRead, MinimalBinaryWrite, len_minimal_binary};
 use crate::traits::*;

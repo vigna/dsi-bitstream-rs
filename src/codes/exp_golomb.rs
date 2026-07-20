@@ -7,25 +7,27 @@
 //! Exponential Golomb codes.
 //!
 //! Exponential Golomb codes are a variant of Golomb codes with power-of-two
-//! modulus (i.e., [Rice codes](super::rice)) in which the prefix is written
-//! using [Elias γ code](super::gamma) instead of unary code. More precisely,
-//! the exponential Golomb code with parameter *k* ≥ 0 of a natural number *x*
-//! is given by ⌊*x* / 2*ᵏ*⌋ in [γ code](super::gamma) followed by *x* mod 2*ᵏ*
-//! in binary *k*-bit representation.
+//! modulus (i.e., [Rice codes]) in which the prefix is written using [Elias γ
+//! code] instead of unary code. More precisely, the exponential Golomb code
+//! with parameter *k* ≥ 0 of a natural number *x* is given by ⌊*x* / 2*ᵏ*⌋ in
+//! [γ code] followed by *x* mod 2*ᵏ* in binary *k*-bit representation.
 //!
 //! The implied distribution of an exponential Golomb code with parameter *k* is
 //! ≈ 2²*ᵏ*/2*x*².
 //!
-//! Note that the exponential Golomb code for *k* = 0 is exactly the [γ
-//! code](super::gamma).
+//! Note that the exponential Golomb code for *k* = 0 is exactly the [γ code].
 //!
 //! The supported range is [0 . . 2⁶⁴ – 1) for *k* = 0 and [0 . . 2⁶⁴) for *k*
 //! in [1 . . 64).
 //!
-//! Exponential Golomb codes are used in the [H.264
-//! (MPEG-4)](https://en.wikipedia.org/wiki/Advanced_Video_Coding) and
-//! [H.265](https://en.wikipedia.org/wiki/High_Efficiency_Video_Coding)
+//! Exponential Golomb codes are used in the [H.264 (MPEG-4)] and [H.265]
 //! standards.
+//!
+//! [Rice codes]: super::rice
+//! [Elias γ code]: super::gamma
+//! [γ code]: super::gamma
+//! [H.264 (MPEG-4)]: https://en.wikipedia.org/wiki/Advanced_Video_Coding
+//! [H.265]: https://en.wikipedia.org/wiki/High_Efficiency_Video_Coding
 
 use super::gamma::{GammaRead, GammaWrite, len_gamma};
 use crate::traits::*;

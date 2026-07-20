@@ -9,9 +9,11 @@
 //! Static dispatch for codes.
 //!
 //! This kind of dispatch is resolved at compile time against a specific
-//! [`CodesRead`]. Thus, the code can be inlined and optimized, contrary to
-//! the [dynamic case](crate::dispatch::dynamic), but you have less flexibility
-//! as codes have to be chosen at compile time.
+//! [`CodesRead`]. Thus, the code can be inlined and optimized, contrary to the
+//! [dynamic case], but you have less flexibility as codes have to be chosen at
+//! compile time.
+//!
+//! [dynamic case]: crate::dispatch::dynamic
 
 use super::*;
 
@@ -28,7 +30,9 @@ use mem_dbg::{MemDbg, MemSize};
 /// If the value is not among those defined in the [`code_consts`] module, the
 /// methods will panic.
 ///
-/// See the [module documentation](crate::dispatch) for more information.
+/// See the [module documentation] for more information.
+///
+/// [module documentation]: crate::dispatch
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
 pub struct ConstCode<const CODE: usize>;
@@ -62,10 +66,12 @@ impl<const CODE: usize> ConstCode<CODE> {
 
 /// The constants to use as generic parameter for the [`ConstCode`] struct.
 ///
-/// Aliases for equivalent codes (e.g., [`ZETA1`](self::code_consts::ZETA1),
-/// [`RICE0`](self::code_consts::RICE0)) are derived from
-/// [`Codes::canonicalize`] via [`Codes::to_code_const`], so they
-/// are guaranteed to be consistent.
+/// Aliases for equivalent codes (e.g., [`ZETA1`], [`RICE0`]) are derived from
+/// [`Codes::canonicalize`] via [`Codes::to_code_const`], so they are guaranteed
+/// to be consistent.
+///
+/// [`ZETA1`]: self::code_consts::ZETA1
+/// [`RICE0`]: self::code_consts::RICE0
 pub mod code_consts {
     use super::Codes;
 

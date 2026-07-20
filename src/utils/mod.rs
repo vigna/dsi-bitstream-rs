@@ -7,14 +7,13 @@
 
 //! Helpers and statistics.
 //!
-//! [`CountBitReader`] and [`CountBitWriter`] keep track of the number
-//! of bits read or written to a [`BitRead`](crate::traits::BitRead)
-//! and [`BitWrite`](crate::traits::BitWrite), respectively,
-//! optionally printing on standard error the operations performed on the stream.
+//! [`CountBitReader`] and [`CountBitWriter`] keep track of the number of bits
+//! read or written to a [`BitRead`] and [`BitWrite`], respectively, optionally
+//! printing on standard error the operations performed on the stream.
 //!
 //! [`DbgBitReader`] and [`DbgBitWriter`] print the operations performed by a
-//! [`BitRead`](crate::traits::BitRead) or [`BitWrite`](crate::traits::BitWrite)
-//! on standard error (only when the `std` feature is enabled).
+//! [`BitRead`] or [`BitWrite`] on standard error (only when the `std` feature
+//! is enabled).
 //!
 //! [`CodesStats`] keeps track of the space needed to store a stream of
 //! integers using different codes.
@@ -26,6 +25,9 @@
 //!
 //! [`FindChangePoints`] finds, using exponential search, the points where a
 //! non-decreasing monotonic function changes value.
+//!
+//! [`BitRead`]: crate::traits::BitRead
+//! [`BitWrite`]: crate::traits::BitWrite
 
 mod count;
 pub use count::*;

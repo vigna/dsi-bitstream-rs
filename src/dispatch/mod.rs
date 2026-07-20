@@ -8,9 +8,9 @@
 
 //! Programmable static and dynamic dispatch for codes.
 //!
-//! The modules in [codes](super::codes), such as [`omega`], extend [`BitRead`]
-//! and [`BitWrite`] to provide a way to read and write codes from a bitstream.
-//! The user can thus select at compile time the desired trait and use the
+//! The modules in [codes], such as [`omega`], extend [`BitRead`] and
+//! [`BitWrite`] to provide a way to read and write codes from a bitstream. The
+//! user can thus select at compile time the desired trait and use the
 //! associated codes.
 //!
 //! In many contexts, however, one does not want to commit to a specific set of
@@ -32,7 +32,7 @@
 //! codes, and operate with them. For example, in this function we read twice a
 //! code and return the sum of the two values, but make no commitment on which
 //! code we will be using:
-//!```rust
+//! ```rust
 //! use dsi_bitstream::prelude::*;
 //! use dsi_bitstream::dispatch::{CodesRead, DynamicCodeRead};
 //! use std::fmt::Debug;
@@ -47,12 +47,12 @@
 //! ) -> Result<u64, R::Error> {
 //!     Ok(code.read(reader)? + code.read(reader)?)
 //! }
-//!```
+//! ```
 //! On the other hand, the traits [`StaticCodeRead`] and [`StaticCodeWrite`] are
 //! specialized for a reader or writer of given endianness. This means that they
 //! can in principle be implemented for a specific code by storing a function
 //! pointer, with much less runtime overhead.
-//!```rust
+//! ```rust
 //! use dsi_bitstream::prelude::*;
 //! use dsi_bitstream::dispatch::{CodesRead, StaticCodeRead};
 //! use std::fmt::Debug;
@@ -67,7 +67,7 @@
 //! ) -> Result<u64, R::Error> {
 //!     Ok(code.read(reader)? + code.read(reader)?)
 //! }
-//!```
+//! ```
 //!
 //! Note that the syntax for invoking the methods in the two groups of traits is
 //! identical, but the type variables are on the method in the first case, and
@@ -79,10 +79,9 @@
 //! implements all the dispatch traits, so it can be used to read or write any
 //! code both in a generic and in a specific way. It also implements the
 //! [`CodeLen`] trait, which provides a method to compute the length of a
-//! codeword. The only exception is for [minimal binary
-//! codes](crate::codes::minimal_binary), which have a separate
-//! [`MinimalBinary`] structure with the same functionality, as they cannot
-//! represent all integers.
+//! codeword. The only exception is for [minimal binary codes], which have a
+//! separate [`MinimalBinary`] structure with the same functionality, as they
+//! cannot represent all integers.
 //!
 //! If Rust supported const enums in traits, one could create structures
 //! with const enum type parameters of type [`Codes`], and then the compiler
@@ -95,7 +94,7 @@
 //! codes, and for the codes with parameters up to 10. For example, here at
 //! execution time there will be no test to select a code, even if
 //! `read_two_codes_and_sum` is generic:
-//!```rust
+//! ```rust
 //! use dsi_bitstream::prelude::*;
 //! use dsi_bitstream::dispatch::{code_consts, CodesRead, DynamicCodeRead};
 //! use std::fmt::Debug;
@@ -116,7 +115,7 @@
 //! ) -> Result<u64, R::Error> {
 //!     read_two_codes_and_sum(reader, ConstCode::<{code_consts::GAMMA}>)
 //! }
-//!```
+//! ```
 //!
 //! Working with [`ConstCode`] is very efficient, but it forces the choice of a
 //! code at compile time. If you need to read or write a code multiple times on
@@ -131,7 +130,7 @@
 //! if the code is not supported.
 //!
 //! For example:
-//!```rust
+//! ```rust
 //! use dsi_bitstream::prelude::*;
 //! use dsi_bitstream::dispatch::{CodesRead, StaticCodeRead, FuncCodeReader};
 //! use std::fmt::Debug;
@@ -152,10 +151,9 @@
 //! ) -> Result<u64, R::Error> {
 //!     read_two_codes_and_sum(reader, FuncCodeReader::new(Codes::Gamma).unwrap())
 //! }
-//!```
-//! Note that we [`unwrap`](core::result::Result::unwrap) the result of the
-//! [`new`](FuncCodeReader::new) method, as we know that a function pointer
-//! exists for the γ code.
+//! ```
+//! Note that we [`unwrap`] the result of the [`new`] method, as we know that a
+//! function pointer exists for the γ code.
 //!
 //! # Workaround to Limitations
 //!
@@ -203,7 +201,7 @@
 //! Suppose instead you need to pass a [`StaticCodeRead`] to a method using a
 //! code that is not supported directly by [`FuncCodeReader`]. You can create a
 //! new [`FuncCodeReader`] using a provided function:
-//!```rust
+//! ```rust
 //! use dsi_bitstream::prelude::*;
 //! use dsi_bitstream::dispatch::{CodesRead, StaticCodeRead, FuncCodeReader};
 //! use std::fmt::Debug;
@@ -224,7 +222,12 @@
 //! ) -> Result<u64, R::Error> {
 //!     read_two_codes_and_sum(reader, FuncCodeReader::new_with_func(|r: &mut R| r.read_rice(20)))
 //! }
-//!```
+//! ```
+//!
+//! [codes]: super::codes
+//! [minimal binary codes]: crate::codes::minimal_binary
+//! [`unwrap`]: core::result::Result::unwrap
+//! [`new`]: FuncCodeReader::new
 
 use crate::prelude::Endianness;
 use crate::prelude::{BitRead, BitWrite};

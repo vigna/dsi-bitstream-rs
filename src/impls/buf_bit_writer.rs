@@ -37,8 +37,11 @@ use num_primitive::{PrimitiveInteger, PrimitiveNumber, PrimitiveNumberAs};
 ///
 /// The [`Drop`] implementation flushes the buffer, which requires writing to
 /// the backend. If the backend write fails, the drop will panic. To handle
-/// errors gracefully, call [`flush`](BitWrite::flush) or [`into_inner`](Self::into_inner)
-/// explicitly before dropping.
+/// errors gracefully, call [`flush`] or [`into_inner`] explicitly before
+/// dropping.
+///
+/// [`flush`]: BitWrite::flush
+/// [`into_inner`]: Self::into_inner
 
 #[derive(Debug)]
 #[cfg_attr(feature = "mem_dbg", derive(MemDbg, MemSize))]
@@ -55,9 +58,8 @@ pub struct BufBitWriter<E: Endianness, WW: WordWrite, WP: WriteParams = DefaultW
     _marker: core::marker::PhantomData<(E, WP)>,
 }
 
-/// Creates a new [`BufBitWriter`] with [default write
-/// parameters](`DefaultWriteParams`) from a file path using the provided
-/// endianness and write word.
+/// Creates a new [`BufBitWriter`] with [default write parameters] from a file
+/// path using the provided endianness and write word.
 ///
 /// The file will be created if it does not exist, and truncated if it already
 /// exists.
@@ -69,6 +71,8 @@ pub struct BufBitWriter<E: Endianness, WW: WordWrite, WP: WriteParams = DefaultW
 /// let mut writer = buf_bit_writer::from_path::<LE, u64>("data.bin")?;
 /// # Ok::<(), Box<dyn core::error::Error>>(())
 /// ```
+///
+/// [default write parameters]: `DefaultWriteParams`
 #[cfg(feature = "std")]
 pub fn from_path<E: Endianness, W: Word>(
     path: impl AsRef<std::path::Path>,
@@ -81,11 +85,12 @@ where
     Ok(from_file::<E, W>(std::fs::File::create(path)?))
 }
 
-/// Creates a new [`BufBitWriter`] with [default write
-/// parameters](`DefaultWriteParams`) from a file using the provided
-/// endianness and write word.
+/// Creates a new [`BufBitWriter`] with [default write parameters] from a file
+/// using the provided endianness and write word.
 ///
 /// See also [`from_path`] for a version that takes a path.
+///
+/// [default write parameters]: `DefaultWriteParams`
 #[must_use]
 #[cfg(feature = "std")]
 pub fn from_file<E: Endianness, W: Word>(
@@ -140,13 +145,14 @@ impl<E: Endianness, WW: WordWrite, WP: WriteParams> BufBitWriter<E, WW, WP>
 where
     BufBitWriter<E, WW, WP>: BitWrite<E>,
 {
-    /// Returns the backend, consuming this writer after
-    /// [flushing it](BufBitWriter::flush).
+    /// Returns the backend, consuming this writer after [flushing it].
     ///
     /// # Errors
     ///
     /// If the flush fails, the flush error is returned and the backend is
     /// dropped, together with the buffered bits.
+    ///
+    /// [flushing it]: BufBitWriter::flush
     pub fn into_inner(mut self) -> Result<WW, <Self as BitWrite<E>>::Error> {
         let flush_result = self.flush();
         // SAFETY: forget(self) prevents double dropping backend; moreover,

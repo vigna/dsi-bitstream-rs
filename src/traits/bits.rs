@@ -48,26 +48,30 @@ impl<RE: Error + Send + Sync + 'static, WE: Error + Send + Sync + 'static> Error
 /// Sequential, streaming bit-by-bit reads.
 ///
 /// This trait specifies basic operations over which codes can be implemented by
-/// traits such as [`GammaReadParam`](crate::codes::gamma::GammaReadParam).
+/// traits such as [`GammaReadParam`].
 ///
-/// To quickly read complex codes, such traits may use the
-/// [`peek_bits`](BitRead::peek_bits) method to read a few bits in advance and
-/// then use a table to decode them. For this to happen correctly,
-/// [`peek_bits`](BitRead::peek_bits) must return a sufficient number of bits.
-/// Each table module provides a `check_read_table` const fn that can be used
-/// in a `const { }` block to verify at compile time that the peek word is
-/// large enough.
+/// To quickly read complex codes, such traits may use the [`peek_bits`] method
+/// to read a few bits in advance and then use a table to decode them. For this
+/// to happen correctly, [`peek_bits`] must return a sufficient number of bits.
+/// Each table module provides a `check_read_table` const fn that can be used in
+/// a `const { }` block to verify at compile time that the peek word is large
+/// enough.
 ///
-/// Please see the documentation of the [`impls`](crate::impls) module for more
-/// details.
+/// Please see the documentation of the [`impls`] module for more details.
+///
+/// [`GammaReadParam`]: crate::codes::gamma::GammaReadParam
+/// [`peek_bits`]: BitRead::peek_bits
+/// [`impls`]: crate::impls
 pub trait BitRead<E: Endianness> {
     type Error: Error + Send + Sync + 'static;
 
     /// The type we can read from the stream without advancing.
     type PeekWord: PrimitiveUnsigned;
 
-    /// The number of bits that [`peek_bits`](BitRead::peek_bits) is guaranteed
-    /// to return successfully (with zero-extended EOF).
+    /// The number of bits that [`peek_bits`] is guaranteed to return
+    /// successfully (with zero-extended EOF).
+    ///
+    /// [`peek_bits`]: BitRead::peek_bits
     const PEEK_BITS: usize;
 
     /// Reads `num_bits` bits and returns them in the lowest bits.
@@ -88,9 +92,10 @@ pub trait BitRead<E: Endianness> {
 
     /// Skip bits from the stream after a call to [`BitRead::peek_bits`].
     ///
-    /// This is an internal optimization used to skip bits we know
-    /// are already in some internal buffer as we [peeked](BitRead::peek_bits)
-    /// at them. Please don't use.
+    /// This is an internal optimization used to skip bits we know are already
+    /// in some internal buffer as we [peeked] at them. Please don't use.
+    ///
+    /// [peeked]: BitRead::peek_bits
     #[doc(hidden)]
     fn skip_bits_after_peek(&mut self, n: usize);
 
@@ -188,9 +193,10 @@ pub trait BitSeek {
     type Error: Error + Send + Sync + 'static;
     /// Gets the current position in bits from the start of the stream.
     ///
-    /// Note that, consistently with
-    /// [`Seek::stream_position`](https://doc.rust-lang.org/std/io/trait.Seek.html#method.stream_position),
-    /// this method takes a mutable reference to `self`.
+    /// Note that, consistently with [`Seek::stream_position`], this method
+    /// takes a mutable reference to `self`.
+    ///
+    /// [`Seek::stream_position`]: https://doc.rust-lang.org/std/io/trait.Seek.html#method.stream_position
     fn bit_pos(&mut self) -> Result<u64, Self::Error>;
 
     /// Sets the current position in bits from the start of the

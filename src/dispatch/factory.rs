@@ -59,8 +59,7 @@
 //! To mitigate this problem, we provide instead a helper trait
 //! [`CodesReaderFactoryHelper`] that extends [`CodesReaderFactory`]; the helper
 //! trait contains an `Error` associated type and [uses higher-rank trait
-//! bounds](https://users.rust-lang.org/t/extracting-static-associated-type-from-type-with-lifetime/126880)
-//! to bind the associated type to the error type of the
+//! bounds] to bind the associated type to the error type of the
 //! [`CodesReaderFactory::CodesReader`]. The user can implement
 //! [`CodesReaderFactory`] on its own types and write trait bounds using
 //! [`CodesReaderFactoryHelper`]:
@@ -72,6 +71,8 @@
 //!     // CRF::Error is the error type of CRF::CodesReader<'a>
 //! }
 //! ```
+//!
+//! [uses higher-rank trait bounds]: https://users.rust-lang.org/t/extracting-static-associated-type-from-type-with-lifetime/126880
 
 use super::*;
 /// A trait that models a type that can return a [`CodesRead`] that can reference
@@ -191,13 +192,15 @@ impl<E: Endianness, CRF: CodesReaderFactoryHelper<E> + ?Sized> FactoryFuncCodeRe
 
     /// Returns a new [`FactoryFuncCodeReader`] for the given code.
     ///
-    /// The code is [canonicalized](Codes::canonicalize) before
-    /// the lookup, so equivalent codes yield the same reader.
+    /// The code is [canonicalized] before the lookup, so equivalent codes yield
+    /// the same reader.
     ///
     /// # Errors
     ///
     /// The method will return an error if there is no constant
     /// for the given code in [`FactoryFuncCodeReader`].
+    ///
+    /// [canonicalized]: Codes::canonicalize
     pub const fn new(code: Codes) -> Result<Self, DispatchError> {
         let code = code.canonicalize();
         let read_func = match code {
