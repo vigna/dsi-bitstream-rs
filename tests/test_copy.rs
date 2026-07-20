@@ -170,3 +170,70 @@ where
 
     Ok(())
 }
+
+/// 16 varied words; word 0 has both its MSB and LSB set so that a leading
+/// 1-bit read is nonzero for either endianness.
+fn topup_sample_words() -> [u64; 16] {
+    [
+        0x8000_0000_0000_0001,
+        0xfedc_ba98_7654_3210,
+        0x0123_4567_89ab_cdef,
+        0xdead_beef_cafe_babe,
+        0x1111_2222_3333_4444,
+        0x5555_6666_7777_8888,
+        0x9999_aaaa_bbbb_cccc,
+        0xdddd_eeee_ffff_0000,
+        0x0f0f_0f0f_0f0f_0f0f,
+        0xf0f0_f0f0_f0f0_f0f0,
+        0xaaaa_5555_aaaa_5555,
+        0x1234_1234_1234_1234,
+        0xabcd_ef01_2345_6789,
+        0x9e37_79b9_7f4a_7c15,
+        0x6a09_e667_f3bc_c908,
+        0xbb67_ae85_84ca_a73b,
+    ]
+}
+
+fn read_bit_seq<E: Endianness>(r: &mut impl BitRead<E>, n: usize) -> Vec<u64> {
+    (0..n).map(|_| r.read_bits(1).unwrap()).collect()
+}
+
+/// After a 1-bit read, the two-word refill top-up leaves `2 * WORD_BITS - 1`
+/// bits in the bit buffer (more than one word), so a bulk `copy_to` must
+/// drain more than `WORD_BITS` buffered bits without exceeding the 64-bit
+/// `write_bits` contract.
+fn copy_to_after_topup<E: Endianness, W: Word + PrimitiveInteger + DoubleType + 'static>(
+    words: &[W],
+) where
+    BufBitReader<E, MemWordReader<W, Vec<W>, true>>: BitRead<E>,
+    BufBitReader<E, MemWordReader<u64, Vec<u64>, true>>: BitRead<E>,
+    BufBitWriter<E, MemWordWriterVec<u64, Vec<u64>>>: BitWrite<E>,
+{
+    const N: usize = 200;
+    let mut refr = BufBitReader::<E, _>::new(MemWordReader::new_inf(words.to_vec()));
+    let _ = refr.read_bits(1).unwrap();
+    let expected = read_bit_seq::<E>(&mut refr, N);
+
+    let mut src = BufBitReader::<E, _>::new(MemWordReader::new_inf(words.to_vec()));
+    let _ = src.read_bits(1).unwrap();
+    let mut wr = BufBitWriter::<E, _>::new(MemWordWriterVec::new(Vec::<u64>::new()));
+    // Lossless: N is a small constant and usize is at most 64 bits wide.
+    src.copy_to(&mut wr, N as u64).unwrap();
+    let out = wr.into_inner().unwrap().into_inner();
+    let mut back = BufBitReader::<E, _>::new(MemWordReader::new_inf(out));
+    assert_eq!(read_bit_seq::<E>(&mut back, N), expected);
+}
+
+#[test]
+fn test_copy_to_after_topup() {
+    let w64 = topup_sample_words();
+    copy_to_after_topup::<BE, u64>(&w64);
+    copy_to_after_topup::<LE, u64>(&w64);
+    let w32: Vec<u32> = w64
+        .iter()
+        // Intended truncation: split each u64 into its two u32 halves.
+        .flat_map(|w| [(*w >> 32) as u32, *w as u32])
+        .collect();
+    copy_to_after_topup::<BE, u32>(&w32);
+    copy_to_after_topup::<LE, u32>(&w32);
+}

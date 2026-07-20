@@ -74,3 +74,15 @@ harness = false
 [[bench]]
 name = "vbyte"
 harness = false
+
+[[bench]]
+name = "bufbitreader"
+harness = false
+
+[[bench]]
+name = "bufbitreader_gamma"
+harness = false
+
+[[bench]]
+name = "bufbitreader_wa"
+harness = false

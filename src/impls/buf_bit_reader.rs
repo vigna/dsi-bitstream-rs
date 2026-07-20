@@ -172,6 +172,44 @@ where
         self.buffer |= new_word << (Self::BUFFER_BITS - self.bits_in_buffer);
         Ok(())
     }
+    /// Single-word refill for 64-bit words (128-bit buffer), specialized so
+    /// that the result and the pre-top-up buffer, which both live entirely
+    /// in the high 64 bits of the buffer, are computed in u64 arithmetic
+    /// (no cross-half 128-bit shifts).
+    ///
+    /// Must be called only when `WORD_BITS == 64`, with `w` the word read
+    /// for this request and `bits_in_buffer < num_bits <= WORD_BITS`.
+    #[inline(always)]
+    fn read_bits_refill_word64(
+        &mut self,
+        num_bits: usize,
+        w: WR::Word,
+    ) -> Result<u64, <WR as WordRead>::Error> {
+        debug_assert!(Self::WORD_BITS == 64);
+        let bits = self.bits_in_buffer;
+        // High half of buffer | word placed right below the buffered bits.
+        // Shifts valid: bits < num_bits <= WORD_BITS = 64, and num_bits >= 1
+        // because the in-buffer fast path handled num_bits <= bits.
+        let virt_hi: u64 = (self.buffer >> Self::WORD_BITS).as_to::<u64>() | (w.as_u64() >> bits);
+        let result = virt_hi >> (Self::WORD_BITS - num_bits);
+        // The remaining low WORD_BITS - (num_bits - bits) bits of the word,
+        // placed at the top of the high half; double shift as
+        // num_bits - bits may equal WORD_BITS.
+        let hi = (w << (num_bits - bits - 1)) << 1_u32;
+        let mut buffer = hi.as_double() << Self::WORD_BITS;
+        let mut new_bits = bits + Self::WORD_BITS - num_bits;
+        // Top up with a second word if available: new_bits < WORD_BITS here,
+        // so there is always room and the buffer stays short of full. The
+        // atomic optional read never consumes past the end of the stream.
+        if let Some(w2) = self.backend.read_word_opt() {
+            // Shifts valid: WORD_BITS and new_bits are < BUFFER_BITS.
+            buffer |= (w2.to_be().as_double() << Self::WORD_BITS) >> new_bits;
+            new_bits += Self::WORD_BITS;
+        }
+        self.buffer = buffer;
+        self.bits_in_buffer = new_bits;
+        Ok(result)
+    }
 }
 
 impl<WR: WordRead, RP: ReadParams> BitRead<BE> for BufBitReader<BE, WR, RP>
@@ -220,6 +258,51 @@ where
             self.buffer <<= num_bits;
             return Ok(result);
         }
+        // Single-word refill path: past the test above, a request of at most
+        // WORD_BITS bits always consumes exactly one word, which we can
+        // compose with the buffer without the loop and the branches of the
+        // general path below.
+        if num_bits <= Self::WORD_BITS {
+            let bits = self.bits_in_buffer;
+            // The word is required in any case, so no peek is needed.
+            let w = self.backend.read_word()?.to_be();
+            // For 64-bit words (128-bit buffer), the result and the
+            // pre-top-up buffer both live entirely in the high 64 bits of
+            // the buffer, so the specialized helper uses u64 arithmetic,
+            // avoiding cross-half 128-bit shifts. The branch is resolved at
+            // compile time; the helper keeps the dead branch's MIR footprint
+            // to one statement so that inlining decisions for narrow-word
+            // readers are unaffected.
+            if Self::WORD_BITS == 64 {
+                return self.read_bits_refill_word64(num_bits, w);
+            }
+            // Place the word right below the buffered bits; the word fits
+            // entirely because bits < num_bits <= WORD_BITS, and both
+            // shifts are valid as WORD_BITS and bits are < BUFFER_BITS.
+            let placed = (w.as_double() << Self::WORD_BITS) >> bits;
+            let virt = self.buffer | placed;
+            // Valid right shift, even when num_bits is zero
+            let result: u64 = (virt >> (Self::BUFFER_BITS - num_bits - 1) >> 1_u32).as_to();
+            // The new buffer comes from the placed word alone: bits <
+            // num_bits, so all buffered bits are consumed and
+            // `self.buffer << num_bits` would be zero; dropping the `|` from
+            // this computation shortens the loop-carried dependency chain.
+            let mut buffer = placed << num_bits;
+            let mut new_bits = bits + Self::WORD_BITS - num_bits;
+            // Top up with a second word if available: new_bits < WORD_BITS
+            // here, so there is always room and the buffer stays short of
+            // full. This halves the number of refills, making the in-buffer
+            // test above more predictable. The atomic optional read never
+            // consumes past the end of the stream.
+            if let Some(w2) = self.backend.read_word_opt() {
+                // Shifts valid: WORD_BITS and new_bits are < BUFFER_BITS.
+                buffer |= (w2.to_be().as_double() << Self::WORD_BITS) >> new_bits;
+                new_bits += Self::WORD_BITS;
+            }
+            self.buffer = buffer;
+            self.bits_in_buffer = new_bits;
+            return Ok(result);
+        }
 
         let mut result: u64 =
             (self.buffer >> (Self::BUFFER_BITS - 1 - self.bits_in_buffer) >> 1_u8).as_to();
@@ -257,7 +340,16 @@ where
 
         // if we encountered a 1 in the bits_in_buffer we can return
         if zeros < self.bits_in_buffer {
-            self.buffer = self.buffer << zeros << 1;
+            // zeros + 1 <= bits_in_buffer < BUFFER_BITS, so both forms are
+            // always valid. On 128-bit buffers a single merged shift avoids a
+            // second synthesized wide shift (measured -13% on u64-word
+            // read_unary); on 64-bit buffers the two-step shift measured
+            // slightly faster, so each width keeps its best form (const-folded).
+            if Self::BUFFER_BITS > 64 {
+                self.buffer <<= zeros + 1;
+            } else {
+                self.buffer = self.buffer << zeros << 1;
+            }
             self.bits_in_buffer -= zeros + 1;
             return Ok(zeros as u64);
         }
@@ -269,8 +361,19 @@ where
 
             if new_word != WR::Word::ZERO {
                 let zeros: usize = new_word.leading_zeros() as _;
-                self.buffer = new_word.as_double() << (Self::WORD_BITS + zeros) << 1;
-                self.bits_in_buffer = Self::WORD_BITS - zeros - 1;
+                let mut buffer = new_word.as_double() << (Self::WORD_BITS + zeros) << 1;
+                let mut new_bits = Self::WORD_BITS - zeros - 1;
+                // Top up with a second word if available: new_bits <
+                // WORD_BITS here, so there is always room and the buffer
+                // stays short of full. The atomic optional read never
+                // consumes past the end of the stream (see read_bits).
+                if let Some(w2) = self.backend.read_word_opt() {
+                    // Shifts valid: WORD_BITS and new_bits are < BUFFER_BITS.
+                    buffer |= (w2.to_be().as_double() << Self::WORD_BITS) >> new_bits;
+                    new_bits += Self::WORD_BITS;
+                }
+                self.buffer = buffer;
+                self.bits_in_buffer = new_bits;
                 return Ok(result + zeros as u64);
             }
             result += Self::WORD_BITS as u64;
@@ -460,6 +563,39 @@ where
             return Ok(result);
         }
 
+        // Single-word refill path: see the big-endian implementation for the
+        // invariants.
+        if num_bits <= Self::WORD_BITS {
+            let bits = self.bits_in_buffer;
+            // The word is required in any case, so no peek is needed.
+            let w = self.backend.read_word()?.to_le();
+            // Shift valid: bits < num_bits <= WORD_BITS < BUFFER_BITS,
+            // and the word fits entirely above the buffered bits.
+            let virt = self.buffer | (w.as_double() << bits);
+            // Extract the low num_bits (num_bits <= WORD_BITS < BUFFER_BITS)
+            let result: u64 = (virt & ((BB::<WR>::ONE << num_bits) - BB::<WR>::ONE)).as_to();
+            // The new buffer comes from the word alone: bits < num_bits, so
+            // all buffered bits are consumed and `buffer >> num_bits` would
+            // be zero. Keeping `virt` off this computation shortens the
+            // loop-carried dependency chain. Shift valid: 1 <= num_bits -
+            // bits <= WORD_BITS < BUFFER_BITS.
+            let mut buffer = w.as_double() >> (num_bits - bits);
+            let mut new_bits = bits + Self::WORD_BITS - num_bits;
+            // Top up with a second word if available: new_bits < WORD_BITS
+            // here, so there is always room and the buffer stays short of
+            // full. This halves the number of refills, making the in-buffer
+            // test above more predictable. The atomic optional read never
+            // consumes past the end of the stream.
+            if let Some(w2) = self.backend.read_word_opt() {
+                // Shift valid: new_bits < WORD_BITS <= BUFFER_BITS - WORD_BITS.
+                buffer |= w2.to_le().as_double() << new_bits;
+                new_bits += Self::WORD_BITS;
+            }
+            self.buffer = buffer;
+            self.bits_in_buffer = new_bits;
+            return Ok(result);
+        }
+
         let mut result: u64 = self.buffer.as_to();
         let mut bits_in_res = self.bits_in_buffer;
 
@@ -498,7 +634,12 @@ where
 
         // if we encountered a 1 in the bits_in_buffer we can return
         if zeros < self.bits_in_buffer {
-            self.buffer = self.buffer >> zeros >> 1;
+            // See the big-endian implementation for the shift-form choice.
+            if Self::BUFFER_BITS > 64 {
+                self.buffer >>= zeros + 1;
+            } else {
+                self.buffer = self.buffer >> zeros >> 1;
+            }
             self.bits_in_buffer -= zeros + 1;
             return Ok(zeros as u64);
         }
@@ -510,8 +651,19 @@ where
 
             if new_word != WR::Word::ZERO {
                 let zeros: usize = new_word.trailing_zeros() as _;
-                self.buffer = new_word.as_double() >> zeros >> 1;
-                self.bits_in_buffer = Self::WORD_BITS - zeros - 1;
+                let mut buffer = new_word.as_double() >> zeros >> 1;
+                let mut new_bits = Self::WORD_BITS - zeros - 1;
+                // Top up with a second word if available: new_bits <
+                // WORD_BITS here, so there is always room and the buffer
+                // stays short of full. The atomic optional read never
+                // consumes past the end of the stream (see read_bits).
+                if let Some(w2) = self.backend.read_word_opt() {
+                    // Shift valid: new_bits < WORD_BITS <= BUFFER_BITS - WORD_BITS.
+                    buffer |= w2.to_le().as_double() << new_bits;
+                    new_bits += Self::WORD_BITS;
+                }
+                self.buffer = buffer;
+                self.bits_in_buffer = new_bits;
                 return Ok(result + zeros as u64);
             }
             result += Self::WORD_BITS as u64;
@@ -723,6 +875,48 @@ mod tests {
     use crate::prelude::{MemWordReader, MemWordWriterVec};
     use core::error::Error;
     use std::io::Read;
+    /// On a strict (finite) backend, the two-word top-up must consume a word
+    /// only when one is available, and the read-and-consume must be atomic:
+    /// every bit of the stream is read back exactly once, the reader works
+    /// through the exact end of the data, and only then errors.
+    #[test]
+    fn test_topup_at_end_of_stream() {
+        macro_rules! check {
+            ($E:ty, $to:ident) => {{
+                let words: [u32; 3] = [0xA1B2_C3D4_u32.$to(), 0x1596_37D8_u32.$to(), !0];
+                let mut r = BufBitReader::<$E, _>::new(MemWordReader::new(&words));
+                let mut all: Vec<u64> = Vec::new();
+                // 20 + 40 + 20 + 16 = 96 bits = exactly three words; the
+                // first and third reads cross a word boundary and top up.
+                for n in [20, 40, 20, 16] {
+                    all.push(r.read_bits(n).unwrap());
+                }
+                // The stream is exhausted: no word was consumed early, none
+                // was lost, and the next read fails.
+                assert!(r.read_bits(1).is_err());
+                // The same bits read in one 64-bit and one 32-bit piece must
+                // reassemble identically.
+                let mut r2 = BufBitReader::<$E, _>::new(MemWordReader::new(&words));
+                let a = r2.read_bits(64).unwrap();
+                let b = r2.read_bits(32).unwrap();
+                assert!(r2.read_bits(1).is_err());
+                if TypeId::of::<$E>() == TypeId::of::<BE>() {
+                    assert_eq!(all[0], a >> 44);
+                    assert_eq!(all[1], (a >> 4) & ((1 << 40) - 1));
+                    assert_eq!(all[2], ((a & 0xF) << 16) | (b >> 16));
+                    assert_eq!(all[3], b & 0xFFFF);
+                } else {
+                    assert_eq!(all[0], a & ((1 << 20) - 1));
+                    assert_eq!(all[1], (a >> 20) & ((1 << 40) - 1));
+                    assert_eq!(all[2], (a >> 60) | ((b & 0xFFFF) << 4));
+                    assert_eq!(all[3], b >> 16);
+                }
+            }};
+        }
+        use core::any::TypeId;
+        check!(BE, to_be);
+        check!(LE, to_le);
+    }
 
     #[test]
     fn test_read() -> std::io::Result<()> {

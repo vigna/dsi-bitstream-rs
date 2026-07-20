@@ -89,6 +89,28 @@ pub trait WordRead {
 
     /// Reads a word and advances the current position.
     fn read_word(&mut self) -> Result<Self::Word, Self::Error>;
+
+    /// Reads and consumes the next word if the backend can determine cheaply
+    /// that one is available, returning `None` otherwise (in particular, at
+    /// the end of the stream, or when availability cannot be determined
+    /// without blocking or performing I/O).
+    ///
+    /// `None` leaves the current position unchanged, and this method never
+    /// fails: read-and-consume is a single atomic operation, so callers can
+    /// combine it with buffered state without an error path in between (a
+    /// separate peek-then-skip pair would allow the skip to fail after the
+    /// caller committed to consuming the word).
+    ///
+    /// The default implementation returns `None`. Backends with cheap random
+    /// access (e.g., [`MemWordReader`](crate::impls::MemWordReader)) should
+    /// override this method: readers such as
+    /// [`BufBitReader`](crate::impls::BufBitReader) use it to provide
+    /// branch-free read paths, falling back to
+    /// [`read_word`](WordRead::read_word) when `None` is returned.
+    #[inline(always)]
+    fn read_word_opt(&mut self) -> Option<Self::Word> {
+        None
+    }
 }
 
 /// Sequential, streaming word-by-word writes.
