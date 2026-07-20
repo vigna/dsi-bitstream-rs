@@ -2,6 +2,12 @@ name: Rust
 
 on: ["push", "pull_request"]
 
+# Least-privilege default token: jobs only need to read repository contents.
+# The coverage job uploads to Coveralls using GITHUB_TOKEN, which needs only
+# read access here.
+permissions:
+  contents: read
+
 env:
   CARGO_TERM_COLOR: always
 
