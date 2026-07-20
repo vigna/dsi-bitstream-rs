@@ -10,8 +10,8 @@
 use mem_dbg::{MemDbg, MemSize};
 
 use crate::prelude::{
-    Codes, bit_len_vbyte, len_delta, len_exp_golomb, len_gamma, len_golomb, len_omega, len_pi,
-    len_rice, len_zeta,
+    Codes, bit_len_vbyte, len_delta, len_exp_golomb, len_gamma, len_minimal_binary, len_omega,
+    len_pi, len_zeta,
 };
 use core::fmt::Debug;
 
@@ -132,56 +132,85 @@ impl<
     }
 
     /// Update the stats with `count` occurrences of `n` and return `n` for convenience.
+    ///
+    /// # Panics
+    ///
+    /// If `n` is [`u64::MAX`]: the totals for every code are updated on each
+    /// call, and some code-length helpers (e.g. `len_gamma`) reject
+    /// [`u64::MAX`] because they compute `n + 1` -- even though other codes
+    /// (VByte, Golomb with b > 1, Rice/exp-Golomb with k > 0) could
+    /// represent it.
     #[inline]
     pub fn update_many(&mut self, n: u64, count: u64) -> u64 {
-        self.total += count;
-        self.unary += (n + 1) * count;
-        self.gamma += len_gamma(n) as u64 * count;
-        self.delta += len_delta(n) as u64 * count;
-        self.omega += len_omega(n) as u64 * count;
-        self.vbyte += bit_len_vbyte(n) as u64 * count;
+        // No occurrences: record nothing.
+        if count == 0 {
+            return n;
+        }
+        self.total = self.total.saturating_add(count);
 
+        // Saturating arithmetic: an overflowing total means the code is
+        // impractically large for this data, so it saturates (and never wins
+        // best_code) instead of panicking (debug) or wrapping to a small,
+        // wrongly-winning value (release).
+        self.unary = self.unary.saturating_add((n + 1).saturating_mul(count));
+        self.gamma = self
+            .gamma
+            .saturating_add((len_gamma(n) as u64).saturating_mul(count));
+        self.delta = self
+            .delta
+            .saturating_add((len_delta(n) as u64).saturating_mul(count));
+        self.omega = self
+            .omega
+            .saturating_add((len_omega(n) as u64).saturating_mul(count));
+        self.vbyte = self
+            .vbyte
+            .saturating_add((bit_len_vbyte(n) as u64).saturating_mul(count));
         for (k, val) in self.zeta.iter_mut().enumerate() {
-            *val += (len_zeta(n, (k + 1) as _) as u64) * count;
+            *val = val.saturating_add((len_zeta(n, (k + 1) as _) as u64).saturating_mul(count));
         }
         for (b, val) in self.golomb.iter_mut().enumerate() {
-            *val += (len_golomb(n, (b + 1) as _) as u64) * count;
+            // Length in u64 to avoid truncating n / b on 32-bit targets, where
+            // len_golomb's usize return can drop high bits.
+            let b = (b + 1) as u64;
+            let len = (n / b) + 1 + len_minimal_binary(n % b, b) as u64;
+            *val = val.saturating_add(len.saturating_mul(count));
         }
         for (k, val) in self.exp_golomb.iter_mut().enumerate() {
-            *val += (len_exp_golomb(n, k as _) as u64) * count;
+            *val = val.saturating_add((len_exp_golomb(n, k as _) as u64).saturating_mul(count));
         }
         for (log2_b, val) in self.rice.iter_mut().enumerate() {
-            *val += (len_rice(n, log2_b as _) as u64) * count;
+            // Length in u64 to avoid truncating n >> log2_b on 32-bit targets.
+            let len = (n >> log2_b) + 1 + log2_b as u64;
+            *val = val.saturating_add(len.saturating_mul(count));
         }
-        // π₀ = γ and π₁ = ζ₂ in terms of codeword lengths
         for (k, val) in self.pi.iter_mut().enumerate() {
-            *val += (len_pi(n, (k + 2) as _) as u64) * count;
+            *val = val.saturating_add((len_pi(n, (k + 2) as _) as u64).saturating_mul(count));
         }
         n
     }
 
     /// Combines additively this stats with another one.
     pub fn add(&mut self, rhs: &Self) {
-        self.total += rhs.total;
-        self.unary += rhs.unary;
-        self.gamma += rhs.gamma;
-        self.delta += rhs.delta;
-        self.omega += rhs.omega;
-        self.vbyte += rhs.vbyte;
+        self.total = self.total.saturating_add(rhs.total);
+        self.unary = self.unary.saturating_add(rhs.unary);
+        self.gamma = self.gamma.saturating_add(rhs.gamma);
+        self.delta = self.delta.saturating_add(rhs.delta);
+        self.omega = self.omega.saturating_add(rhs.omega);
+        self.vbyte = self.vbyte.saturating_add(rhs.vbyte);
         for (a, b) in self.zeta.iter_mut().zip(rhs.zeta.iter()) {
-            *a += *b;
+            *a = a.saturating_add(*b);
         }
         for (a, b) in self.golomb.iter_mut().zip(rhs.golomb.iter()) {
-            *a += *b;
+            *a = a.saturating_add(*b);
         }
         for (a, b) in self.exp_golomb.iter_mut().zip(rhs.exp_golomb.iter()) {
-            *a += *b;
+            *a = a.saturating_add(*b);
         }
         for (a, b) in self.rice.iter_mut().zip(rhs.rice.iter()) {
-            *a += *b;
+            *a = a.saturating_add(*b);
         }
         for (a, b) in self.pi.iter_mut().zip(rhs.pi.iter()) {
-            *a += *b;
+            *a = a.saturating_add(*b);
         }
     }
 
@@ -651,5 +680,42 @@ mod serde_tests {
         let json = serde_json::to_string_pretty(&stats).unwrap();
         // This should panic because the JSON has 20 golomb values but we expect 21
         let _deserialized: CodesStats<10, 21, 5, 8, 6> = serde_json::from_str(&json).unwrap();
+    }
+}
+
+#[cfg(test)]
+mod robustness_tests {
+    use super::*;
+
+    #[test]
+    #[should_panic]
+    fn u64_max_panics_as_documented() {
+        let mut stats: CodesStats = CodesStats::default();
+        // update evaluates every code's length helper, and helpers such as
+        // len_gamma reject u64::MAX (they compute n + 1); the documented
+        // contract is a panic.
+        stats.update(u64::MAX);
+    }
+
+    #[test]
+    fn count_zero_is_a_noop() {
+        let mut stats: CodesStats = CodesStats::default();
+        let before = stats;
+        stats.update_many(u64::MAX, 0);
+        assert_eq!(
+            stats, before,
+            "update_many with count 0 must change nothing"
+        );
+    }
+
+    #[test]
+    fn large_count_saturates_without_panic() {
+        let mut stats: CodesStats = CodesStats::default();
+        // (n + 1) * count overflows u64; it must saturate rather than panic
+        // (debug) or wrap to a small, wrongly-winning value (release).
+        stats.update_many(1 << 40, 1 << 30);
+        let (_, bits) = stats.best_code();
+        // A finite-length code (e.g. gamma) still wins; unary saturated.
+        assert!(bits < u64::MAX);
     }
 }
