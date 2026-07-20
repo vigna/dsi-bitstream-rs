@@ -789,6 +789,15 @@ impl<WR: WordRead, RP: ReadParams> std::io::Read for BufBitReader<LE, WR, RP>
 where
     WR::Word: DoubleType,
 {
+    /// Note that this implementation transfers data in 8-byte chunks, and a
+    /// [`WordRead`] backend error is not atomic with respect to the chunk:
+    /// near the end of the stream a partial chunk may be consumed and then
+    /// discarded, so up to 7 trailing bytes can be unreachable through this
+    /// interface when the destination buffer length is a multiple of 8.
+    /// Moreover, the backend error type cannot distinguish end of stream
+    /// from a backend failure, so reading past the last available byte fails
+    /// with [`std::io::ErrorKind::UnexpectedEof`] instead of returning
+    /// `Ok(0)`.
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
         let mut read = 0;
         let mut iter = buf.chunks_exact_mut(8);
@@ -831,6 +840,15 @@ impl<WR: WordRead, RP: ReadParams> std::io::Read for BufBitReader<BE, WR, RP>
 where
     WR::Word: DoubleType,
 {
+    /// Note that this implementation transfers data in 8-byte chunks, and a
+    /// [`WordRead`] backend error is not atomic with respect to the chunk:
+    /// near the end of the stream a partial chunk may be consumed and then
+    /// discarded, so up to 7 trailing bytes can be unreachable through this
+    /// interface when the destination buffer length is a multiple of 8.
+    /// Moreover, the backend error type cannot distinguish end of stream
+    /// from a backend failure, so reading past the last available byte fails
+    /// with [`std::io::ErrorKind::UnexpectedEof`] instead of returning
+    /// `Ok(0)`.
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
         let mut read = 0;
         let mut iter = buf.chunks_exact_mut(8);

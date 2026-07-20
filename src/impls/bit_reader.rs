@@ -267,6 +267,13 @@ impl<WR: WordRead<Word = u64> + WordSeek<Error = <WR as WordRead>::Error>, RP: R
 impl<WR: WordRead<Word = u64> + WordSeek<Error = <WR as WordRead>::Error>, RP: ReadParams>
     std::io::Read for BitReader<LE, WR, RP>
 {
+    /// Note that this implementation transfers data in 8-byte chunks: near
+    /// the end of the stream a full chunk may no longer be readable, so up
+    /// to 7 trailing bytes can be unreachable through this interface when
+    /// the destination buffer length is a multiple of 8. Moreover, the
+    /// backend error type cannot distinguish end of stream from a backend
+    /// failure, so reading past the last available byte fails with
+    /// [`std::io::ErrorKind::UnexpectedEof`] instead of returning `Ok(0)`.
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
         let mut read = 0;
         let mut iter = buf.chunks_exact_mut(8);
@@ -308,6 +315,13 @@ impl<WR: WordRead<Word = u64> + WordSeek<Error = <WR as WordRead>::Error>, RP: R
 impl<WR: WordRead<Word = u64> + WordSeek<Error = <WR as WordRead>::Error>, RP: ReadParams>
     std::io::Read for BitReader<BE, WR, RP>
 {
+    /// Note that this implementation transfers data in 8-byte chunks: near
+    /// the end of the stream a full chunk may no longer be readable, so up
+    /// to 7 trailing bytes can be unreachable through this interface when
+    /// the destination buffer length is a multiple of 8. Moreover, the
+    /// backend error type cannot distinguish end of stream from a backend
+    /// failure, so reading past the last available byte fails with
+    /// [`std::io::ErrorKind::UnexpectedEof`] instead of returning `Ok(0)`.
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
         let mut read = 0;
         let mut iter = buf.chunks_exact_mut(8);

@@ -478,6 +478,11 @@ where
     u64: PrimitiveNumberAs<WW::Word>,
 {
     #[inline(always)]
+    /// Note that on a backend error the internal bit buffer may be left in
+    /// an inconsistent state, so a failed write poisons the writer: retrying
+    /// the write (as, e.g., [`std::io::Write::write_all`] does after a
+    /// partial write) can corrupt the stream. Treat any error from this
+    /// interface as fatal for the stream.
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
         let mut iter = buf.chunks_exact(8);
 
@@ -513,6 +518,11 @@ where
     u64: PrimitiveNumberAs<WW::Word>,
 {
     #[inline(always)]
+    /// Note that on a backend error the internal bit buffer may be left in
+    /// an inconsistent state, so a failed write poisons the writer: retrying
+    /// the write (as, e.g., [`std::io::Write::write_all`] does after a
+    /// partial write) can corrupt the stream. Treat any error from this
+    /// interface as fatal for the stream.
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
         let mut iter = buf.chunks_exact(8);
 
