@@ -134,6 +134,11 @@ pub const fn byte_len_vbyte(mut n: u64) -> usize {
 pub const fn bit_len_vbyte(n: u64) -> usize {
     8 * byte_len_vbyte(n)
 }
+/// The number of bytes of the longest vbyte code for a `u64`; no
+/// well-formed code is longer, and no well-formed code of this length
+/// decodes to a value above [`u64::MAX`]. Used by the debug-only
+/// malformed-input guards in the decoders.
+const MAX_VBYTE_LEN: usize = byte_len_vbyte(u64::MAX);
 
 /// Trait for reading big-endian variable-length byte codes.
 ///
@@ -156,9 +161,29 @@ impl<E: Endianness, B: BitRead<E>> VByteBeRead<E> for B {
     fn read_vbyte_be(&mut self) -> Result<u64, Self::Error> {
         let mut byte = self.read_bits(8)?;
         let mut value = byte & 0x7F;
+        // Malformed-input guards, compiled out of release builds: a vbyte
+        // code for a u64 has at most MAX_VBYTE_LEN bytes and its value must
+        // fit in a u64. The value is mirrored in u128 shadow arithmetic
+        // because the u64 shift below drops overflowing bits silently.
+        #[cfg(debug_assertions)]
+        let (mut bytes, mut shadow) = (1_usize, u128::from(byte & 0x7F));
         while (byte >> 7) != 0 {
             value += 1;
             byte = self.read_bits(8)?;
+            #[cfg(debug_assertions)]
+            {
+                bytes += 1;
+                debug_assert!(
+                    bytes <= MAX_VBYTE_LEN,
+                    "malformed vbyte code: more than {} bytes",
+                    MAX_VBYTE_LEN
+                );
+                shadow = ((shadow + 1) << 7) | u128::from(byte & 0x7F);
+                debug_assert!(
+                    shadow <= u128::from(u64::MAX),
+                    "malformed vbyte code: the value does not fit in a u64"
+                );
+            }
             value = (value << 7) | (byte & 0x7F);
         }
         Ok(value)
@@ -170,8 +195,30 @@ impl<E: Endianness, B: BitRead<E>> VByteLeRead<E> for B {
     fn read_vbyte_le(&mut self) -> Result<u64, Self::Error> {
         let mut result = 0;
         let mut shift = 0;
+        // Malformed-input guards, compiled out of release builds; see
+        // read_vbyte_be. The byte-count assertion also fires before the
+        // shift amount can reach 64.
+        #[cfg(debug_assertions)]
+        let (mut bytes, mut shadow) = (0_usize, 0_u128);
         loop {
             let byte = self.read_bits(8)?;
+            #[cfg(debug_assertions)]
+            {
+                bytes += 1;
+                debug_assert!(
+                    bytes <= MAX_VBYTE_LEN,
+                    "malformed vbyte code: more than {} bytes",
+                    MAX_VBYTE_LEN
+                );
+                shadow += u128::from(byte & 0x7F) << shift;
+                if (byte >> 7) != 0 {
+                    shadow += 1_u128 << (shift + 7);
+                }
+                debug_assert!(
+                    shadow <= u128::from(u64::MAX),
+                    "malformed vbyte code: the value does not fit in a u64"
+                );
+            }
             result += (byte & 0x7F) << shift;
             if (byte >> 7) == 0 {
                 break;
@@ -319,9 +366,27 @@ pub fn vbyte_read_be<R: std::io::Read>(reader: &mut R) -> std::io::Result<u64> {
     let mut value: u64;
     reader.read_exact(&mut buf)?;
     value = (buf[0] & 0x7F) as u64;
+    // Malformed-input guards, compiled out of release builds; see
+    // read_vbyte_be in VByteBeRead.
+    #[cfg(debug_assertions)]
+    let (mut bytes, mut shadow) = (1_usize, u128::from(buf[0] & 0x7F));
     while (buf[0] >> 7) != 0 {
         value += 1;
         reader.read_exact(&mut buf)?;
+        #[cfg(debug_assertions)]
+        {
+            bytes += 1;
+            debug_assert!(
+                bytes <= MAX_VBYTE_LEN,
+                "malformed vbyte code: more than {} bytes",
+                MAX_VBYTE_LEN
+            );
+            shadow = ((shadow + 1) << 7) | u128::from(buf[0] & 0x7F);
+            debug_assert!(
+                shadow <= u128::from(u64::MAX),
+                "malformed vbyte code: the value does not fit in a u64"
+            );
+        }
         value = (value << 7) | ((buf[0] & 0x7F) as u64);
     }
     Ok(value)
@@ -335,9 +400,30 @@ pub fn vbyte_read_le<R: std::io::Read>(reader: &mut R) -> std::io::Result<u64> {
     let mut result = 0;
     let mut shift = 0;
     let mut buffer = [0; 1];
+    // Malformed-input guards, compiled out of release builds; see
+    // read_vbyte_le in VByteLeRead.
+    #[cfg(debug_assertions)]
+    let (mut bytes, mut shadow) = (0_usize, 0_u128);
     loop {
         reader.read_exact(&mut buffer)?;
         let byte = buffer[0];
+        #[cfg(debug_assertions)]
+        {
+            bytes += 1;
+            debug_assert!(
+                bytes <= MAX_VBYTE_LEN,
+                "malformed vbyte code: more than {} bytes",
+                MAX_VBYTE_LEN
+            );
+            shadow += u128::from(byte & 0x7F) << shift;
+            if (byte >> 7) != 0 {
+                shadow += 1_u128 << (shift + 7);
+            }
+            debug_assert!(
+                shadow <= u128::from(u64::MAX),
+                "malformed vbyte code: the value does not fit in a u64"
+            );
+        }
         result += ((byte & 0x7F) as u64) << shift;
         if (byte >> 7) == 0 {
             break;
@@ -353,6 +439,69 @@ pub fn vbyte_read_le<R: std::io::Read>(reader: &mut R) -> std::io::Result<u64> {
 mod tests {
     #[allow(unused_imports)]
     use super::*;
+
+    /// An 11-byte run of continuation bytes: one byte longer than the
+    /// longest well-formed u64 code. Caught by the debug-only byte-count
+    /// guard; release builds keep the unchecked decode paths.
+    #[cfg(debug_assertions)]
+    const OVERLONG: [u8; 12] = [0xFF; 12];
+
+    /// A terminated ten-byte code whose payload exceeds u64::MAX. Caught by
+    /// the debug-only u128 shadow accumulation (the u64 arithmetic would
+    /// truncate silently).
+    #[cfg(debug_assertions)]
+    const HIGH_PAYLOAD: [u8; 10] = [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F];
+
+    macro_rules! malformed_tests {
+        ($bit_be:ident, $bit_le:ident, $io_be:ident, $io_le:ident, $data:ident) => {
+            #[test]
+            #[cfg(debug_assertions)]
+            #[should_panic(expected = "malformed vbyte code")]
+            fn $bit_be() {
+                use crate::prelude::{BufBitReader, MemWordReader};
+                let mut r = <BufBitReader<crate::traits::BE, _>>::new(MemWordReader::new(&$data));
+                let _ = r.read_vbyte_be();
+            }
+
+            #[test]
+            #[cfg(debug_assertions)]
+            #[should_panic(expected = "malformed vbyte code")]
+            fn $bit_le() {
+                use crate::prelude::{BufBitReader, MemWordReader};
+                let mut r = <BufBitReader<crate::traits::LE, _>>::new(MemWordReader::new(&$data));
+                let _ = r.read_vbyte_le();
+            }
+
+            #[test]
+            #[cfg(debug_assertions)]
+            #[should_panic(expected = "malformed vbyte code")]
+            fn $io_be() {
+                let _ = vbyte_read_be(&mut std::io::Cursor::new(&$data));
+            }
+
+            #[test]
+            #[cfg(debug_assertions)]
+            #[should_panic(expected = "malformed vbyte code")]
+            fn $io_le() {
+                let _ = vbyte_read_le(&mut std::io::Cursor::new(&$data));
+            }
+        };
+    }
+
+    malformed_tests!(
+        overlong_bit_be,
+        overlong_bit_le,
+        overlong_io_be,
+        overlong_io_le,
+        OVERLONG
+    );
+    malformed_tests!(
+        high_payload_bit_be,
+        high_payload_bit_le,
+        high_payload_io_be,
+        high_payload_io_le,
+        HIGH_PAYLOAD
+    );
 
     const UPPER_BOUND_1: u64 = 128;
     const UPPER_BOUND_2: u64 = 128_u64.pow(2) + UPPER_BOUND_1;
