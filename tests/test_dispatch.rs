@@ -8,9 +8,9 @@
 //! (dispatch::static: ConstCode).
 //!
 //! The dynamic and function-pointer matrices are cross-validated against each
-//! other: for each code the two are encoded into *separate* buffers, the
+//! other: for each code the two are encoded into separate buffers, the
 //! codewords and lengths must be byte-for-byte identical, and each buffer is
-//! read back through the *other* matrix. A wrong arm in either matrix that
+//! read back through the other matrix. A wrong arm in either matrix that
 //! diverges from the other is therefore caught (a byte mismatch or a wrong
 //! decoded value), not hidden by reading each buffer with its own matching arm.
 #![cfg(feature = "alloc")]

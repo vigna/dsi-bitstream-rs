@@ -103,7 +103,7 @@ macro_rules! bench_endian_wa {
 
 fn bench_bufbitreader_wa(c: &mut Criterion) {
     #[cfg(target_os = "linux")]
-    common::utils::pin_to_core(5);
+    common::utils::pin_to_core(2);
 
     let mut group = c.benchmark_group("bufbitreader_wa");
     group.throughput(Throughput::Elements(u64::try_from(N).unwrap()));

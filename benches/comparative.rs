@@ -171,7 +171,7 @@ macro_rules! bench_comp {
 /// Comparative benchmarks: all codes compared side by side.
 fn bench_comparative(c: &mut Criterion) {
     #[cfg(target_os = "linux")]
-    common::utils::pin_to_core(5);
+    common::utils::pin_to_core(2);
 
     let mut group = c.benchmark_group("comparative");
     group.throughput(Throughput::Elements(N as u64));

@@ -210,7 +210,7 @@ macro_rules! bench_code_tables {
 /// No-table baselines: run once, results independent of table size.
 fn bench_no_table(c: &mut Criterion) {
     #[cfg(target_os = "linux")]
-    common::utils::pin_to_core(5);
+    common::utils::pin_to_core(2);
 
     let mut group = c.benchmark_group("no_table");
     group.throughput(Throughput::Elements(N as u64));
@@ -300,7 +300,7 @@ fn bench_no_table(c: &mut Criterion) {
 /// The Python scripts call this repeatedly with different table sizes.
 fn bench_table(c: &mut Criterion) {
     #[cfg(target_os = "linux")]
-    common::utils::pin_to_core(5);
+    common::utils::pin_to_core(2);
 
     let mut group = c.benchmark_group("table");
     group.throughput(Throughput::Elements(N as u64));

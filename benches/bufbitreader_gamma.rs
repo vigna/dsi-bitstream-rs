@@ -79,7 +79,7 @@ macro_rules! bench_endian {
 
 fn bench_bufbitreader_gamma(c: &mut Criterion) {
     #[cfg(target_os = "linux")]
-    common::utils::pin_to_core(5);
+    common::utils::pin_to_core(2);
 
     let mut group = c.benchmark_group("bufbitreader_gamma");
     // Lossless: N = 1_000_000 fits u64 on all supported targets.

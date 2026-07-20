@@ -418,7 +418,7 @@ impl core::str::FromStr for Codes {
                 }
                 let invalid = || CodeError::InvalidParameter(array_format_error(s));
                 match name {
-                    // zeta is defined for k in [1, 64).
+                    // zeta is defined for k in [1..64).
                     "Zeta" => {
                         let k: usize = param.parse()?;
                         if k == 0 || k >= 64 {

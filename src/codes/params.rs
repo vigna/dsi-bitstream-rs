@@ -33,7 +33,7 @@
 //! this module.
 //!
 //! You can also define a new selector type implementing
-//! [`ReadParams`]/[`WriteParams`] and, *within this crate*, provide blanket
+//! [`ReadParams`]/[`WriteParams`] and, within this crate, provide blanket
 //! implementations of the parameterless code traits for the bitstream readers
 //! and writers in [`crate::impls`] with `RP`/`WP` set to that type; a reader or
 //! writer using it then picks up those implementations instead of the ones
