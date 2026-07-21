@@ -235,10 +235,14 @@ where
 
         // Load the bottom of the buffer, if necessary, and dump the whole
         // buffer. The outgoing word is computed in a local so that a failed
-        // write leaves the buffer state consistent.
+        // write leaves the buffer state consistent; it is built in two steps
+        // rather than a single `|` expression, which lets the optimizer keep
+        // the hot buffer-fitting path above register-lean (a single combined
+        // expression here pessimized the code that inlines this method, e.g.
+        // Golomb writes, by ~30%).
         // The first shift on value discards bits higher than num_bits
-        let word: WW::Word = (self.buffer << (self.space_left_in_buffer - 1) << 1)
-            | (value << (64 - num_bits) >> (64 - self.space_left_in_buffer)).as_to();
+        let mut word: WW::Word = self.buffer << (self.space_left_in_buffer - 1) << 1;
+        word |= (value << (64 - num_bits) >> (64 - self.space_left_in_buffer)).as_to();
         self.backend.write_word(word.to_be())?;
 
         let mut to_write = num_bits - self.space_left_in_buffer;
