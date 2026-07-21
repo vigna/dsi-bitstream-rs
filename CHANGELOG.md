@@ -1,108 +1,93 @@
 # Change Log
 
-## [0.10.0] - 2026-07-20
+## [0.10.0] - 2026-07-22
 
 ### New
 
-- `WordRead` has a new method with a default implementation:
-  `read_word_opt`, atomically reading and consuming the next word if the
-  backend can determine cheaply that one is available (`None` otherwise,
-  never failing and never consuming past the end). `MemWordReader`
-  implements it.
+- `WordRead` has a new method with a default implementation: `read_word_opt`,
+  atomically reading and consuming the next word if the backend can determine
+  cheaply that one is available (`None` otherwise, never failing and never
+  consuming past the end). `MemWordReader` implements it.
 
 ### Changed
 
 - The public counters `CountBitReader::bits_read` and
-  `CountBitWriter::bits_written` are now `u64` (previously `usize`, which
-  wraps after 2³² bits on 32-bit targets); moreover,
-  `skip_bits_after_peek` now updates the count, as it advances the stream
-  (table-based decoding uses the peek/skip fast path, so wrapped readers
-  previously undercounted).
+  `CountBitWriter::bits_written` are now `u64` (previously `usize`, which wraps
+  after 2³² bits on 32-bit targets); moreover, `skip_bits_after_peek` now
+  updates the count, as it advances the stream (table-based decoding uses the
+  peek/skip fast path, so wrapped readers previously undercounted).
 
 - `Codes::from_str` (and serde deserialization, which goes through it) now
-  enforces an exact `Name(param)` grammar and validates every parameter
-  range (ζ with k in [1, 64), π/exponential Golomb/Rice with k in [0, 64),
-  Golomb with b ≥ 1), returning the new `CodeError::InvalidParameter`
-  variant instead of producing a code that panics or shifts out of range on
-  first use. Previously accepted malformed descriptors such as `Zeta(3)x`
-  are now rejected, and exhaustive matches on `CodeError` must handle the
-  new variant.
+  enforces an exact `Name(param)` grammar and validates every parameter range,
+  returning the new `CodeError::InvalidParameter` variant. Previously accepted
+  malformed descriptors such as `Zeta(3)x` are now rejected, and exhaustive
+  matches on `CodeError` must handle the new variant.
 
-- The parameterless write-trait blanket implementations (e.g. `GammaWrite`)
-  are now specific to `DefaultWriteParams`, mirroring the read-side
-  blankets, so `DefaultWriteParams` is a meaningful selector and an
-  in-crate alternative write selector no longer conflicts. Users of the
-  default parameters are unaffected.
+- The parameterless write-trait blanket implementations (e.g. `GammaWrite`) are
+  now specific to `DefaultWriteParams`, mirroring the read-side blankets, so
+  `DefaultWriteParams` is a meaningful selector and an in-crate alternative
+  write selector no longer conflicts.
 
-- `CodesStats` accumulates with saturating arithmetic (an overflowing total
-  can no longer wrap and wrongly win `best_code`), computes Golomb/Rice
-  lengths without truncation on 32-bit targets, and treats a zero count as
-  a no-op; updating with `u64::MAX` is documented to panic, as the
-  code-length helpers reject it.
+- `CodesStats` accumulates with saturating arithmetic (an overflowing total can
+  no longer wrap and wrongly win `best_code`), computes Golomb/Rice lengths
+  without truncation on 32-bit targets, and treats a zero count as a no-op;
+  updating with `u64::MAX` is documented to panic, as the code-length helpers
+  reject it.
 
-- The vbyte decoders check for malformed codes (overlong, or encoding a
-  value that does not fit in a `u64`) in debug builds only, with
-  descriptive assertions; release decode paths are unchanged.
+- The vbyte decoders check for malformed codes (overlong, or encoding a value
+  that does not fit in a `u64`) in debug builds only, with descriptive
+  assertions; release decode paths are unchanged.
 
-- The `mem_dbg` and (fuzzing-only) `libfuzzer-sys` dependency requirements
-  are bounded to their compatible major versions; the `zip` dev-dependency
-  no longer enables its default features, dropping the vulnerable
-  transitive `time` dependency (RUSTSEC-2026-0009) from test builds.
+- The `mem_dbg` and (fuzzing-only) `libfuzzer-sys` dependency requirements are
+  bounded to their compatible major versions; the `zip` dev-dependency no longer
+  enables its default features, dropping the vulnerable transitive `time`
+  dependency (RUSTSEC-2026-0009) from test builds.
 
 ### Improved
 
 - `BufBitReader::read_bits` and `BufBitReader::read_unary` are significantly
   faster: word-crossing reads of at most one word are composed with
   straight-line code instead of the general word loop, and, on backends that
-  override `read_word_opt` (currently `MemWordReader`), refills load two
-  words when possible, halving refill events and branch mispredictions. The
-  bit buffer still never fills completely, so the hot paths carry no
-  full-buffer handling.
+  override `read_word_opt` (currently `MemWordReader`), refills load two words
+  when possible, halving refill events and branch mispredictions. The bit buffer
+  still never fills completely, so the hot paths carry no full-buffer handling.
 
 ### Fixed
 
-- The big-endian `BufBitReader::copy_to` no longer leaves already-copied bits
-  in the bit buffer; they could corrupt reads performed after the copy.
+- The big-endian `BufBitReader::copy_to` no longer leaves already-copied bits in
+  the bit buffer; they could corrupt reads performed after the copy.
 
-- `BufBitReader::copy_to` and `BufBitWriter::copy_from` now transfer at most
-  64 bits per `read_bits`/`write_bits` call; previously they could exceed the
-  trait limits when buffers held more than 64 bits, silently corrupting the
-  copy.
+- `BufBitReader::copy_to` and `BufBitWriter::copy_from` now transfer at most 64
+  bits per `read_bits`/`write_bits` call; previously they could exceed the trait
+  limits when buffers held more than 64 bits, silently corrupting the copy.
 
 - `BufBitReader::peek_bits` previously advertised `PEEK_BITS` = one word + 1
   bits but could only guarantee one word after a single refill, returning an
-  incorrect result when peeking more than one word from an almost-empty
-  buffer. `PEEK_BITS` is now exactly one word (half the bit buffer), which is
-  sufficient for all decoding tables; a single refill always suffices, the bit
-  buffer is never completely full, and the read/skip/unary hot paths are
-  unchanged from before (no extra full-buffer handling). The `peek_bits`
-  documentation and entry assertions now state the `PEEK_BITS` bound (they
-  previously advertised `PeekWord::BITS`, which a single refill cannot
-  guarantee).
+  incorrect result when peeking more than one word from an almost-empty buffer.
+  `PEEK_BITS` is now exactly one word (half the bit buffer).
 
-- `BufBitWriter::into_inner` now returns the flush error instead of
-  panicking in the drop-time flush.
+- `BufBitWriter::into_inner` now returns the flush error instead of panicking in
+  the drop-time flush.
 
-- `BufBitWriter` flushes no longer modify the bit buffer before writing to
-  the backend, so a failed flush can be retried without corrupting the
-  stream; the slow paths of `write_bits` and `write_unary` similarly keep
-  the buffer state consistent on backend errors.
+- `BufBitWriter` flushes no longer modify the bit buffer before writing to the
+  backend, so a failed flush can be retried without corrupting the stream; the
+  slow paths of `write_bits` and `write_unary` similarly keep the buffer state
+  consistent on backend errors.
 
 - `CountBitWriter::flush` no longer double-counts the bits remaining in the
-  buffer of the underlying writer; `CountBitReader::skip_bits` no longer
-  updates the count when the underlying skip fails.
+  buffer of the underlying writer; `CountBitReader::skip_bits` no longer updates
+  the count when the underlying skip fails.
 
-- The length of the unary code computed by `CodeLen`/`FuncCodeLen` is no
-  longer silently truncated on 32-bit platforms.
+- The length of the unary code computed by `CodeLen`/`FuncCodeLen` is no longer
+  silently truncated on 32-bit platforms.
 
 - The `std::io::Read` implementations of `BufBitReader` and `BitReader` now
-  return the number of bytes read before an error, and preserve the
-  underlying error as source instead of discarding it.
+  return the number of bytes read before an error, and preserve the underlying
+  error as source instead of discarding it.
 
-- `WordAdapter::set_word_pos` detects overflow when converting a word
-  position to a byte position; `set_word_pos` on memory-based word readers
-  and writers now reports the requested (offending) position instead of the
-  current one.
+- `WordAdapter::set_word_pos` detects overflow when converting a word position
+  to a byte position; `set_word_pos` on memory-based word readers and writers
+  now reports the requested (offending) position instead of the current one.
 
 ## [0.9.2] - 2026-05-11
 
