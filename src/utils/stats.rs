@@ -701,7 +701,7 @@ mod robustness_tests {
     }
 
     #[test]
-    fn count_zero_is_a_noop() {
+    fn test_count_zero_is_a_noop() {
         let mut stats: CodesStats = CodesStats::default();
         let before = stats;
         stats.update_many(u64::MAX, 0);
@@ -712,7 +712,7 @@ mod robustness_tests {
     }
 
     #[test]
-    fn large_count_saturates_without_panic() {
+    fn test_large_count_saturates_without_panic() {
         let mut stats: CodesStats = CodesStats::default();
         // (n + 1) * count overflows u64; it must saturate rather than panic
         // (debug) or wrap to a small, wrongly-winning value (release).

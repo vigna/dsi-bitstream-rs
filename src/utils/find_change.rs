@@ -103,6 +103,8 @@ impl<F: Fn(u64) -> usize> Iterator for FindChangePoints<F> {
     }
 }
 
+impl<F: Fn(u64) -> usize> core::iter::FusedIterator for FindChangePoints<F> {}
+
 #[cfg(test)]
 mod tests {
     use super::FindChangePoints;

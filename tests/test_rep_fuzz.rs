@@ -74,25 +74,25 @@ macro_rules! impl_fuzz_repr {
     };
 }
 
-impl_fuzz_repr!(fuzz_codes, fuzz_codes_zip, codes);
+impl_fuzz_repr!(test_fuzz_codes, test_fuzz_codes_zip, codes);
 
 impl_fuzz_repr!(
-    fuzz_mem_word_reader,
-    fuzz_mem_word_reader_zip,
+    test_fuzz_mem_word_reader,
+    test_fuzz_mem_word_reader_zip,
     mem_word_reader
 );
 impl_fuzz_repr!(
-    fuzz_mem_word_reader_strict,
-    fuzz_mem_word_reader_strict_zip,
+    test_fuzz_mem_word_reader_strict,
+    test_fuzz_mem_word_reader_strict_zip,
     mem_word_reader_strict
 );
 impl_fuzz_repr!(
-    fuzz_mem_word_writer,
-    fuzz_mem_word_writer_zip,
+    test_fuzz_mem_word_writer,
+    test_fuzz_mem_word_writer_zip,
     mem_word_writer
 );
 impl_fuzz_repr!(
-    fuzz_mem_word_writer_vec,
-    fuzz_mem_word_writer_vec_zip,
+    test_fuzz_mem_word_writer_vec,
+    test_fuzz_mem_word_writer_vec_zip,
     mem_word_writer_vec
 );

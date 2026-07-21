@@ -13,27 +13,26 @@ We provide three bit-based traits, [`BitRead`], [`BitWrite`], and
 [`BitSeek`], analogous to [`std::io::Read`], [`std::io::Write`],
 and [`std::io::Seek`], respectively. They provide read/write operations
 on fixed-width blocks of bits and unary codes. More complex operations,
-such as [reading instantaneous codes](crate::codes::gamma::GammaReadParam),
-are built on these basic traits.
+such as [reading instantaneous codes], are built on these basic traits.
 
 The endianness of a bit stream is specified by using the selector types
 [`BigEndian`] (AKA [`BE`]) and [`LittleEndian`] (AKA [`LE`]), which
 are the only implementations of the sealed marker trait [`Endianness`].
 
 The implementations we provide for these traits (e.g.,
-[`BufBitReader`](crate::impls::BufBitReader)) are based on
+[`BufBitReader`]) are based on
 [`WordRead`], [`WordWrite`], and [`WordSeek`], which provide word-based
 operations, as reading or writing multiple bytes at a time is usually
 much faster than reading or writing single bytes, in particular when
 interacting with memory. For example,
-[`MemWordReader`](crate::impls::MemWordReader) is a [`WordRead`] that
+[`MemWordReader`] is a [`WordRead`] that
 reads word-by-word from a slice.
 
 All traits have an associated error type `Error`, which usually propagates
 the error of the underlying backend. However, in some cases (e.g.,
-[`MemWordReader`](crate::impls::MemWordReader) with infinite zero
+[`MemWordReader`] with infinite zero
 extension) the error type is
-[`Infallible`](core::convert::Infallible), in which case the compiler
+[`Infallible`], in which case the compiler
 is able to perform several further optimizations.
 
 Note that methods returning a [`Result`] will return a
@@ -66,8 +65,14 @@ get as first byte `110xxxxx`, while if we write it to a little-endian bit stream
 we will obtain the byte `xxxxx110`. Clearly, reversing the order of the bits
 of each byte will not give the other byte.
 
-See the [codes](crate::codes) module for a discussion on the impact of
+See the [codes] module for a discussion on the impact of
 endianness on the encoding of instantaneous codes.
+
+[reading instantaneous codes]: crate::codes::gamma::GammaReadParam
+[`BufBitReader`]: crate::impls::BufBitReader
+[`MemWordReader`]: crate::impls::MemWordReader
+[`Infallible`]: core::convert::Infallible
+[codes]: crate::codes
 
 */
 

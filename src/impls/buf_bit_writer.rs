@@ -58,6 +58,15 @@ pub struct BufBitWriter<E: Endianness, WW: WordWrite, WP: WriteParams = DefaultW
     _marker: core::marker::PhantomData<(E, WP)>,
 }
 
+impl<E: Endianness, WW: WordWrite + Default, WP: WriteParams> Default for BufBitWriter<E, WW, WP>
+where
+    BufBitWriter<E, WW, WP>: BitWrite<E>,
+{
+    fn default() -> Self {
+        Self::new(WW::default())
+    }
+}
+
 /// Creates a new [`BufBitWriter`] with [default write parameters] from a file
 /// path using the provided endianness and write word.
 ///
@@ -132,15 +141,6 @@ impl<E: Endianness, WW: WordWrite, WP: WriteParams> BufBitWriter<E, WW, WP> {
     }
 }
 
-impl<E: Endianness, WW: WordWrite + Default, WP: WriteParams> Default for BufBitWriter<E, WW, WP>
-where
-    BufBitWriter<E, WW, WP>: BitWrite<E>,
-{
-    fn default() -> Self {
-        Self::new(WW::default())
-    }
-}
-
 impl<E: Endianness, WW: WordWrite, WP: WriteParams> BufBitWriter<E, WW, WP>
 where
     BufBitWriter<E, WW, WP>: BitWrite<E>,
@@ -161,17 +161,6 @@ where
         let backend = unsafe { ptr::read(&self.backend) };
         mem::forget(self);
         flush_result.map(|_| backend)
-    }
-}
-
-impl<E: Endianness, WW: WordWrite, WP: WriteParams> core::ops::Drop for BufBitWriter<E, WW, WP> {
-    fn drop(&mut self) {
-        if TypeId::of::<E>() == TypeId::of::<LE>() {
-            flush_le(self).unwrap();
-        } else {
-            // TypeId::of::<E>() == TypeId::of::<BE>()
-            flush_be(self).unwrap();
-        }
     }
 }
 
@@ -479,6 +468,17 @@ where
         }
 
         Ok(())
+    }
+}
+
+impl<E: Endianness, WW: WordWrite, WP: WriteParams> core::ops::Drop for BufBitWriter<E, WW, WP> {
+    fn drop(&mut self) {
+        if TypeId::of::<E>() == TypeId::of::<LE>() {
+            flush_le(self).unwrap();
+        } else {
+            // TypeId::of::<E>() == TypeId::of::<BE>()
+            flush_be(self).unwrap();
+        }
     }
 }
 

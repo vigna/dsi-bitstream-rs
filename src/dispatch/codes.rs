@@ -329,49 +329,18 @@ impl CodeLen for Codes {
     }
 }
 
-/// Error type for parsing a code from a string.
-#[derive(Debug, Clone)]
-pub enum CodeError {
-    /// Error parsing an integer parameter.
-    ParseError(core::num::ParseIntError),
-    /// Unknown code name. Uses a fixed-size array instead of `String` for `no_std` compatibility.
-    UnknownCode([u8; 32]),
-    /// A parameter is outside the valid range for its code (for example
-    /// `Golomb(0)`, `Zeta(0)`, or a shift parameter `>= 64`).
-    InvalidParameter([u8; 32]),
-}
-impl core::error::Error for CodeError {}
-impl core::fmt::Display for CodeError {
-    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        match self {
-            CodeError::ParseError(e) => write!(f, "parse error: {}", e),
-            CodeError::UnknownCode(s) => {
-                write!(f, "unknown code: ")?;
-                for c in s {
-                    if *c == 0 {
-                        break;
-                    }
-                    write!(f, "{}", *c as char)?;
-                }
-                Ok(())
-            }
-            CodeError::InvalidParameter(s) => {
-                write!(f, "invalid parameter for code: ")?;
-                for c in s {
-                    if *c == 0 {
-                        break;
-                    }
-                    write!(f, "{}", *c as char)?;
-                }
-                Ok(())
-            }
-        }
+#[cfg(feature = "serde")]
+impl serde::Serialize for Codes {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(&self.to_string())
     }
 }
 
-impl From<core::num::ParseIntError> for CodeError {
-    fn from(e: core::num::ParseIntError) -> Self {
-        CodeError::ParseError(e)
+#[cfg(feature = "serde")]
+impl<'de> serde::Deserialize<'de> for Codes {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let s = String::deserialize(deserializer)?;
+        s.parse().map_err(serde::de::Error::custom)
     }
 }
 
@@ -473,24 +442,49 @@ impl core::str::FromStr for Codes {
     }
 }
 
-#[cfg(feature = "serde")]
-impl serde::Serialize for Codes {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        serializer.serialize_str(&self.to_string())
+/// Error type for parsing a code from a string.
+#[derive(Debug, Clone)]
+pub enum CodeError {
+    /// Error parsing an integer parameter.
+    ParseError(core::num::ParseIntError),
+    /// Unknown code name. Uses a fixed-size array instead of `String` for `no_std` compatibility.
+    UnknownCode([u8; 32]),
+    /// A parameter is outside the valid range for its code (for example
+    /// `Golomb(0)`, `Zeta(0)`, or a shift parameter `>= 64`).
+    InvalidParameter([u8; 32]),
+}
+impl core::error::Error for CodeError {}
+impl core::fmt::Display for CodeError {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        match self {
+            CodeError::ParseError(e) => write!(f, "parse error: {}", e),
+            CodeError::UnknownCode(s) => {
+                write!(f, "unknown code: ")?;
+                for c in s {
+                    if *c == 0 {
+                        break;
+                    }
+                    write!(f, "{}", *c as char)?;
+                }
+                Ok(())
+            }
+            CodeError::InvalidParameter(s) => {
+                write!(f, "invalid parameter for code: ")?;
+                for c in s {
+                    if *c == 0 {
+                        break;
+                    }
+                    write!(f, "{}", *c as char)?;
+                }
+                Ok(())
+            }
+        }
     }
 }
 
-#[cfg(feature = "serde")]
-impl<'de> serde::Deserialize<'de> for Codes {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let s = String::deserialize(deserializer)?;
-        s.parse().map_err(serde::de::Error::custom)
+impl From<core::num::ParseIntError> for CodeError {
+    fn from(e: core::num::ParseIntError) -> Self {
+        CodeError::ParseError(e)
     }
 }
 
@@ -554,7 +548,7 @@ mod parse_tests {
     use core::str::FromStr;
 
     #[test]
-    fn parses_valid_parameterized_codes() {
+    fn test_parses_valid_parameterized_codes() {
         assert_eq!(Codes::from_str("Unary").unwrap(), Codes::Unary);
         assert_eq!(Codes::from_str("Zeta(3)").unwrap(), Codes::Zeta(3));
         assert_eq!(Codes::from_str("Pi(2)").unwrap(), Codes::Pi(2));
@@ -568,7 +562,7 @@ mod parse_tests {
     }
 
     #[test]
-    fn rejects_out_of_range_parameters() {
+    fn test_rejects_out_of_range_parameters() {
         // These previously deserialized into values that panic on first use
         // (divide-by-zero) or shift by >= 64.
         assert!(Codes::from_str("Golomb(0)").is_err());
@@ -580,7 +574,7 @@ mod parse_tests {
     }
 
     #[test]
-    fn rejects_malformed_grammar() {
+    fn test_rejects_malformed_grammar() {
         assert!(Codes::from_str("Zeta(3").is_err());
         assert!(Codes::from_str("Zeta(3)x").is_err());
         assert!(Codes::from_str("Zeta(3)(4)").is_err());

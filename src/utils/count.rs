@@ -460,7 +460,7 @@ mod tests {
     }
 
     #[test]
-    fn skip_bits_after_peek_is_counted() {
+    fn test_skip_bits_after_peek_is_counted() {
         let buffer = vec![0u64; 4];
         let bit_read = <BufBitReader<LE, _>>::new(MemWordReader::<u64, _>::new(&buffer));
         let mut r = CountBitReader::<_, _, false>::new(bit_read);
@@ -472,7 +472,7 @@ mod tests {
     }
 
     #[test]
-    fn failed_skip_bits_is_not_counted() {
+    fn test_failed_skip_bits_is_not_counted() {
         // Strict reader over an empty backend: skip_bits hits EOF.
         let buffer = Vec::<u64>::new();
         let bit_read = <BufBitReader<LE, _>>::new(MemWordReader::<u64, _>::new(&buffer));

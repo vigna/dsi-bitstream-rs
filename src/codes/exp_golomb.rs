@@ -35,7 +35,7 @@ use crate::traits::*;
 /// Returns the length of the exponential Golomb code for `n` with parameter `k`.
 #[must_use]
 #[inline(always)]
-pub fn len_exp_golomb(n: u64, k: usize) -> usize {
+pub const fn len_exp_golomb(n: u64, k: usize) -> usize {
     debug_assert!(k < 64);
     len_gamma(n >> k) + k
 }

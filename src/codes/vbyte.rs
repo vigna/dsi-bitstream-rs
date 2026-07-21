@@ -309,7 +309,7 @@ pub fn vbyte_write<E: Endianness, W: std::io::Write>(
 /// byte codes and return the number of bytes written.
 #[inline(always)]
 #[cfg(feature = "std")]
-pub fn vbyte_write_be<W: std::io::Write>(mut n: u64, w: &mut W) -> std::io::Result<usize> {
+pub fn vbyte_write_be(mut n: u64, w: &mut impl std::io::Write) -> std::io::Result<usize> {
     let mut buf = [0u8; 10];
     let mut pos = buf.len() - 1;
     buf[pos] = (n & 0x7F) as u8;
@@ -329,7 +329,7 @@ pub fn vbyte_write_be<W: std::io::Write>(mut n: u64, w: &mut W) -> std::io::Resu
 /// byte codes and return the number of bytes written.
 #[inline(always)]
 #[cfg(feature = "std")]
-pub fn vbyte_write_le<W: std::io::Write>(mut n: u64, writer: &mut W) -> std::io::Result<usize> {
+pub fn vbyte_write_le(mut n: u64, writer: &mut impl std::io::Write) -> std::io::Result<usize> {
     let mut len = 1;
     loop {
         let byte = (n & 0x7F) as u8;
@@ -363,7 +363,7 @@ pub fn vbyte_read<E: Endianness, R: std::io::Read>(reader: &mut R) -> std::io::R
 /// byte codes.
 #[inline(always)]
 #[cfg(feature = "std")]
-pub fn vbyte_read_be<R: std::io::Read>(reader: &mut R) -> std::io::Result<u64> {
+pub fn vbyte_read_be(reader: &mut impl std::io::Read) -> std::io::Result<u64> {
     let mut buf = [0u8; 1];
     let mut value: u64;
     reader.read_exact(&mut buf)?;
@@ -398,7 +398,7 @@ pub fn vbyte_read_be<R: std::io::Read>(reader: &mut R) -> std::io::Result<u64> {
 /// variable-length byte codes.
 #[inline(always)]
 #[cfg(feature = "std")]
-pub fn vbyte_read_le<R: std::io::Read>(reader: &mut R) -> std::io::Result<u64> {
+pub fn vbyte_read_le(reader: &mut impl std::io::Read) -> std::io::Result<u64> {
     let mut result = 0;
     let mut shift = 0;
     let mut buffer = [0; 1];
@@ -491,17 +491,17 @@ mod tests {
     }
 
     malformed_tests!(
-        overlong_bit_be,
-        overlong_bit_le,
-        overlong_io_be,
-        overlong_io_le,
+        test_overlong_bit_be,
+        test_overlong_bit_le,
+        test_overlong_io_be,
+        test_overlong_io_le,
         OVERLONG
     );
     malformed_tests!(
-        high_payload_bit_be,
-        high_payload_bit_le,
-        high_payload_io_be,
-        high_payload_io_le,
+        test_high_payload_bit_be,
+        test_high_payload_bit_le,
+        test_high_payload_io_be,
+        test_high_payload_io_le,
         HIGH_PAYLOAD
     );
 

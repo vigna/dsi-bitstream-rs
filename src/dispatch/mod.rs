@@ -296,7 +296,8 @@ pub trait CodesRead<E: Endianness>:
 {
 }
 
-impl<E: Endianness, B> CodesRead<E> for B where
+impl<
+    E: Endianness,
     B: BitRead<E>
         + GammaRead<E>
         + DeltaRead<E>
@@ -308,7 +309,8 @@ impl<E: Endianness, B> CodesRead<E> for B where
         + RiceRead<E>
         + ExpGolombRead<E>
         + VByteBeRead<E>
-        + VByteLeRead<E>
+        + VByteLeRead<E>,
+> CodesRead<E> for B
 {
 }
 
@@ -338,7 +340,8 @@ pub trait CodesWrite<E: Endianness>:
 {
 }
 
-impl<E: Endianness, B> CodesWrite<E> for B where
+impl<
+    E: Endianness,
     B: BitWrite<E>
         + GammaWrite<E>
         + DeltaWrite<E>
@@ -350,7 +353,8 @@ impl<E: Endianness, B> CodesWrite<E> for B where
         + RiceWrite<E>
         + ExpGolombWrite<E>
         + VByteBeWrite<E>
-        + VByteLeWrite<E>
+        + VByteLeWrite<E>,
+> CodesWrite<E> for B
 {
 }
 

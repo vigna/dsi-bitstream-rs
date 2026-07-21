@@ -62,7 +62,7 @@ use super::{RiceRead, RiceWrite, len_rice, pi_tables};
 #[must_use]
 #[inline(always)]
 #[allow(clippy::collapsible_if)]
-pub fn len_pi_param<const USE_TABLE: bool>(mut n: u64, k: usize) -> usize {
+pub const fn len_pi_param<const USE_TABLE: bool>(mut n: u64, k: usize) -> usize {
     debug_assert!(k < 64);
     if USE_TABLE {
         if k == pi_tables::K {
@@ -82,7 +82,7 @@ pub fn len_pi_param<const USE_TABLE: bool>(mut n: u64, k: usize) -> usize {
 /// a default value for `USE_TABLE`.
 #[must_use]
 #[inline(always)]
-pub fn len_pi(n: u64, k: usize) -> usize {
+pub const fn len_pi(n: u64, k: usize) -> usize {
     len_pi_param::<true>(n, k)
 }
 

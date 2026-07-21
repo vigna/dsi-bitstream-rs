@@ -112,17 +112,17 @@ where
 }
 
 #[test]
-fn dispatch_matrix_be() {
+fn test_dispatch_matrix_be() {
     check_matrix::<BE>();
 }
 
 #[test]
-fn dispatch_matrix_le() {
+fn test_dispatch_matrix_le() {
     check_matrix::<LE>();
 }
 
 #[test]
-fn const_code_roundtrips() {
+fn test_const_code_roundtrips() {
     const N: u64 = 100;
     // One representative const per family; ConstCode delegates through the
     // static-dispatch matrices, so a wrong const->code mapping is caught here.

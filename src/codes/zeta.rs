@@ -44,7 +44,7 @@ use crate::traits::*;
 #[must_use]
 #[inline(always)]
 #[allow(clippy::collapsible_if)]
-pub fn len_zeta_param<const USE_TABLE: bool>(mut n: u64, k: usize) -> usize {
+pub const fn len_zeta_param<const USE_TABLE: bool>(mut n: u64, k: usize) -> usize {
     debug_assert!(k >= 1);
     if USE_TABLE {
         if k == zeta_tables::K {
@@ -65,7 +65,7 @@ pub fn len_zeta_param<const USE_TABLE: bool>(mut n: u64, k: usize) -> usize {
 /// a default value for `USE_TABLE`.
 #[must_use]
 #[inline(always)]
-pub fn len_zeta(n: u64, k: usize) -> usize {
+pub const fn len_zeta(n: u64, k: usize) -> usize {
     len_zeta_param::<true>(n, k)
 }
 
