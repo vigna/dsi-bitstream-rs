@@ -4,7 +4,7 @@
 # SPDX-FileCopyrightText: 2023 Tommaso Fontana
 # SPDX-FileCopyrightText: 2023 Inria
 #
-# SPDX-License-Identifier: Apache-2.0 OR LGPL-2.1-or-later
+# SPDX-License-Identifier: Apache-2.0 OR MIT
 #
 
 """Plots data generated from `bench_code_tables_read.py`.
